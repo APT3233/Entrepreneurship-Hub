@@ -1,0 +1,37 @@
+import Joi from "joi";
+
+export const loginSchema = {
+  body: Joi.object({
+    username: Joi.string().required().messages({
+      "any.required": "Username is required",
+    }),
+    password: Joi.string().required().messages({
+      "any.required": "Password is required",
+    }),
+  }),
+};
+
+export const registerSchema = {
+  body: Joi.object({
+    fullname: Joi.string().min(2).max(100).required().messages({
+      "string.min": "Full name must be at least 2 characters long",
+      "any.required": "Full name is required",
+    }),
+    email: Joi.string().email().required().messages({
+      "string.email": "Email must be a valid email address",
+      "any.required": "Email is required",
+    }),
+    password: Joi.string().min(6).max(128).required().messages({
+      "string.min": "Password must be at least 6 characters long",
+      "string.max": "Password must not exceed 128 characters",
+      "any.required": "Password is required",
+    }),
+    role: Joi.string()
+      .valid("admin", "department_head", "teacher", "student")
+      .default("student"),
+  }),
+};
+
+// refreshToken and logout token are now sent via httpOnly cookies, not request body
+export const refreshSchema = {};
+export const logoutSchema = {};

@@ -1,0 +1,116 @@
+name: ehub
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: ehub-mysql
+    restart: unless-stopped
+    ports:
+      - "${MYSQL_PORT:-3308}:3306"
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DB:-fptu_ehub_db}
+      MYSQL_USER: ${MYSQL_USER:-fptu_ehub_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-fptu_ehub_passwd}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootsecret}
+      TZ: ${TZ:-Asia/Ho_Chi_Minh}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./workdir/database/fptu_ehub_structure_db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    command:
+      - "--character-set-server=utf8mb4"
+      - "--collation-server=utf8mb4_unicode_ci"
+      - "--innodb-buffer-pool-size=64M"
+      - "--max-connections=30"
+      - "--skip-log-bin"
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.5"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "${MYSQL_USER:-fptu_ehub_user}", "-p${MYSQL_PASSWORD:-fptu_ehub_passwd}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ehub-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: ehub-redis
+    environment:
+      - TZ=${TZ:-Asia/Ho_Chi_Minh}
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+      - ./ehub-server/scripts/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+          cpus: "0.3"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    networks:
+      - ehub-network
+
+  ehub-server:
+    build:
+      context: ./ehub-server
+      args:
+        APP_PORT: ${APP_PORT:-7777}
+    container_name: ehub-server
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-7777}:${APP_PORT:-7777}"
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: ${PORT:-7777}
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_DB: ${MYSQL_DB:-fptu_ehub_db}
+      MYSQL_USER: ${MYSQL_USER:-fptu_ehub_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-fptu_ehub_passwd}
+      TZ: ${TZ:-Asia/Ho_Chi_Minh}
+      REDIS_URL: redis://redis:6379
+      REDIS_PORT: 6379
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - ehub-network
+
+  ehub-client:
+    build:
+      context: ./ehub-client
+      dockerfile: Dockerfile
+    container_name: ehub-client
+    environment:
+      - TZ=${TZ:-Asia/Ho_Chi_Minh}
+    restart: unless-stopped
+    ports:
+      - "${CLIENT_PORT:-5173}:80"
+    depends_on:
+      - ehub-server
+    networks:
+      - ehub-network
+
+volumes:
+  mysql_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  ehub-network:
+    driver: bridge

@@ -1,0 +1,14 @@
+.vscode
+.tmp
+.env
+.env.example
+.log
+.idea/
+
+node_modules/
+scripts/
+tests/
+
+docs/
+.rules/
+logs/

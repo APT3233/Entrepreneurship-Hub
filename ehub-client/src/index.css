@@ -1,0 +1,25 @@
+/* ── Tailwind CSS ──────────────────────────────────────── */
+@import "tailwindcss";
+
+/* ── Inter Variable Font ─────────────────────────────────── */
+@font-face {
+  font-family: "Inter";
+  src: url("./assets/fptu/fonts/Inter-VariableFont.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Inter";
+  src: url("./assets/fptu/fonts/Inter-Italic-VariableFont.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: italic;
+  font-display: swap;
+}
+
+*,
+*::before,
+*::after {
+  font-family: "Inter", sans-serif;
+}
