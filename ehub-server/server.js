@@ -2,15 +2,6 @@ import { bootstrap } from "app/loaders/index.js";
 import { appConfig } from "app/config/app.js";
 import { logger } from "app/core/logger/index.js";
 
-const envCheck = {
-  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID ? "(đã có)" : "(CHƯA CÓ)",
-  GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET ? "(đã có)" : "(CHƯA CÓ)",
-  GOOGLE_REDIRECT_URI: process.env.GOOGLE_REDIRECT_URI || "(CHƯA CÓ)",
-  FRONTEND_URL: process.env.FRONTEND_URL || "(CHƯA CÓ)",
-  PORT: process.env.PORT || process.env.APP_PORT || "(CHƯA CÓ)",
-};
-console.log("[ENV] Biến môi trường:", JSON.stringify(envCheck, null, 2));
-
 const start = async () => {
   const { app } = await bootstrap();
 

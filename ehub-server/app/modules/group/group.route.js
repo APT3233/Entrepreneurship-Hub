@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { validateRequest } from "app/core/middlewares/validateRequest.js";
-import { authenticate } from "app/core/middlewares/authMiddleware.js";
+import { authenticate, optionalAuthenticate } from "app/core/middlewares/authMiddleware.js";
 import { roleGuard } from "app/core/middlewares/roleGuard.js";
 import {
   createGroupSchema,
@@ -26,17 +26,13 @@ export const createGroupRouter = (container) => {
   const { groupController } = container.cradle;
   const router = Router();
 
-  router.get("/", validateRequest(listGroupSchema), groupController.list);
-  router.get(
-    "/:id",
-    validateRequest(groupParamsSchema),
-    groupController.getById,
-  );
+  router.get("/", optionalAuthenticate, validateRequest(listGroupSchema), groupController.list);
+  router.get("/:id", optionalAuthenticate, validateRequest(groupParamsSchema), groupController.getById);
 
   router.post(
     "/",
     authenticate,
-    roleGuard("admin", "department_head", "teacher"),
+    roleGuard("admin", "department_head", "lecturer"),
     validateRequest(createGroupSchema),
     groupController.create,
   );
@@ -44,7 +40,7 @@ export const createGroupRouter = (container) => {
   router.put(
     "/:id",
     authenticate,
-    roleGuard("admin", "department_head", "teacher"),
+    roleGuard("admin", "department_head", "lecturer"),
     validateRequest(updateGroupSchema),
     groupController.update,
   );
@@ -52,7 +48,7 @@ export const createGroupRouter = (container) => {
   router.delete(
     "/:id",
     authenticate,
-    roleGuard("admin", "department_head", "teacher"),
+    roleGuard("admin", "department_head", "lecturer"),
     validateRequest(groupParamsSchema),
     groupController.remove,
   );

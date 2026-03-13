@@ -12,7 +12,7 @@ export const createClassSchema = {
       "any.required": "Class code is required",
     }),
     class_name: Joi.string().max(200).allow(null, ""),
-    teacher_id: Joi.number().integer().positive().allow(null),
+    lecturer_id: Joi.number().integer().positive().allow(null),
     max_students: Joi.number().integer().min(1).max(200).default(40),
     min_group_members: Joi.number().integer().min(1).max(20).default(4),
     max_group_members: Joi.number()
@@ -35,7 +35,7 @@ export const updateClassSchema = {
     semester_id: Joi.number().integer().positive(),
     class_code: Joi.string().max(50),
     class_name: Joi.string().max(200).allow(null, ""),
-    teacher_id: Joi.number().integer().positive().allow(null),
+    lecturer_id: Joi.number().integer().positive().allow(null),
     max_students: Joi.number().integer().min(1).max(200),
     min_group_members: Joi.number().integer().min(1).max(20),
     max_group_members: Joi.number()
@@ -53,7 +53,8 @@ export const listClassSchema = {
     sort: Joi.string(),
     status: Joi.string().valid("draft", "active", "completed", "archived"),
     subject_id: Joi.number().integer().positive(),
-    semester_id: Joi.number().integer().positive(),
+    semester_code: Joi.string().max(20).description("Filter by semester e.g. SP2026, FA2025"),
+    lecturerScope: Joi.string().valid("mine").description("Filter classes by current lecturer"),
   }),
 };
 

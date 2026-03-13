@@ -32,7 +32,7 @@ export const createSemesterRouter = (container) => {
   router.post(
     "/",
     authenticate,
-    roleGuard("admin", "department_head", "teacher"),
+    roleGuard("admin", "department_head", "lecturer"),
     validateRequest(createSemesterSchema),
     semesterController.create,
   );
@@ -40,7 +40,7 @@ export const createSemesterRouter = (container) => {
   router.put(
     "/:id",
     authenticate,
-    roleGuard("admin", "department_head", "teacher"),
+    roleGuard("admin", "department_head", "lecturer"),
     validateRequest(updateSemesterSchema),
     semesterController.update,
   );

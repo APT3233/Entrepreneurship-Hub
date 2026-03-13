@@ -9,6 +9,7 @@ const RootLayout = () => {
   const location = useLocation();
   const [searchParams] = useSearchParams();
 
+  // Restore session chỉ 1 lần khi mount (tránh chạy lại mỗi lần đổi route → race / cleanup → mất user khi reload)
   useEffect(() => {
     const isLoginWithGoogleCallback =
       location.pathname === "/auth/login" && searchParams.get("google_login") === "success";
@@ -33,7 +34,8 @@ const RootLayout = () => {
     return () => {
       mounted = false;
     };
-  }, [dispatch, location.pathname, searchParams]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- chỉ chạy 1 lần khi mount
+  }, [dispatch]);
 
   return <Outlet />;
 };

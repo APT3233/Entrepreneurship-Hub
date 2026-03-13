@@ -4,5 +4,6 @@
  */
 
 export { UserIcon, LockIcon } from "@/components/icons/auth";
-export { GraduationCapIcon, TeacherIcon } from "@/components/icons/education";
+export { GraduationCapIcon, LectureIcon } from "@/components/icons/education";
+export { StatIconGrading, StatIconAssignment, StatIconGroups } from "@/components/icons/lecture";
 export { AlertCircleIcon } from "@/components/icons/ui";

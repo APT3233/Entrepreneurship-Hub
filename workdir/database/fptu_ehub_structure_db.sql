@@ -46,10 +46,10 @@ CREATE TABLE users (
 
 
 -- -------------------------------------------
--- BẢNG 2: roles — Vai trò hệ thống
+-- BẢNG 2: roles — Vai trò hệ thống 
 -- -------------------------------------------
 CREATE TABLE roles (
-    id          BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    id          SMALLINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     role_code   VARCHAR(30)  NOT NULL,
     role_name   VARCHAR(100) NOT NULL,
     description TEXT             NULL,
@@ -69,7 +69,7 @@ CREATE TABLE roles (
 -- BẢNG 3: permissions — Quyền hạn
 -- -------------------------------------------
 CREATE TABLE permissions (
-    id              BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    id              INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     permission_code VARCHAR(80)  NOT NULL,
     permission_name VARCHAR(150) NOT NULL,
     module          VARCHAR(50)  NOT NULL
@@ -88,9 +88,9 @@ CREATE TABLE permissions (
 -- BẢNG 4: role_permissions — Gán quyền cho vai trò
 -- -------------------------------------------
 CREATE TABLE role_permissions (
-    id            BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    role_id       BIGINT UNSIGNED NOT NULL,
-    permission_id BIGINT UNSIGNED NOT NULL,
+    id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    role_id       SMALLINT UNSIGNED NOT NULL,
+    permission_id INT UNSIGNED NOT NULL,
 
     UNIQUE KEY uk_role_perm (role_id, permission_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
@@ -103,7 +103,7 @@ CREATE TABLE role_permissions (
 CREATE TABLE user_roles (
     id          BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id     BIGINT UNSIGNED NOT NULL,
-    role_id     BIGINT UNSIGNED NOT NULL,
+    role_id     SMALLINT UNSIGNED NOT NULL,
     assigned_by BIGINT UNSIGNED     NULL
                 COMMENT 'Ai đã gán vai trò này',
     assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
@@ -142,10 +142,10 @@ CREATE TABLE users_profile (
 
 
 -- -------------------------------------------
--- BẢNG 6: subjects — Học phần
+-- BẢNG 6: subjects — Học phần 
 -- -------------------------------------------
 CREATE TABLE subjects (
-    id              BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    id              INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     subject_code    VARCHAR(20)  NOT NULL
                     COMMENT 'Mã học phần: EXE101, EXE201',
     subject_name    VARCHAR(200) NOT NULL,
@@ -169,10 +169,10 @@ CREATE TABLE subjects (
 
 
 -- -------------------------------------------
--- BẢNG 7: semesters — Học kỳ
+-- BẢNG 7: semesters — Học kỳ 
 -- -------------------------------------------
 CREATE TABLE semesters (
-    id            BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     semester_code VARCHAR(20)  NOT NULL
                   COMMENT 'Mã kỳ: SP2025, SU2025, FA2025',
     semester_name VARCHAR(100) NOT NULL
@@ -202,16 +202,16 @@ CREATE TABLE semesters (
 -- Giao điểm của Học phần + Học kỳ + Section
 -- -------------------------------------------
 CREATE TABLE classes (
-    id               BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    subject_id       BIGINT UNSIGNED NOT NULL,
-    semester_id      BIGINT UNSIGNED NOT NULL,
+    id               INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    subject_id       INT UNSIGNED NOT NULL,
+    semester_id      INT UNSIGNED NOT NULL,
 
     class_code       VARCHAR(50)  NOT NULL
                      COMMENT 'Mã lớp: SE1856, SE1857...',
     class_name       VARCHAR(200)     NULL
                      COMMENT 'Tên hiển thị tuỳ chọn',
 
-    teacher_id       BIGINT UNSIGNED  NULL
+    lecturer_id      BIGINT UNSIGNED  NULL
                      COMMENT 'Giảng viên phụ trách chính',
 
     max_students     SMALLINT UNSIGNED DEFAULT 40  NOT NULL,
@@ -231,7 +231,7 @@ CREATE TABLE classes (
     UNIQUE KEY uk_class_semester (class_code, semester_id),
     INDEX      idx_class_subject  (subject_id),
     INDEX      idx_class_semester (semester_id),
-    INDEX      idx_class_teacher  (teacher_id),
+    INDEX      idx_class_lecturer (lecturer_id),
     INDEX      idx_class_status   (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='Lớp học = Học phần + Học kỳ + Section';
@@ -278,7 +278,7 @@ CREATE TABLE students (
 -- -------------------------------------------
 CREATE TABLE class_students (
     id          BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    class_id    BIGINT UNSIGNED NOT NULL,
+    class_id    INT UNSIGNED NOT NULL,
     student_id  BIGINT UNSIGNED NOT NULL,
 
     status      ENUM('enrolled','dropped','completed')
@@ -301,7 +301,7 @@ CREATE TABLE class_students (
 -- -------------------------------------------
 CREATE TABLE `groups` (
     id            BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    class_id      BIGINT UNSIGNED NOT NULL,
+    class_id      INT UNSIGNED NOT NULL,
     group_code    VARCHAR(50)  NOT NULL
                   COMMENT 'Mã nhóm: G01, G02... hoặc tự sinh',
     group_name    VARCHAR(200) NOT NULL
@@ -392,7 +392,7 @@ CREATE TABLE import_logs (
     file_path      VARCHAR(500)        NULL,
     target_table   VARCHAR(64)     NOT NULL
                    COMMENT 'Bảng đích: students, class_students...',
-    target_class_id BIGINT UNSIGNED    NULL,
+    target_class_id INT UNSIGNED      NULL,
 
     total_rows     INT UNSIGNED DEFAULT 0 NOT NULL,
     success_rows   INT UNSIGNED DEFAULT 0 NOT NULL,
@@ -497,7 +497,7 @@ ALTER TABLE semesters
 ALTER TABLE classes
     ADD CONSTRAINT fk_class_subject  FOREIGN KEY (subject_id)  REFERENCES subjects(id)  ON DELETE RESTRICT,
     ADD CONSTRAINT fk_class_semester FOREIGN KEY (semester_id) REFERENCES semesters(id) ON DELETE RESTRICT,
-    ADD CONSTRAINT fk_class_teacher  FOREIGN KEY (teacher_id)  REFERENCES users(id)     ON DELETE SET NULL,
+    ADD CONSTRAINT fk_class_lecturer  FOREIGN KEY (lecturer_id)  REFERENCES users(id)     ON DELETE SET NULL,
     ADD CONSTRAINT fk_class_creator  FOREIGN KEY (created_by)  REFERENCES users(id)     ON DELETE SET NULL,
     ADD CONSTRAINT chk_group_members CHECK (min_group_members <= max_group_members);
 
@@ -546,7 +546,7 @@ ALTER TABLE api_access_logs
 INSERT INTO roles (role_code, role_name, description, is_system) VALUES
 ('admin',          'Quản trị viên',        'Toàn quyền hệ thống',                    1),
 ('department_head','Trưởng bộ môn',        'Quản lý bộ môn Khởi nghiệp',             1),
-('teacher',        'Giảng viên',           'GV bộ môn — CRUD dữ liệu lõi',           1),
+('lecturer',       'Giảng viên',           'GV bộ môn — CRUD dữ liệu lõi',           1),
 ('student',        'Sinh viên',            'Chỉ đọc dữ liệu & thao tác nhóm mình',  1),
 ('guest',          'Khách',                'Chỉ xem dữ liệu public',                 1);
 
@@ -581,11 +581,11 @@ INSERT INTO permissions (permission_code, permission_name, module) VALUES
 -- Export
 ('core.export',           'Xuất dữ liệu',        'core');
 
--- Gán quyền cho vai trò Teacher (full CRUD)
+-- Gán quyền cho vai trò Lecture (full CRUD)
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT r.id, p.id
 FROM roles r, permissions p
-WHERE r.role_code = 'teacher'
+WHERE r.role_code = 'lecturer'
   AND p.module = 'core';
 
 -- Gán quyền cho vai trò Student (chỉ đọc)
@@ -629,7 +629,7 @@ SELECT
     sub.subject_name,
     sem.semester_code,
     sem.semester_name,
-    u.full_name         AS teacher_name,
+    u.full_name         AS lecturer_name,
     c.max_students,
     COUNT(DISTINCT cs.student_id)   AS enrolled_count,
     COUNT(DISTINCT g.id)            AS group_count,
@@ -637,7 +637,7 @@ SELECT
 FROM classes c
     JOIN subjects sub   ON sub.id = c.subject_id
     JOIN semesters sem  ON sem.id = c.semester_id
-    LEFT JOIN users u   ON u.id  = c.teacher_id
+    LEFT JOIN users u   ON u.id  = c.lecturer_id
     LEFT JOIN class_students cs
         ON cs.class_id = c.id AND cs.status = 'enrolled'
     LEFT JOIN `groups` g

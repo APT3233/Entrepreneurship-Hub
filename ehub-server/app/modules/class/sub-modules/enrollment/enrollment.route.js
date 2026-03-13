@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { validateRequest } from "app/core/middlewares/validateRequest.js";
-import { authenticate } from "app/core/middlewares/authMiddleware.js";
+import { authenticate, optionalAuthenticate } from "app/core/middlewares/authMiddleware.js";
 import { roleGuard } from "app/core/middlewares/roleGuard.js";
 import {
   enrollStudentSchema,
@@ -19,16 +19,12 @@ export const createEnrollmentRouter = (container) => {
   const { enrollmentController } = container.cradle;
   const router = Router({ mergeParams: true });
 
-  router.get(
-    "/",
-    validateRequest(listEnrollmentSchema),
-    enrollmentController.list,
-  );
+  router.get("/", optionalAuthenticate, validateRequest(listEnrollmentSchema), enrollmentController.list);
 
   router.post(
     "/",
     authenticate,
-    roleGuard("admin", "department_head", "teacher"),
+    roleGuard("admin", "department_head", "lecturer"),
     validateRequest(enrollStudentSchema),
     enrollmentController.enroll,
   );
@@ -36,7 +32,7 @@ export const createEnrollmentRouter = (container) => {
   router.delete(
     "/:studentId",
     authenticate,
-    roleGuard("admin", "department_head", "teacher"),
+    roleGuard("admin", "department_head", "lecturer"),
     validateRequest(unenrollStudentSchema),
     enrollmentController.unenroll,
   );

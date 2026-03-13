@@ -5,10 +5,12 @@ import {
   sendNoContent,
 } from "app/core/utils/apiResponse.js";
 import { catchAsync } from "app/core/utils/catchAsync.js";
+import { TokenInvalid } from "app/core/errors/errorFactory.js";
 
 export const createGroupController = ({ groupService }) => {
-  const list = catchAsync(async (req, res) => {
-    const result = await groupService.getList(req.query);
+  const list = catchAsync(async (req, res, next) => {
+    if (req.query.lecturerScope === "mine" && !req.user) return next(TokenInvalid());
+    const result = await groupService.getList(req.query, req.user?.id);
     return sendPaginated(res, {
       data: result.data,
       page: result.page,
@@ -19,7 +21,7 @@ export const createGroupController = ({ groupService }) => {
   });
 
   const getById = catchAsync(async (req, res) => {
-    const group = await groupService.getById(req.params.id);
+    const group = await groupService.getById(req.params.id, req.user);
     return sendSuccess(res, {
       data: group,
       message: "Group retrieved successfully",
@@ -38,7 +40,7 @@ export const createGroupController = ({ groupService }) => {
   });
 
   const update = catchAsync(async (req, res) => {
-    const group = await groupService.update(req.params.id, req.body);
+    const group = await groupService.update(req.params.id, req.body, req.user);
     return sendSuccess(res, {
       data: group,
       message: "Group updated successfully",
@@ -46,7 +48,7 @@ export const createGroupController = ({ groupService }) => {
   });
 
   const remove = catchAsync(async (req, res) => {
-    await groupService.remove(req.params.id);
+    await groupService.remove(req.params.id, req.user);
     return sendNoContent(res);
   });
 

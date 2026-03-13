@@ -43,14 +43,9 @@ export const listGroupSchema = {
     page: Joi.number().integer().min(1).default(1),
     limit: Joi.number().integer().min(1).max(100).default(20),
     sort: Joi.string(),
-    status: Joi.string().valid(
-      "forming",
-      "active",
-      "inactive",
-      "completed",
-      "dissolved",
-    ),
+    status: Joi.string().valid("forming", "active", "inactive", "completed", "dissolved"),
     class_id: Joi.number().integer().positive(),
+    lecturerScope: Joi.string().valid("mine").description("Filter groups by current lecturer's classes"),
   }),
 };
 

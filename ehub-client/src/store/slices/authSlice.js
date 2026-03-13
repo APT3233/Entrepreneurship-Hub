@@ -4,7 +4,7 @@ import { getUserRoles, hasAnyRole } from "@/utils/role";
 const initialState = {
   user: null,
   isAuthenticated: false,
-  isLoading: false,
+  isLoading: true,
   error: null,
 };
 

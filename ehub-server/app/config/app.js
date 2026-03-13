@@ -15,6 +15,8 @@ export const appConfig = Object.freeze({
     defaultLimit: 20,
     maxLimit: 100,
   },
+  /** Khi chạy qua tunnel/domain công khai (vd: ehub.apt3233.id.vn): set để cookie gửi đúng domain + Secure */
+  cookieDomain: optional("COOKIE_DOMAIN", ""),
   google: {
     clientId: optional("GOOGLE_CLIENT_ID", ""),
     clientSecret: optional("GOOGLE_CLIENT_SECRET", ""),

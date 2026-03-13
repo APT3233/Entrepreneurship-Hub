@@ -1,21 +1,35 @@
 import { createBaseService } from "app/core/services/baseService.js";
+import { parsePagination, parseSort } from "app/core/utils/pagination.js";
 
 export const createGroupService = ({ groupRepository }) => {
   const base = createBaseService(groupRepository, "Group");
+  const ALLOWED_SORT = ["group_code", "group_name", "status", "max_members", "created_at"];
 
-  const getById = async (id) => {
-    return base.getById(id);
+  const getById = async (id, user = null) => {
+    const group = await base.getById(id);
+    if (!group) return group;
+    await verifyGroupOwnership(id, user);
+    return group;
   };
 
-  const getList = async (query) => {
+  const getList = async (query, lecturerId = null) => {
+    if (query.lecturerScope === "mine" && lecturerId) {
+      const pagination = parsePagination(query);
+      const sort = parseSort(query.sort, ALLOWED_SORT);
+      const [data, total] = await Promise.all([
+        groupRepository.findManyByLecturer({
+          lecturerId,
+          status: query.status,
+          classId: query.class_id,
+          pagination,
+          sort,
+        }),
+        groupRepository.countByLecturer({ lecturerId, status: query.status, classId: query.class_id }),
+      ]);
+      return { data, ...pagination, total };
+    }
     return base.getList(query, {
-      allowedSortColumns: [
-        "group_code",
-        "group_name",
-        "status",
-        "max_members",
-        "created_at",
-      ],
+      allowedSortColumns: ALLOWED_SORT,
       filters: {
         ...(query.status && { status: query.status }),
         ...(query.class_id && { class_id: query.class_id }),
@@ -23,15 +37,27 @@ export const createGroupService = ({ groupRepository }) => {
     });
   };
 
-  const create = async (data) => {
-    return base.create(data);
+  const create = async (data) => base.create(data);
+
+  const verifyGroupOwnership = async (groupId, user) => {
+    if (!user?.roles?.length || user.roles.some((r) => ["admin", "department_head"].includes(String(r).toLowerCase()))) return;
+    const group = await base.getById(groupId);
+    if (!group) return;
+    const rows = await groupRepository.rawQuery("SELECT lecturer_id FROM classes WHERE id = :classId AND deleted_at IS NULL LIMIT 1", { classId: group.class_id });
+    const cls = rows?.[0];
+    if (cls && Number(cls.lecturer_id) !== Number(user.id)) {
+      const { Forbidden } = await import("app/core/errors/errorFactory.js");
+      throw Forbidden("Group does not belong to your class");
+    }
   };
 
-  const update = async (id, data) => {
+  const update = async (id, data, user = null) => {
+    await verifyGroupOwnership(id, user);
     return base.update(id, data);
   };
 
-  const remove = async (id) => {
+  const remove = async (id, user = null) => {
+    await verifyGroupOwnership(id, user);
     return base.remove(id, true);
   };
 

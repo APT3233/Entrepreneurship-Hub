@@ -18,6 +18,11 @@
   font-display: swap;
 }
 
+/* Cỡ chữ nền responsive: nhỏ trên màn hẹp, vừa trên màn rộng */
+html {
+  font-size: clamp(14px, 0.875rem + 0.25vw, 16px);
+}
+
 *,
 *::before,
 *::after {

@@ -27,7 +27,7 @@ export const registerSchema = {
       "any.required": "Password is required",
     }),
     role: Joi.string()
-      .valid("admin", "department_head", "teacher", "student")
+      .valid("admin", "department_head", "lecturer", "student")
       .default("student"),
   }),
 };

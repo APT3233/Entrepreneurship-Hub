@@ -10,11 +10,11 @@ export const createClassRepository = ({ db }) => {
   const findBySubjectAndSemester = async (subjectId, semesterId) => {
     const sql = `
       SELECT c.*, sub.subject_code, sub.subject_name, sem.semester_code, sem.semester_name,
-             u.full_name AS teacher_name
+             u.full_name AS lecturer_name
       FROM \`classes\` c
         JOIN subjects sub ON sub.id = c.subject_id
         JOIN semesters sem ON sem.id = c.semester_id
-        LEFT JOIN users u ON u.id = c.teacher_id
+        LEFT JOIN users u ON u.id = c.lecturer_id
       WHERE c.subject_id = :subjectId
         AND c.semester_id = :semesterId
         AND c.deleted_at IS NULL
@@ -26,11 +26,11 @@ export const createClassRepository = ({ db }) => {
   const findWithDetails = async (id) => {
     const sql = `
       SELECT c.*, sub.subject_code, sub.subject_name, sem.semester_code, sem.semester_name,
-             u.full_name AS teacher_name
+             u.full_name AS lecturer_name
       FROM \`classes\` c
         JOIN subjects sub ON sub.id = c.subject_id
         JOIN semesters sem ON sem.id = c.semester_id
-        LEFT JOIN users u ON u.id = c.teacher_id
+        LEFT JOIN users u ON u.id = c.lecturer_id
       WHERE c.id = :id AND c.deleted_at IS NULL
     `;
     const [rows] = await db.execute(sql, { id });

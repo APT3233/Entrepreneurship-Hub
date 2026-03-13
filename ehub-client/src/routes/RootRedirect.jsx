@@ -6,7 +6,7 @@ import { getDefaultRouteForUser } from "@/utils/role";
 
 /**
  * Redirect "/" theo trạng thái auth:
- * - Đã login → trang mặc định theo role (student/dashboard, lecture/dashboard...)
+ * - Đã login → trang mặc định theo role (student/dashboard, lecturer/dashboard...)
  * - Chưa login → /auth/login
  */
 const RootRedirect = () => {

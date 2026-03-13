@@ -1,7 +1,7 @@
 import { RoleDefaultRoute, RoleHierarchy, Roles } from "@/constants/roles";
 
 const normalizeRole = (role) => String(role || "").trim().toLowerCase();
-const RoleAlias = Object.freeze({ teacher: Roles.LECTURE, department_head: Roles.LECTURE });
+const RoleAlias = Object.freeze({ lecturer: Roles.LECTURER, lecture: Roles.LECTURER, teacher: Roles.LECTURER, department_head: Roles.LECTURER });
 
 export const getUserRoles = (user) => {
   if (!user) return [];

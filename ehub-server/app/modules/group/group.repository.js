@@ -23,8 +23,7 @@ export const createGroupRepository = ({ db }) => {
 
   const findWithMembers = async (id) => {
     const sql = `
-      SELECT g.*,
-             c.class_code, sub.subject_code
+      SELECT g.*, c.class_code, sub.subject_code
       FROM \`groups\` g
         JOIN classes c ON c.id = g.class_id
         JOIN subjects sub ON sub.id = c.subject_id
@@ -34,10 +33,38 @@ export const createGroupRepository = ({ db }) => {
     return rows[0] || null;
   };
 
+  /** List groups filtered by lecturer (groups in classes taught by lecturer) */
+  const findManyByLecturer = async ({ lecturerId, status, classId, pagination, sort }) => {
+    const params = { lecturerId };
+    const clauses = ["g.deleted_at IS NULL", "c.deleted_at IS NULL", "c.lecturer_id = :lecturerId"];
+    if (status) { clauses.push("g.`status` = :status"); params.status = status; }
+    if (classId) { clauses.push("g.class_id = :classId"); params.classId = classId; }
+    let sql = `SELECT g.* FROM \`groups\` g JOIN classes c ON c.id = g.class_id WHERE ${clauses.join(" AND ")}`;
+    if (sort?.length) {
+      const orderParts = sort.map(({ column, order }) => `g.\`${column}\` ${order.toUpperCase() === "DESC" ? "DESC" : "ASC"}`);
+      sql += ` ORDER BY ${orderParts.join(", ")}`;
+    } else sql += " ORDER BY g.created_at DESC";
+    if (pagination) sql += ` LIMIT ${pagination.limit} OFFSET ${pagination.offset}`;
+    const [rows] = await db.execute(sql, params);
+    return rows;
+  };
+
+  const countByLecturer = async ({ lecturerId, status, classId }) => {
+    const params = { lecturerId };
+    const clauses = ["g.deleted_at IS NULL", "c.deleted_at IS NULL", "c.lecturer_id = :lecturerId"];
+    if (status) { clauses.push("g.`status` = :status"); params.status = status; }
+    if (classId) { clauses.push("g.class_id = :classId"); params.classId = classId; }
+    const sql = `SELECT COUNT(g.id) as total FROM \`groups\` g JOIN classes c ON c.id = g.class_id WHERE ${clauses.join(" AND ")}`;
+    const [rows] = await db.execute(sql, params);
+    return Number(rows[0].total);
+  };
+
   return {
     ...base,
     findByCode,
     findByClass,
     findWithMembers,
+    findManyByLecturer,
+    countByLecturer,
   };
 };

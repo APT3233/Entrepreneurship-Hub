@@ -8,7 +8,7 @@ export const GraduationCapIcon = () => (
   </svg>
 );
 
-export const TeacherIcon = () => (
+export const LectureIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="w-4 h-4">
     <path strokeLinecap="round" strokeLinejoin="round" d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3z" />
     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13.18v4L12 21l7-3.82v-4" />

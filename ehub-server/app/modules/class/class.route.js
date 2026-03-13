@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { validateRequest } from "app/core/middlewares/validateRequest.js";
-import { authenticate } from "app/core/middlewares/authMiddleware.js";
+import { authenticate, optionalAuthenticate } from "app/core/middlewares/authMiddleware.js";
 import { roleGuard } from "app/core/middlewares/roleGuard.js";
 import {
   createClassSchema,
@@ -26,36 +26,12 @@ export const createClassRouter = (container) => {
   const { classController } = container.cradle;
   const router = Router();
 
-  router.get("/", validateRequest(listClassSchema), classController.list);
-  router.get(
-    "/:id",
-    validateRequest(classParamsSchema),
-    classController.getById,
-  );
+  router.get("/", optionalAuthenticate, validateRequest(listClassSchema), classController.list);
+  router.get("/:id", optionalAuthenticate, validateRequest(classParamsSchema), classController.getById);
 
-  router.post(
-    "/",
-    authenticate,
-    roleGuard("admin", "department_head", "teacher"),
-    validateRequest(createClassSchema),
-    classController.create,
-  );
-
-  router.put(
-    "/:id",
-    authenticate,
-    roleGuard("admin", "department_head", "teacher"),
-    validateRequest(updateClassSchema),
-    classController.update,
-  );
-
-  router.delete(
-    "/:id",
-    authenticate,
-    roleGuard("admin", "department_head", "teacher"),
-    validateRequest(classParamsSchema),
-    classController.remove,
-  );
+  router.post("/", authenticate, roleGuard("admin", "department_head", "lecturer"), validateRequest(createClassSchema), classController.create);
+  router.put("/:id", authenticate, roleGuard("admin", "department_head", "lecturer"), validateRequest(updateClassSchema), classController.update);
+  router.delete("/:id", authenticate, roleGuard("admin", "department_head", "lecturer"), validateRequest(classParamsSchema), classController.remove);
 
   // ── Mount Enrollment sub-module ───────────────────
   router.use("/:classId/enrollments", createEnrollmentRouter(container));

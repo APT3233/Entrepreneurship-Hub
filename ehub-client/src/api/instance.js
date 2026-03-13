@@ -32,10 +32,11 @@ instance.interceptors.response.use(
     const originalRequest = error.config;
     const requestUrl = originalRequest?.url || "";
 
+    // Chỉ không retry khi 401 ở login hoặc chính refresh-token (tránh vòng lặp)
+    // auth/me 401 vẫn retry: gọi refresh-token rồi retry auth/me để restore session sau reload
     const isAuthEndpoint =
       requestUrl.includes("auth/login") ||
-      requestUrl.includes("auth/refresh-token") ||
-      requestUrl.includes("auth/me"); // session restore — 401 = not logged in, don't retry
+      requestUrl.includes("auth/refresh-token");
 
     if (
       error.response?.status === 401 &&
@@ -60,7 +61,6 @@ instance.interceptors.response.use(
         return instance(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError, null);
-        window.location.href = "/auth/login";
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;

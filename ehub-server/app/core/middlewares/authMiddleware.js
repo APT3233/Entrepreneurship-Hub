@@ -69,6 +69,24 @@ export const authenticate = async (req, _res, next) => {
   }
 };
 
+/** Optional auth: populate req.user if token present, never fail (for routes supporting lecturerScope=mine) */
+export const optionalAuthenticate = async (req, _res, next) => {
+  const authHeader = req.headers.authorization;
+  let token = null;
+  if (authHeader?.startsWith("Bearer ")) token = authHeader.slice(7);
+  else if (req.cookies?.access_token) token = req.cookies.access_token;
+  if (!token) return next();
+  try {
+    const decoded = jwt.verify(token, jwtConfig.secret, { issuer: jwtConfig.issuer, algorithms: [jwtConfig.algorithm] });
+    if (_redis && decoded.jti) {
+      const isBlacklisted = await _redis.get(blacklistKey(decoded.jti));
+      if (isBlacklisted) return next();
+    }
+    req.user = { id: decoded.sub, email: decoded.email, roles: decoded.roles || [] };
+  } catch (_) { /* ignore */ }
+  next();
+};
+
 /**
  * Role-based authorization
  * authorize('admin') — user phải có role >= admin

@@ -1,7 +1,7 @@
 export const Roles = Object.freeze({
   ADMIN: "admin",
   DEPARTMENT_HEAD: "department_head",
-  TEACHER: "teacher",
+  LECTURER: "lecturer",
   STUDENT: "student",
   GUEST: "guest",
 });
@@ -9,7 +9,7 @@ export const Roles = Object.freeze({
 export const RoleHierarchy = Object.freeze({
   [Roles.ADMIN]: 100,
   [Roles.DEPARTMENT_HEAD]: 80,
-  [Roles.TEACHER]: 60,
+  [Roles.LECTURER]: 60,
   [Roles.STUDENT]: 30,
   [Roles.GUEST]: 10,
 });

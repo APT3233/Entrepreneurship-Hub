@@ -23,39 +23,16 @@ export const createSubjectRouter = (container) => {
   const { subjectController } = container.cradle;
   const router = Router();
 
-  // ── Public / Authenticated routes ──────────────────
-  router.get("/", validateRequest(listSubjectSchema), subjectController.list);
-  router.get(
-    "/:id",
-    validateRequest(subjectParamsSchema),
-    subjectController.getById,
-  );
+  // ── Authenticated routes (lecture reference data) ───
+  router.get("/", authenticate, roleGuard("admin", "department_head", "lecturer"), validateRequest(listSubjectSchema), subjectController.list);
+  router.get("/:id", authenticate, roleGuard("admin", "department_head", "lecturer"), validateRequest(subjectParamsSchema), subjectController.getById);
 
   // ── Protected routes (LECTURER+) ──────────────────
-  router.post(
-    "/",
-    authenticate,
-    roleGuard("admin", "department_head", "teacher"),
-    validateRequest(createSubjectSchema),
-    subjectController.create,
-  );
-
-  router.put(
-    "/:id",
-    authenticate,
-    roleGuard("admin", "department_head", "teacher"),
-    validateRequest(updateSubjectSchema),
-    subjectController.update,
-  );
+  router.post("/", authenticate, roleGuard("admin", "department_head", "lecturer"), validateRequest(createSubjectSchema), subjectController.create);
+  router.put("/:id", authenticate, roleGuard("admin", "department_head", "lecturer"), validateRequest(updateSubjectSchema), subjectController.update);
 
   // ── Admin only ────────────────────────────────────
-  router.delete(
-    "/:id",
-    authenticate,
-    roleGuard("admin"),
-    validateRequest(subjectParamsSchema),
-    subjectController.remove,
-  );
+  router.delete("/:id", authenticate, roleGuard("admin"), validateRequest(subjectParamsSchema), subjectController.remove);
 
   return router;
 };

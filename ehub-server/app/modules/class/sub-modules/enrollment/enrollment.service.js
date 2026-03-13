@@ -2,6 +2,7 @@ import {
   NotFound,
   AlreadyExists,
   BadRequest,
+  Forbidden,
 } from "app/core/errors/errorFactory.js";
 
 export const createEnrollmentService = ({
@@ -9,21 +10,26 @@ export const createEnrollmentService = ({
   classRepository,
   studentRepository,
 }) => {
+  const isLecturerOnly = (user) =>
+    user?.roles?.length && !user.roles.some((r) => ["admin", "department_head"].includes(String(r).toLowerCase()));
+
   /**
-   * List students enrolled in a class
+   * List students enrolled in a class. When user is lecturer-only, verify class belongs to them.
    */
-  const getByClass = async (classId) => {
+  const getByClass = async (classId, user = null) => {
     const cls = await classRepository.findById(classId);
     if (!cls) throw NotFound("Class");
+    if (isLecturerOnly(user) && Number(cls.lecturer_id) !== Number(user.id)) throw Forbidden("Class does not belong to you");
     return enrollmentRepository.findByClass(classId);
   };
 
   /**
-   * Enroll a student into a class
+   * Enroll a student into a class. When user is lecturer-only, verify class belongs to them.
    */
-  const enroll = async (classId, studentId) => {
+  const enroll = async (classId, studentId, user = null) => {
     const cls = await classRepository.findById(classId);
     if (!cls) throw NotFound("Class");
+    if (isLecturerOnly(user) && Number(cls.lecturer_id) !== Number(user.id)) throw Forbidden("Class does not belong to you");
 
     const student = await studentRepository.findById(studentId);
     if (!student) throw NotFound("Student");
@@ -49,15 +55,14 @@ export const createEnrollmentService = ({
   };
 
   /**
-   * Remove a student from a class (hard delete enrollment record)
+   * Remove a student from a class. When user is lecturer-only, verify class belongs to them.
    */
-  const unenroll = async (classId, studentId) => {
-    const enrollment = await enrollmentRepository.findByClassAndStudent(
-      classId,
-      studentId,
-    );
+  const unenroll = async (classId, studentId, user = null) => {
+    const cls = await classRepository.findById(classId);
+    if (!cls) throw NotFound("Class");
+    if (isLecturerOnly(user) && Number(cls.lecturer_id) !== Number(user.id)) throw Forbidden("Class does not belong to you");
+    const enrollment = await enrollmentRepository.findByClassAndStudent(classId, studentId);
     if (!enrollment) throw NotFound("Enrollment");
-
     return enrollmentRepository.hardDelete(enrollment.id);
   };
 

@@ -2,7 +2,7 @@ import React from "react";
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import authRouter from "@/routes/authRouter";
 import studentRouter from "@/routes/studentRoute";
-import teacherRouter from "@/routes/teacherRoute";
+import lectureRouter from "@/routes/lectureRoute";
 import GuardRoute from "@/routes/guradRoute";
 import RootLayout from "@/routes/RootLayout";
 import RootRedirect from "@/routes/RootRedirect";
@@ -14,7 +14,7 @@ const initRoutes = () => {
 
   const protectedRoutes = [];
   studentRouter(protectedRoutes);
-  teacherRouter(protectedRoutes);
+  lectureRouter(protectedRoutes);
 
   return [
     {
@@ -25,7 +25,7 @@ const initRoutes = () => {
 
         // Root redirect: đã login → trang mặc định theo role; chưa login → /auth/login
         { path: "/", element: <RootRedirect /> },
-        { path: "/teacher/*", element: <Navigate to="/lecture/dashboard" replace /> },
+        { path: "/teacher/*", element: <Navigate to="/lecturer/dashboard" replace /> },
 
         // Protected routes — tự động bọc bằng GuardRoute dựa trên roles property
         ...wrapWithGuard(protectedRoutes),

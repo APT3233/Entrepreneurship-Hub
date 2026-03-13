@@ -3,36 +3,6 @@ import { parsePagination, parseSort } from "app/core/utils/pagination.js";
 import { logger } from "app/core/logger/index.js";
 
 /**
- * Higher-order function to wrap an object with logging proxy
- */
-export const withLogging = (target, name) => {
-  return new Proxy(target, {
-    get(obj, prop) {
-      const original = obj[prop];
-      if (typeof original !== "function") return original;
-
-      return async (...args) => {
-        const start = Date.now();
-        // Hide sensitive args if needed, but for now log basic info
-        logger.debug(`[Service] ${name}.${String(prop)} - Start`, { args });
-
-        try {
-          const result = await original.apply(obj, args);
-          const duration = Date.now() - start;
-          logger.debug(
-            `[Service] ${name}.${String(prop)} - Success (${duration}ms)`,
-          );
-          return result;
-        } catch (error) {
-          logger.error(`[Service] ${name}.${String(prop)} - Failed`, { error });
-          throw error;
-        }
-      };
-    },
-  });
-};
-
-/**
  * Base service factory — compose với bất kỳ repository nào
  */
 export const createBaseService = (repository, resourceName = "Resource") => {
@@ -94,4 +64,36 @@ export const createBaseService = (repository, resourceName = "Resource") => {
   };
 
   return withLogging(service, resourceName + "Service");
+};
+
+
+
+/**
+ * Higher-order function to wrap an object with logging proxy
+ */
+export const withLogging = (target, name) => {
+  return new Proxy(target, {
+    get(obj, prop) {
+      const original = obj[prop];
+      if (typeof original !== "function") return original;
+
+      return async (...args) => {
+        const start = Date.now();
+        // Hide sensitive args if needed, but for now log basic info
+        logger.debug(`[Service] ${name}.${String(prop)} - Start`, { args });
+
+        try {
+          const result = await original.apply(obj, args);
+          const duration = Date.now() - start;
+          logger.debug(
+            `[Service] ${name}.${String(prop)} - Success (${duration}ms)`,
+          );
+          return result;
+        } catch (error) {
+          logger.error(`[Service] ${name}.${String(prop)} - Failed`, { error });
+          throw error;
+        }
+      };
+    },
+  });
 };

@@ -4,7 +4,7 @@ import { Forbidden } from "../errors/errorFactory.js";
  * Role Guard middleware — kiểm tra quyền truy cập theo role
  *
  * Sử dụng SAU authenticate middleware:
- *   router.post('/subjects', authenticate, roleGuard('teacher', 'department_head', 'admin'), controller.create)
+ *   router.post('/subjects', authenticate, roleGuard('lecturer', 'department_head', 'admin'), controller.create)
  *
  * @param  {...string} allowedRoles — danh sách role được phép
  */

@@ -1,43 +1,51 @@
 import { createBaseService } from "app/core/services/baseService.js";
+import { Events } from "app/core/constants/events.js";
 
-export const createSubjectService = ({ subjectRepository }) => {
+export const createSubjectService = ({ subjectRepository, eventBus }) => {
   const base = createBaseService(subjectRepository, "Subject");
 
+  const ALLOWED_SORT = ["subject_code", "subject_name", "credits", "status", "created_at"];
+
   /**
-   * List subjects (chỉ lấy chưa xoá)
+   * List subjects (exclude soft-deleted, support search)
    */
   const getList = async (query) => {
-    return base.getList(query, {
-      allowedSortColumns: [
-        "subject_code",
-        "subject_name",
-        "credits",
-        "status",
-        "created_at",
-      ],
-      filters: { ...(query.status && { status: query.status }) },
+    const sortQuery = { ...query };
+    if (query.sortBy && !query.sort) sortQuery.sort = `${query.sortBy}:${query.sortOrder || "asc"}`;
+    return base.getList(sortQuery, {
+      allowedSortColumns: ALLOWED_SORT,
+      filters: {
+        ...(query.status && { status: query.status }),
+        ...(query.search && { search: query.search }),
+      },
     });
   };
 
   /**
-   * Create subject — kiểm tra trùng subject_code
+   * Create subject — check duplicate subject_code, emit event
    */
   const create = async (data) => {
-    return base.create(data, "subject_code");
+    const subject = await base.create(data, "subject_code");
+    eventBus.emit(Events.SUBJECT_CREATED, { subject });
+    return subject;
   };
 
   /**
-   * Update subject
+   * Update subject — emit event
    */
   const update = async (id, data) => {
-    return base.update(id, data);
+    const subject = await base.update(id, data);
+    eventBus.emit(Events.SUBJECT_UPDATED, { subject });
+    return subject;
   };
 
   /**
-   * Soft delete subject
+   * Soft delete subject — emit event
    */
   const remove = async (id) => {
-    return base.remove(id, true);
+    const subject = await base.getById(id);
+    await base.remove(id, true);
+    eventBus.emit(Events.SUBJECT_DELETED, { subject });
   };
 
   return {

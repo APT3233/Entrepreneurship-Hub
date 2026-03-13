@@ -28,7 +28,7 @@ export const createGroupMemberRouter = (container) => {
   router.post(
     "/",
     authenticate,
-    roleGuard("admin", "department_head", "teacher"),
+    roleGuard("admin", "department_head", "lecturer"),
     validateRequest(addGroupMemberSchema),
     groupMemberController.add,
   );
@@ -36,7 +36,7 @@ export const createGroupMemberRouter = (container) => {
   router.delete(
     "/:studentId",
     authenticate,
-    roleGuard("admin", "department_head", "teacher"),
+    roleGuard("admin", "department_head", "lecturer"),
     validateRequest(removeGroupMemberSchema),
     groupMemberController.remove,
   );

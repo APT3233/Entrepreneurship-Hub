@@ -5,10 +5,12 @@ import {
   sendNoContent,
 } from "app/core/utils/apiResponse.js";
 import { catchAsync } from "app/core/utils/catchAsync.js";
+import { TokenInvalid } from "app/core/errors/errorFactory.js";
 
 export const createClassController = ({ classService }) => {
-  const list = catchAsync(async (req, res) => {
-    const result = await classService.getList(req.query);
+  const list = catchAsync(async (req, res, next) => {
+    if (req.query.lecturerScope === "mine" && !req.user) return next(TokenInvalid());
+    const result = await classService.getList(req.query, req.user?.id);
     return sendPaginated(res, {
       data: result.data,
       page: result.page,
@@ -19,7 +21,7 @@ export const createClassController = ({ classService }) => {
   });
 
   const getById = catchAsync(async (req, res) => {
-    const cls = await classService.getById(req.params.id);
+    const cls = await classService.getById(req.params.id, req.user);
     return sendSuccess(res, {
       data: cls,
       message: "Class retrieved successfully",
@@ -38,7 +40,7 @@ export const createClassController = ({ classService }) => {
   });
 
   const update = catchAsync(async (req, res) => {
-    const cls = await classService.update(req.params.id, req.body);
+    const cls = await classService.update(req.params.id, req.body, req.user);
     return sendSuccess(res, {
       data: cls,
       message: "Class updated successfully",
@@ -46,7 +48,7 @@ export const createClassController = ({ classService }) => {
   });
 
   const remove = catchAsync(async (req, res) => {
-    await classService.remove(req.params.id);
+    await classService.remove(req.params.id, req.user);
     return sendNoContent(res);
   });
 

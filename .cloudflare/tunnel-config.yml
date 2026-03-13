@@ -1,0 +1,22 @@
+
+tunnel: c4468dde-03cf-4b8c-8b4c-cff7a27b7135
+credentials-file: /home/apt3233/.cloudflared/c4468dde-03cf-4b8c-8b4c-cff7a27b7135.json
+
+protocol: quic
+ha-connections: 8
+edge-ip-version: auto
+
+ingress:
+  - hostname: ehub.apt3233.id.vn
+    path: ^/api/v1
+    service: http://localhost:7777
+  - hostname: ehub.apt3233.id.vn
+    service: http://localhost:5173
+  - service: http_status:404
+
+originRequest:
+  connectTimeout: 10s
+  keepAliveConnections: 100
+  keepAliveTimeout: 90s
+  tcpKeepAlive: 30s
+  noHappyEyeballs: true

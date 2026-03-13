@@ -34,7 +34,10 @@ export const listSubjectSchema = {
   query: Joi.object({
     page: Joi.number().integer().min(1).default(1),
     limit: Joi.number().integer().min(1).max(100).default(20),
+    search: Joi.string().max(100).allow(""),
     sort: Joi.string(),
+    sortBy: Joi.string().valid("subject_code", "subject_name", "credits", "status", "created_at"),
+    sortOrder: Joi.string().valid("asc", "desc"),
     status: Joi.string().valid("active", "inactive"),
   }),
 };

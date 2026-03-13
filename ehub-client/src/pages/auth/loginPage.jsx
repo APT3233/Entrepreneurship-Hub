@@ -7,7 +7,7 @@ import { selectAuth, setError, setUser } from "@/store/slices/authSlice";
 import { Roles } from "@/constants/roles";
 import { getDefaultRouteForUser, hasAnyRole } from "@/utils/role";
 import { UserIcon, LockIcon } from "@/components/icons/auth";
-import { GraduationCapIcon, TeacherIcon } from "@/components/icons/education";
+import { GraduationCapIcon, LectureIcon } from "@/components/icons/education";
 import { AlertCircleIcon } from "@/components/icons/ui";
 import GoogleButton from "@/components/ui/Button/GoogleButton";
 
@@ -156,7 +156,7 @@ export default function LoginPage() {
 
     if (hasError) {
       setFieldErrors(errors);
-      toast.error("Vui lòng kiểm tra lại thông tin đăng nhập.");
+      // toast.error("Vui lòng kiểm tra lại thông tin đăng nhập.");
       return;
     }
 
@@ -169,18 +169,18 @@ export default function LoginPage() {
       const user = result?.data?.user ?? result?.data;
       if (!user) throw new Error("Không lấy được thông tin người dùng.");
       if (role === Roles.STUDENT && !hasAnyRole(user, [Roles.STUDENT])) throw new Error("Tài khoản này không phải sinh viên.");
-      if (role === Roles.LECTURE && !hasAnyRole(user, [Roles.LECTURE, Roles.ADMIN])) throw new Error("Tài khoản này không thuộc cổng giảng viên.");
+      if (role === Roles.LECTURER && !hasAnyRole(user, [Roles.LECTURER, Roles.ADMIN])) throw new Error("Tài khoản này không thuộc cổng giảng viên.");
       dispatch(setUser(user));
       const msg = `Chào mừng, ${user.full_name || user.username || "bạn"}! Đăng nhập thành công.`;
       setSuccessMsg(msg);
-      toast.success(msg);
+      // toast.success(msg);
       const targetRoute = getDefaultRouteForUser(user);
       setTimeout(() => navigate(targetRoute, { replace: true }), 150);
     } catch (err) {
       const errMsg = err?.message || "Đăng nhập thất bại.";
       dispatch(setError(errMsg));
       setFieldErrors({ id: "error", password: "error", general: errMsg });
-      toast.error(errMsg);
+      // toast.error(errMsg);
     } finally {
       setLoading(false);
     }
@@ -248,9 +248,9 @@ export default function LoginPage() {
           />
           <TabButton
             active={!isStudent}
-            onClick={() => handleRoleChange(Roles.LECTURE)}
-            icon={<TeacherIcon />}
-            label="Lecture"
+            onClick={() => handleRoleChange(Roles.LECTURER)}
+            icon={<LectureIcon />}
+            label="Lecturer"
           />
         </div>
 

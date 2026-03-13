@@ -11,4 +11,11 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  server: {
+    allowedHosts: [
+      "localhost",
+      ".trycloudflare.com",
+      "ehub.apt3233.id.vn",
+    ],
+  },
 });
