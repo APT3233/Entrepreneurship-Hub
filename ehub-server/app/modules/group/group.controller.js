@@ -29,10 +29,13 @@ export const createGroupController = ({ groupService }) => {
   });
 
   const create = catchAsync(async (req, res) => {
-    const group = await groupService.create({
-      ...req.body,
-      created_by: req.user?.id || null,
-    });
+    const group = await groupService.create(
+      {
+        ...req.body,
+        created_by: req.user?.id || null,
+      },
+      req.user
+    );
     return sendCreated(res, {
       data: group,
       message: "Group created successfully",

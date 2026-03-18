@@ -1,4 +1,5 @@
 import { BookOpen } from "lucide-react";
+import AnimatedNumber from "@/components/ui/common/AnimatedNumber";
 
 /**
  * StatCard — Component dùng chung
@@ -33,7 +34,9 @@ export default function StatCard({
       {/* Left: title + value */}
       <div className="flex flex-col gap-1.5 sm:gap-2 min-w-0">
         <p className="text-xs sm:text-sm text-gray-400 font-medium truncate">{title}</p>
-        <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 leading-none truncate">{value}</p>
+        <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 leading-none truncate">
+          {typeof value === "number" ? <AnimatedNumber value={value} /> : value}
+        </p>
       </div>
 
       {/* Right: icon */}

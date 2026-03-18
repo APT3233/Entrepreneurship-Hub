@@ -7,6 +7,7 @@ import {
   updateClassSchema,
   listClassSchema,
   classParamsSchema,
+  statsClassSchema,
 } from "./class.validation.js";
 import { createEnrollmentRouter } from "./sub-modules/enrollment/enrollment.route.js";
 
@@ -27,6 +28,8 @@ export const createClassRouter = (container) => {
   const router = Router();
 
   router.get("/", optionalAuthenticate, validateRequest(listClassSchema), classController.list);
+  router.get("/stats", authenticate, roleGuard("admin", "department_head", "lecturer"), validateRequest(statsClassSchema), classController.stats);
+  router.get("/:id/overview", optionalAuthenticate, validateRequest(classParamsSchema), classController.overview);
   router.get("/:id", optionalAuthenticate, validateRequest(classParamsSchema), classController.getById);
 
   router.post("/", authenticate, roleGuard("admin", "department_head", "lecturer"), validateRequest(createClassSchema), classController.create);

@@ -7,6 +7,12 @@ export const createSemesterRepository = ({ db }) => {
     return base.findOne({ semester_code: code });
   };
 
+  const findManyByYear = async (year) => {
+    const sql = `SELECT * FROM \`semesters\` WHERE year = :year AND deleted_at IS NULL ORDER BY start_date ASC`;
+    const [rows] = await db.execute(sql, { year });
+    return rows;
+  };
+
   const findCurrentSemester = async () => {
     const sql = `SELECT * FROM \`semesters\` WHERE status = 'ongoing' AND deleted_at IS NULL LIMIT 1`;
     const [rows] = await db.execute(sql);
@@ -16,6 +22,7 @@ export const createSemesterRepository = ({ db }) => {
   return {
     ...base,
     findByCode,
+    findManyByYear,
     findCurrentSemester,
   };
 };

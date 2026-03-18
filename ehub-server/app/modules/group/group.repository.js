@@ -34,12 +34,26 @@ export const createGroupRepository = ({ db }) => {
   };
 
   /** List groups filtered by lecturer (groups in classes taught by lecturer) */
-  const findManyByLecturer = async ({ lecturerId, status, classId, pagination, sort }) => {
+  const findManyByLecturer = async ({ lecturerId, status, classId, semesterId, semesterIds, pagination, sort }) => {
     const params = { lecturerId };
     const clauses = ["g.deleted_at IS NULL", "c.deleted_at IS NULL", "c.lecturer_id = :lecturerId"];
     if (status) { clauses.push("g.`status` = :status"); params.status = status; }
     if (classId) { clauses.push("g.class_id = :classId"); params.classId = classId; }
-    let sql = `SELECT g.* FROM \`groups\` g JOIN classes c ON c.id = g.class_id WHERE ${clauses.join(" AND ")}`;
+    if (Array.isArray(semesterIds) && semesterIds.length > 0) {
+      const placeholders = semesterIds.map((_, idx) => `:sem${idx}`).join(", ");
+      clauses.push(`c.semester_id IN (${placeholders})`);
+      semesterIds.forEach((id, idx) => { params[`sem${idx}`] = id; });
+    } else if (semesterId != null) {
+      clauses.push("c.semester_id = :semesterId");
+      params.semesterId = semesterId;
+    }
+    let sql = `SELECT g.*, c.class_code, c.semester_id,
+         sem.semester_name,
+         (SELECT COUNT(*) FROM group_members gm WHERE gm.group_id = g.id AND gm.status = 'active') AS member_count
+      FROM \`groups\` g
+      JOIN classes c ON c.id = g.class_id
+      JOIN semesters sem ON sem.id = c.semester_id
+      WHERE ${clauses.join(" AND ")}`;
     if (sort?.length) {
       const orderParts = sort.map(({ column, order }) => `g.\`${column}\` ${order.toUpperCase() === "DESC" ? "DESC" : "ASC"}`);
       sql += ` ORDER BY ${orderParts.join(", ")}`;
@@ -49,11 +63,32 @@ export const createGroupRepository = ({ db }) => {
     return rows;
   };
 
-  const countByLecturer = async ({ lecturerId, status, classId }) => {
+  /** Lấy thông tin lớp kèm trạng thái học kỳ (để kiểm tra điều kiện tạo nhóm: chỉ khi ongoing) */
+  const findClassWithSemesterStatus = async (classId) => {
+    const sql = `
+      SELECT c.id, c.lecturer_id, c.class_code, sem.status AS semester_status
+      FROM \`classes\` c
+      JOIN semesters sem ON sem.id = c.semester_id
+      WHERE c.id = :classId AND c.deleted_at IS NULL
+      LIMIT 1
+    `;
+    const [rows] = await db.execute(sql, { classId });
+    return rows[0] || null;
+  };
+
+  const countByLecturer = async ({ lecturerId, status, classId, semesterId, semesterIds }) => {
     const params = { lecturerId };
     const clauses = ["g.deleted_at IS NULL", "c.deleted_at IS NULL", "c.lecturer_id = :lecturerId"];
     if (status) { clauses.push("g.`status` = :status"); params.status = status; }
     if (classId) { clauses.push("g.class_id = :classId"); params.classId = classId; }
+    if (Array.isArray(semesterIds) && semesterIds.length > 0) {
+      const placeholders = semesterIds.map((_, idx) => `:sem${idx}`).join(", ");
+      clauses.push(`c.semester_id IN (${placeholders})`);
+      semesterIds.forEach((id, idx) => { params[`sem${idx}`] = id; });
+    } else if (semesterId != null) {
+      clauses.push("c.semester_id = :semesterId");
+      params.semesterId = semesterId;
+    }
     const sql = `SELECT COUNT(g.id) as total FROM \`groups\` g JOIN classes c ON c.id = g.class_id WHERE ${clauses.join(" AND ")}`;
     const [rows] = await db.execute(sql, params);
     return Number(rows[0].total);
@@ -65,6 +100,7 @@ export const createGroupRepository = ({ db }) => {
     findByClass,
     findWithMembers,
     findManyByLecturer,
+    findClassWithSemesterStatus,
     countByLecturer,
   };
 };

@@ -1,8 +1,10 @@
+import { useMemo } from "react";
 import Dropdown from "@/components/ui/filter/DropDown";
 import { GroupIcon2 } from "@/components/icons/lecture";
 
 /**
  * StudentList — Danh sách sinh viên (sau khi tạo nhóm: có cột Nhóm*, Nhóm trưởng, lọc theo nhóm)
+ * Sắp xếp: theo nhóm (cùng nhóm đứng gần nhau), sinh viên chưa có nhóm xuống cuối.
  *
  * Props:
  * - students       : Array<{ id, mssv, name, email, major, isLeader?, groupId?, groupName? }>
@@ -40,6 +42,20 @@ export default function StudentList({
 }) {
   const hasGroups = groupOptions.length > 0;
   const columns = hasGroups ? columnsWithGroup : columnsWithoutGroup;
+
+  // Sắp xếp: có nhóm trước (cùng nhóm đứng gần nhau), chưa có nhóm xuống cuối; trong nhóm: leader trước, rồi mssv
+  const sortedStudents = useMemo(() => {
+    return [...students].sort((a, b) => {
+      const aNoGroup = a.groupId == null;
+      const bNoGroup = b.groupId == null;
+      if (aNoGroup && bNoGroup) return (a.mssv || "").localeCompare(b.mssv || "");
+      if (aNoGroup) return 1;
+      if (bNoGroup) return -1;
+      if (a.groupId !== b.groupId) return (a.groupName || "").localeCompare(b.groupName || "");
+      if (a.isLeader !== b.isLeader) return a.isLeader ? -1 : 1;
+      return (a.mssv || "").localeCompare(b.mssv || "");
+    });
+  }, [students]);
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 md:p-6 w-full">
@@ -92,14 +108,14 @@ export default function StudentList({
           </thead>
 
           <tbody className="divide-y divide-gray-100">
-            {students.length === 0 ? (
+            {sortedStudents.length === 0 ? (
               <tr>
                 <td colSpan={columns.length} className="px-4 py-10 text-center text-sm text-gray-300">
                   Chưa có sinh viên nào
                 </td>
               </tr>
             ) : (
-              students.map((s, i) => (
+              sortedStudents.map((s, i) => (
                 <tr key={s.id ?? i} className="hover:bg-gray-50 transition-colors duration-100">
                   <td className="px-4 py-4 text-gray-500 text-sm">{i + 1}</td>
                   <td className="px-4 py-4 font-semibold text-gray-800">{s.mssv}</td>
@@ -117,7 +133,9 @@ export default function StudentList({
                   <td className="px-4 py-4 text-gray-400">{s.email}</td>
                   <td className={`px-4 py-4 font-medium ${majorColor(s.major)}`}>{s.major}</td>
                   {hasGroups && (
-                    <td className="px-4 py-4 text-gray-700">{s.groupId != null ? (s.groupName ?? "—") : ""}</td>
+                    <td className="px-4 py-4 text-gray-700">
+                      {s.groupId != null ? (s.groupName ?? "—") : <span className="text-gray-400 italic">Chưa có nhóm</span>}
+                    </td>
                   )}
                 </tr>
               ))

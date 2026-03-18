@@ -29,6 +29,7 @@ export const Events = Object.freeze({
   STUDENT_UPDATED: "student.updated",
   STUDENT_DELETED: "student.deleted",
   STUDENT_IMPORTED: "student.imported",
+  STUDENTS_UPLOADED: "students.uploaded",
 
   // Enrollment
   ENROLLMENT_ADDED: "enrollment.added",

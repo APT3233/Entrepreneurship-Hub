@@ -1,13 +1,15 @@
+import React from "react";
 import LectureLayout from "@/layouts/lecture";
-import LectureDashboard from "@/pages/lecture/dashboard";
-import ClassesPage from "@/pages/lecture/classes";
-import ClassDetailPage from "@/pages/lecture/classes/ClassDetailPage";
-import GroupsPage from "@/pages/lecture/groups";
-import GroupDetailPage from "@/pages/lecture/groups/GroupDetailPage";
-import AssignmentsPage from "@/pages/lecture/assignments";
-import GradingPage from "@/pages/lecture/grading";
-import SchedulePage from "@/pages/lecture/schedule";
 import { Roles } from "@/constants/roles";
+
+const LectureDashboard = React.lazy(() => import("@/pages/lecture/dashboard"));
+const ClassesPage = React.lazy(() => import("@/pages/lecture/classes"));
+const ClassDetailPage = React.lazy(() => import("@/pages/lecture/classes/ClassDetailPage"));
+const GroupsPage = React.lazy(() => import("@/pages/lecture/groups"));
+const GroupDetailPage = React.lazy(() => import("@/pages/lecture/groups/GroupDetailPage"));
+const AssignmentsPage = React.lazy(() => import("@/pages/lecture/assignments"));
+const GradingPage = React.lazy(() => import("@/pages/lecture/grading"));
+const SchedulePage = React.lazy(() => import("@/pages/lecture/schedule"));
 
 export default function init(routes) {
   const route = {

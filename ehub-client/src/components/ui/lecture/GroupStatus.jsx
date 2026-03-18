@@ -1,3 +1,5 @@
+import AnimatedNumber from "@/components/ui/common/AnimatedNumber";
+
 /**
  * GroupStatus
  *
@@ -60,7 +62,7 @@ export default function GroupStatus({
               <span className="text-sm font-medium text-gray-700">{label}</span>
             </div>
             <span className={`text-sm font-bold ${text}`}>
-              {stats[key] ?? 0}
+              <AnimatedNumber value={stats[key] ?? 0} />
             </span>
           </li>
         ))}

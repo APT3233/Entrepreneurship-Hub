@@ -1,6 +1,6 @@
 import { CircleUserRound, LogOut } from "lucide-react";
 
-export default function Header({
+export default function AppHeader({
   user = { name: "TS. Nguyễn Văn B", department: "Khoa kinh tế" },
   onLogout,
 }) {
@@ -10,8 +10,12 @@ export default function Header({
         <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
           <CircleUserRound className="w-7 h-7 sm:w-8 sm:h-8 text-gray-500 shrink-0" />
           <div className="text-right leading-tight min-w-0">
-            <p className="text-xs sm:text-sm font-semibold text-gray-800 truncate">{user.name}</p>
-            <p className="text-[11px] sm:text-xs text-gray-500 truncate">{user.department}</p>
+            <p className="text-xs sm:text-sm font-semibold text-gray-800 truncate">
+              {user.name}
+            </p>
+            <p className="text-[11px] sm:text-xs text-gray-500 truncate">
+              {user.department}
+            </p>
           </div>
         </div>
         <div className="h-6 sm:h-8 w-px bg-gray-200 shrink-0" />
@@ -27,3 +31,4 @@ export default function Header({
     </header>
   );
 }
+

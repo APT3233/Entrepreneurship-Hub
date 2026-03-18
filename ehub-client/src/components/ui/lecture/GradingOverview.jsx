@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import AnimatedNumber from "@/components/ui/common/AnimatedNumber";
 
 /**
  * GradingOverview — Tổng quan chấm điểm
@@ -66,7 +67,9 @@ function GradingRow({ label, count, percent, note, color = "green" }) {
       {/* Top row */}
       <div className="flex items-center justify-between">
         <span className={`text-xs md:text-sm font-semibold ${c.label}`}>{label}</span>
-        <span className={`text-lg md:text-2xl font-bold ${c.count}`}>{count}</span>
+        <span className={`text-lg md:text-2xl font-bold ${c.count}`}>
+          <AnimatedNumber value={count} />
+        </span>
       </div>
 
       {/* Progress bar */}

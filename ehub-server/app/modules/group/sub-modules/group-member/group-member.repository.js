@@ -3,6 +3,24 @@ import { createBaseRepository } from "app/core/database/baseRepository.js";
 export const createGroupMemberRepository = ({ db }) => {
   const base = createBaseRepository(db, "group_members");
 
+  /** Bảng group_members có joined_at, không có created_at/updated_at — insert thủ công */
+  const create = async (data) => {
+    const payload = {
+      group_id: data.group_id,
+      student_id: data.student_id,
+      role: data.role ?? "member",
+      status: data.status ?? "active",
+      joined_at: data.joined_at ?? new Date(),
+    };
+    const keys = Object.keys(payload);
+    const cols = keys.map((k) => `\`${k}\``).join(", ");
+    const placeholders = keys.map((k) => `:${k}`).join(", ");
+    const sql = `INSERT INTO group_members (${cols}) VALUES (${placeholders})`;
+    const [result] = await db.execute(sql, payload);
+    if (result.insertId) return base.findById(result.insertId);
+    return result;
+  };
+
   const findByGroupAndStudent = async (groupId, studentId) => {
     return base.findOne({ group_id: groupId, student_id: studentId });
   };
@@ -41,11 +59,32 @@ export const createGroupMemberRepository = ({ db }) => {
     return rows[0] || null;
   };
 
+  /**
+   * Tất cả thành viên nhóm trong một lớp (để hiển thị sinh viên thuộc nhóm nào / chưa có nhóm)
+   * Trả về: [{ student_id, group_id, group_name, group_code, role }]
+   */
+  const findMembersByClass = async (classId) => {
+    const sql = `
+      SELECT gm.student_id, gm.group_id, gm.role,
+             g.group_name, g.group_code
+      FROM group_members gm
+        JOIN \`groups\` g ON g.id = gm.group_id
+      WHERE g.class_id = :classId
+        AND g.deleted_at IS NULL
+        AND gm.status = 'active'
+      ORDER BY g.group_code, gm.role DESC
+    `;
+    const [rows] = await db.execute(sql, { classId });
+    return rows;
+  };
+
   return {
     ...base,
+    create,
     findByGroupAndStudent,
     findByGroup,
     countActiveByGroup,
     findStudentGroupInClass,
+    findMembersByClass,
   };
 };

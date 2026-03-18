@@ -1,60 +1,116 @@
-import { useState, useRef } from "react";
-import { X, Upload, File, Trash2 } from "lucide-react";
+import { useState, useRef, useMemo } from "react";
+import { X } from "lucide-react";
 import Dropdown from "@/components/ui/filter/DropDown";
+import ImportStudentsStep from "./ImportStudentsStep";
 
-const MON_HOC_OPTIONS = [
+const SUBJECTS_OPTIONS = [
   { label: "EXE101", value: "EXE101" },
   { label: "EXE201", value: "EXE201" },
-  // thêm môn học tại đây
 ];
 
-const LOP_OPTIONS = Array.from({ length: 25 }, (_, i) => ({
-  label: String(i + 1).padStart(2, "0"),   // "01", "02", ... "25"
+const CLASS_OPTIONS = Array.from({ length: 25 }, (_, i) => ({
+  label: String(i + 1).padStart(2, "0"),
   value: i + 1,
 }));
 
-export default function CreateClassModal({ isOpen, onClose, onCreate }) {
-  const [monHoc, setMonHoc] = useState("");
-  const [lop, setLop]       = useState(1);
-  const [year, setYear]     = useState(1);
-  const [ky, setKy]         = useState(1);
-  const [files, setFiles]   = useState([]);
-  const [dragging, setDrag] = useState(false);
-  const [error, setError]   = useState("");
-  const fileInputRef        = useRef(null);
-  const backdropPressedRef  = useRef(false);
+/** Trả về các giá trị class hợp lệ cho subject + classSection (vd: EXE101_04, EXE101_4) */
+const getExpectedClassCodes = (subject, classSection) => {
+  if (!subject) return [];
+  const c = Number(classSection);
+  const partPad = String(c).padStart(2, "0");
+  const partShort = String(c);
+  return [
+    `${subject}_${partPad}`,
+    `${subject}_${partShort}`,
+    `${subject}-${partPad}`,
+    `${subject}-${partShort}`,
+  ];
+};
+
+export default function CreateClassModal({ isOpen, onClose, onCreate, loading = false, error: apiError }) {
+  const currentYear = new Date().getFullYear();
+
+  const YEAR_OPTIONS = Array.from({ length: 2 }, (_, i) => {
+    const y = currentYear + i;
+    return { label: String(y), value: y };
+  });
+
+  const [subject, setSubject] = useState("");
+  const [classSection, setClassSection] = useState(1);
+  const [year, setYear] = useState(currentYear);
+  const [semester, setSemester] = useState(1);
+  const [files, setFiles] = useState([]);
+  const [importSummary, setImportSummary] = useState({
+    total: 0,
+    valid: 0,
+    needReview: 0,
+  });
+  const [error, setError] = useState("");
+  const [importError, setImportError] = useState("");
+
+  const backdropPressedRef = useRef(false);
+
+  const expectedClassCodes = useMemo(
+    () => (subject ? getExpectedClassCodes(subject, classSection) : []),
+    [subject, classSection]
+  );
+
+  const classMismatchError = useMemo(() => {
+    if (!subject || files.length === 0) return null;
+    const codes = getExpectedClassCodes(subject, classSection);
+    const invalid = files.filter((s) => {
+      const code = String(s.classCode || "").trim();
+      return code && !codes.includes(code);
+    });
+    if (invalid.length === 0) return null;
+    const wrong = [...new Set(invalid.map((r) => r.classCode).filter(Boolean))];
+    return `Cột Class trong file không khớp với lớp đã chọn (${subject}_${String(classSection).padStart(2, "0")}). Các giá trị sai: ${wrong.join(", ")}.`;
+  }, [subject, classSection, files]);
+
+  const displayImportError = classMismatchError || importError;
 
   if (!isOpen) return null;
 
   const handleBackdropMouseDown = (e) => {
     if (e.target === e.currentTarget) backdropPressedRef.current = true;
   };
+
   const handleBackdropMouseUp = (e) => {
     if (e.target === e.currentTarget) backdropPressedRef.current = false;
   };
+
   const handleBackdropClick = (e) => {
     if (e.target === e.currentTarget && backdropPressedRef.current) onClose();
     backdropPressedRef.current = false;
   };
 
-  const addFiles = (incoming) => {
-    const arr = Array.from(incoming).filter(f =>
-      ["application/vnd.ms-excel",
-       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-       "text/csv"].includes(f.type)
-    );
-    setFiles(prev => [...prev, ...arr]);
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault(); setDrag(false);
-    addFiles(e.dataTransfer.files);
-  };
-
   const handleSubmit = () => {
-    if (!monHoc) { setError("* Vui lòng nhập thông tin còn thiếu"); return; }
+    if (loading) return;
+    if (!subject) {
+      setError("* Vui lòng nhập thông tin còn thiếu");
+      return;
+    }
+
+    if (importSummary.needReview > 0) {
+      setImportError("Danh sách sinh viên vẫn còn lỗi. Vui lòng sửa hết trước khi tạo lớp.");
+      return;
+    }
+
+    if (classMismatchError) return;
+
     setError("");
-    onCreate?.({ monHoc, lop, year, ky, files });
+    setImportError("");
+
+    onCreate?.({
+      subject,
+      classSection,
+      year,
+      semester,
+      students: {
+        list: files.map((s) => ({ ...s, status: "inactive" })),
+        summary: importSummary,
+      },
+    });
   };
 
   return (
@@ -64,13 +120,15 @@ export default function CreateClassModal({ isOpen, onClose, onCreate }) {
       onMouseUp={handleBackdropMouseUp}
       onClick={handleBackdropClick}
     >
-      <div className="
+      <div
+        className="
         relative w-full bg-white shadow-2xl
         rounded-t-2xl sm:rounded-2xl
         max-h-[92dvh] sm:max-h-[90vh] overflow-y-auto
-        sm:mx-4 sm:max-w-xl lg:max-w-2xl
-      ">
-        {/* Drag handle — mobile only */}
+        sm:mx-4 sm:max-w-4xl lg:max-w-5xl
+      "
+      >
+        {/* Drag handle mobile */}
         <div className="flex justify-center pt-3 pb-1 sm:hidden">
           <div className="w-10 h-1 rounded-full bg-gray-200" />
         </div>
@@ -83,123 +141,123 @@ export default function CreateClassModal({ isOpen, onClose, onCreate }) {
           >
             <X size={18} />
           </button>
-          <h2 className="text-base sm:text-lg font-bold text-gray-900">Tạo lớp mới</h2>
-          <p className="text-xs text-gray-400 mt-0.5">Tạo lớp mới và mời thành viên tham gia</p>
+
+          <h2 className="text-base sm:text-lg font-bold text-gray-900">
+            Tạo lớp mới
+          </h2>
+          <p className="text-xs text-gray-400 mt-0.5">
+            Nhập thông tin lớp và import danh sách sinh viên
+          </p>
         </div>
 
         {/* Body */}
-        <div className="px-5 sm:px-7 py-5 flex flex-col gap-5">
-
-          {/* ── Môn học + Lớp ── */}
-          <div className="flex flex-row items-end gap-5 w-fit">
-            {/* Môn học — chiếm phần lớn chiều rộng */}
-            <div className="flex flex-col gap-1.5 flex-1 min-w-0">
+        <div className="px-5 sm:px-7 py-5 flex flex-col gap-6">
+          {/* Thông tin lớp */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="flex flex-col gap-1.5">
               <label className="text-sm font-semibold text-gray-800">
                 Môn học <span className="text-red-500">*</span>
               </label>
+
               <Dropdown
                 label="Chọn môn học"
-                options={MON_HOC_OPTIONS}
-                value={monHoc}
-                onChange={(v) => { setMonHoc(v); setError(""); }}
+                options={SUBJECTS_OPTIONS}
+                value={subject}
+                onChange={(v) => {
+                  setSubject(v);
+                  setError("");
+                }}
               />
-              {error && <p className="text-xs text-red-500">{error}</p>}
+
+              {error && (
+                <p className="text-xs text-red-500">{error}</p>
+              )}
             </div>
 
-            {/* Lớp — cố định 120 px */}
-            <div className="flex flex-col gap-1.5 shrink-0" style={{ width: "120px" }}>
+            <div className="flex flex-col gap-1.5">
               <label className="text-sm font-semibold text-gray-800">
-                Lớp <span className="text-red-500">*</span>
+                Class <span className="text-red-500">*</span>
               </label>
+
               <Dropdown
-                label="Lớp"
-                options={LOP_OPTIONS}
-                value={lop}
-                onChange={setLop}
+                label="Class"
+                options={CLASS_OPTIONS}
+                value={classSection}
+                onChange={(v) => setClassSection(v)}
               />
             </div>
-          </div>
 
-          {/* ── Năm + Kỳ ── */}
-          <div className="flex flex-row items-end gap-8 w-fit">
-            <div className="flex flex-col gap-1.5" style={{ width: "140px" }}>
-              <label className="text-sm font-semibold text-gray-800">Năm</label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-gray-800">
+                Năm
+              </label>
+
               <Dropdown
                 label="Chọn năm học"
-                options={[{ label: "2025", value: 1 }, { label: "2026", value: 2 }]}
+                options={YEAR_OPTIONS}
                 value={year}
-                onChange={setYear}
+                onChange={(v) => {
+                  if (v >= currentYear) setYear(v);
+                }}
               />
             </div>
-            <div className="flex flex-col gap-1.5" style={{ width: "140px" }}>
-              <label className="text-sm font-semibold text-gray-800">Kỳ</label>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-gray-800">
+                Semester
+              </label>
+
               <Dropdown
-                label="Kỳ"
-                options={[{ label: "Spring", value: 1 }, { label: "Summer", value: 2 }, { label: "Fall", value: 3 }]}
-                value={ky}
-                onChange={setKy}
+                label="Semester"
+                options={[
+                  { label: "Spring", value: 1 },
+                  { label: "Summer", value: 2 },
+                  { label: "Fall", value: 3 },
+                ]}
+                value={semester}
+                onChange={setSemester}
               />
             </div>
           </div>
 
-          {/* ── Upload ── */}
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold text-gray-800">Upload files</label>
+            <label className="text-sm font-semibold text-gray-800">
+              Import danh sách sinh viên
+            </label>
+            <p className="text-xs text-gray-500">
+              Cột Class trong file phải có format {subject ? `${subject}_` : "EXExxx_"}số lớp (vd: {subject || "EXE101"}_{String(classSection).padStart(2, "0")})
+            </p>
 
-            <div
-              onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
-              onDragLeave={() => setDrag(false)}
-              onDrop={handleDrop}
-              onClick={() => fileInputRef.current?.click()}
-              className={`
-                border-2 border-dashed rounded-xl cursor-pointer
-                flex flex-col items-center justify-center
-                py-8 sm:py-12 gap-2 transition-colors
-                ${dragging
-                  ? "border-indigo-400 bg-indigo-50"
-                  : "border-gray-200 bg-gray-50 hover:border-indigo-300 hover:bg-indigo-50/40"}
-              `}
-            >
-              <input
-                ref={fileInputRef}
-                type="file"
-                multiple
-                accept=".xls,.xlsx,.csv"
-                className="hidden"
-                onChange={(e) => addFiles(e.target.files)}
-              />
-              <div className="w-10 h-10 flex items-center justify-center text-indigo-600">
-                <Upload size={28} strokeWidth={1.8} />
-              </div>
-              <p className="text-sm font-semibold text-gray-700">Drag your files to start uploading</p>
-              <p className="text-xs text-gray-400">Or</p>
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
-                className="px-5 py-1.5 rounded-lg border border-indigo-500 text-indigo-600 text-sm font-semibold hover:bg-indigo-50 transition-colors"
-              >
-                Browse files
-              </button>
-            </div>
-
-            <p className="text-xs text-gray-400">Hỗ trợ định dạng: XLS, XLSX, CSV.</p>
-
-            {files.length > 0 && (
-              <ul className="flex flex-col gap-2 mt-1">
-                {files.map((f, i) => (
-                  <li key={i} className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg border border-gray-100">
-                    <File size={15} className="text-indigo-400 shrink-0" />
-                    <span className="text-xs text-gray-600 flex-1 truncate">{f.name}</span>
-                    <button
-                      type="button"
-                      onClick={() => setFiles(prev => prev.filter((_, idx) => idx !== i))}
-                      className="text-gray-300 hover:text-red-400 transition-colors"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </li>
-                ))}
-              </ul>
+            <ImportStudentsStep
+              expectedClassCodes={expectedClassCodes}
+              onParsed={({ students, summary }) => {
+                setFiles(students);
+                setImportSummary(summary);
+                let err = "";
+                if (summary.needReview > 0) {
+                  err = "Danh sách sinh viên vẫn còn lỗi. Vui lòng sửa hết trước khi tạo lớp.";
+                } else if (expectedClassCodes.length && students.some((s) => {
+                  const code = String(s.classCode || "").trim();
+                  return code && !expectedClassCodes.includes(code);
+                })) {
+                  const wrong = [...new Set(students.filter((s) => {
+                    const code = String(s.classCode || "").trim();
+                    return code && !expectedClassCodes.includes(code);
+                  }).map((r) => r.classCode).filter(Boolean))];
+                  err = `Cột Class trong file không khớp với lớp đã chọn (${subject}_${String(classSection).padStart(2, "0")}). Các giá trị sai: ${wrong.join(", ")}.`;
+                }
+                setImportError(err);
+              }}
+            />
+            {displayImportError && (
+              <p className="text-xs text-red-500 mt-1">
+                {displayImportError}
+              </p>
+            )}
+            {apiError && (
+              <p className="text-xs text-red-500 mt-1">
+                {apiError}
+              </p>
             )}
           </div>
         </div>
@@ -208,14 +266,16 @@ export default function CreateClassModal({ isOpen, onClose, onCreate }) {
         <div className="px-5 sm:px-7 pb-6 sm:pb-7 pt-2 sticky bottom-0 bg-white">
           <button
             onClick={handleSubmit}
+            disabled={loading || !!displayImportError || importSummary.needReview > 0}
             className="
               w-full py-3 rounded-xl
               bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99]
               text-white text-sm font-bold tracking-wide
               shadow-md shadow-indigo-200 transition-all duration-200
+              disabled:opacity-60 disabled:cursor-not-allowed
             "
           >
-            Tạo lớp
+            {loading ? "Đang tạo..." : "Tạo lớp"}
           </button>
         </div>
       </div>

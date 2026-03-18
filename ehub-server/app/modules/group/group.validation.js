@@ -12,7 +12,7 @@ export const createGroupSchema = {
       "any.required": "Group name is required",
     }),
     description: Joi.string().allow(null, ""),
-    max_members: Joi.number().integer().min(1).max(20).default(6),
+    max_members: Joi.number().integer().min(3).max(6).default(6),
     status: Joi.string()
       .valid("forming", "active", "inactive", "completed", "dissolved")
       .default("forming"),
@@ -27,7 +27,7 @@ export const updateGroupSchema = {
     group_code: Joi.string().max(50),
     group_name: Joi.string().max(200),
     description: Joi.string().allow(null, ""),
-    max_members: Joi.number().integer().min(1).max(20),
+    max_members: Joi.number().integer().min(3).max(6),
     status: Joi.string().valid(
       "forming",
       "active",

@@ -1,4 +1,4 @@
-import MainLayout from "@/layouts/MainLayout";
+import StudentLayout from "@/layouts/student";
 import StudentDashboard from "@/pages/student";
 import { Roles } from "@/constants/roles";
 
@@ -6,7 +6,7 @@ export default function init(routes) {
   const route = {
     path: "/student",
     roles: [Roles.STUDENT],
-    element: <MainLayout />,
+    element: <StudentLayout />,
     children: [
       {
         path: "dashboard",

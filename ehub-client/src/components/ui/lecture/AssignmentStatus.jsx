@@ -1,3 +1,5 @@
+import AnimatedNumber from "@/components/ui/common/AnimatedNumber";
+
 /**
  * AssignmentStatus — Bài tập cần xử lý
  *
@@ -62,7 +64,7 @@ export default function AssignmentStatus({
               <span className="text-sm font-medium text-gray-700">{label}</span>
             </div>
             <span className={`text-sm font-bold ${text}`}>
-              {stats[key] ?? 0}{unit}
+              <AnimatedNumber value={stats[key] ?? 0} />{unit}
             </span>
           </li>
         ))}

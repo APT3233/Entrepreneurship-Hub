@@ -13,11 +13,9 @@ export const ClassModule = {
 
   register: (container) => {
     container.register({
-      // Class
       classRepository: asFunction(createClassRepository).singleton(),
       classService: asFunction(createClassService).singleton(),
       classController: asFunction(createClassController).singleton(),
-      // Enrollment sub-module
       enrollmentRepository: asFunction(createEnrollmentRepository).singleton(),
       enrollmentService: asFunction(createEnrollmentService).singleton(),
       enrollmentController: asFunction(createEnrollmentController).singleton(),

@@ -24,7 +24,7 @@ const initRoutes = () => {
         ...publicRoutes,
 
         // Root redirect: đã login → trang mặc định theo role; chưa login → /auth/login
-        { path: "/", element: <RootRedirect /> },
+        { index: true, element: <RootRedirect /> },
         { path: "/teacher/*", element: <Navigate to="/lecturer/dashboard" replace /> },
 
         // Protected routes — tự động bọc bằng GuardRoute dựa trên roles property

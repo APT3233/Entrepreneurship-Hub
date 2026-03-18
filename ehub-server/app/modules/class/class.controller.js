@@ -20,6 +20,23 @@ export const createClassController = ({ classService }) => {
     });
   });
 
+  const stats = catchAsync(async (req, res, next) => {
+    if (!req.user) return next(TokenInvalid());
+    const result = await classService.getStats(req.query, req.user.id);
+    return sendSuccess(res, {
+      data: result,
+      message: "Lecturer stats retrieved successfully",
+    });
+  });
+
+  const overview = catchAsync(async (req, res, next) => {
+    const cls = await classService.getOverview(req.params.id, req.user);
+    return sendSuccess(res, {
+      data: cls,
+      message: "Class overview retrieved successfully",
+    });
+  });
+
   const getById = catchAsync(async (req, res) => {
     const cls = await classService.getById(req.params.id, req.user);
     return sendSuccess(res, {
@@ -29,10 +46,9 @@ export const createClassController = ({ classService }) => {
   });
 
   const create = catchAsync(async (req, res) => {
-    const cls = await classService.create({
-      ...req.body,
-      created_by: req.user?.id || null,
-    });
+    const payload = { ...req.body, created_by: req.user?.id || null };
+    if (req.user?.id && !payload.lecturer_id && payload.students?.list?.length) payload.lecturer_id = req.user.id;
+    const cls = await classService.create(payload);
     return sendCreated(res, {
       data: cls,
       message: "Class created successfully",
@@ -52,5 +68,5 @@ export const createClassController = ({ classService }) => {
     return sendNoContent(res);
   });
 
-  return { list, getById, create, update, remove };
+  return { list, getById, overview, stats, create, update, remove };
 };

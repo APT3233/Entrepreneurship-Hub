@@ -47,7 +47,7 @@ export default function LoginPage() {
   const [successMsg, setSuccessMsg] = useState("");
   const [fieldErrors, setFieldErrors] = useState({ id: "", password: "", general: "" });
 
-  const { error: authError } = useSelector(selectAuth);
+  const { user, isAuthenticated, isLoading, error: authError } = useSelector(selectAuth);
   const isStudent = role === Roles.STUDENT;
 
   const clearErrors = () => {
@@ -120,6 +120,14 @@ export default function LoginPage() {
 
     return () => { mounted = false; };
   }, [searchParams, setSearchParams, dispatch, navigate]);
+
+  // Nếu đã đăng nhập mà vẫn cố vào /auth/login (vd: bấm Back) → auto redirect về route mặc định
+  useEffect(() => {
+    if (!isLoading && isAuthenticated && user) {
+      const targetRoute = getDefaultRouteForUser(user);
+      navigate(targetRoute, { replace: true });
+    }
+  }, [isLoading, isAuthenticated, user, navigate]);
 
   const handleGoogleLogin = () => {
     dispatch(setError(null));

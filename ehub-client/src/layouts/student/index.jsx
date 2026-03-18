@@ -2,6 +2,13 @@ import { useState, Suspense } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import AppHeader from "@/components/layout/AppHeader";
 import AppSidebar from "@/components/layout/AppSidebar";
+import {
+  Home,
+  Users,
+  ClipboardList,
+  Activity,
+  Calendar,
+} from "lucide-react";
 import NavProgress from "@/components/ui/NavProgress";
 import ConfirmModal from "@/components/modal/ConfirmModal";
 import { authApi } from "@/api/auth";
@@ -9,7 +16,15 @@ import { useDispatch } from "react-redux";
 import { logout } from "@/store/slices/authSlice";
 import { LogOut } from "lucide-react";
 
-const LectureLayout = () => {
+const studentNavItems = [
+  { label: "Trang chủ", icon: Home, path: "/student/dashboard" },
+  { label: "Nhóm", icon: Users, path: "/student/groups" },
+  { label: "Bài tập", icon: ClipboardList, path: "/student/assignments" },
+  { label: "Trạng thái", icon: Activity, path: "/student/status" },
+  { label: "Lịch dạy", icon: Calendar, path: "/student/schedule" },
+];
+
+const StudentLayout = () => {
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
   const location = useLocation();
   const dispatch = useDispatch();
@@ -25,7 +40,7 @@ const LectureLayout = () => {
   return (
     <div className="flex h-screen overflow-hidden bg-slate-100">
       <NavProgress />
-      <AppSidebar />
+      <AppSidebar items={studentNavItems} subtitle="Cổng sinh viên" />
       <div className="flex flex-1 flex-col min-w-0 min-h-0">
         <AppHeader onLogout={() => setLogoutModalOpen(true)} />
         <main className="flex-1 min-h-0 overflow-auto p-4 sm:p-6 bg-slate-100">
@@ -61,4 +76,5 @@ const LectureLayout = () => {
   );
 };
 
-export default LectureLayout;
+export default StudentLayout;
+

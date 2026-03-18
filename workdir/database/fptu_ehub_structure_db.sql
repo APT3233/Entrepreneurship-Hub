@@ -256,7 +256,7 @@ CREATE TABLE students (
                  COMMENT 'Cơ sở: HCM, HN, DN, CT',
 
     status       ENUM('active','inactive','graduated','suspended')
-                     DEFAULT 'active'  NOT NULL,
+                     DEFAULT 'inactive'  NOT NULL,
 
     created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP

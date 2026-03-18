@@ -9,8 +9,10 @@ import { LastNameAvatar } from "@/components/icons/ui";
  * - isOpen    : boolean
  * - onClose   : () => void
  * - onSubmit  : ({ name, mentor, category, topic, members }) => void
- * - students  : Array<{ id, name, mssv?, student_code?, major }>
+ * - students  : Array<{ id, name, student_code?, major }>
  * - categories: string[]
+ * - loading   : boolean  — đang gửi form
+ * Trong modal chỉ hiển thị trạng thái thiếu/đủ thành viên; thông báo thành công/lỗi dùng toast bên ngoài.
  */
 
 function SelectField({ value, onChange, options, placeholder }) {
@@ -46,12 +48,12 @@ function SelectField({ value, onChange, options, placeholder }) {
 }
 
 const DEFAULT_STUDENTS = [
-  { id: 1, name: "Nguyễn Văn A", mssv: "DS180001", major: "IT" },
-  { id: 2, name: "Nguyễn Văn C", mssv: "DS180002", major: "IT" },
-  { id: 3, name: "Trần Huy B", mssv: "DS180003", major: "Design" },
-  { id: 4, name: "Lê Thị V", mssv: "DS180463", major: "Kinh tế" },
-  { id: 5, name: "Huỳnh Lê C", mssv: "DS180273", major: "Kinh Tế" },
-  { id: 6, name: "Lê Ngọc H", mssv: "DE180473", major: "IT" },
+  { id: 1, name: "Nguyễn Văn A", student_code: "DS180001", major: "IT" },
+  { id: 2, name: "Nguyễn Văn C", student_code: "DS180002", major: "IT" },
+  { id: 3, name: "Trần Huy B", student_code: "DS180003", major: "Design" },
+  { id: 4, name: "Lê Thị V", student_code: "DS180463", major: "Kinh tế" },
+  { id: 5, name: "Huỳnh Lê C", student_code: "DS180273", major: "Kinh Tế" },
+  { id: 6, name: "Lê Ngọc H", student_code: "DE180473", major: "IT" },
 ];
 
 const DEFAULT_CATEGORIES = ["Web Development", "Mobile App", "AI / ML", "Kinh doanh", "Thiết kế"];
@@ -60,15 +62,42 @@ function getMajorStatus(students, memberIds) {
   const selected = students.filter((s) => memberIds.includes(s.id));
   const majors = selected.map((s) => (s.major || "").toLowerCase());
 
-  const hasDesign = majors.some((m) => m.includes("design"));
-  const hasIT = majors.some((m) => m === "it");
-  const hasEcon = majors.some((m) => m.includes("kinh"));
+  // IT: bao gồm IT, Software Engineering
+  const hasIT = majors.some((m) => m === "it" || m.includes("software engineering") || m.includes("kỹ thuật phần mềm"));
+  
+  // Design: bao gồm Design, Thiết kế
+  const hasDesign = majors.some((m) => m.includes("design") || m.includes("thiết kế"));
+  
+  // Business: bao gồm Business, Kinh tế, Kinh doanh
+  const hasBusiness = majors.some((m) => m.includes("business") || m.includes("kinh"));
+
+  const count = selected.length;
+  const isSizeValid = count >= 3 && count <= 6;
+  const isMajorValid = hasIT && hasDesign && hasBusiness;
+
+  let message = "";
+  if (count === 0) {
+    message = "Vui lòng chọn thành viên cho nhóm.";
+  } else if (!isSizeValid) {
+    message = `Số lượng thành viên không hợp lệ (${count}/6). Nhóm cần từ 3 đến 6 người.`;
+  } else if (!isMajorValid) {
+    const missing = [];
+    if (!hasIT) missing.push("IT");
+    if (!hasDesign) missing.push("Design");
+    if (!hasBusiness) missing.push("Business");
+    message = `Nhóm cần ít nhất 1 thành viên từ mỗi chuyên ngành: ${missing.join(", ")}.`;
+  } else {
+    message = "✓ Đủ thành viên và đa dạng chuyên ngành.";
+  }
 
   return {
-    hasDesign,
     hasIT,
-    hasEcon,
-    isValid: hasDesign && hasIT && hasEcon,
+    hasDesign,
+    hasBusiness,
+    isSizeValid,
+    isMajorValid,
+    isValid: isSizeValid && isMajorValid,
+    message,
   };
 }
 
@@ -78,6 +107,7 @@ export default function CreateGroupModal({
   onSubmit,
   students = DEFAULT_STUDENTS,
   categories = DEFAULT_CATEGORIES,
+  loading = false,
 }) {
   const [name, setName] = useState("");
   const [mentor, setMentor] = useState("");
@@ -94,7 +124,8 @@ export default function CreateGroupModal({
     );
   };
 
-  const { isValid } = getMajorStatus(students, members);
+  const status = getMajorStatus(students, members);
+  const isValid = status.isValid;
 
   const handleSubmit = () => {
     if (!name.trim()) {
@@ -193,18 +224,15 @@ export default function CreateGroupModal({
             <div>
               <h3 className="text-sm font-bold text-gray-900">Mời thành viên</h3>
               <p className="text-xs text-gray-400 mt-0.5">
-                Nhóm cần ít nhất 1 thành viên từ mỗi chuyên ngành: Design, IT, Kinh tế
+                Nhóm cần từ 3 - 6 thành viên và có đủ: IT, Design, Business.
               </p>
-              {members.length > 0 && (
-                <p
-                  className={`text-xs mt-0.5 ${isValid ? "text-emerald-500" : "text-red-500"
-                    }`}
-                >
-                  {isValid
-                    ? "✓ Đủ thành viên từ các chuyên ngành"
-                    : "* Nhóm cần ít nhất 1 sinh viên ngành Design, 1 sinh viên ngành IT và 1 sinh viên ngành Kinh tế"}
-                </p>
-              )}
+              <p
+                className={`text-xs mt-1.5 font-medium ${
+                  isValid ? "text-emerald-500" : "text-amber-500"
+                }`}
+              >
+                {status.message}
+              </p>
             </div>
 
             {/* Student list — chỉ hiển thị sinh viên chưa có nhóm */}
@@ -221,7 +249,7 @@ export default function CreateGroupModal({
                       <LastNameAvatar name={s.name} index={i} />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-gray-800 truncate">{s.name}</p>
-                        <p className="text-xs text-gray-400">{s.mssv || s.student_code || s.major}</p>
+                        <p className="text-xs text-gray-400">{s.student_code || s.mssv || s.major}</p>
                       </div>
                       {added ? (
                         <button
@@ -253,15 +281,15 @@ export default function CreateGroupModal({
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={!isValid}
+            disabled={!isValid || loading}
             className={`
               w-full py-3 rounded-xl text-sm font-bold tracking-wide transition-all duration-200
-              ${isValid
+              ${isValid && !loading
                 ? "bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] text-white shadow-md shadow-indigo-200"
                 : "bg-gray-200 text-gray-400 cursor-not-allowed"}
             `}
           >
-            Tạo nhóm
+            {loading ? "Đang tạo..." : "Tạo nhóm"}
           </button>
         </div>
       </div>

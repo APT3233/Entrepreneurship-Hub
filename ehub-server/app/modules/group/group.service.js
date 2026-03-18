@@ -1,5 +1,6 @@
 import { createBaseService } from "app/core/services/baseService.js";
 import { parsePagination, parseSort } from "app/core/utils/pagination.js";
+import { NotFound, BadRequest, Forbidden } from "app/core/errors/errorFactory.js";
 
 export const createGroupService = ({ groupRepository }) => {
   const base = createBaseService(groupRepository, "Group");
@@ -37,7 +38,29 @@ export const createGroupService = ({ groupRepository }) => {
     });
   };
 
-  const create = async (data) => base.create(data);
+  const create = async (data, user = null) => {
+    const classId = data.class_id;
+    if (!classId) throw BadRequest("class_id is required");
+
+    const cls = await groupRepository.findClassWithSemesterStatus(classId);
+    if (!cls) throw NotFound("Class");
+
+    if (cls.semester_status !== "ongoing") {
+      throw BadRequest("Chỉ được tạo nhóm khi học kỳ đang diễn ra (ongoing). Học kỳ hiện tại không ở trạng thái ongoing.");
+    }
+
+    if (user?.id) {
+      const isAdminOrDept = user?.roles?.length && user.roles.some((r) => ["admin", "department_head"].includes(String(r).toLowerCase()));
+      if (!isAdminOrDept && Number(cls.lecturer_id) !== Number(user.id)) {
+        throw Forbidden("Bạn không có quyền tạo nhóm cho lớp này.");
+      }
+    }
+
+    const existing = await groupRepository.findByCode(data.group_code, classId);
+    if (existing) throw BadRequest(`Mã nhóm "${data.group_code}" đã tồn tại trong lớp này.`);
+
+    return base.create(data);
+  };
 
   const verifyGroupOwnership = async (groupId, user) => {
     if (!user?.roles?.length || user.roles.some((r) => ["admin", "department_head"].includes(String(r).toLowerCase()))) return;

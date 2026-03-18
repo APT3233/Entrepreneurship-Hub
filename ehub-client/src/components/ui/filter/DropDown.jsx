@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { ChevronDown } from "lucide-react";
 
 // ── Dropdown dùng chung ──────────────────────────────────────────────────────
-function Dropdown({ label, options, value, onChange }) {
+function Dropdown({ label, options, value, onChange, disabled = false }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
@@ -20,13 +20,17 @@ function Dropdown({ label, options, value, onChange }) {
     <div ref={ref} className="relative">
       {/* Trigger */}
       <button
-        onClick={() => setOpen(!open)}
+        type="button"
+        onClick={() => !disabled && setOpen(!open)}
+        disabled={disabled}
         className={`
-          flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium pointer
-          bg-white transition-all duration-150 min-w-[96px]
-          ${open
-            ? "border-indigo-400 ring-2 ring-indigo-100 text-gray-700"
-            : "border-gray-200 text-gray-600 hover:border-gray-300"
+          flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium min-w-[96px]
+          transition-all duration-150
+          ${disabled
+            ? "bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed"
+            : "bg-white cursor-pointer " + (open
+              ? "border-indigo-400 ring-2 ring-indigo-100 text-gray-700"
+              : "border-gray-200 text-gray-600 hover:border-gray-300")
           }
         `}
       >
@@ -40,7 +44,7 @@ function Dropdown({ label, options, value, onChange }) {
       </button>
 
       {/* Dropdown list */}
-      {open && (
+      {open && !disabled && (
         <div className="
           absolute top-[calc(100%+6px)] left-0 z-50
           bg-white border border-gray-100 rounded-xl shadow-lg

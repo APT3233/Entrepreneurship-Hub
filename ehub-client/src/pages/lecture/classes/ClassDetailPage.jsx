@@ -7,28 +7,116 @@ import Dropdown from "@/components/ui/filter/DropDown";
 import ClassInfo from "./components/ClassInfo";
 import StudentList from "./components/StudentList";
 import CreateGroupModal from "@/components/modal/lecturer/CreateGroupModal";
-import {
-  getClassDetail,
-  mockClasses,
-  mockYearOptions,
-  mockSemesterOptions,
-  mockClassFilterOptions,
-} from "./mockData";
+import { toast } from "react-toastify";
+import ClassApi from "@/api/class";
+import SemesterApi from "@/api/semester";
+import GroupApi from "@/api/group";
+
+const VALUE_ALL_CLASSES = "all";
 
 export default function ClassDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const detail = useMemo(() => getClassDetail(id), [id]);
-
-  const [filterYear, setFilterYear] = useState(mockYearOptions[1]?.value ?? 2026);
-  const [filterSemester, setFilterSemester] = useState("Spring");
+  const [detail, setDetail] = useState(null);
+  const [semesterList, setSemesterList] = useState([]);
+  const [classList, setClassList] = useState([]);
+  const [filterYear, setFilterYear] = useState(null);
+  const [filterSemesterId, setFilterSemesterId] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedGroup, setSelectedGroup] = useState("all");
   const [createGroupModalOpen, setCreateGroupModalOpen] = useState(false);
+  const [createGroupLoading, setCreateGroupLoading] = useState(false);
 
   useEffect(() => {
-    if (id != null && !detail) navigate("/lecturer/classes", { replace: true });
-  }, [id, detail, navigate]);
+    const fetchSemesters = async () => {
+      const list = await SemesterApi.getList();
+      setSemesterList(Array.isArray(list) ? list : []);
+    };
+    fetchSemesters();
+  }, []);
+
+  useEffect(() => {
+    if (!id) return;
+    const fetchDetail = async () => {
+      try {
+        const res = await ClassApi.getOverview(id);
+        if (!res?.data) {
+          navigate("/lecturer/classes", { replace: true });
+          return;
+        }
+        const data = res.data;
+        setDetail(data);
+        if (data.year != null) setFilterYear(data.year);
+        if (data.semester_id != null) setFilterSemesterId(data.semester_id);
+      } catch {
+        navigate("/lecturer/classes", { replace: true });
+      }
+    };
+    fetchDetail();
+  }, [id, navigate]);
+
+  // Danh sách lớp cùng năm/kỳ để chọn nhanh (dropdown "Tất cả lớp")
+  useEffect(() => {
+    if (filterYear == null || !filterSemesterId) return;
+    const fetchClasses = async () => {
+      try {
+        const sem = semesterList.find((s) => s.id === filterSemesterId);
+        const params = { year: filterYear, lecturerScope: "mine", limit: 100, page: 1 };
+        if (sem?.semester_code) params.semester_code = sem.semester_code;
+        const res = await ClassApi.getList(params);
+        const list = res?.data ?? [];
+        setClassList(list.map((c) => ({ id: c.id, class_code: c.class_code })));
+      } catch {
+        setClassList([]);
+      }
+    };
+    fetchClasses();
+  }, [filterYear, filterSemesterId, semesterList]);
+
+  const fetchDetail = async () => {
+    if (!id) return;
+    try {
+      const res = await ClassApi.getOverview(id);
+      if (res?.data) setDetail(res.data);
+    } catch {
+      // ignore refetch errors
+    }
+  };
+
+  const yearOptions = useMemo(
+    () =>
+      [...new Set(semesterList.map((s) => s.year))]
+        .sort((a, b) => b - a)
+        .map((y) => ({ value: y, label: `${y}` })),
+    [semesterList]
+  );
+
+  const semestersInYear = useMemo(
+    () => semesterList.filter((s) => s.year === filterYear),
+    [semesterList, filterYear]
+  );
+
+  // Kỳ chỉ hiện khi đã chọn năm (thứ tự: Năm → Kỳ → Lớp)
+  const semesterOptions = useMemo(
+    () =>
+      !filterYear ? [] : semestersInYear.map((s) => ({ value: s.id, label: s.semester_name })),
+    [filterYear, semestersInYear]
+  );
+
+  const classFilterOptions = useMemo(
+    () => [
+      { label: "Tất cả lớp", value: VALUE_ALL_CLASSES },
+      ...classList.map((c) => ({ label: c.class_code, value: c.id })),
+    ],
+    [classList]
+  );
+
+  const handleYearChange = (year) => {
+    setFilterYear(year);
+    const inYear = semesterList.filter((s) => s.year === year);
+    if (inYear.length > 0) setFilterSemesterId(inYear[0].id);
+    else setFilterSemesterId(null);
+  };
 
   const groupOptions = useMemo(
     () => [
@@ -65,13 +153,54 @@ export default function ClassDetailPage() {
 
   if (!detail) return null;
 
+  // Chỉ cho phép tạo nhóm nếu học kỳ của lớp đang ở trạng thái ongoing.
+  // Nếu backend chưa trả về semester_status thì cho phép (tránh khóa nút khi API chưa có field).
+  const semesterStatus = detail.semester_status ?? detail.semesterStatus;
+  const canCreateGroup = semesterStatus == null || semesterStatus === "ongoing";
+
   const handleClassChange = (value) => {
-    if (value === "all") {
+    if (value === VALUE_ALL_CLASSES) {
       navigate("/lecturer/classes");
       return;
     }
-    const c = mockClasses.find((x) => x.code === value);
-    if (c) navigate(`/lecturer/classes/${c.id}`);
+    if (value && Number(value) !== Number(id)) navigate(`/lecturer/classes/${value}`);
+  };
+
+  const handleCreateGroupSubmit = async ({ name, members }) => {
+    if (!detail?.id || !name?.trim()) return;
+    setCreateGroupLoading(true);
+    try {
+      const groupCode =
+        name.trim().replace(/\s+/g, "_").slice(0, 30) + "_" + Date.now().toString(36);
+      const createRes = await GroupApi.create({
+        class_id: Number(detail.id),
+        group_code: groupCode,
+        group_name: name.trim(),
+        description: null,
+        max_members: 6,
+        status: "forming",
+      });
+      const groupId = createRes?.data?.data?.id ?? createRes?.data?.id;
+      if (groupId && Array.isArray(members) && members.length > 0) {
+        for (let i = 0; i < members.length; i++) {
+          await GroupApi.addMember(groupId, {
+            student_id: Number(members[i]),
+            role: i === 0 ? "leader" : "member",
+          });
+        }
+      }
+      setCreateGroupModalOpen(false);
+      toast.success("Tạo nhóm thành công.");
+      await fetchDetail();
+    } catch (err) {
+      const msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Không thể tạo nhóm. Vui lòng thử lại.";
+      toast.error(msg);
+    } finally {
+      setCreateGroupLoading(false);
+    }
   };
 
   return (
@@ -113,28 +242,35 @@ export default function ClassDetailPage() {
         <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-4">
           <div className="flex flex-wrap items-center gap-3 sm:gap-4">
             <Dropdown
-              label="Tất cả lớp"
-              options={mockClassFilterOptions}
-              value={detail.classCode}
-              onChange={handleClassChange}
-            />
-            <Dropdown
               label="Năm"
-              options={mockYearOptions}
+              options={yearOptions}
               value={filterYear}
-              onChange={(v) => setFilterYear(v)}
+              onChange={handleYearChange}
             />
             <Dropdown
               label="Kỳ"
-              options={mockSemesterOptions}
-              value={filterSemester}
-              onChange={(v) => setFilterSemester(v)}
+              options={semesterOptions}
+              value={filterSemesterId}
+              onChange={(v) => setFilterSemesterId(v)}
+              disabled={filterYear == null}
+            />
+            <Dropdown
+              label="Lớp"
+              options={classFilterOptions}
+              value={detail?.id != null ? detail.id : id}
+              onChange={handleClassChange}
+              disabled={filterYear == null || filterSemesterId == null}
             />
           </div>
           <button
             type="button"
-            onClick={() => setCreateGroupModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-sm transition-colors shrink-0 cursor-pointer"
+            disabled={!canCreateGroup}
+            onClick={canCreateGroup ? () => setCreateGroupModalOpen(true) : undefined}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold shadow-sm transition-colors shrink-0 ${
+              canCreateGroup
+                ? "bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer"
+                : "bg-gray-200 text-gray-400 cursor-not-allowed"
+            }`}
           >
             <Plus size={18} strokeWidth={2.5} />
             Tạo nhóm
@@ -169,13 +305,11 @@ export default function ClassDetailPage() {
       <CreateGroupModal
         isOpen={createGroupModalOpen}
         onClose={() => setCreateGroupModalOpen(false)}
-        onSubmit={() => {
-          setCreateGroupModalOpen(false);
-          // TODO: gọi API tạo nhóm, sau đó cập nhật detail (refresh hoặc thêm nhóm mới)
-        }}
+        onSubmit={handleCreateGroupSubmit}
+        loading={createGroupLoading}
         students={(detail.students || [])
           .filter((s) => s.groupId == null)
-          .map((s) => ({ id: s.id, name: s.name, mssv: s.mssv, student_code: s.student_code, major: s.major || "" }))}
+          .map((s) => ({ id: s.id, name: s.name, student_code: s.student_code, major: s.major || "" }))}
       />
     </>
   );
