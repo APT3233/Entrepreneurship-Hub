@@ -83,6 +83,35 @@ export const createClassRepository = ({ db }) => {
       LIMIT ${limitNum} OFFSET ${offsetNum}
     `;
     const [rows] = await db.execute(sql, params);
+
+    // Bổ sung: Lấy avatar của sinh viên (ưu tiên nhóm trưởng)
+    if (rows.length > 0) {
+      const classIds = rows.map((r) => r.id);
+      const avatarsSql = `
+        SELECT cs.class_id, u.avatar_url
+        FROM class_students cs
+        JOIN students s ON s.id = cs.student_id
+        LEFT JOIN users u ON u.id = s.user_id
+        LEFT JOIN \`group_members\` gm ON gm.student_id = s.id AND gm.status = 'active'
+        WHERE cs.class_id IN (${classIds.map(() => '?').join(',')})
+          AND u.avatar_url IS NOT NULL
+        ORDER BY cs.class_id ASC, CASE WHEN gm.role = 'leader' THEN 1 ELSE 2 END ASC, cs.enrolled_at ASC
+      `;
+      const [avatarRows] = await db.execute(avatarsSql, classIds);
+      
+      const avatarMap = {};
+      classIds.forEach((id) => { avatarMap[id] = []; });
+      for (const row of avatarRows) {
+        if (avatarMap[row.class_id].length < 3) {
+          avatarMap[row.class_id].push(row.avatar_url);
+        }
+      }
+      
+      for (const row of rows) {
+        row.avatars = avatarMap[row.id] || [];
+      }
+    }
+
     return rows;
   };
 

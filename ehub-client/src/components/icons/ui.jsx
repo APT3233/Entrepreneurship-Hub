@@ -24,11 +24,21 @@ export const AlertCircleIcon = () => (
   </svg>
 );
 
-export function LastNameAvatar({ name, index }) {
-  const initial = name?.charAt(name.lastIndexOf(" ") + 1)?.toUpperCase() ?? "?";
+export function LastNameAvatar({ name, avatar, index = 0 }) {
+  if (avatar) {
+    return (
+      <img
+        src={avatar}
+        alt={name}
+        className="w-9 h-9 rounded-full object-cover shrink-0 ring-1 ring-gray-100 shadow-sm"
+      />
+    );
+  }
+
+  const initial = name?.trim()?.split(" ").pop()?.charAt(0)?.toUpperCase() ?? "?";
   const color = AVATAR_COLORS[index % AVATAR_COLORS.length];
   return (
-    <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${color}`}>
+    <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0 border border-white/50 shadow-sm ${color}`}>
       {initial}
     </div>
   );

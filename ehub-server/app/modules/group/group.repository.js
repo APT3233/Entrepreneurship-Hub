@@ -23,10 +23,17 @@ export const createGroupRepository = ({ db }) => {
 
   const findWithMembers = async (id) => {
     const sql = `
-      SELECT g.*, c.class_code, sub.subject_code
+      SELECT g.*, 
+             c.class_code, c.class_name,
+             sub.subject_code, sub.subject_name,
+             sem.semester_name, sem.year,
+             lec.full_name AS lecturer_name, 
+             lec.email AS lecturer_email
       FROM \`groups\` g
         JOIN classes c ON c.id = g.class_id
         JOIN subjects sub ON sub.id = c.subject_id
+        JOIN semesters sem ON sem.id = c.semester_id
+        LEFT JOIN users lec ON lec.id = c.lecturer_id
       WHERE g.id = :id AND g.deleted_at IS NULL
     `;
     const [rows] = await db.execute(sql, { id });
@@ -49,7 +56,9 @@ export const createGroupRepository = ({ db }) => {
     }
     let sql = `SELECT g.*, c.class_code, c.semester_id,
          sem.semester_name,
-         (SELECT COUNT(*) FROM group_members gm WHERE gm.group_id = g.id AND gm.status = 'active') AS member_count
+         (SELECT COUNT(*) FROM group_members gm WHERE gm.group_id = g.id AND gm.status = 'active') AS member_count,
+         (SELECT COUNT(*) FROM group_members gm JOIN students s ON s.id = gm.student_id WHERE gm.group_id = g.id AND gm.status = 'active' AND s.student_code LIKE 'DE%') AS de_count,
+         (SELECT COUNT(*) FROM group_members gm JOIN students s ON s.id = gm.student_id WHERE gm.group_id = g.id AND gm.status = 'active' AND (s.student_code LIKE 'DS%' OR s.student_code LIKE 'DA%')) AS dsda_count
       FROM \`groups\` g
       JOIN classes c ON c.id = g.class_id
       JOIN semesters sem ON sem.id = c.semester_id
@@ -94,8 +103,25 @@ export const createGroupRepository = ({ db }) => {
     return Number(rows[0].total);
   };
 
+  const update = async (id, data) => {
+    const keys = Object.keys(data);
+    if (!keys.length) return null;
+
+    const payload = { ...data };
+    if (!payload.updated_at) payload.updated_at = new Date();
+
+    const updateData = { ...payload, whereId: id };
+    const updateKeys = Object.keys(updateData).filter((k) => k !== "whereId");
+    const setClause = updateKeys.map((k) => `\`${k}\` = :${k}`).join(", ");
+
+    const sql = `UPDATE \`groups\` SET ${setClause} WHERE id = :whereId`;
+    await db.execute(sql, updateData);
+    return findWithMembers(id);
+  };
+
   return {
     ...base,
+    update,
     findByCode,
     findByClass,
     findWithMembers,

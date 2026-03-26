@@ -261,6 +261,9 @@ export const createClassService = ({
               console.log(`[createClass] SKIP student ${j + 1}: missing code/email/fullname`);
               continue;
             }
+            const [userRows] = await conn.execute("SELECT id FROM users WHERE email = ? AND deleted_at IS NULL LIMIT 1", [emailVal]);
+            const userId = userRows?.[0]?.id || null;
+
             const [existingRows] = await conn.execute(
               "SELECT id FROM students WHERE student_code = ? LIMIT 1",
               [studentCode]
@@ -269,13 +272,13 @@ export const createClassService = ({
             if (existingRows && existingRows.length > 0) {
               studentId = existingRows[0].id;
               await conn.execute(
-                "UPDATE students SET full_name = ?, email = ?, major = ?, status = ?, updated_at = NOW(), deleted_at = NULL WHERE id = ?",
-                [fullName, emailVal, majorVal || null, statusVal, studentId]
+                "UPDATE students SET full_name = ?, email = ?, major = ?, status = ?, user_id = ?, updated_at = NOW(), deleted_at = NULL WHERE id = ?",
+                [fullName, emailVal, majorVal || null, statusVal, userId, studentId]
               );
             } else {
               const [insResult] = await conn.execute(
-                "INSERT INTO students (student_code, full_name, email, major, status) VALUES (?, ?, ?, ?, ?)",
-                [studentCode, fullName, emailVal, majorVal || null, statusVal]
+                "INSERT INTO students (student_code, full_name, email, major, status, user_id) VALUES (?, ?, ?, ?, ?, ?)",
+                [studentCode, fullName, emailVal, majorVal || null, statusVal, userId]
               );
               studentId = insResult.insertId;
             }

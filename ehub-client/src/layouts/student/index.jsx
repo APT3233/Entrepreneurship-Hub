@@ -38,12 +38,12 @@ const StudentLayout = () => {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-100">
+    <div className="flex h-screen h-[100dvh] overflow-hidden bg-slate-100">
       <NavProgress />
       <AppSidebar items={studentNavItems} subtitle="Cổng sinh viên" />
-      <div className="flex flex-1 flex-col min-w-0 min-h-0">
+      <div className="flex flex-1 flex-col min-w-0 min-h-0 relative">
         <AppHeader onLogout={() => setLogoutModalOpen(true)} />
-        <main className="flex-1 min-h-0 overflow-auto p-4 sm:p-6 bg-slate-100">
+        <main className="flex-1 min-h-0 overflow-auto p-4 pb-20 sm:p-6 sm:pb-6 bg-slate-100">
           <Suspense
             fallback={
               <div className="min-h-[200px] flex items-center justify-center">

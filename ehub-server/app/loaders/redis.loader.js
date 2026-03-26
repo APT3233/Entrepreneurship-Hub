@@ -25,7 +25,7 @@ export const loadRedis = async () => {
   try {
     await redis.connect();
     await redis.ping();
-    logger.info("✅ Redis connected");
+    logger.info("[Bootstrap] Redis connected");
   } catch (err) {
     logger.fatal({ err }, "❌ Redis connection failed");
     throw err;

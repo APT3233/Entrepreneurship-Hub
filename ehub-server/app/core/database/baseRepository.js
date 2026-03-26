@@ -99,13 +99,13 @@ export const createBaseRepository = (db, tableName) => {
     const keys = Object.keys(data);
     if (!keys.length) return null;
 
-    let updateData = { ...data, _id: id };
+    let updateData = { ...data, whereId: id };
     if (!updateData.updated_at) updateData.updated_at = new Date();
 
-    const updateKeys = Object.keys(updateData).filter((k) => k !== "_id");
+    const updateKeys = Object.keys(updateData).filter((k) => k !== "whereId");
     const setClause = updateKeys.map((k) => `\`${k}\` = :${k}`).join(", ");
 
-    const sql = `UPDATE \`${tableName}\` SET ${setClause} WHERE id = :_id`;
+    const sql = `UPDATE \`${tableName}\` SET ${setClause} WHERE id = :whereId`;
 
     await db.execute(sql, updateData);
     return findById(id);
@@ -127,9 +127,9 @@ export const createBaseRepository = (db, tableName) => {
 
     if (condKeys.length > 0) {
       whereClause =
-        " WHERE " + condKeys.map((k) => `\`${k}\` = :_cond_${k}`).join(" AND ");
+        " WHERE " + condKeys.map((k) => `\`${k}\` = :cond_${k}`).join(" AND ");
       for (const ck of condKeys) {
-        mapping[`_cond_${ck}`] = conditions[ck];
+        mapping[`cond_${ck}`] = conditions[ck];
       }
     }
 

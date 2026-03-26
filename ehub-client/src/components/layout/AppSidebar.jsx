@@ -14,8 +14,8 @@ import { GraduationCapIcon } from "@/components/icons/education";
 
 const defaultNavItems = [
   { label: "Trang chủ", icon: Home, path: "/lecturer/dashboard" },
-  { label: "Quản lý lớp học", icon: BookOpen, path: "/lecturer/classes" },
-  { label: "Nhóm sinh viên", icon: Users, path: "/lecturer/groups" },
+  { label: "Lớp học", icon: BookOpen, path: "/lecturer/classes" },
+  { label: "Nhóm Sinh viên", icon: Users, path: "/lecturer/groups" },
   { label: "Bài tập", icon: ClipboardList, path: "/lecturer/assignments" },
   { label: "Chấm điểm", icon: Star, path: "/lecturer/grading" },
   { label: "Lịch dạy", icon: Calendar, path: "/lecturer/schedule" },
@@ -24,7 +24,15 @@ const defaultNavItems = [
 export default function AppSidebar({ items, subtitle = "Cổng giảng viên" }) {
   const navItems = items && items.length ? items : defaultNavItems;
   const [hovered, setHovered] = useState(false);
-  const [pinned, setPinned] = useState(false);
+  const [pinned, setPinned] = useState(() => {
+    return localStorage.getItem("sidebar_pinned") === "true";
+  });
+
+  const togglePin = () => {
+    const nextValue = !pinned;
+    setPinned(nextValue);
+    localStorage.setItem("sidebar_pinned", String(nextValue));
+  };
   const isOpen = pinned || hovered;
 
   return (
@@ -114,7 +122,7 @@ export default function AppSidebar({ items, subtitle = "Cổng giảng viên" })
         {/* Footer — Pin */}
         <div className="mt-auto border-t border-gray-100 px-[14px] py-4 flex items-center gap-3 overflow-hidden">
           <button
-            onClick={() => setPinned(!pinned)}
+            onClick={togglePin}
             title={pinned ? "Tắt ghim" : "Ghim sidebar"}
             className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200
               ${
@@ -149,8 +157,8 @@ export default function AppSidebar({ items, subtitle = "Cổng giảng viên" })
         bg-white/95 backdrop-blur-md
         border-t border-gray-100
         shadow-[0_-1px_16px_rgba(0,0,0,0.08)]
-        grid grid-cols-6
-        px-1 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))]
+        flex items-center justify-around
+        px-2 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))]
       "
       >
         {navItems.map(({ label, icon: Icon, path }, index) => (
@@ -159,7 +167,7 @@ export default function AppSidebar({ items, subtitle = "Cổng giảng viên" })
             to={path}
             end={index === 0}
             className={({ isActive }) =>
-              `flex flex-col items-center gap-1 py-1 rounded-xl transition-all duration-200
+              `flex flex-col items-center gap-1 py-1 flex-1 min-w-0 rounded-xl transition-all duration-200
                ${isActive ? "text-indigo-600" : "text-slate-400"}`
             }
           >
@@ -174,7 +182,7 @@ export default function AppSidebar({ items, subtitle = "Cổng giảng viên" })
                   <Icon size={18} strokeWidth={isActive ? 2.5 : 1.8} />
                 </span>
                 <span
-                  className={`text-[9px] font-medium leading-none transition-all duration-200 ${
+                  className={`text-[9px] font-medium leading-none w-full text-center px-0.5 whitespace-nowrap overflow-hidden text-ellipsis transition-all duration-200 ${
                     isActive ? "text-indigo-600" : "text-slate-400"
                   }`}
                 >

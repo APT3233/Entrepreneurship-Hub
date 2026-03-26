@@ -17,5 +17,11 @@ export default defineConfig({
       ".trycloudflare.com",
       "ehub.apt3233.id.vn",
     ],
+    proxy: {
+      "/api": {
+        target: "http://127.0.0.1:7777",
+        changeOrigin: true,
+      },
+    },
   },
 });

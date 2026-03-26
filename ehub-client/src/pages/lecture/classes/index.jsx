@@ -9,11 +9,13 @@ import ClassCard from "./components/ClassCard";
 import CreateClassModal from "@/components/modal/lecturer/CreateClassModal";
 import SemesterApi from "@/api/semester";
 import ClassApi from "@/api/class";
+import { useToast } from "@/components/ui/Toast";
 
 const VALUE_ALL_SEMESTERS = "all";
 const VALUE_ALL_CLASSES = "all";
 
 export default function ClassesPage() {
+  const toast = useToast();
   const navigate = useNavigate();
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [semesterList, setSemesterList] = useState([]);
@@ -29,6 +31,7 @@ export default function ClassesPage() {
   });
   const [createLoading, setCreateLoading] = useState(false);
   const [createError, setCreateError] = useState(null);
+  const [pageLoading, setPageLoading] = useState(true);
 
   useEffect(() => {
     const fetchSemesters = async () => {
@@ -44,6 +47,8 @@ export default function ClassesPage() {
         setFilterYear(selectedYear);
         setFilterSemesterId(inYear.length > 1 ? VALUE_ALL_SEMESTERS : inYear[0].id);
         setFilterClass(VALUE_ALL_CLASSES);
+      } else {
+        setPageLoading(false);
       }
     };
     fetchSemesters();
@@ -72,7 +77,10 @@ export default function ClassesPage() {
     if (!filterYear) return [];
     return [
       { value: VALUE_ALL_SEMESTERS, label: "Tất cả kỳ" },
-      ...semestersInYear.map((s) => ({ value: s.id, label: s.semester_name })),
+      ...semestersInYear.map((s) => ({
+        value: s.id,
+        label: s.semester_name.replace(/\s?\d{4}$/, ""),
+      })),
     ];
   }, [filterYear, semestersInYear]);
 
@@ -149,6 +157,7 @@ export default function ClassesPage() {
             groups: c.group_count ?? 0,
             completion: 0,
             semester_id: c.semester_id,
+            avatars: c.avatars ?? [],
           }))
         );
       } catch {
@@ -159,6 +168,8 @@ export default function ClassesPage() {
           needGradingCount: 0,
         });
         setClasses([]);
+      } finally {
+        setPageLoading(false);
       }
     };
     fetchData();
@@ -168,7 +179,10 @@ export default function ClassesPage() {
   const classFilterOptions = useMemo(
     () => [
       { label: "Tất cả lớp", value: VALUE_ALL_CLASSES },
-      ...classes.map((c) => ({ label: c.code, value: c.id })),
+      ...classes.map((c) => ({
+        label: c.code.split("_")[0] || c.code,
+        value: c.id,
+      })),
     ],
     [classes]
   );
@@ -199,6 +213,7 @@ export default function ClassesPage() {
     try {
       await ClassApi.create(body);
       setCreateModalOpen(false);
+      toast.success("Tạo lớp học thành công");
       // Refetch stats and list to stay in sync
       const baseParams = { year: filterYear };
       const semesterId =
@@ -225,10 +240,13 @@ export default function ClassesPage() {
           groups: c.group_count ?? 0,
           completion: 0,
           semester_id: c.semester_id,
+          avatars: c.avatars ?? [],
         }))
       );
     } catch (err) {
-      setCreateError(err?.response?.data?.message || err?.message || "Không thể tạo lớp");
+      const msg = err?.message || "Không thể tạo lớp";
+      setCreateError(msg);
+      toast.error(msg);
       console.error("Create class error:", err);
     } finally {
       setCreateLoading(false);
@@ -272,7 +290,7 @@ export default function ClassesPage() {
       {/* Section 2: Bộ lọc + nút Tạo lớp học */}
       <section className="mt-4 sm:mt-6 w-full p-4 bg-white rounded-2xl shadow-sm border border-gray-100">
         <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-4">
-          <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+          <div className="grid grid-cols-3 items-center gap-2 sm:gap-4 w-full md:w-auto md:flex">
             <Dropdown
               label="Năm"
               options={yearOptions}
@@ -312,7 +330,17 @@ export default function ClassesPage() {
 
       {/* Nội dung chính: empty state nếu chưa có lớp, ngược lại hiển thị danh sách ClassCard */}
       <div className="mt-4 sm:mt-6">
-        {visibleClasses.length === 0 ? (
+        {pageLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 full-width">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="bg-white rounded-3xl border border-gray-100 shadow-sm p-5 h-[200px] animate-pulse">
+                <div className="h-5 bg-gray-200 rounded w-1/3 mb-4" />
+                <div className="h-4 bg-gray-100 rounded w-1/2 mb-2" />
+                <div className="h-4 bg-gray-100 rounded w-2/3" />
+              </div>
+            ))}
+          </div>
+        ) : visibleClasses.length === 0 ? (
           <EmptyClasses onCreate={canCreateClass ? () => setCreateModalOpen(true) : undefined} />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 full-width">

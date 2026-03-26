@@ -13,11 +13,11 @@ const VALUE_ALL = "all";
 
 const STATUS_OPTIONS = [
   { label: "Tất cả trạng thái", value: VALUE_ALL },
-  { label: "Forming", value: "forming" },
-  { label: "Active", value: "active" },
-  { label: "Inactive", value: "inactive" },
-  { label: "Completed", value: "completed" },
-  { label: "Dissolved", value: "dissolved" },
+  { label: "Đang lập nhóm", value: "forming" },
+  { label: "Đang hoạt động", value: "active" },
+  { label: "Ngưng hoạt động", value: "inactive" },
+  { label: "Đã hoàn thành", value: "completed" },
+  { label: "Đã giải tán", value: "dissolved" },
 ];
 
 export default function GroupsPage() {
@@ -84,13 +84,17 @@ export default function GroupsPage() {
             id: g.id,
             name: g.group_name || g.group_code,
             classCode: g.class_code,
+            topic: g.topic || g.description,
             class_id: g.class_id,
             semester_id: g.semester_id,
             semester_name: g.semester_name,
             members: Number(g.member_count) || 0,
             status: g.status,
-            majors: [],
-            avatars: [],
+            majors: [
+              { name: "DE",    count: Number(g.de_count) || 0,   minRequired: 2 },
+              { name: "DS/DA", count: Number(g.dsda_count) || 0, minRequired: 2 }
+            ],
+            avatars: g.avatars || [],
           }))
         );
       } catch {
@@ -105,7 +109,10 @@ export default function GroupsPage() {
   const classOptions = useMemo(
     () => [
       { label: "Tất cả lớp", value: VALUE_ALL },
-      ...classList.map((c) => ({ label: c.class_code, value: String(c.id) })),
+      ...classList.map((c) => ({
+        label: c.class_code.split("_")[0] || c.class_code,
+        value: String(c.id),
+      })),
     ],
     [classList]
   );
@@ -113,7 +120,10 @@ export default function GroupsPage() {
   const semesterOptions = useMemo(
     () => [
       { label: "Tất cả kỳ", value: VALUE_ALL },
-      ...semesterList.map((s) => ({ label: s.semester_name, value: String(s.id) })),
+      ...semesterList.map((s) => ({
+        label: s.semester_name.replace(/\s?\d{4}$/, ""),
+        value: String(s.id),
+      })),
     ],
     [semesterList]
   );
@@ -125,7 +135,8 @@ export default function GroupsPage() {
       list = list.filter(
         (g) =>
           (g.name && g.name.toLowerCase().includes(q)) ||
-          (g.classCode && g.classCode.toLowerCase().includes(q))
+          (g.classCode && g.classCode.toLowerCase().includes(q)) ||
+          (g.topic && g.topic.toLowerCase().includes(q))
       );
     }
     if (filterClass !== VALUE_ALL) {
@@ -174,8 +185,8 @@ export default function GroupsPage() {
       </section>
 
       <section className="mt-4 sm:mt-6 w-full p-4 bg-white rounded-2xl shadow-sm border border-gray-100">
-        <div className="flex flex-wrap items-center gap-3 sm:gap-4">
-          <div className="relative flex-1 min-w-[200px]">
+        <div className="flex flex-col md:flex-row items-center gap-3 sm:gap-4 w-full">
+          <div className="relative w-full md:flex-1 md:min-w-[200px]">
             <Search
               size={18}
               className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
@@ -188,6 +199,7 @@ export default function GroupsPage() {
               className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
             />
           </div>
+          <div className="grid grid-cols-3 gap-2 sm:gap-4 w-full md:w-auto md:flex">
           <Dropdown
             label="Tất cả lớp"
             options={classOptions}
@@ -206,6 +218,7 @@ export default function GroupsPage() {
             value={filterSemesterId}
             onChange={(v) => setFilterSemesterId(v)}
           />
+          </div>
         </div>
       </section>
 
@@ -225,6 +238,7 @@ export default function GroupsPage() {
                 key={g.id}
                 name={g.name}
                 classCode={g.classCode}
+                topic={g.topic}
                 members={g.members}
                 majors={g.majors}
                 avatars={g.avatars}
@@ -234,6 +248,7 @@ export default function GroupsPage() {
           </div>
         )}
       </section>
+
     </>
   );
 }

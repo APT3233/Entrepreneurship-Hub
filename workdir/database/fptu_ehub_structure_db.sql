@@ -307,6 +307,18 @@ CREATE TABLE `groups` (
     group_name    VARCHAR(200) NOT NULL
                   COMMENT 'Tên team / startup',
     description   TEXT             NULL,
+    category      VARCHAR(100)     NULL
+                      COMMENT 'Danh mục: Web, Mobile, AI...',
+    topic         VARCHAR(500)     NULL
+                      COMMENT 'Tên đề tài / ý tưởng khởi nghiệp',
+    topic_desc    TEXT             NULL
+                      COMMENT 'Mô tả chi tiết đề tài',
+    zalo_link     VARCHAR(500)     NULL
+                      COMMENT 'Link nhóm Zalo của team',
+    mentor_name   VARCHAR(200)     NULL
+                      COMMENT 'Tên Mentor (nếu khác GV)',
+    mentor_dept   VARCHAR(200)     NULL
+                      COMMENT 'Khoa/Phòng ban của Mentor',
 
     max_members   TINYINT UNSIGNED DEFAULT 6 NOT NULL,
 
@@ -668,3 +680,291 @@ WHERE cs.status = 'enrolled'
         AND g.class_id    = cs.class_id
         AND gm.status     = 'active'
   );
+
+
+-- =============================================
+-- MODULE 2: CHECKPOINT — Nộp bài & Chấm điểm
+-- =============================================
+
+-- -------------------------------------------
+-- BẢNG 17: checkpoints — Định nghĩa các mốc checkpoint
+-- Mỗi lớp học có nhiều checkpoint (do GV tạo)
+-- -------------------------------------------
+CREATE TABLE checkpoints (
+    id            BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    class_id      INT UNSIGNED    NOT NULL
+                  COMMENT 'Thuộc lớp học nào',
+    title         VARCHAR(200)    NOT NULL
+                  COMMENT 'Tên checkpoint: Checkpoint 1 - Ý tưởng',
+    description   TEXT                NULL
+                  COMMENT 'Hướng dẫn nộp bài, yêu cầu cụ thể',
+    order_index   TINYINT UNSIGNED DEFAULT 1 NOT NULL
+                  COMMENT 'Thứ tự hiển thị (1, 2, 3...)',
+
+    -- Thời gian
+    deadline      DATETIME        NOT NULL
+                  COMMENT 'Hạn nộp bài của nhóm',
+    open_at       DATETIME            NULL
+                  COMMENT 'Thời điểm mở cho phép nộp (NULL = mở ngay)',
+
+    -- Thang điểm
+    max_score     DECIMAL(5,2)    DEFAULT 10.00 NOT NULL
+                  COMMENT 'Điểm tối đa (vd: 10, 100)',
+    weight        DECIMAL(5,2)    DEFAULT 1.00  NOT NULL
+                  COMMENT 'Hệ số điểm (vd: 0.3 = 30%)',
+
+    -- Yêu cầu file
+    required_file_types VARCHAR(200)  NULL
+                  COMMENT 'Các loại file được chấp nhận: pdf,docx,pptx',
+    max_file_size_mb    SMALLINT UNSIGNED DEFAULT 20 NOT NULL
+                  COMMENT 'Giới hạn dung lượng mỗi file (MB)',
+    max_files           TINYINT UNSIGNED  DEFAULT 5  NOT NULL
+                  COMMENT 'Số file tối đa được nộp',
+
+    status        ENUM('draft','open','closed','archived')
+                      DEFAULT 'draft' NOT NULL
+                  COMMENT 'draft=chưa mở, open=đang nhận bài, closed=đã đóng',
+
+    created_by    BIGINT UNSIGNED  NULL,
+    created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                      ON UPDATE CURRENT_TIMESTAMP     NOT NULL,
+    deleted_at    TIMESTAMP        NULL,
+
+    INDEX idx_cp_class      (class_id),
+    INDEX idx_cp_deadline   (deadline),
+    INDEX idx_cp_status     (status),
+    INDEX idx_cp_order      (class_id, order_index)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT='Định nghĩa checkpoint của từng lớp học';
+
+
+-- -------------------------------------------
+-- BẢNG 18: checkpoint_submissions — Bài nộp của từng nhóm
+-- Trạng thái: not_submitted / submitted / graded / resubmitted
+-- -------------------------------------------
+CREATE TABLE checkpoint_submissions (
+    id             BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    checkpoint_id  BIGINT UNSIGNED NOT NULL,
+    group_id       BIGINT UNSIGNED NOT NULL,
+
+    -- Thông tin nộp bài
+    submitted_by   BIGINT UNSIGNED     NULL
+                   COMMENT 'Student hoặc User đã nhấn nộp',
+    submitted_at   DATETIME            NULL
+                   COMMENT 'Thời điểm nộp (NULL = chưa nộp)',
+    is_late        TINYINT(1)  DEFAULT 0 NOT NULL
+                   COMMENT '1 nếu nộp sau deadline',
+    note           TEXT                NULL
+                   COMMENT 'Ghi chú của nhóm khi nộp bài',
+
+    -- Thông tin chấm điểm
+    score          DECIMAL(5,2)        NULL
+                   COMMENT 'Điểm số (NULL = chưa chấm)',
+    feedback       TEXT                NULL
+                   COMMENT 'Nhận xét của GV (15-20 từ trở lên)',
+    graded_by      BIGINT UNSIGNED     NULL
+                   COMMENT 'GV chấm điểm (FK users)',
+    graded_at      DATETIME            NULL
+                   COMMENT 'Thời điểm chấm điểm',
+
+    -- Trạng thái tổng hợp
+    -- not_submitted: nhóm chưa nộp
+    -- submitted    : đã nộp, chờ chấm
+    -- graded       : đã chấm điểm
+    -- resubmitted  : nộp lại sau khi đã chấm
+    status         ENUM('not_submitted','submitted','graded','resubmitted')
+                       DEFAULT 'not_submitted' NOT NULL,
+
+    created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                       ON UPDATE CURRENT_TIMESTAMP     NOT NULL,
+
+    -- Mỗi nhóm chỉ có 1 bài nộp cho mỗi checkpoint
+    UNIQUE KEY uk_cp_sub_group  (checkpoint_id, group_id),
+    INDEX      idx_sub_group    (group_id),
+    INDEX      idx_sub_status   (status),
+    INDEX      idx_sub_graded   (graded_by),
+    INDEX      idx_sub_submitted_at (submitted_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT='Bài nộp checkpoint của từng nhóm — lưu trạng thái & điểm';
+
+
+-- -------------------------------------------
+-- BẢNG 19: checkpoint_submission_files — File đính kèm bài nộp
+-- Mỗi bài nộp có thể có nhiều file
+-- -------------------------------------------
+CREATE TABLE checkpoint_submission_files (
+    id             BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    submission_id  BIGINT UNSIGNED NOT NULL
+                   COMMENT 'FK checkpoint_submissions',
+
+    file_name      VARCHAR(255)    NOT NULL
+                   COMMENT 'Tên file gốc: Bao_cao_y_tuong.pdf',
+    file_path      VARCHAR(1000)   NOT NULL
+                   COMMENT 'Đường dẫn lưu trữ (relative hoặc URL S3)',
+    file_url       VARCHAR(1000)       NULL
+                   COMMENT 'Public URL để download/preview',
+    file_type      VARCHAR(20)         NULL
+                   COMMENT 'Phần mở rộng: pdf, docx, pptx, xlsx...',
+    mime_type      VARCHAR(100)        NULL
+                   COMMENT 'MIME type: application/pdf',
+    file_size      INT UNSIGNED        NULL
+                   COMMENT 'Kích thước file (bytes)',
+
+    uploaded_by    BIGINT UNSIGNED     NULL
+                   COMMENT 'Ai đã upload file này',
+    uploaded_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+
+    is_deleted     TINYINT(1) DEFAULT 0 NOT NULL
+                   COMMENT '1 = đã xoá (soft delete)',
+    deleted_at     TIMESTAMP               NULL,
+
+    INDEX idx_sub_files_submission (submission_id),
+    INDEX idx_sub_files_uploader   (uploaded_by)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT='File đính kèm bài nộp checkpoint (PDF, DOCX, PPTX...)';
+
+
+-- -------------------------------------------
+-- FOREIGN KEYS cho Module Checkpoint
+-- -------------------------------------------
+ALTER TABLE checkpoints
+    ADD CONSTRAINT fk_cp_class    FOREIGN KEY (class_id)   REFERENCES classes(id) ON DELETE RESTRICT,
+    ADD CONSTRAINT fk_cp_creator  FOREIGN KEY (created_by) REFERENCES users(id)   ON DELETE SET NULL;
+
+ALTER TABLE checkpoint_submissions
+    ADD CONSTRAINT fk_sub_checkpoint  FOREIGN KEY (checkpoint_id) REFERENCES checkpoints(id)  ON DELETE RESTRICT,
+    ADD CONSTRAINT fk_sub_group       FOREIGN KEY (group_id)      REFERENCES `groups`(id)      ON DELETE RESTRICT,
+    ADD CONSTRAINT fk_sub_submitter   FOREIGN KEY (submitted_by)  REFERENCES users(id)         ON DELETE SET NULL,
+    ADD CONSTRAINT fk_sub_grader      FOREIGN KEY (graded_by)     REFERENCES users(id)         ON DELETE SET NULL;
+
+ALTER TABLE checkpoint_submission_files
+    ADD CONSTRAINT fk_subfile_submission FOREIGN KEY (submission_id) REFERENCES checkpoint_submissions(id) ON DELETE CASCADE,
+    ADD CONSTRAINT fk_subfile_uploader   FOREIGN KEY (uploaded_by)   REFERENCES users(id)                  ON DELETE SET NULL;
+
+
+-- -------------------------------------------
+-- VIEW: v_checkpoint_status — Trạng thái checkpoint theo nhóm
+-- Dùng để hiển thị: Đã chấm / Chưa chấm / Chưa nộp
+-- -------------------------------------------
+CREATE OR REPLACE VIEW v_checkpoint_status AS
+SELECT
+    cp.id                  AS checkpoint_id,
+    cp.class_id,
+    cp.title               AS checkpoint_title,
+    cp.order_index,
+    cp.deadline,
+    cp.max_score,
+    cp.weight,
+    cp.status              AS checkpoint_status,
+    g.id                   AS group_id,
+    g.group_name,
+    g.group_code,
+    -- Trạng thái submission
+    COALESCE(sub.status, 'not_submitted') AS submission_status,
+    sub.id                 AS submission_id,
+    sub.submitted_at,
+    sub.is_late,
+    sub.score,
+    sub.feedback,
+    sub.graded_by,
+    sub.graded_at,
+    -- Số file đã nộp
+    COUNT(f.id)            AS file_count,
+    -- Tính trạng thái đơn giản để filter nhanh
+    CASE
+        WHEN sub.id IS NULL                        THEN 'not_submitted'
+        WHEN sub.status IN ('submitted', 'resubmitted') THEN 'pending_grading'
+        WHEN sub.status = 'graded'                THEN 'graded'
+        ELSE 'not_submitted'
+    END                    AS display_status
+FROM checkpoints cp
+    JOIN `groups` g ON g.class_id = cp.class_id AND g.deleted_at IS NULL
+    LEFT JOIN checkpoint_submissions sub
+        ON sub.checkpoint_id = cp.id AND sub.group_id = g.id
+    LEFT JOIN checkpoint_submission_files f
+        ON f.submission_id = sub.id AND f.is_deleted = 0
+WHERE cp.deleted_at IS NULL
+GROUP BY
+    cp.id, cp.class_id, cp.title, cp.order_index, cp.deadline,
+    cp.max_score, cp.weight, cp.status,
+    g.id, g.group_name, g.group_code,
+    sub.id, sub.status, sub.submitted_at, sub.is_late,
+    sub.score, sub.feedback, sub.graded_by, sub.graded_at;
+
+-- =============================================
+-- MODULE 3: DAILY ASSIGNMENT — Bài tập thường xuyên
+-- =============================================
+
+-- -------------------------------------------
+-- BẢNG 20: assignments — Định nghĩa bài tập thường xuyên
+-- Mỗi lớp có thể có nhiều bài tập
+-- -------------------------------------------
+CREATE TABLE assignments (
+    id            BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    class_id       INT UNSIGNED    NOT NULL
+                  COMMENT 'Thuộc lớp học nào',
+    title          VARCHAR(200)    NOT NULL
+                  COMMENT 'Tên bài tập',
+    description    TEXT                NULL
+                  COMMENT 'Mô tả yêu cầu bài tập',
+    deadline       DATETIME        NOT NULL
+                  COMMENT 'Hạn nộp',
+    max_score      DECIMAL(5,2)    DEFAULT 10.00 NOT NULL
+                  COMMENT 'Điểm tối đa',
+    status         ENUM('open','closed','archived')
+                      DEFAULT 'open' NOT NULL
+                  COMMENT 'Trạng thái bài tập',
+    created_by     BIGINT UNSIGNED  NULL,
+    created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                      ON UPDATE CURRENT_TIMESTAMP     NOT NULL,
+    deleted_at     TIMESTAMP        NULL,
+    INDEX idx_assignment_class      (class_id),
+    INDEX idx_assignment_status     (status),
+    INDEX idx_assignment_deadline   (deadline)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT='Bài tập thường xuyên theo lớp';
+
+-- -------------------------------------------
+-- BẢNG 21: assignment_submissions — Bài nộp assignment theo nhóm
+-- Dùng để tính submittedGroups/need grading
+-- -------------------------------------------
+CREATE TABLE assignment_submissions (
+    id             BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    assignment_id  BIGINT UNSIGNED NOT NULL,
+    group_id       BIGINT UNSIGNED NOT NULL,
+    submitted_by   BIGINT UNSIGNED     NULL,
+    submitted_at   DATETIME            NULL,
+    is_late        TINYINT(1)  DEFAULT 0 NOT NULL,
+    note           TEXT                NULL,
+    score          DECIMAL(5,2)        NULL,
+    feedback       TEXT                NULL,
+    graded_by      BIGINT UNSIGNED     NULL,
+    graded_at      DATETIME            NULL,
+    status         ENUM('not_submitted','submitted','graded','resubmitted')
+                       DEFAULT 'not_submitted' NOT NULL,
+    created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                       ON UPDATE CURRENT_TIMESTAMP     NOT NULL,
+    UNIQUE KEY uk_assignment_sub_group  (assignment_id, group_id),
+    INDEX      idx_assignment_sub_group (group_id),
+    INDEX      idx_assignment_sub_status (status),
+    INDEX      idx_assignment_sub_submitted_at (submitted_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT='Bài nộp của nhóm cho bài tập thường xuyên';
+
+-- -------------------------------------------
+-- FOREIGN KEYS cho Module Assignment
+-- -------------------------------------------
+ALTER TABLE assignments
+    ADD CONSTRAINT fk_assignment_class    FOREIGN KEY (class_id)   REFERENCES classes(id) ON DELETE RESTRICT,
+    ADD CONSTRAINT fk_assignment_creator  FOREIGN KEY (created_by) REFERENCES users(id)   ON DELETE SET NULL;
+
+ALTER TABLE assignment_submissions
+    ADD CONSTRAINT fk_assignment_sub_assignment FOREIGN KEY (assignment_id) REFERENCES assignments(id) ON DELETE RESTRICT,
+    ADD CONSTRAINT fk_assignment_sub_group      FOREIGN KEY (group_id)      REFERENCES `groups`(id)    ON DELETE RESTRICT,
+    ADD CONSTRAINT fk_assignment_sub_submitter  FOREIGN KEY (submitted_by)  REFERENCES users(id)       ON DELETE SET NULL,
+    ADD CONSTRAINT fk_assignment_sub_grader     FOREIGN KEY (graded_by)     REFERENCES users(id)       ON DELETE SET NULL;
+

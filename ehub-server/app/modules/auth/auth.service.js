@@ -3,6 +3,7 @@ import {
   InvalidCredentials,
   AlreadyExists,
   BadRequest,
+  Forbidden,
 } from "app/core/errors/errorFactory.js";
 import { withLogging } from "app/core/services/baseService.js";
 import { appConfig } from "app/config/app.js";
@@ -13,6 +14,7 @@ import { appConfig } from "app/config/app.js";
  */
 export const createAuthService = ({
   userRepository,
+  studentRepository,
   tokenService,
   accessLogRepository,
 }) => {
@@ -207,6 +209,16 @@ export const createAuthService = ({
     const { id: googleId, email, name, picture } = googleUser;
     if (!googleId || !email) throw BadRequest("Google profile missing id or email");
 
+    // --- KIỂM TRA WHITE-LIST ---
+    // Chỉ cho phép nếu đã có account User hoặc email nằm trong danh sách Student
+    const existingUserMatch = (await userRepository.findByGoogleId(googleId)) || (await userRepository.findByEmail(email));
+    const studentMatch = await studentRepository.findByEmail(email);
+
+    if (!existingUserMatch && !studentMatch) {
+      throw Forbidden("Tài khoản của bạn không có trong danh sách được phép truy cập. Vui lòng liên hệ quản trị viên.");
+    }
+    // ---------------------------
+
     let user = await userRepository.findByGoogleId(googleId);
     if (user) {
       // Đã có user với google_id → cập nhật avatar & last_login_at (dùng rawQuery để tránh lỗi placeholder)
@@ -251,6 +263,23 @@ export const createAuthService = ({
         user = await userRepository.findByGoogleId(googleId);
       }
     }
+
+    // --- Đồng bộ với bảng students ---
+    const student = await studentRepository.findByEmail(email);
+    if (student) {
+      // Liên kết Student với User
+      await userRepository.rawQuery(
+        "UPDATE students SET user_id = ?, status = 'active', updated_at = ? WHERE id = ?",
+        [user.id, new Date(), student.id]
+      );
+      // Đảm bảo user có role student (nếu chưa có)
+      if (!user.roles || !user.roles.includes("student")) {
+        await userRepository.assignRole(user.id, "student");
+      }
+      // Cập nhật lại user info để phản ánh role mới (nếu có)
+      user = await userRepository.findByGoogleId(googleId);
+    }
+    // ---------------------------------
 
     const tokens = await tokenService.generateTokenPair(user, deviceInfo);
     const responseTime = deviceInfo.startTime ? Date.now() - deviceInfo.startTime : 0;

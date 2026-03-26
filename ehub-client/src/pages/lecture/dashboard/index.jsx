@@ -26,6 +26,7 @@ const LectureDashboard = () => {
     needGradingCount: 0,
   });
   const [recentClasses, setRecentClasses] = useState([]);
+  const [pageLoading, setPageLoading] = useState(true);
 
   // Fetch first
   useEffect(() => {
@@ -37,6 +38,8 @@ const LectureDashboard = () => {
         const inFirstYear = list.filter((s) => s.year === firstYear);
         setSelectedYear(firstYear);
         setSelectedSemesterId(inFirstYear.length > 1 ? VALUE_ALL_SEMESTERS : inFirstYear[0].id);
+      } else {
+        setPageLoading(false);
       }
     };
     fetchSemesters();
@@ -49,7 +52,10 @@ const LectureDashboard = () => {
   const semestersInYear = semesterList.filter((s) => s.year === selectedYear);
   const semesterOptions = [
     { value: VALUE_ALL_SEMESTERS, label: "Tất cả kỳ" },
-    ...semestersInYear.map((s) => ({ value: s.id, label: s.semester_name })),
+    ...semestersInYear.map((s) => ({
+      value: s.id,
+      label: s.semester_name.replace(/\s?\d{4}$/, ""),
+    })),
   ];
 
   const handleYearChange = (year) => {
@@ -66,6 +72,7 @@ const LectureDashboard = () => {
   useEffect(() => {
     if (selectedYear == null && selectedSemesterId == null) return;
     const fetchData = async () => {
+      setPageLoading(true);
       const baseParams = { year: selectedYear };
       let params = baseParams;
       if (selectedSemesterId && selectedSemesterId !== VALUE_ALL_SEMESTERS) {
@@ -102,6 +109,8 @@ const LectureDashboard = () => {
       } catch {
         setStats({ classCount: 0, groupCount: 0, assignmentCount: 0, needGradingCount: 0 });
         setRecentClasses([]);
+      } finally {
+        setPageLoading(false);
       }
     };
     fetchData();
@@ -133,7 +142,23 @@ const LectureDashboard = () => {
       </div>
 
       {/* Main content: empty state nếu chưa có lớp, ngược lại grid + grading */}
-      {recentClasses.length === 0 ? (
+      {pageLoading ? (
+        <div className="mt-4 grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <div className="h-48 w-full md:col-span-2 xl:col-span-1 bg-white rounded-3xl border border-gray-100 shadow-sm p-6 animate-pulse">
+            <div className="h-4 bg-gray-200 rounded w-1/3 mb-4" />
+            <div className="h-10 bg-gray-100 rounded w-full mb-3" />
+            <div className="h-10 bg-gray-100 rounded w-full" />
+          </div>
+          <div className="h-48 w-full bg-white rounded-3xl border border-gray-100 shadow-sm p-6 animate-pulse">
+             <div className="h-4 bg-gray-200 rounded w-1/3 mb-4" />
+             <div className="h-20 bg-gray-100 rounded w-20 mx-auto rounded-full" />
+          </div>
+          <div className="h-48 w-full bg-white rounded-3xl border border-gray-100 shadow-sm p-6 animate-pulse">
+             <div className="h-4 bg-gray-200 rounded w-1/3 mb-4" />
+             <div className="h-16 bg-gray-100 rounded w-full" />
+          </div>
+        </div>
+      ) : recentClasses.length === 0 ? (
         <div className="mt-4">
           <RecentClassesEmpty
             onViewAll={() => navigate("/lecturer/classes")}

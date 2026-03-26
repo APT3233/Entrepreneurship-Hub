@@ -91,15 +91,15 @@ export default function StudentList({
       </div>
 
       {/* Table wrapper — scroll ngang trên mobile */}
-      <div className="rounded-xl border border-gray-100 overflow-x-auto">
-        <table className="w-full min-w-[560px] text-sm border-collapse">
+      <div className="rounded-xl border border-gray-100 overflow-x-auto w-full">
+        <table className="w-full min-w-[800px] text-sm border-collapse whitespace-nowrap">
 
           <thead>
-            <tr className="border-b border-gray-100">
+            <tr className="bg-indigo-50/20 border-b border-gray-50">
               {columns.map((col) => (
                 <th
                   key={col}
-                  className="px-4 py-3 text-left text-xs font-medium text-gray-400 whitespace-nowrap"
+                  className="px-4 py-4 md:px-6 md:py-5 text-left text-[10px] md:text-[11px] font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap"
                 >
                   {col}
                 </th>
@@ -117,24 +117,41 @@ export default function StudentList({
             ) : (
               sortedStudents.map((s, i) => (
                 <tr key={s.id ?? i} className="hover:bg-gray-50 transition-colors duration-100">
-                  <td className="px-4 py-4 text-gray-500 text-sm">{i + 1}</td>
-                  <td className="px-4 py-4 font-semibold text-gray-800">{s.mssv}</td>
-                  <td className="px-4 py-4 text-gray-800">
-                    <div>
-                      <span>
+                  <td className="px-4 py-3 md:px-6 md:py-5 text-gray-500 font-medium text-[11px] md:text-xs">{i + 1}</td>
+                  <td className="px-4 py-3 md:px-6 md:py-5">
+                    <span className="font-mono text-[11px] md:text-xs font-semibold text-gray-600 bg-gray-50 px-2 py-1 rounded-lg group-hover:bg-white transition-colors">
+                      {s.mssv}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 md:px-6 md:py-5 text-gray-800">
+                    <div className="flex flex-col gap-0.5">
+                      <span className="font-medium text-gray-800 text-xs md:text-sm leading-none group-hover:text-indigo-600 transition-colors">
                         {s.name}
-                        {s.isLeader && <span className="ml-1 text-gray-400 text-xs">*</span>}
                       </span>
                       {s.isLeader && (
-                        <p className="text-xs text-green-600 mt-0.5">Nhóm trưởng</p>
+                        <span className="text-[9px] md:text-[10px] text-emerald-600 font-bold uppercase tracking-tight mt-1">
+                          Nhóm trưởng
+                        </span>
                       )}
                     </div>
                   </td>
-                  <td className="px-4 py-4 text-gray-400">{s.email}</td>
-                  <td className={`px-4 py-4 font-medium ${majorColor(s.major)}`}>{s.major}</td>
+                  <td className="px-4 py-3 md:px-6 md:py-5">
+                    <span className="text-gray-400 font-medium text-[11px] md:text-xs leading-none">
+                      {s.email}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 md:px-6 md:py-5 text-left">
+                    <span className={`px-2 md:px-3 py-1 md:py-1.5 rounded-full text-[9px] md:text-[10px] font-bold uppercase tracking-wider bg-gray-50 border border-gray-100 ${majorColor(s.major)} shadow-sm`}>
+                      {s.major}
+                    </span>
+                  </td>
                   {hasGroups && (
-                    <td className="px-4 py-4 text-gray-700">
-                      {s.groupId != null ? (s.groupName ?? "—") : <span className="text-gray-400 italic">Chưa có nhóm</span>}
+                    <td className="px-4 py-3 md:px-6 md:py-5 text-gray-700 font-medium text-[11px] md:text-xs">
+                      {s.groupId != null ? (
+                        <span className="font-semibold text-gray-700">{s.groupName ?? "—"}</span>
+                      ) : (
+                        <span className="text-gray-400 italic">Chưa phân nhóm</span>
+                      )}
                     </td>
                   )}
                 </tr>

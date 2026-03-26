@@ -20,7 +20,7 @@ export const loadDatabase = async () => {
     await setupDatabaseSchema(connection);
 
     connection.release();
-    logger.info("✅ MySQL2 Pool OKE");
+    logger.info("[Bootstrap] MySQL2 Pool OKE");
   } catch (err) {
     logger.error("❌ MySQL2 Pool connection failed", { err });
     throw err;

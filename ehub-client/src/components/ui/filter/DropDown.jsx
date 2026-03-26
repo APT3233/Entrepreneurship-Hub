@@ -17,14 +17,14 @@ function Dropdown({ label, options, value, onChange, disabled = false }) {
   const selected = options.find((o) => o.value === value);
 
   return (
-    <div ref={ref} className="relative">
+    <div ref={ref} className="relative flex-1 min-w-0 md:flex-none md:w-auto md:min-w-[120px]">
       {/* Trigger */}
       <button
         type="button"
         onClick={() => !disabled && setOpen(!open)}
         disabled={disabled}
         className={`
-          flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium min-w-[96px]
+          flex items-center justify-between gap-1 sm:gap-2 px-2 sm:px-4 py-2 rounded-lg border text-sm font-medium w-full
           transition-all duration-150
           ${disabled
             ? "bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed"
@@ -34,12 +34,12 @@ function Dropdown({ label, options, value, onChange, disabled = false }) {
           }
         `}
       >
-        <span className="flex-1 text-left">
+        <span className="text-left truncate">
           {selected ? selected.label : label}
         </span>
         <ChevronDown
           size={15}
-          className={`text-gray-400 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+          className={`shrink-0 text-gray-400 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
         />
       </button>
 

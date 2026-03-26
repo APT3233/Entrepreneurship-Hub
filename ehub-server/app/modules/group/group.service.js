@@ -7,7 +7,7 @@ export const createGroupService = ({ groupRepository }) => {
   const ALLOWED_SORT = ["group_code", "group_name", "status", "max_members", "created_at"];
 
   const getById = async (id, user = null) => {
-    const group = await base.getById(id);
+    const group = await groupRepository.findWithMembers(id);
     if (!group) return group;
     await verifyGroupOwnership(id, user);
     return group;

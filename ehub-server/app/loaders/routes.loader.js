@@ -7,6 +7,7 @@ import { SemesterModule } from "app/modules/semester/index.js";
 import { ClassModule } from "app/modules/class/index.js";
 import { StudentModule } from "app/modules/student/index.js";
 import { GroupModule } from "app/modules/group/index.js";
+import { AssignmentModule } from "app/modules/assignment/index.js";
 
 const MODULES = [
   AuthModule,
@@ -16,6 +17,7 @@ const MODULES = [
   ClassModule,
   StudentModule,
   GroupModule,
+  AssignmentModule,
 ];
 
 export const loadRoutes = (app, container) => {
@@ -29,7 +31,7 @@ export const loadRoutes = (app, container) => {
     const router = mod.router(container);
     app.use(`${prefix}${mod.path}`, router);
     logger.info(
-      `📌 Route mounted: [${mod.name.toUpperCase()}] ${prefix}${mod.path}`,
+      `[Bootstrap] Route mounted: [${mod.name.toUpperCase()}] ${prefix}${mod.path}`,
     );
   }
 

@@ -1,29 +1,38 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useLocation } from "react-router-dom";
 
 /**
- * Thanh tiến trình mỏng ở đầu layout khi chuyển route.
- * Hiện khi location thay đổi, chạy animation ngắn rồi ẩn — tạo cảm giác mượt khi đổi trang.
+ * NavProgress — Thanh tiến trình mỏng ở đầu layout khi chuyển route.
+ * Hiện ngay khi location thay đổi, chạy animation mượt rồi ẩn.
  */
 export default function NavProgress() {
   const location = useLocation();
   const [visible, setVisible] = useState(false);
+  const timeoutRef = useRef(null);
 
   useEffect(() => {
     setVisible(true);
-    const t = setTimeout(() => setVisible(false), 320);
-    return () => clearTimeout(t);
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => setVisible(false), 500);
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
   }, [location.pathname]);
 
   if (!visible) return null;
 
   return (
     <div
-      className="fixed top-0 left-0 right-0 z-[100] h-0.5 bg-indigo-500/90 overflow-hidden opacity-100 transition-opacity duration-150"
-      style={{ boxShadow: "0 0 10px rgba(99, 102, 241, 0.5)" }}
+      className="fixed top-0 left-0 right-0 z-[100] h-[3px] overflow-hidden"
       aria-hidden
     >
-      <div className="h-full w-1/3 bg-white/50 rounded-full animate-nav-progress" />
+      <div
+        className="h-full bg-gradient-to-r from-indigo-500 via-indigo-400 to-indigo-600 rounded-full"
+        style={{
+          animation: "navProgressSlide 0.5s ease-out forwards",
+          boxShadow: "0 0 10px rgba(99, 102, 241, 0.5)",
+        }}
+      />
     </div>
   );
 }

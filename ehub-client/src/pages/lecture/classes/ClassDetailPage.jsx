@@ -7,7 +7,7 @@ import Dropdown from "@/components/ui/filter/DropDown";
 import ClassInfo from "./components/ClassInfo";
 import StudentList from "./components/StudentList";
 import CreateGroupModal from "@/components/modal/lecturer/CreateGroupModal";
-import { toast } from "react-toastify";
+import { useToast } from "@/components/ui/Toast";
 import ClassApi from "@/api/class";
 import SemesterApi from "@/api/semester";
 import GroupApi from "@/api/group";
@@ -15,6 +15,7 @@ import GroupApi from "@/api/group";
 const VALUE_ALL_CLASSES = "all";
 
 export default function ClassDetailPage() {
+  const toast = useToast();
   const { id } = useParams();
   const navigate = useNavigate();
   const [detail, setDetail] = useState(null);
@@ -24,8 +25,9 @@ export default function ClassDetailPage() {
   const [filterSemesterId, setFilterSemesterId] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedGroup, setSelectedGroup] = useState("all");
-  const [createGroupModalOpen, setCreateGroupModalOpen] = useState(false);
-  const [createGroupLoading, setCreateGroupLoading] = useState(false);
+   const [createGroupModalOpen, setCreateGroupModalOpen] = useState(false);
+   const [createGroupLoading, setCreateGroupLoading] = useState(false);
+   const [groupFormKey, setGroupFormKey] = useState(0);
 
   useEffect(() => {
     const fetchSemesters = async () => {
@@ -151,11 +153,15 @@ export default function ClassDetailPage() {
     }));
   }, [detail?.groups, filteredStudents]);
 
-  if (!detail) return null;
+  const [pageLoading, setPageLoading] = useState(true);
+
+  useEffect(() => {
+    if (detail) setPageLoading(false);
+  }, [detail]);
 
   // Chỉ cho phép tạo nhóm nếu học kỳ của lớp đang ở trạng thái ongoing.
   // Nếu backend chưa trả về semester_status thì cho phép (tránh khóa nút khi API chưa có field).
-  const semesterStatus = detail.semester_status ?? detail.semesterStatus;
+  const semesterStatus = detail?.semester_status ?? detail?.semesterStatus;
   const canCreateGroup = semesterStatus == null || semesterStatus === "ongoing";
 
   const handleClassChange = (value) => {
@@ -166,7 +172,7 @@ export default function ClassDetailPage() {
     if (value && Number(value) !== Number(id)) navigate(`/lecturer/classes/${value}`);
   };
 
-  const handleCreateGroupSubmit = async ({ name, members }) => {
+  const handleCreateGroupSubmit = async ({ name, topic, topic_desc, zalo_link, category, mentor, members, leaderId }) => {
     if (!detail?.id || !name?.trim()) return;
     setCreateGroupLoading(true);
     try {
@@ -176,27 +182,30 @@ export default function ClassDetailPage() {
         class_id: Number(detail.id),
         group_code: groupCode,
         group_name: name.trim(),
-        description: null,
+        topic: topic,
+        topic_desc: topic_desc,
+        zalo_link: zalo_link,
+        category: category,
+        mentor_name: mentor,
+        mentor_dept: "Khoa Hệ thống Thông tin", // Default as seen in image
         max_members: 6,
         status: "forming",
       });
       const groupId = createRes?.data?.data?.id ?? createRes?.data?.id;
       if (groupId && Array.isArray(members) && members.length > 0) {
-        for (let i = 0; i < members.length; i++) {
+        for (const memberId of members) {
           await GroupApi.addMember(groupId, {
-            student_id: Number(members[i]),
-            role: i === 0 ? "leader" : "member",
+            student_id: Number(memberId),
+            role: Number(memberId) === Number(leaderId) ? "leader" : "member",
           });
         }
       }
       setCreateGroupModalOpen(false);
+      setGroupFormKey((prev) => prev + 1);
       toast.success("Tạo nhóm thành công.");
       await fetchDetail();
     } catch (err) {
-      const msg =
-        err?.response?.data?.message ||
-        err?.message ||
-        "Không thể tạo nhóm. Vui lòng thử lại.";
+      const msg = err?.message || "Không thể tạo nhóm. Vui lòng thử lại.";
       toast.error(msg);
     } finally {
       setCreateGroupLoading(false);
@@ -206,36 +215,47 @@ export default function ClassDetailPage() {
   return (
     <>
       {/* Section 1: Thống kê */}
-      <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <StatCard
-          title="Số sinh viên"
-          value={detail.studentCount}
-          icon={<Users size={22} />}
-          iconBg="bg-blue-100"
-          iconColor="text-blue-500"
-        />
-        <StatCard
-          title="Nhóm sinh viên"
-          value={detail.groupCount}
-          icon={<StatIconGroups />}
-          iconBg="bg-amber-100"
-          iconColor="text-amber-600"
-        />
-        <StatCard
-          title="Bài tập"
-          value={detail.assignmentCount}
-          icon={<StatIconAssignment />}
-          iconBg="bg-purple-100"
-          iconColor="text-violet-600"
-        />
-        <StatCard
-          title="Cần chấm"
-          value={detail.needGradingCount}
-          icon={<StatIconGrading />}
-          iconBg="bg-green-100"
-          iconColor="text-green-600"
-        />
-      </section>
+      {pageLoading ? (
+        <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 animate-pulse">
+              <div className="h-4 bg-gray-200 rounded w-1/2 mb-3" />
+              <div className="h-6 bg-gray-100 rounded w-1/3" />
+            </div>
+          ))}
+        </section>
+      ) : (
+        <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <StatCard
+            title="Số sinh viên"
+            value={detail.studentCount}
+            icon={<Users size={22} />}
+            iconBg="bg-blue-100"
+            iconColor="text-blue-500"
+          />
+          <StatCard
+            title="Nhóm sinh viên"
+            value={detail.groupCount}
+            icon={<StatIconGroups />}
+            iconBg="bg-amber-100"
+            iconColor="text-amber-600"
+          />
+          <StatCard
+            title="Bài tập"
+            value={detail.assignmentCount}
+            icon={<StatIconAssignment />}
+            iconBg="bg-purple-100"
+            iconColor="text-violet-600"
+          />
+          <StatCard
+            title="Cần chấm"
+            value={detail.needGradingCount}
+            icon={<StatIconGrading />}
+            iconBg="bg-green-100"
+            iconColor="text-green-600"
+          />
+        </section>
+      )}
 
       {/* Section 2: Filter + Tạo nhóm */}
       <section className="mt-4 sm:mt-6 w-full p-4 bg-white rounded-2xl shadow-sm border border-gray-100">
@@ -279,35 +299,57 @@ export default function ClassDetailPage() {
       </section>
 
       {/* Section 3: Thông tin lớp học */}
-      <section className="mt-4 sm:mt-6">
-        <ClassInfo
-          classCode={detail.classCode}
-          lecturer={detail.lecturer}
-          subject={detail.subject}
-          semester={detail.semester}
-        />
-      </section>
+      {pageLoading ? (
+        <section className="mt-4 sm:mt-6">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 animate-pulse">
+            <div className="h-5 bg-gray-200 rounded w-1/4 mb-4" />
+            <div className="h-4 bg-gray-100 rounded w-1/2 mb-2" />
+            <div className="h-4 bg-gray-100 rounded w-2/3" />
+          </div>
+        </section>
+      ) : (
+        <section className="mt-4 sm:mt-6">
+          <ClassInfo
+            classCode={detail.classCode}
+            lecturer={detail.lecturer}
+            subject={detail.subject}
+            semester={detail.semester}
+          />
+        </section>
+      )}
 
-      {/* Section 4: Danh sách sinh viên (sau khi tạo nhóm: cột Nhóm*, lọc nhóm, Nhóm trưởng) */}
-      <section className="mt-4 sm:mt-6">
-        <StudentList
-          students={studentsWithGroupName}
-          totalCount={detail.studentCount}
-          groupCount={detail.groupCount > 0 ? detail.groupCount : null}
-          searchValue={searchQuery}
-          onSearchChange={setSearchQuery}
-          groupOptions={groupOptions}
-          selectedGroup={selectedGroup}
-          onGroupChange={setSelectedGroup}
-        />
-      </section>
+      {/* Section 4: Danh sách sinh viên */}
+      {pageLoading ? (
+        <section className="mt-4 sm:mt-6">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 animate-pulse">
+            <div className="h-5 bg-gray-200 rounded w-1/3 mb-4" />
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="h-12 bg-gray-50 rounded-lg mb-2" />
+            ))}
+          </div>
+        </section>
+      ) : (
+        <section className="mt-4 sm:mt-6">
+          <StudentList
+            students={studentsWithGroupName}
+            totalCount={detail.studentCount}
+            groupCount={detail.groupCount > 0 ? detail.groupCount : null}
+            searchValue={searchQuery}
+            onSearchChange={setSearchQuery}
+            groupOptions={groupOptions}
+            selectedGroup={selectedGroup}
+            onGroupChange={setSelectedGroup}
+          />
+        </section>
+      )}
 
       <CreateGroupModal
+        key={groupFormKey}
         isOpen={createGroupModalOpen}
         onClose={() => setCreateGroupModalOpen(false)}
         onSubmit={handleCreateGroupSubmit}
         loading={createGroupLoading}
-        students={(detail.students || [])
+        students={(detail?.students || [])
           .filter((s) => s.groupId == null)
           .map((s) => ({ id: s.id, name: s.name, student_code: s.student_code, major: s.major || "" }))}
       />

@@ -45,7 +45,11 @@ export default function ClassCard({
   onDetail,
 }) {
   const shownAvatars = avatars.slice(0, 3);
-  const extraCount   = Math.max(0, students - shownAvatars.length);
+  const extraCount = Math.max(0, students - 3);
+  
+  // If no actual avatars are provided, we show up to 3 placeholder avatars based on student count
+  const placeholderCount = shownAvatars.length === 0 ? Math.min(students, 3) : 0;
+  const placeholders = Array.from({ length: placeholderCount });
 
   const headerColor = useMemo(() => {
     const idx = hashCode(code) % CARD_HEADER_COLORS.length;
@@ -109,7 +113,7 @@ export default function ClassCard({
                 className="relative w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-white object-cover shrink-0"
               />
             ))}
-            {shownAvatars.length === 0 && [0, 1, 2].map((i) => (
+            {placeholders.map((_, i) => (
               <div
                 key={i}
                 style={{ marginLeft: i === 0 ? 0 : "-8px", zIndex: 3 - i }}

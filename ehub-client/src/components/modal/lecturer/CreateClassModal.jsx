@@ -91,6 +91,11 @@ export default function CreateClassModal({ isOpen, onClose, onCreate, loading = 
       return;
     }
 
+    if (files.length === 0) {
+      setImportError("Vui lòng import danh sách sinh viên trước khi tạo lớp.");
+      return;
+    }
+
     if (importSummary.needReview > 0) {
       setImportError("Danh sách sinh viên vẫn còn lỗi. Vui lòng sửa hết trước khi tạo lớp.");
       return;
@@ -266,7 +271,7 @@ export default function CreateClassModal({ isOpen, onClose, onCreate, loading = 
         <div className="px-5 sm:px-7 pb-6 sm:pb-7 pt-2 sticky bottom-0 bg-white">
           <button
             onClick={handleSubmit}
-            disabled={loading || !!displayImportError || importSummary.needReview > 0}
+            disabled={loading || !!displayImportError || importSummary.needReview > 0 || files.length === 0}
             className="
               w-full py-3 rounded-xl
               bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99]

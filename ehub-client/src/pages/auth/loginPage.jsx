@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { toast } from "react-toastify";
+import { useToast } from "@/components/ui/Toast";
 import { authApi } from "@/api/auth";
 import { selectAuth, setError, setUser } from "@/store/slices/authSlice";
 import { Roles } from "@/constants/roles";
@@ -35,6 +35,7 @@ const FieldError = ({ message }) =>
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function LoginPage() {
+  const toast = useToast();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -94,7 +95,7 @@ export default function LoginPage() {
           setFieldErrors({ id: "", password: "", general: "" });
           const msg = `Chào ${user.full_name || user.username || "bạn"}! Đăng nhập Google thành công.`;
           setSuccessMsg(msg);
-          toast.success(msg);
+          toast.success("Đăng nhập Google thành công", msg);
           setSearchParams({}, { replace: true });
           const targetRoute = getDefaultRouteForUser(user);
           setTimeout(() => navigate(targetRoute, { replace: true }), 150);
@@ -164,7 +165,7 @@ export default function LoginPage() {
 
     if (hasError) {
       setFieldErrors(errors);
-      // toast.error("Vui lòng kiểm tra lại thông tin đăng nhập.");
+      toast.warning("Thiếu thông tin", "Vui lòng kiểm tra lại các trường bắt buộc.");
       return;
     }
 
@@ -181,14 +182,14 @@ export default function LoginPage() {
       dispatch(setUser(user));
       const msg = `Chào mừng, ${user.full_name || user.username || "bạn"}! Đăng nhập thành công.`;
       setSuccessMsg(msg);
-      // toast.success(msg);
+      toast.success("Đăng nhập thành công", msg);
       const targetRoute = getDefaultRouteForUser(user);
       setTimeout(() => navigate(targetRoute, { replace: true }), 150);
     } catch (err) {
       const errMsg = err?.message || "Đăng nhập thất bại.";
       dispatch(setError(errMsg));
       setFieldErrors({ id: "error", password: "error", general: errMsg });
-      // toast.error(errMsg);
+      toast.error("Đăng nhập thất bại", errMsg);
     } finally {
       setLoading(false);
     }

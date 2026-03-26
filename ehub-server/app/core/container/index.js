@@ -12,7 +12,7 @@ import { createAuditService } from "app/core/services/audit.service.js";
  * Enterprise DI Container using Awilix — Proxy Mode
  * Tiêm db (mysql2 pool) + redis vào mỗi module bằng asValue
  */
-export const createContainer = ({ db, redis }) => {
+export const createContainer = ({ db, redis, minio }) => {
   // Tạo container mới của awilix, sử dụng PROXY mode (khuyên dùng)
   const container = createAwilixContainer({
     injectionMode: InjectionMode.PROXY,
@@ -22,6 +22,7 @@ export const createContainer = ({ db, redis }) => {
   container.register({
     db: asValue(db),
     redis: asValue(redis),
+    minio: asValue(minio),
     eventBus: asValue(eventBus),
     transaction: asValue(createTransactionManager(db)),
     auditService: asValue(createAuditService()),

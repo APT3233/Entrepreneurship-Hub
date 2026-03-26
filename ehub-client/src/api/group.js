@@ -24,6 +24,18 @@ const GroupApi = {
     const response = await instance.post(`/groups/${groupId}/members`, body);
     return response;
   },
+
+  /** Lấy danh sách thành viên của nhóm */
+  getMembers: async (groupId) => {
+    const response = await instance.get(`/groups/${groupId}/members`);
+    return response;
+  },
+
+  /** Cập nhật thông tin nhóm (body: group_name, category, topic, topic_desc, etc.) */
+  update: async (id, body) => {
+    const response = await instance.put(`/groups/${id}`, body);
+    return response;
+  },
 };
 
 export default GroupApi;

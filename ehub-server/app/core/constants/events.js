@@ -44,6 +44,11 @@ export const Events = Object.freeze({
   GROUP_MEMBER_ADDED: "group_member.added",
   GROUP_MEMBER_REMOVED: "group_member.removed",
 
+  // Assignment
+  ASSIGNMENT_CREATED: "assignment.created",
+  ASSIGNMENT_UPDATED: "assignment.updated",
+  ASSIGNMENT_DELETED: "assignment.deleted",
+
   // System
   CACHE_INVALIDATED: "cache.invalidated",
   NOTIFICATION_SEND: "notification.send",
