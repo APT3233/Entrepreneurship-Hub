@@ -8,31 +8,38 @@ import { ClassModule } from "app/modules/class/index.js";
 import { StudentModule } from "app/modules/student/index.js";
 import { GroupModule } from "app/modules/group/index.js";
 import { AssignmentModule } from "app/modules/assignment/index.js";
+import { MailModule } from "app/modules/mail/index.js";
 
 const MODULES = [
   AuthModule,
   UserModule,
   SubjectModule,
   SemesterModule,
+  MailModule,
   ClassModule,
   StudentModule,
   GroupModule,
   AssignmentModule,
 ];
 
-export const loadRoutes = (app, container) => {
-  const prefix = appConfig.apiPrefix; // '/api/v1'
-
+/** Đăng ký DI của toàn bộ module (repositories, services). Dùng chung API + worker fork (mailOutbox.entry). */
+export const registerAppModules = (container) => {
   for (const mod of MODULES) {
     if (mod.register) mod.register(container);
   }
+};
+
+export const loadRoutes = (app, container) => {
+  const prefix = appConfig.apiPrefix; // '/api/v1'
+
+  registerAppModules(container);
 
   for (const mod of MODULES) {
     const router = mod.router(container);
     app.use(`${prefix}${mod.path}`, router);
-    logger.info(
-      `[Bootstrap] Route mounted: [${mod.name.toUpperCase()}] ${prefix}${mod.path}`,
-    );
+    // logger.info(
+    //   `[Bootstrap] Route mounted: [${mod.name.toUpperCase()}] ${prefix}${mod.path}`,
+    // );
   }
 
   return app;

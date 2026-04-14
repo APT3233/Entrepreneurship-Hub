@@ -96,7 +96,8 @@ export default function GroupCard({
   const warnStyle = WARNING_STYLE[status];
 
   const shownAvatars = avatars.slice(0, 3);
-  const extraCount   = Math.max(0, members - shownAvatars.length);
+  const placeholderCount = Math.max(0, Math.min(members, 3) - shownAvatars.length);
+  const extraCount = Math.max(0, members - 3);
 
   return (
     <div className="bg-white rounded-2xl border-[1.5px] border-blue-400/60 shadow-sm px-4 sm:px-6 py-4 sm:py-5 w-full flex flex-col gap-4 sm:gap-5 transition-all">
@@ -152,20 +153,20 @@ export default function GroupCard({
       <div className="flex items-center justify-between mt-1 pt-1">
         <div className="flex items-center">
           <div className="flex -space-x-2">
-            {shownAvatars.length > 0
-              ? shownAvatars.map((src, i) => (
-                  <img key={i} src={src} alt=""
-                    className="w-7 h-7 sm:w-9 sm:h-9 rounded-full border-2 border-white object-cover shadow-sm"
-                  />
-                ))
-              : [0, 1, 2].map((i) => (
-                  <div key={i}
-                    className="w-7 h-7 sm:w-9 sm:h-9 rounded-full border-2 border-white bg-gray-100 flex items-center justify-center shadow-sm"
-                  >
-                    <Users size={12} className="text-gray-300 sm:w-[14px] sm:h-[14px]" />
-                  </div>
-                ))
-            }
+            {shownAvatars.map((src, i) => (
+              <img key={`avatar-${i}`} src={src} alt=""
+                className="w-7 h-7 sm:w-9 sm:h-9 rounded-full border-2 border-white object-cover shadow-sm transition-transform hover:translate-y-[-2px]"
+                style={{ zIndex: 10 - i }}
+              />
+            ))}
+            {Array.from({ length: placeholderCount }).map((_, i) => (
+              <div key={`placeholder-${i}`}
+                className="w-7 h-7 sm:w-9 sm:h-9 rounded-full border-2 border-white bg-gray-100 flex items-center justify-center shadow-sm"
+                style={{ zIndex: 5 - i }}
+              >
+                <Users size={12} className="text-gray-300 sm:w-[14px] sm:h-[14px]" />
+              </div>
+            ))}
           </div>
           {extraCount > 0 && (
             <div className="ml-2 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center">

@@ -7,6 +7,10 @@ import {
 } from "../errors/errorFactory.js";
 import { hasMinRole } from "../constants/roles.js";
 import { blacklistKey } from "../cache/keys.js";
+import {
+  AUTH_COOKIE_ACCESS_TOKEN,
+  AUTH_HEADER_BEARER_PREFIX,
+} from "../constants/authHttp.js";
 
 /**
  * authenticate middleware — factory version
@@ -35,10 +39,10 @@ export const authenticate = async (req, _res, next) => {
   const authHeader = req.headers.authorization;
   let token = null;
 
-  if (authHeader?.startsWith("Bearer ")) {
-    token = authHeader.slice(7);
-  } else if (req.cookies?.access_token) {
-    token = req.cookies.access_token;
+  if (authHeader?.startsWith(AUTH_HEADER_BEARER_PREFIX)) {
+    token = authHeader.slice(AUTH_HEADER_BEARER_PREFIX.length);
+  } else if (req.cookies?.[AUTH_COOKIE_ACCESS_TOKEN]) {
+    token = req.cookies[AUTH_COOKIE_ACCESS_TOKEN];
   }
 
   if (!token) return next(TokenInvalid());
@@ -73,8 +77,10 @@ export const authenticate = async (req, _res, next) => {
 export const optionalAuthenticate = async (req, _res, next) => {
   const authHeader = req.headers.authorization;
   let token = null;
-  if (authHeader?.startsWith("Bearer ")) token = authHeader.slice(7);
-  else if (req.cookies?.access_token) token = req.cookies.access_token;
+  if (authHeader?.startsWith(AUTH_HEADER_BEARER_PREFIX))
+    token = authHeader.slice(AUTH_HEADER_BEARER_PREFIX.length);
+  else if (req.cookies?.[AUTH_COOKIE_ACCESS_TOKEN])
+    token = req.cookies[AUTH_COOKIE_ACCESS_TOKEN];
   if (!token) return next();
   try {
     const decoded = jwt.verify(token, jwtConfig.secret, { issuer: jwtConfig.issuer, algorithms: [jwtConfig.algorithm] });

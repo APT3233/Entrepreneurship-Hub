@@ -18,6 +18,7 @@ export const createGroupMemberController = ({ groupMemberService }) => {
     const member = await groupMemberService.addMember(
       req.params.groupId,
       req.body,
+      req.user,
     );
     return sendCreated(res, {
       data: member,
@@ -25,13 +26,27 @@ export const createGroupMemberController = ({ groupMemberService }) => {
     });
   });
 
+  const update = catchAsync(async (req, res) => {
+    const member = await groupMemberService.updateMember(
+      req.params.groupId,
+      req.params.studentId,
+      req.body,
+      req.user,
+    );
+    return sendSuccess(res, {
+      data: member,
+      message: "Group member updated successfully",
+    });
+  });
+
   const remove = catchAsync(async (req, res) => {
     await groupMemberService.removeMember(
       req.params.groupId,
       req.params.studentId,
+      req.user,
     );
     return sendNoContent(res);
   });
 
-  return { list, add, remove };
+  return { list, add, update, remove };
 };

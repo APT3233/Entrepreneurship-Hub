@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+SERVER_DIR="$ROOT/ehub-server"
+CLIENT_DIR="$ROOT/ehub-client"
+
+if [[ ! -d "$SERVER_DIR" ]] || [[ ! -d "$CLIENT_DIR" ]]; then
+  echo "Lỗi: không tìm thấy ehub-server hoặc ehub-client dưới $ROOT" >&2
+  exit 1
+fi
+
+command -v npm >/dev/null || { echo "Lỗi: cần npm trong PATH" >&2; exit 1; }
+
+# --- Dọn dẹp tiến trình cũ ---
+echo "[start] Dọn dẹp tiến trình cũ..."
+
+# Tắt Terminator cũ dựa trên tiêu đề cửa sổ
+if command -v terminator >/dev/null 2>&1; then
+  pkill -f "E-HUB — API (dev:linux)" 2>/dev/null || true
+  pkill -f "E-HUB — FE (vite)" 2>/dev/null || true
+fi
+
+# Đọc port từ env và kill process đang chiếm port
+if [[ -f "$SERVER_DIR/.env.linux" ]]; then
+  P_API=$(grep "APP_PORT=" "$SERVER_DIR/.env.linux" | cut -d'=' -f2 | tr -d '\r ' | grep -o '[0-9]*' || echo "7777")
+  P_FE=$(grep "CLIENT_PORT=" "$SERVER_DIR/.env.linux" | cut -d'=' -f2 | tr -d '\r ' | grep -o '[0-9]*' || echo "5173")
+  [[ -n "$P_API" ]] && fuser -k "$P_API/tcp" 2>/dev/null || true
+  [[ -n "$P_FE" ]] && fuser -k "$P_FE/tcp" 2>/dev/null || true
+else
+  fuser -k 7777/tcp 2>/dev/null || true
+  fuser -k 5173/tcp 2>/dev/null || true
+fi
+
+# Kill thêm theo pattern đường dẫn để chắc chắn (nếu không dùng terminator hoặc port chưa kịp bind)
+pkill -f "node.*$(basename "$SERVER_DIR")" 2>/dev/null || true
+pkill -f "node.*$(basename "$CLIENT_DIR")" 2>/dev/null || true
+
+sleep 1
+echo "[start] Đã dọn dẹp xong."
+
+start_inline() {
+  cleanup() {
+    if [[ -n "${SERVER_PID:-}" ]] && kill -0 "$SERVER_PID" 2>/dev/null; then
+      kill "$SERVER_PID" 2>/dev/null || true
+    fi
+    if [[ -n "${CLIENT_PID:-}" ]] && kill -0 "$CLIENT_PID" 2>/dev/null; then
+      kill "$CLIENT_PID" 2>/dev/null || true
+    fi
+  }
+  trap cleanup EXIT INT TERM
+
+  echo "[start] Repo: $ROOT"
+  echo "[start] Backend: npm run dev:linux (ehub-server)"
+  echo "[start] Frontend: npm run dev (ehub-client)"
+  echo "[start] Ctrl+C để dừng cả hai."
+  echo ""
+
+  ( cd "$SERVER_DIR" && export FORCE_COLOR=1 && exec npm run dev:linux 2>&1 | tee app.log) &
+  SERVER_PID=$!
+  ( cd "$CLIENT_DIR" && exec npm run dev ) &
+  CLIENT_PID=$!
+  wait "$SERVER_PID" "$CLIENT_PID" || true
+}
+
+start_terminator() {
+
+  local -a env_cmd=(env "PATH=$PATH" "HOME=${HOME:-}" "USER=${USER:-}")
+  [[ -n "${NVM_DIR:-}" ]] && env_cmd+=("NVM_DIR=$NVM_DIR")
+  [[ -n "${VOLTA_HOME:-}" ]] && env_cmd+=("VOLTA_HOME=$VOLTA_HOME")
+  [[ -n "${ASDF_DIR:-}" ]] && env_cmd+=("ASDF_DIR=$ASDF_DIR")
+  [[ -n "${FNM_MULTISHELL_PATH:-}" ]] && env_cmd+=("FNM_MULTISHELL_PATH=$FNM_MULTISHELL_PATH")
+
+  local api_cmd fe_cmd
+  api_cmd="command -v npm >/dev/null 2>&1 || { [[ -f \"\$HOME/.nvm/nvm.sh\" ]] && . \"\$HOME/.nvm/nvm.sh\"; }; cd $(printf %q "$SERVER_DIR") && export FORCE_COLOR=1 && npm run dev:linux 2>&1 | tee app.log; exec bash"
+  fe_cmd="command -v npm >/dev/null 2>&1 || { [[ -f \"\$HOME/.nvm/nvm.sh\" ]] && . \"\$HOME/.nvm/nvm.sh\"; }; cd $(printf %q "$CLIENT_DIR") && export FORCE_COLOR=1 && npm run dev; exec bash"
+
+  terminator --working-directory "$SERVER_DIR" \
+    -T "E-HUB — API (dev:linux)" \
+    -x "${env_cmd[@]}" bash -c "$api_cmd" &
+  sleep 0.5
+  terminator --new-tab \
+    --working-directory "$CLIENT_DIR" \
+    -T "E-HUB — FE (vite)" \
+    -x "${env_cmd[@]}" bash -c "$fe_cmd"
+}
+
+if [[ "${EHUB_START_INLINE:-0}" == "1" ]]; then
+  start_inline
+elif command -v terminator >/dev/null 2>&1; then
+  start_terminator
+else
+  echo "Lỗi: không thấy lệnh «terminator»." >&2
+  echo "     Cài gói terminator, hoặc chạy trong một terminal: EHUB_START_INLINE=1 $0" >&2
+  exit 1
+fi

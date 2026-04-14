@@ -9,9 +9,11 @@ export const createEnrollmentRepository = ({ db }) => {
 
   const findByClass = async (classId) => {
     const sql = `
-      SELECT cs.*, s.student_code, s.full_name, s.email, s.phone, s.major
+      SELECT cs.*, s.student_code, s.full_name, s.email, s.phone, s.major, s.user_id,
+             u.avatar_url AS avatar_url
       FROM class_students cs
         JOIN students s ON s.id = cs.student_id
+        LEFT JOIN users u ON u.id = s.user_id AND u.deleted_at IS NULL
       WHERE cs.class_id = :classId
       ORDER BY s.student_code ASC
     `;

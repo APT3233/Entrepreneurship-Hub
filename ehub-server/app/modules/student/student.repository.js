@@ -7,6 +7,18 @@ export const createStudentRepository = ({ db }) => {
     return base.findOne({ student_code: code });
   };
 
+  /** Sinh viên còn hiệu lực (deleted_at NULL), so khớp MSSV không phân biệt hoa thường. */
+  const findActiveByStudentCode = async (code) => {
+    const sql = `
+      SELECT * FROM students
+      WHERE deleted_at IS NULL
+        AND LOWER(TRIM(student_code)) = LOWER(TRIM(:code))
+      LIMIT 1
+    `;
+    const [rows] = await db.execute(sql, { code });
+    return rows[0] || null;
+  };
+
   const findByEmail = async (email) => {
     return base.findOne({ email });
   };
@@ -30,6 +42,7 @@ export const createStudentRepository = ({ db }) => {
   return {
     ...base,
     findByCode,
+    findActiveByStudentCode,
     findByEmail,
     findByUserId,
     search,

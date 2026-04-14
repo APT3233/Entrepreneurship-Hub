@@ -1,6 +1,6 @@
-
 import React from "react";
 import LoginPage from "@/pages/auth/loginPage";
+import ActivatePage from "@/pages/auth/ActivatePage";
 
 export default function init(routes) {
   const authRoutes = {
@@ -14,4 +14,5 @@ export default function init(routes) {
   };
 
   routes.push(authRoutes);
+  routes.push({ path: "/activate", element: <ActivatePage /> });
 }

@@ -6,6 +6,7 @@ import { createClassRouter } from "./class.route.js";
 import { createEnrollmentRepository } from "./sub-modules/enrollment/enrollment.repository.js";
 import { createEnrollmentService } from "./sub-modules/enrollment/enrollment.service.js";
 import { createEnrollmentController } from "./sub-modules/enrollment/enrollment.controller.js";
+import { createClassInviteRepository } from "./sub-modules/class-invite/classInvite.repository.js";
 
 export const ClassModule = {
   name: "class",
@@ -13,6 +14,8 @@ export const ClassModule = {
 
   register: (container) => {
     container.register({
+      /** Bảng `class_invites` — tên DI giữ `inviteRepository` để tương thích auth/group/worker */
+      inviteRepository: asFunction(createClassInviteRepository).singleton(),
       classRepository: asFunction(createClassRepository).singleton(),
       classService: asFunction(createClassService).singleton(),
       classController: asFunction(createClassController).singleton(),

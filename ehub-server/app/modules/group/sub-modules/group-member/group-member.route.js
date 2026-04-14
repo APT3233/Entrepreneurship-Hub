@@ -6,13 +6,15 @@ import {
   addGroupMemberSchema,
   removeGroupMemberSchema,
   listGroupMemberSchema,
+  updateGroupMemberSchema,
 } from "./group-member.validation.js";
 
 /**
  * Group Member Router — nested under /groups/:groupId
  *
  * GET    /                   — list group members
- * POST   /                   — add member             [LECTURER+]
+ * POST   /                   — add member (leader only)
+ * PATCH  /:studentId         — update role/status      [LECTURER+]
  * DELETE /:studentId         — remove member           [LECTURER+]
  */
 export const createGroupMemberRouter = (container) => {
@@ -28,9 +30,17 @@ export const createGroupMemberRouter = (container) => {
   router.post(
     "/",
     authenticate,
-    roleGuard("admin", "department_head", "lecturer"),
+    roleGuard("admin", "department_head", "lecturer", "student"),
     validateRequest(addGroupMemberSchema),
     groupMemberController.add,
+  );
+
+  router.patch(
+    "/:studentId",
+    authenticate,
+    roleGuard("admin", "department_head", "lecturer"),
+    validateRequest(updateGroupMemberSchema),
+    groupMemberController.update,
   );
 
   router.delete(

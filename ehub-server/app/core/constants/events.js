@@ -49,6 +49,9 @@ export const Events = Object.freeze({
   ASSIGNMENT_UPDATED: "assignment.updated",
   ASSIGNMENT_DELETED: "assignment.deleted",
 
+  // Mail / outbox
+  MAIL_DISPATCH_COMPLETED: "mail.dispatch.completed",
+
   // System
   CACHE_INVALIDATED: "cache.invalidated",
   NOTIFICATION_SEND: "notification.send",

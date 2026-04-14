@@ -67,8 +67,8 @@ export default function ClassesPage() {
     [semesterList, filterYear]
   );
 
-  const ongoingSemestersInYear = useMemo(
-    () => semestersInYear.filter((s) => s.status === "ongoing"),
+  const activatableSemestersInYear = useMemo(
+    () => semestersInYear.filter((s) => s.status === "ongoing" || s.status === "upcoming"),
     [semestersInYear]
   );
 
@@ -105,15 +105,15 @@ export default function ClassesPage() {
   const canCreateClass = useMemo(() => {
     if (!filterYear || !semestersInYear.length) return false;
 
-    // Đang chọn 1 kỳ cụ thể → chỉ cho tạo khi kỳ đó đang ongoing
+    // Đang chọn 1 kỳ cụ thể → cho tạo khi kỳ đó đang ongoing hoặc upcoming
     if (filterSemesterId && filterSemesterId !== VALUE_ALL_SEMESTERS) {
       const sem = semesterList.find((s) => s.id === filterSemesterId);
-      return sem?.status === "ongoing";
+      return sem?.status === "ongoing" || sem?.status === "upcoming";
     }
 
-    // Chọn "Tất cả kỳ" trong năm → cho tạo nếu trong năm có ít nhất 1 kỳ ongoing
-    return ongoingSemestersInYear.length > 0;
-  }, [filterYear, filterSemesterId, semestersInYear, ongoingSemestersInYear, semesterList]);
+    // Chọn "Tất cả kỳ" trong năm → cho tạo nếu trong năm có ít nhất 1 kỳ active
+    return activatableSemestersInYear.length > 0;
+  }, [filterYear, filterSemesterId, semestersInYear, activatableSemestersInYear, semesterList]);
 
   // Fetch stats + danh sách lớp chỉ khi đã chọn Năm và Kỳ (thứ tự: Năm → Kỳ → Lớp)
   useEffect(() => {
@@ -157,6 +157,7 @@ export default function ClassesPage() {
             groups: c.group_count ?? 0,
             completion: 0,
             semester_id: c.semester_id,
+            semester_status: c.semester_status,
             avatars: c.avatars ?? [],
           }))
         );
@@ -196,11 +197,11 @@ export default function ClassesPage() {
     setCreateError(null);
     setCreateLoading(true);
     const studentList = (data?.students?.list || []).map((s) => ({
-        memberCode: s.memberCode || s.rollNumber,
-        rollNumber: s.rollNumber,
-        email: s.email,
-        fullname: s.fullname,
-        major: s.major,
+        memberCode: String(s.memberCode || s.rollNumber || "").trim(),
+        rollNumber: String(s.rollNumber || "").trim(),
+        email: String(s.email || "").trim(),
+        fullname: String(s.fullname || "").trim(),
+        major: String(s.major || "").trim(),
         status: s.status || "inactive",
       }));
     const body = {
@@ -214,14 +215,16 @@ export default function ClassesPage() {
       await ClassApi.create(body);
       setCreateModalOpen(false);
       toast.success("Tạo lớp học thành công");
-      // Refetch stats and list to stay in sync
-      const baseParams = { year: filterYear };
-      const semesterId =
-        filterSemesterId && filterSemesterId !== VALUE_ALL_SEMESTERS ? filterSemesterId : undefined;
-      const params = { ...baseParams, ...(semesterId != null && { semester_id: semesterId }) };
+
+      if (data.year) setFilterYear(data.year);
+      const targetYear = data.year || filterYear;
+      const baseParams = { year: targetYear };
+    
+      const params = { ...baseParams, lecturerScope: "mine", limit: 50, page: 1 };
+      
       const [statsRes, listRes] = await Promise.all([
         ClassApi.getStats(params),
-        ClassApi.getList({ lecturerScope: "mine", limit: 50, page: 1, ...params }),
+        ClassApi.getList(params),
       ]);
       const s = statsRes?.data?.data || statsRes?.data || {};
       setStats({
@@ -240,13 +243,32 @@ export default function ClassesPage() {
           groups: c.group_count ?? 0,
           completion: 0,
           semester_id: c.semester_id,
+          semester_status: c.semester_status,
           avatars: c.avatars ?? [],
         }))
       );
+      setFilterClass(VALUE_ALL_CLASSES);
     } catch (err) {
-      const msg = err?.message || "Không thể tạo lớp";
-      setCreateError(msg);
-      toast.error(msg);
+      const mainMsg = err?.message || "Không thể tạo lớp";
+      let detailMsg = "";
+      if (err.details && Array.isArray(err.details)) {
+        detailMsg = err.details
+          .map((d) => {
+            const match = d.field.match(/students\.list\.(\d+)\.(.+)/);
+            if (match) {
+              const row = parseInt(match[1]) + 1;
+              const field = match[2];
+              const fieldName = field === "email" ? "Email" : field;
+              return `Dòng ${row} (${fieldName} sai)`;
+            }
+            return d.message;
+          })
+          .join(", ");
+      }
+      const fullMsg = detailMsg ? `${mainMsg}: ${detailMsg}` : mainMsg;
+      
+      setCreateError(fullMsg);
+      toast.error(mainMsg, detailMsg);
       console.error("Create class error:", err);
     } finally {
       setCreateLoading(false);
@@ -352,6 +374,7 @@ export default function ClassesPage() {
                 students={c.students}
                 groups={c.groups}
                 completion={c.completion}
+                semesterStatus={c.semester_status}
                 avatars={c.avatars ?? []}
                 onDetail={() => navigate(`/lecturer/classes/${c.id}`)}
               />
@@ -368,6 +391,7 @@ export default function ClassesPage() {
           setCreateError(null);
         }}
         onCreate={handleCreateClass}
+        onClearError={() => setCreateError(null)}
         loading={createLoading}
         error={createError}
       />

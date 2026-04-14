@@ -73,36 +73,16 @@ export default function AppSidebar({ items, subtitle = "Cổng giảng viên" })
 
         {/* Nav */}
         <nav className="flex flex-col gap-0.5 p-2 mt-1">
-          {navItems.map(({ label, icon: Icon, path }, i) => (
-            <NavLink
-              key={path}
-              to={path}
-              end={i === 0}
-              style={{ transitionDelay: isOpen ? `${i * 20}ms` : "0ms" }}
-              className={({ isActive }) =>
-                `group flex items-center gap-3 px-[14px] py-[11px] rounded-xl text-sm font-medium
-                 transition-all duration-200 overflow-hidden whitespace-nowrap
-                 ${
-                   isActive
-                     ? "bg-indigo-50 text-indigo-600"
-                     : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
-                 }`
-              }
-            >
-              {({ isActive }) => (
-                <>
+          {navItems.map((item, i) => {
+            if (item.disabled) {
+              return (
+                <div
+                  key={item.path}
+                  style={{ transitionDelay: isOpen ? `${i * 20}ms` : "0ms" }}
+                  className="group flex items-center gap-3 px-[14px] py-[11px] rounded-xl text-sm font-medium transition-all duration-200 overflow-hidden whitespace-nowrap text-slate-300 cursor-not-allowed"
+                >
                   <span className="relative shrink-0">
-                    <Icon
-                      size={20}
-                      className={`transition-colors duration-200 ${
-                        isActive
-                          ? "text-indigo-500"
-                          : "text-slate-400 group-hover:text-slate-600"
-                      }`}
-                    />
-                    {isActive && !isOpen && (
-                      <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-indigo-500" />
-                    )}
+                    <item.icon size={20} className="transition-colors duration-200 text-slate-300" />
                   </span>
                   <span
                     style={{
@@ -111,12 +91,56 @@ export default function AppSidebar({ items, subtitle = "Cổng giảng viên" })
                     }}
                     className="transition-all duration-300 ease-in-out overflow-hidden"
                   >
-                    {label}
+                    {item.label}
                   </span>
-                </>
-              )}
-            </NavLink>
-          ))}
+                </div>
+              );
+            }
+            return (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                end={i === 0}
+                style={{ transitionDelay: isOpen ? `${i * 20}ms` : "0ms" }}
+                className={({ isActive }) =>
+                  `group flex items-center gap-3 px-[14px] py-[11px] rounded-xl text-sm font-medium
+                 transition-all duration-200 overflow-hidden whitespace-nowrap
+                 ${
+                   isActive
+                     ? "bg-indigo-50 text-indigo-600"
+                     : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
+                 }`
+                }
+              >
+                {({ isActive }) => (
+                  <>
+                    <span className="relative shrink-0">
+                      <item.icon
+                        size={20}
+                        className={`transition-colors duration-200 ${
+                          isActive
+                            ? "text-indigo-500"
+                            : "text-slate-400 group-hover:text-slate-600"
+                        }`}
+                      />
+                      {isActive && !isOpen && (
+                        <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-indigo-500" />
+                      )}
+                    </span>
+                    <span
+                      style={{
+                        opacity: isOpen ? 1 : 0,
+                        width: isOpen ? "auto" : 0,
+                      }}
+                      className="transition-all duration-300 ease-in-out overflow-hidden"
+                    >
+                      {item.label}
+                    </span>
+                  </>
+                )}
+              </NavLink>
+            );
+          })}
         </nav>
 
         {/* Footer — Pin */}
@@ -161,37 +185,49 @@ export default function AppSidebar({ items, subtitle = "Cổng giảng viên" })
         px-2 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))]
       "
       >
-        {navItems.map(({ label, icon: Icon, path }, index) => (
-          <NavLink
-            key={path}
-            to={path}
-            end={index === 0}
-            className={({ isActive }) =>
-              `flex flex-col items-center gap-1 py-1 flex-1 min-w-0 rounded-xl transition-all duration-200
+        {navItems.map((item, index) => {
+          if (item.disabled) {
+            return (
+              <div key={item.path} className="flex flex-col items-center gap-1 py-1 flex-1 min-w-0 rounded-xl text-slate-300 cursor-not-allowed">
+                <span className="w-8 h-8 flex items-center justify-center rounded-xl transition-all duration-200">
+                  <item.icon size={18} strokeWidth={1.8} />
+                </span>
+                <span className="text-[9px] font-medium leading-none w-full text-center px-0.5 whitespace-nowrap overflow-hidden text-ellipsis">{item.label}</span>
+              </div>
+            );
+          }
+          return (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              end={index === 0}
+              className={({ isActive }) =>
+                `flex flex-col items-center gap-1 py-1 flex-1 min-w-0 rounded-xl transition-all duration-200
                ${isActive ? "text-indigo-600" : "text-slate-400"}`
-            }
-          >
-            {({ isActive }) => (
-              <>
-                <span
-                  className={`
+              }
+            >
+              {({ isActive }) => (
+                <>
+                  <span
+                    className={`
                   w-8 h-8 flex items-center justify-center rounded-xl transition-all duration-200
                   ${isActive ? "bg-indigo-50 scale-110" : ""}
                 `}
-                >
-                  <Icon size={18} strokeWidth={isActive ? 2.5 : 1.8} />
-                </span>
-                <span
-                  className={`text-[9px] font-medium leading-none w-full text-center px-0.5 whitespace-nowrap overflow-hidden text-ellipsis transition-all duration-200 ${
-                    isActive ? "text-indigo-600" : "text-slate-400"
-                  }`}
-                >
-                  {label}
-                </span>
-              </>
-            )}
-          </NavLink>
-        ))}
+                  >
+                    <item.icon size={18} strokeWidth={isActive ? 2.5 : 1.8} />
+                  </span>
+                  <span
+                    className={`text-[9px] font-medium leading-none w-full text-center px-0.5 whitespace-nowrap overflow-hidden text-ellipsis transition-all duration-200 ${
+                      isActive ? "text-indigo-600" : "text-slate-400"
+                    }`}
+                  >
+                    {item.label}
+                  </span>
+                </>
+              )}
+            </NavLink>
+          );
+        })}
       </nav>
     </>
   );

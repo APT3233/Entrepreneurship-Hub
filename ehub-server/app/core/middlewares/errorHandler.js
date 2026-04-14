@@ -4,10 +4,11 @@ export const errorHandler = (err, req, res, _next) => {
   const statusCode = err.statusCode ?? 500;
   const isDev = process.env.NODE_ENV !== "production";
 
-  // chỉ log 500+ errors hoặc non-operational
-  if (statusCode >= 500 || !err.isOperational) {
-    logger.error(err.message, {
+  // chỉ log 500+ errors hoặc non-operational, hoặc lỗi validation để debug
+  if (statusCode >= 500 || statusCode === 400 || !err.isOperational) {
+    logger.error(`${err.message} (${statusCode})`, {
       err,
+      details: err.details,
       req: { method: req.method, url: req.originalUrl, ip: req.ip },
       requestId: req.requestId,
     });

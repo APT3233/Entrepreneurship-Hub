@@ -12,6 +12,7 @@ export default function ClassInfo({
   lecturer  = "TS. Nguyễn Văn B",
   subject   = "EXE404",
   semester  = "Fall 2026",
+  semesterStatus = null,
 }) {
   const rows = [
     [
@@ -28,9 +29,21 @@ export default function ClassInfo({
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-6 py-5 w-full">
 
       {/* Title */}
-      <h2 className="text-sm md:text-base font-bold text-gray-900 mb-5">
-        Thông tin lớp học
-      </h2>
+      <div className="flex items-center gap-3 mb-5">
+        <h2 className="text-sm md:text-base font-bold text-gray-900">
+          Thông tin lớp học
+        </h2>
+        {semesterStatus === "upcoming" && (
+          <span className="px-2 py-0.5 rounded-full bg-orange-50 text-orange-500 text-[10px] font-bold uppercase tracking-wider border border-orange-100">
+            Sắp diễn ra
+          </span>
+        )}
+        {semesterStatus === "ongoing" && (
+          <span className="px-2 py-0.5 rounded-full bg-green-50 text-green-600 text-[10px] font-bold uppercase tracking-wider border border-green-100">
+            Đang diễn ra
+          </span>
+        )}
+      </div>
 
       {/* Rows */}
       <div className="flex flex-col divide-y divide-gray-100">

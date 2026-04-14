@@ -6,6 +6,9 @@ import { createGroupRouter } from "./group.route.js";
 import { createGroupMemberRepository } from "./sub-modules/group-member/group-member.repository.js";
 import { createGroupMemberService } from "./sub-modules/group-member/group-member.service.js";
 import { createGroupMemberController } from "./sub-modules/group-member/group-member.controller.js";
+import { createGroupInviteRepository } from "./sub-modules/group-invite/groupInvite.repository.js";
+import { createGroupInviteService } from "./sub-modules/group-invite/groupInvite.service.js";
+import { createGroupInviteController } from "./sub-modules/group-invite/groupInvite.controller.js";
 
 export const GroupModule = {
   name: "group",
@@ -25,6 +28,9 @@ export const GroupModule = {
       groupMemberController: asFunction(
         createGroupMemberController,
       ).singleton(),
+      groupInviteRepository: asFunction(createGroupInviteRepository).singleton(),
+      groupInviteService: asFunction(createGroupInviteService).singleton(),
+      groupInviteController: asFunction(createGroupInviteController).singleton(),
     });
   },
 

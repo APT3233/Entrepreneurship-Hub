@@ -1,5 +1,6 @@
 import StudentLayout from "@/layouts/student";
 import StudentDashboard from "@/pages/student";
+import StudentGroupsPage from "@/pages/student/groups";
 import { Roles } from "@/constants/roles";
 
 export default function init(routes) {
@@ -11,6 +12,10 @@ export default function init(routes) {
       {
         path: "dashboard",
         element: <StudentDashboard />,
+      },
+      {
+        path: "groups",
+        element: <StudentGroupsPage />,
       },
     ],
   };

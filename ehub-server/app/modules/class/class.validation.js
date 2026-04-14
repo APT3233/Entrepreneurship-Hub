@@ -3,11 +3,11 @@ import Joi from "joi";
 const studentItemSchema = Joi.object({
   classCode: Joi.string().max(50).allow(""),
   rollNumber: Joi.string().max(20).allow(""),
-  email: Joi.string().email().required(),
+  email: Joi.string().email({ allowUnicode: false }).lowercase().required(),
   memberCode: Joi.string().max(50).required(),
   fullname: Joi.string().max(150).required(),
   major: Joi.string().max(100).allow(null, ""),
-  status: Joi.string().valid("active", "inactive").default("inactive"),
+  status: Joi.string().valid("active", "inactive", "pending", "graduated", "suspended").default("inactive"),
 });
 
 export const createClassSchema = {

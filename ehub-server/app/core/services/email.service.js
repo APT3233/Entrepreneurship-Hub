@@ -1,26 +1,53 @@
+import nodemailer from "nodemailer";
 import { logger } from "app/core/logger/index.js";
 
 /**
- * Enterprise Email Service Abstraction
- * Supports multiple drivers (SMTP, SendGrid, etc.) and template-based emails.
+ * Email abstraction: SMTP (nodemailer) or console driver for development.
  */
-export const createEmailService = (
-  config = { driver: "smtp", from: "noreply@ehub.edu.vn" },
-) => {
-  const { driver, from } = config;
+export const createEmailService = (config = {}) => {
+  const {
+    driver = "console",
+    from = "noreply@ehub.edu.vn",
+    smtp = {},
+    enabled = true,
+  } = config;
 
-  /**
-   * Send a raw email
-   * @param {Object} options - { to, subject, text, html }
-   */
-  const send = async ({ to, subject, text, html }) => {
-    logger.debug(
-      `[Email] Sending email to: ${to} | Subject: ${subject} | Driver: ${driver}`,
-    );
+  let transporter = null;
+  const getTransporter = () => {
+    if (transporter) return transporter;
+    const { host, port, secure, user, pass, pool, maxConnections, maxMessages } = smtp;
+    if (!host) {
+      logger.warn("[Email] SMTP host missing; falling back to console-style log only");
+      return null;
+    }
+    transporter = nodemailer.createTransport({
+      host,
+      port: Number(port) || 587,
+      secure: Boolean(secure),
+      pool: pool !== false,
+      maxConnections: Math.max(1, Number(maxConnections) || 5),
+      maxMessages: Math.max(1, Number(maxMessages) || 100),
+      auth: user && pass ? { user, pass } : undefined,
+    });
+    return transporter;
+  };
+
+  const send = async ({ to, subject, text, html, headers }) => {
+    if (!enabled) {
+      logger.info(`[Email][disabled] skip send to=${to} subject=${subject}`);
+      return true;
+    }
+
+    logger.debug(`[Email] to=${to} subject=${subject} driver=${driver}`);
 
     if (driver === "smtp") {
-      // TODO: Implement with nodemailer
-      logger.info(`[Email][SMTP] Email sent to ${to}`);
+      const tx = getTransporter();
+      if (!tx) {
+        logger.info(`[Email][fallback] To: ${to} | ${subject}`);
+        return false;
+      }
+      await tx.sendMail({ from, to, subject, text, html, ...(headers && { headers }) });
+      logger.info(`[Email][SMTP] sent to ${to}`);
       return true;
     }
 
@@ -29,7 +56,8 @@ export const createEmailService = (
       logger.info(`From: ${from}`);
       logger.info(`To: ${to}`);
       logger.info(`Subject: ${subject}`);
-      logger.info(`Body: ${text || "HTML Content"}`);
+      logger.info(`Body: ${text || "(html)"}`);
+      if (headers) logger.info(`Headers: ${JSON.stringify(headers)}`);
       logger.info("======================================================");
       return true;
     }
@@ -37,18 +65,10 @@ export const createEmailService = (
     throw new Error(`Email driver [${driver}] not implemented`);
   };
 
-  /**
-   * Send email using a predefined template
-   * @param {string} templateName
-   * @param {Object} context - Template variables
-   */
   const sendTemplate = async (to, templateName, context = {}) => {
-    logger.debug(`[Email] Processing template: ${templateName} for ${to}`);
-
-    // TODO: Integrate with template engine (Handlebars/EJS)
+    logger.debug(`[Email] template=${templateName} to=${to}`);
     const subject = `[E-HUB] Notification: ${templateName}`;
-    const text = `Hello, this is a message for ${templateName}`;
-
+    const text = `Hello, this is a message for ${templateName} (${JSON.stringify(context)})`;
     return send({ to, subject, text });
   };
 

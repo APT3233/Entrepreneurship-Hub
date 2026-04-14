@@ -10,6 +10,12 @@ import { UserIcon, LockIcon } from "@/components/icons/auth";
 import { GraduationCapIcon, LectureIcon } from "@/components/icons/education";
 import { AlertCircleIcon } from "@/components/icons/ui";
 import GoogleButton from "@/components/ui/Button/GoogleButton";
+import StudentNotInRosterModal from "@/components/modal/auth/StudentNotInRosterModal";
+import GoogleAccessDeniedModal from "@/components/modal/auth/GoogleAccessDeniedModal";
+import {
+  API_ERROR_STUDENT_NOT_IN_ROSTER,
+  API_ERROR_INSUFFICIENT_PERMISSION,
+} from "@/constants/apiErrors";
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 const TabButton = ({ active, onClick, icon, label }) => (
@@ -47,6 +53,8 @@ export default function LoginPage() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
   const [fieldErrors, setFieldErrors] = useState({ id: "", password: "", general: "" });
+  const [notInRosterModalOpen, setNotInRosterModalOpen] = useState(false);
+  const [googleAccessDeniedOpen, setGoogleAccessDeniedOpen] = useState(false);
 
   const { user, isAuthenticated, isLoading, error: authError } = useSelector(selectAuth);
   const isStudent = role === Roles.STUDENT;
@@ -67,6 +75,26 @@ export default function LoginPage() {
 
   // Xử lý redirect từ Google callback: thành công → /me + Redux + navigate; thất bại → Redux error + hiển thị
   useEffect(() => {
+    const googleErrCode = searchParams.get("google_error");
+    if (googleErrCode) {
+      dispatch(setError(null));
+      setFieldErrors((prev) => ({ ...prev, general: "" }));
+      if (googleErrCode === API_ERROR_INSUFFICIENT_PERMISSION) {
+        setGoogleAccessDeniedOpen(true);
+      } else {
+        toast.error(
+          "Đăng nhập Google thất bại",
+          "Vui lòng thử lại hoặc liên hệ quản trị viên."
+        );
+      }
+      setSearchParams((prev) => {
+        const n = new URLSearchParams(prev);
+        n.delete("google_error");
+        return n;
+      }, { replace: true });
+      return;
+    }
+
     const googleLogin = searchParams.get("google_login");
     const error = searchParams.get("error");
 
@@ -141,6 +169,8 @@ export default function LoginPage() {
     setId("");
     setPassword("");
     setSuccessMsg("");
+    setNotInRosterModalOpen(false);
+    setGoogleAccessDeniedOpen(false);
     clearErrors();
   };
 
@@ -186,6 +216,12 @@ export default function LoginPage() {
       const targetRoute = getDefaultRouteForUser(user);
       setTimeout(() => navigate(targetRoute, { replace: true }), 150);
     } catch (err) {
+      if (isStudent && err?.code === API_ERROR_STUDENT_NOT_IN_ROSTER) {
+        dispatch(setError(null));
+        setFieldErrors({ id: "", password: "", general: "" });
+        setNotInRosterModalOpen(true);
+        return;
+      }
       const errMsg = err?.message || "Đăng nhập thất bại.";
       dispatch(setError(errMsg));
       setFieldErrors({ id: "error", password: "error", general: errMsg });
@@ -411,6 +447,15 @@ export default function LoginPage() {
         </div>
 
       </div>
+
+      <StudentNotInRosterModal
+        isOpen={notInRosterModalOpen}
+        onClose={() => setNotInRosterModalOpen(false)}
+      />
+      <GoogleAccessDeniedModal
+        isOpen={googleAccessDeniedOpen}
+        onClose={() => setGoogleAccessDeniedOpen(false)}
+      />
     </div>
   );
 }

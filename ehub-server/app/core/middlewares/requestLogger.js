@@ -1,4 +1,5 @@
 import { logger } from "app/core/logger/index.js";
+import { AUTH_HEADER_BEARER_PREFIX } from "../constants/authHttp.js";
 
 const SENSITIVE_FIELDS = ["password", "token", "secret", "authorization"];
 const SKIP_PATHS = ["/health", "/favicon.ico"];
@@ -39,7 +40,7 @@ export const requestLogger = (req, res, next) => {
 
   const authHeader = headers.authorization;
   if (authHeader)
-    meta.auth = authHeader.startsWith("Bearer ") ? "Bearer ***" : "***";
+    meta.auth = authHeader.startsWith(AUTH_HEADER_BEARER_PREFIX) ? "Bearer ***" : "***";
 
   logger.info(`→ ${method} ${originalUrl}`, meta);
 

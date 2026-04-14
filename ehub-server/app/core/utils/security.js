@@ -1,3 +1,5 @@
+import { AUTH_COOKIE_REFRESH_TOKEN } from "app/core/constants/authHttp.js";
+
 /**
  * Remove sensitive fields from an object (e.g., user profile)
  * @param {Object} data - The object to sanitize
@@ -9,7 +11,7 @@ export const sanitize = (data, extraFields = []) => {
 
   const sensitiveFields = [
     "password",
-    "refresh_token",
+    AUTH_COOKIE_REFRESH_TOKEN,
     "secret",
     ...extraFields,
   ];

@@ -35,3 +35,16 @@ export const registerSchema = {
 // refreshToken and logout token are now sent via httpOnly cookies, not request body
 export const refreshSchema = {};
 export const logoutSchema = {};
+
+export const activatePreviewSchema = {
+  query: Joi.object({
+    token: Joi.string().length(64).hex().required(),
+  }),
+};
+
+export const activateBodySchema = {
+  body: Joi.object({
+    token: Joi.string().length(64).hex().required(),
+    password: Joi.string().min(6).max(128).required(),
+  }),
+};

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { Upload, File, Trash2, AlertTriangle, Users, CheckCircle } from "lucide-react";
 import * as XLSX from "xlsx";
 import StatCard from "@/components/ui/Card/StatCard";
@@ -14,6 +14,7 @@ export default function ImportStudentsStep({ onParsed, expectedClassCodes = [] }
   const [genericError, setGenericError] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const fileInputRef = useRef(null);
 
   const { students, summary } = useMemo(() => {
     const codes = Array.isArray(expectedClassCodes) ? expectedClassCodes : [];
@@ -140,6 +141,7 @@ export default function ImportStudentsStep({ onParsed, expectedClassCodes = [] }
     setRawStudents([]);
     setErrors([]);
     setPage(1);
+    if (fileInputRef.current) fileInputRef.current.value = "";
     if (onParsed) onParsed({ students: [], summary: { total: 0, valid: 0, needReview: 0 }, errors: [] });
   };
 
@@ -224,9 +226,10 @@ export default function ImportStudentsStep({ onParsed, expectedClassCodes = [] }
             ? "border-indigo-400 bg-indigo-50"
             : "border-gray-200 bg-gray-50 hover:border-indigo-300 hover:bg-indigo-50/40"}
         `}
-        onClick={() => document.getElementById("import-students-input")?.click()}
+        onClick={() => fileInputRef.current?.click()}
       >
         <input
+          ref={fileInputRef}
           id="import-students-input"
           type="file"
           accept=".xls,.xlsx,.csv"

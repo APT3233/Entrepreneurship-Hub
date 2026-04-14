@@ -1,13 +1,13 @@
 import { useMemo } from "react";
 import Dropdown from "@/components/ui/filter/DropDown";
-import { GroupIcon2 } from "@/components/icons/lecture";
+import { LastNameAvatar } from "@/components/icons/ui";
 
 /**
  * StudentList — Danh sách sinh viên (sau khi tạo nhóm: có cột Nhóm*, Nhóm trưởng, lọc theo nhóm)
  * Sắp xếp: theo nhóm (cùng nhóm đứng gần nhau), sinh viên chưa có nhóm xuống cuối.
  *
  * Props:
- * - students       : Array<{ id, mssv, name, email, major, isLeader?, groupId?, groupName? }>
+ * - students       : Array<{ id, mssv, name, email, major, avatar?, accountActivated?, isLeader?, groupId?, groupName? }>
  * - totalCount     : number
  * - groupCount     : number | null  — null = "Chưa có nhóm"
  * - searchValue    : string
@@ -15,6 +15,7 @@ import { GroupIcon2 } from "@/components/icons/lecture";
  * - groupOptions   : [{ label, value }] — options lọc nhóm (vd: Tất cả, Alpha, Beta)
  * - selectedGroup  : string  — value đang chọn
  * - onGroupChange  : (value: string) => void
+ * - activationOptions, selectedActivation, onActivationChange — lọc đã/chưa kích hoạt tài khoản
  */
 
 const MAJOR_COLOR = {
@@ -27,8 +28,8 @@ function majorColor(major) {
   return MAJOR_COLOR[major] ?? "text-gray-600";
 }
 
-const columnsWithoutGroup = ["STT", "MSSV", "Họ và tên", "Email", "Chuyên ngành"];
-const columnsWithGroup = ["STT", "MSSV", "Họ và tên", "Email", "Chuyên ngành", "Nhóm*"];
+const columnsWithoutGroup = ["STT", "MSSV", "Họ và tên", "Email", "Kích hoạt", "Chuyên ngành"];
+const columnsWithGroup = ["STT", "MSSV", "Họ và tên", "Email", "Kích hoạt", "Chuyên ngành", "Nhóm*"];
 
 export default function StudentList({
   students = [],
@@ -39,6 +40,9 @@ export default function StudentList({
   groupOptions = [],
   selectedGroup = "all",
   onGroupChange,
+  activationOptions = [],
+  selectedActivation = "all",
+  onActivationChange,
 }) {
   const hasGroups = groupOptions.length > 0;
   const columns = hasGroups ? columnsWithGroup : columnsWithoutGroup;
@@ -68,6 +72,11 @@ export default function StudentList({
           <p className="text-xs text-gray-400">
             Số nhóm: {groupCount != null ? `${groupCount} nhóm` : "Chưa có nhóm"}
           </p>
+          {students.length !== totalCount && totalCount > 0 && (
+            <p className="text-xs text-indigo-600 font-medium mt-0.5">
+              Đang hiển thị: {students.length} / {totalCount} sinh viên
+            </p>
+          )}
         </div>
         <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
           {hasGroups && onGroupChange && (
@@ -76,6 +85,14 @@ export default function StudentList({
               options={groupOptions}
               value={selectedGroup}
               onChange={onGroupChange}
+            />
+          )}
+          {activationOptions.length > 0 && onActivationChange && (
+            <Dropdown
+              label="Kích hoạt: Tất cả"
+              options={activationOptions}
+              value={selectedActivation}
+              onChange={onActivationChange}
             />
           )}
           {onSearchChange && (
@@ -92,7 +109,7 @@ export default function StudentList({
 
       {/* Table wrapper — scroll ngang trên mobile */}
       <div className="rounded-xl border border-gray-100 overflow-x-auto w-full">
-        <table className="w-full min-w-[800px] text-sm border-collapse whitespace-nowrap">
+        <table className="w-full min-w-[920px] text-sm border-collapse whitespace-nowrap">
 
           <thead>
             <tr className="bg-indigo-50/20 border-b border-gray-50">
@@ -119,20 +136,23 @@ export default function StudentList({
                 <tr key={s.id ?? i} className="hover:bg-gray-50 transition-colors duration-100">
                   <td className="px-4 py-3 md:px-6 md:py-5 text-gray-500 font-medium text-[11px] md:text-xs">{i + 1}</td>
                   <td className="px-4 py-3 md:px-6 md:py-5">
-                    <span className="font-mono text-[11px] md:text-xs font-semibold text-gray-600 bg-gray-50 px-2 py-1 rounded-lg group-hover:bg-white transition-colors">
+                    <span className="font-mono text-xs md:text-sm font-semibold text-gray-700 leading-none">
                       {s.mssv}
                     </span>
                   </td>
                   <td className="px-4 py-3 md:px-6 md:py-5 text-gray-800">
-                    <div className="flex flex-col gap-0.5">
-                      <span className="font-medium text-gray-800 text-xs md:text-sm leading-none group-hover:text-indigo-600 transition-colors">
-                        {s.name}
-                      </span>
-                      {s.isLeader && (
-                        <span className="text-[9px] md:text-[10px] text-emerald-600 font-bold uppercase tracking-tight mt-1">
-                          Nhóm trưởng
+                    <div className="flex items-center gap-3">
+                      <LastNameAvatar name={s.name || "—"} avatar={s.avatar} index={i} />
+                      <div className="flex flex-col gap-0.5 min-w-0">
+                        <span className="font-medium text-gray-800 text-xs md:text-sm leading-none group-hover:text-indigo-600 transition-colors truncate">
+                          {s.name}
                         </span>
-                      )}
+                        {s.isLeader && (
+                          <span className="text-[9px] md:text-[10px] text-emerald-600 font-bold uppercase tracking-tight mt-1">
+                            Nhóm trưởng
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </td>
                   <td className="px-4 py-3 md:px-6 md:py-5">
@@ -140,8 +160,19 @@ export default function StudentList({
                       {s.email}
                     </span>
                   </td>
+                  <td className="px-4 py-3 md:px-6 md:py-5">
+                    {s.accountActivated ? (
+                      <span className="inline-flex items-center px-2 md:px-2.5 py-1 rounded-full text-[9px] md:text-[10px] font-bold uppercase tracking-wide bg-emerald-50 text-emerald-700 border border-emerald-100">
+                        Đã kích hoạt
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center px-2 md:px-2.5 py-1 rounded-full text-[9px] md:text-[10px] font-bold uppercase tracking-wide bg-amber-50 text-amber-800 border border-amber-100">
+                        Chưa kích hoạt
+                      </span>
+                    )}
+                  </td>
                   <td className="px-4 py-3 md:px-6 md:py-5 text-left">
-                    <span className={`px-2 md:px-3 py-1 md:py-1.5 rounded-full text-[9px] md:text-[10px] font-bold uppercase tracking-wider bg-gray-50 border border-gray-100 ${majorColor(s.major)} shadow-sm`}>
+                    <span className={`text-[11px] md:text-xs font-semibold ${majorColor(s.major)}`}>
                       {s.major}
                     </span>
                   </td>

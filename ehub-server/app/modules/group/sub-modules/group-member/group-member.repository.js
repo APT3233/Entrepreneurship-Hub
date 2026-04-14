@@ -4,14 +4,25 @@ export const createGroupMemberRepository = ({ db }) => {
   const base = createBaseRepository(db, "group_members");
 
   /** Bảng group_members có joined_at, không có created_at/updated_at — insert thủ công */
+  const buildInsertPayload = (data) => ({
+    group_id: data.group_id,
+    student_id: data.student_id,
+    role: data.role ?? "member",
+    status: data.status ?? "active",
+    joined_at: data.joined_at ?? new Date(),
+  });
+
+  const insertWithConn = async (conn, data) => {
+    const payload = buildInsertPayload(data);
+    const keys = Object.keys(payload);
+    const cols = keys.map((k) => `\`${k}\``).join(", ");
+    const placeholders = keys.map(() => "?").join(", ");
+    const sql = `INSERT INTO group_members (${cols}) VALUES (${placeholders})`;
+    await conn.execute(sql, keys.map((k) => payload[k]));
+  };
+
   const create = async (data) => {
-    const payload = {
-      group_id: data.group_id,
-      student_id: data.student_id,
-      role: data.role ?? "member",
-      status: data.status ?? "active",
-      joined_at: data.joined_at ?? new Date(),
-    };
+    const payload = buildInsertPayload(data);
     const keys = Object.keys(payload);
     const cols = keys.map((k) => `\`${k}\``).join(", ");
     const placeholders = keys.map((k) => `:${k}`).join(", ");
@@ -27,7 +38,7 @@ export const createGroupMemberRepository = ({ db }) => {
 
   const findByGroup = async (groupId) => {
     const sql = `
-      SELECT gm.*, s.student_code, s.full_name, s.email, s.phone
+      SELECT gm.*, s.student_code, s.full_name, s.email, s.phone, s.major
       FROM group_members gm
         JOIN students s ON s.id = gm.student_id
       WHERE gm.group_id = :groupId
@@ -35,6 +46,39 @@ export const createGroupMemberRepository = ({ db }) => {
     `;
     const [rows] = await db.execute(sql, { groupId });
     return rows;
+  };
+
+  /** Cập nhật từng field (bảng không có updated_at — không dùng base.update) */
+  const updateById = async (id, fields) => {
+    const allowed = ["role", "status", "left_at", "note"];
+    const data = {};
+    for (const k of allowed) {
+      if (fields[k] !== undefined) data[k] = fields[k];
+    }
+    const keys = Object.keys(data);
+    if (!keys.length) return base.findById(id);
+    const setClause = keys.map((k) => `\`${k}\` = :${k}`).join(", ");
+    await db.execute(`UPDATE group_members SET ${setClause} WHERE id = :id`, { ...data, id });
+    return base.findById(id);
+  };
+
+  const demoteLeadersExcept = async (groupId, exceptStudentId) => {
+    await db.execute(
+      `UPDATE group_members SET role = 'member' WHERE group_id = ? AND role = 'leader' AND student_id != ?`,
+      [groupId, exceptStudentId],
+    );
+  };
+
+  const findJoinedById = async (id) => {
+    const sql = `
+      SELECT gm.*, s.student_code, s.full_name, s.email, s.phone, s.major
+      FROM group_members gm
+        JOIN students s ON s.id = gm.student_id
+      WHERE gm.id = :id
+      LIMIT 1
+    `;
+    const [rows] = await db.execute(sql, { id });
+    return rows[0] || null;
   };
 
   const countActiveByGroup = async (groupId) => {
@@ -80,9 +124,13 @@ export const createGroupMemberRepository = ({ db }) => {
 
   return {
     ...base,
+    insertWithConn,
     create,
     findByGroupAndStudent,
     findByGroup,
+    updateById,
+    demoteLeadersExcept,
+    findJoinedById,
     countActiveByGroup,
     findStudentGroupInClass,
     findMembersByClass,

@@ -5,6 +5,10 @@ import {
 } from "app/core/utils/apiResponse.js";
 import { catchAsync } from "app/core/utils/catchAsync.js";
 import { appConfig } from "app/config/app.js";
+import {
+  AUTH_COOKIE_ACCESS_TOKEN,
+  AUTH_COOKIE_REFRESH_TOKEN,
+} from "app/core/constants/authHttp.js";
 
 /**
  * Lấy host thực từ request (tunnel/proxy gửi X-Forwarded-Host)
@@ -40,8 +44,8 @@ const getCookieOpts = (req) => {
 
 const setTokenCookies = (res, tokens, req) => {
   const opts = getCookieOpts(req);
-  res.cookie("access_token", tokens.accessToken, opts.access);
-  res.cookie("refresh_token", tokens.refreshToken, opts.refresh);
+  res.cookie(AUTH_COOKIE_ACCESS_TOKEN, tokens.accessToken, opts.access);
+  res.cookie(AUTH_COOKIE_REFRESH_TOKEN, tokens.refreshToken, opts.refresh);
 };
 
 const getClearCookieOpts = (req) => {
@@ -56,8 +60,8 @@ const getClearCookieOpts = (req) => {
 
 const clearTokenCookies = (res, req) => {
   const base = getClearCookieOpts(req);
-  res.clearCookie("access_token", base);
-  res.clearCookie("refresh_token", base);
+  res.clearCookie(AUTH_COOKIE_ACCESS_TOKEN, base);
+  res.clearCookie(AUTH_COOKIE_REFRESH_TOKEN, base);
 };
 
 export const createAuthController = ({ authService }) => {
@@ -89,7 +93,7 @@ export const createAuthController = ({ authService }) => {
   });
 
   const refresh = catchAsync(async (req, res) => {
-    const refreshToken = req.cookies?.refresh_token;
+    const refreshToken = req.cookies?.[AUTH_COOKIE_REFRESH_TOKEN];
     const deviceInfo = getDeviceInfo(req);
     const tokens = await authService.refresh(refreshToken, deviceInfo);
     setTokenCookies(res, tokens, req);
@@ -97,7 +101,7 @@ export const createAuthController = ({ authService }) => {
   });
 
   const logout = catchAsync(async (req, res) => {
-    const refreshToken = req.cookies?.refresh_token;
+    const refreshToken = req.cookies?.[AUTH_COOKIE_REFRESH_TOKEN];
     const deviceInfo = getDeviceInfo(req);
     if (refreshToken) {
       await authService.logout(refreshToken, deviceInfo);
@@ -114,8 +118,9 @@ export const createAuthController = ({ authService }) => {
   });
 
   const getProfile = catchAsync(async (req, res) => {
+    const profile = await authService.getProfile(req.user.id);
     return sendSuccess(res, {
-      data: req.user,
+      data: profile,
       message: "Profile retrieved successfully",
     });
   });
@@ -139,17 +144,38 @@ export const createAuthController = ({ authService }) => {
     return res.redirect(302, url);
   });
 
-  const authorizeGoogle = catchAsync(async (req, res) => {
-    const { code } = req.query;
-    const frontendUrl = appConfig.google.frontendUrl || "http://localhost:5173";
-    if (!code) {
-      return res.redirect(302, `${frontendUrl}?error=missing_code`);
+  /** OAuth callback: luôn redirect về SPA (không trả JSON) để hiện modal/lỗi trên /auth/login */
+  const authorizeGoogle = async (req, res) => {
+    const base = String(appConfig.google.frontendUrl || "http://localhost:5173").replace(/\/$/, "");
+    const toLogin = (qs) => res.redirect(302, `${base}/auth/login?${qs}`);
+    try {
+      const { code } = req.query;
+      if (!code) return toLogin("error=missing_code");
+      const deviceInfo = getDeviceInfo(req);
+      const result = await authService.loginWithGoogle(code, deviceInfo);
+      setTokenCookies(res, result.tokens, req);
+      return res.redirect(302, `${base}?google_login=success`);
+    } catch (err) {
+      const apiCode = err?.errorCode;
+      if (err?.isOperational && apiCode) return toLogin(`google_error=${encodeURIComponent(apiCode)}`);
+      return toLogin(`google_error=${encodeURIComponent("GEN")}`);
     }
-    const deviceInfo = getDeviceInfo(req);
-    const result = await authService.loginWithGoogle(code, deviceInfo);
-    setTokenCookies(res, result.tokens, req);
-    return res.redirect(302, `${frontendUrl}?google_login=success`);
+  };
+
+  const getActivatePreview = catchAsync(async (req, res) => {
+    const data = await authService.getActivatePreview(req.query.token);
+    return sendSuccess(res, { data, message: "Invite valid" });
   });
 
-  return { login, register, refresh, logout, logoutAll, getProfile, redirectToGoogle, authorizeGoogle };
+  const postActivate = catchAsync(async (req, res) => {
+    const deviceInfo = getDeviceInfo(req);
+    const result = await authService.activateWithInvite(req.body, deviceInfo);
+    setTokenCookies(res, result.tokens, req);
+    return sendCreated(res, {
+      data: { user: result.user },
+      message: "Account activated successfully",
+    });
+  });
+
+  return { login, register, refresh, logout, logoutAll, getProfile, redirectToGoogle, authorizeGoogle, getActivatePreview, postActivate };
 };

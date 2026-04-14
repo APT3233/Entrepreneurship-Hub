@@ -74,10 +74,11 @@ export const createClassRepository = ({ db }) => {
     const limitNum = Number(limit) || 10;
     const offsetNum = Number(offset) || 0;
     const sql = `
-      SELECT c.id, c.class_code, c.class_name,
+      SELECT c.id, c.class_code, c.class_name, sem.status AS semester_status,
              (SELECT COUNT(*) FROM class_students cs WHERE cs.class_id = c.id) AS student_count,
              (SELECT COUNT(*) FROM \`groups\` g WHERE g.class_id = c.id AND g.deleted_at IS NULL) AS group_count
       FROM \`classes\` c
+      JOIN \`semesters\` sem ON sem.id = c.semester_id
       WHERE ${whereClause}
       ORDER BY c.created_at DESC
       LIMIT ${limitNum} OFFSET ${offsetNum}

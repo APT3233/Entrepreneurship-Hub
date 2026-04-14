@@ -46,9 +46,9 @@ function Dropdown({ label, options, value, onChange, disabled = false }) {
       {/* Dropdown list */}
       {open && !disabled && (
         <div className="
-          absolute top-[calc(100%+6px)] left-0 z-50
+          absolute top-[calc(100%+6px)] left-0 right-0 z-50
           bg-white border border-gray-100 rounded-xl shadow-lg
-          min-w-[140px] overflow-hidden
+          w-full overflow-hidden
           animate-in fade-in slide-in-from-top-1 duration-150
         ">
           {/* Header — hiện giá trị đang chọn */}

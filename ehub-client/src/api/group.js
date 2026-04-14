@@ -25,6 +25,18 @@ const GroupApi = {
     return response;
   },
 
+  /** Cập nhật thành viên (body: role?, status?) */
+  updateMember: async (groupId, studentId, body) => {
+    const response = await instance.patch(`/groups/${groupId}/members/${studentId}`, body);
+    return response;
+  },
+
+  /** Xóa thành viên khỏi nhóm */
+  removeMember: async (groupId, studentId) => {
+    const response = await instance.delete(`/groups/${groupId}/members/${studentId}`);
+    return response;
+  },
+
   /** Lấy danh sách thành viên của nhóm */
   getMembers: async (groupId) => {
     const response = await instance.get(`/groups/${groupId}/members`);

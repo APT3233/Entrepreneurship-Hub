@@ -22,6 +22,14 @@ export const createGroupSchema = {
     status: Joi.string()
       .valid("forming", "active", "inactive", "completed", "dissolved")
       .default("forming"),
+    members: Joi.array()
+      .items(Joi.object({ student_id: Joi.number().integer().positive().required() }))
+      .default([]),
+    leader_student_id: Joi.number().integer().positive().when("members", {
+      is: Joi.array().min(1),
+      then: Joi.required().messages({ "any.required": "leader_student_id is required when members is non-empty" }),
+      otherwise: Joi.forbidden(),
+    }),
   }),
 };
 

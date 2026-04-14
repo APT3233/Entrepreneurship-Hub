@@ -10,4 +10,6 @@ export const authApi = {
   me: () => instance.get("auth/me"),
   logout: () => instance.post("auth/logout"),
   getGoogleLoginUrl: () => `${getBaseUrl()}/auth/google`,
+  activatePreview: (token) => instance.get("auth/activate", { params: { token } }),
+  activate: (payload) => instance.post("auth/activate", payload),
 };

@@ -252,7 +252,14 @@ export default function GroupDetailPage() {
             />
           )}
           {activeTab === "members" && (
-            <MembersTab members={members} loading={loading} />
+            <MembersTab
+              members={members}
+              loading={loading}
+              groupId={id}
+              classId={group?.class_id}
+              canManageMembers={isLecturer}
+              onMembersChanged={fetchData}
+            />
           )}
           {activeTab === "checkpoint" && (
             <CheckpointTab

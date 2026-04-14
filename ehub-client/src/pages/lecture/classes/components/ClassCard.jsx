@@ -42,6 +42,7 @@ export default function ClassCard({
   groups     = 6,
   completion = 85,
   avatars    = [],
+  semesterStatus = null,
   onDetail,
 }) {
   const shownAvatars = avatars.slice(0, 3);
@@ -60,7 +61,17 @@ export default function ClassCard({
     <div className="w-full min-w-0 rounded-2xl overflow-hidden border border-gray-100 shadow-md bg-white hover:shadow-lg transition-shadow">
 
       {/* ── Header (màu cố định theo code) ── */}
-      <div className={`${headerColor.bg} px-4 py-4 sm:px-5 sm:py-5`}>
+      <div className={`${headerColor.bg} px-4 py-4 sm:px-5 sm:py-5 relative`}>
+        {semesterStatus === "upcoming" && (
+          <div className="absolute top-4 right-4 px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-md border border-white/20">
+            <span className="text-[10px] font-bold text-white uppercase tracking-wider">Sắp diễn ra</span>
+          </div>
+        )}
+        {semesterStatus === "ongoing" && (
+          <div className="absolute top-4 right-4 px-2 py-0.5 rounded-full bg-green-400/20 backdrop-blur-md border border-green-400/30">
+            <span className="text-[10px] font-bold text-white uppercase tracking-wider">Đang diễn ra</span>
+          </div>
+        )}
         <h2 className="text-lg sm:text-xl font-bold text-white truncate">{code}</h2>
         <p className={`text-xs sm:text-sm ${headerColor.text} mt-0.5 line-clamp-2`}>{subject}</p>
       </div>

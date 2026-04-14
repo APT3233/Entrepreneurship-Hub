@@ -255,7 +255,7 @@ CREATE TABLE students (
     campus       VARCHAR(50)      NULL
                  COMMENT 'Cơ sở: HCM, HN, DN, CT',
 
-    status       ENUM('active','inactive','graduated','suspended')
+    status       ENUM('active','inactive','graduated','suspended','pending')
                      DEFAULT 'inactive'  NOT NULL,
 
     created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
@@ -293,6 +293,82 @@ CREATE TABLE class_students (
     INDEX      idx_cs_status    (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='Enrollment — Sinh viên đăng ký vào lớp';
+
+
+-- -------------------------------------------
+-- BẢNG 10a: outbox_events — Transactional outbox
+-- -------------------------------------------
+CREATE TABLE outbox_events (
+    id            BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    public_id     CHAR(36)      NOT NULL COMMENT 'UUID một dòng outbox (mỗi chunk một public_id)',
+    dispatch_public_id CHAR(36)   NULL COMMENT 'UUID lô gửi mail = mail_dispatch_id; mọi chunk cùng giá trị',
+    event_type    VARCHAR(64)   NOT NULL,
+    payload       JSON          NOT NULL,
+    status        ENUM('pending','processing','done','failed','dead') NOT NULL DEFAULT 'pending',
+    attempts      INT UNSIGNED  NOT NULL DEFAULT 0,
+    next_retry_at DATETIME      NULL,
+    last_error    TEXT          NULL,
+    created_at    TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at    TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    processed_at  TIMESTAMP     NULL,
+
+    UNIQUE KEY uk_outbox_public_id (public_id),
+    KEY idx_outbox_worker (status, next_retry_at, id),
+    KEY idx_outbox_dispatch_public (dispatch_public_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT='Transactional outbox for async side effects';
+
+
+-- -------------------------------------------
+-- BẢNG 10b: class_invites — Mời / kích hoạt sinh viên vào lớp (token email)
+-- -------------------------------------------
+CREATE TABLE class_invites (
+    id           BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    email        VARCHAR(150) NOT NULL,
+    student_id   BIGINT UNSIGNED NOT NULL,
+    class_id     INT UNSIGNED NOT NULL,
+    outbox_id    BIGINT UNSIGNED NULL
+                 COMMENT 'Batch dispatch job (NULL = legacy / manual)',
+    token        VARCHAR(64)  NOT NULL
+                 COMMENT 'hex from crypto.randomBytes(32)',
+    expires_at   DATETIME     NOT NULL,
+    used         TINYINT(1)   NOT NULL DEFAULT 0,
+    email_delivery_status ENUM('queued','sending','sent','failed') NULL DEFAULT NULL,
+    email_attempts INT UNSIGNED NOT NULL DEFAULT 0,
+    email_last_error VARCHAR(512) NULL,
+    email_sent_at TIMESTAMP NULL,
+    email_next_retry_at DATETIME NULL,
+    created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+
+    UNIQUE KEY uk_class_invites_token (token),
+    INDEX idx_class_invites_student_class (student_id, class_id),
+    INDEX idx_class_invites_expires (expires_at),
+    INDEX idx_class_invites_outbox_status (outbox_id, email_delivery_status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT='Email activation tokens for students added to a class';
+
+
+-- -------------------------------------------
+-- BẢNG 10c: inbox_events — Idempotency after successful SMTP
+-- -------------------------------------------
+CREATE TABLE inbox_events (
+    idempotency_key VARCHAR(191) NOT NULL PRIMARY KEY COMMENT 'e.g. invite_smtp:{class_invites.id} | group_invite_smtp:{id}',
+    outbox_id       BIGINT UNSIGNED NOT NULL,
+    invite_id       BIGINT UNSIGNED NULL
+                    COMMENT 'FK → class_invites.id (lời mời lớp; XOR với group_invite_id)',
+    group_invite_id BIGINT UNSIGNED NULL
+                    COMMENT 'Group join invite',
+    created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    KEY idx_inbox_outbox (outbox_id),
+    KEY idx_inbox_invite (invite_id),
+    KEY idx_inbox_group_invite (group_invite_id),
+    CONSTRAINT chk_inbox_one_target CHECK (
+      (invite_id IS NOT NULL AND group_invite_id IS NULL)
+      OR (invite_id IS NULL AND group_invite_id IS NOT NULL)
+    )
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT='Idempotency after successful SMTP send';
 
 
 -- -------------------------------------------
@@ -362,6 +438,60 @@ CREATE TABLE group_members (
     INDEX      idx_gm_status    (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='Thành viên nhóm';
+
+
+-- -------------------------------------------
+-- BẢNG 12b: group_invites — Mời tham gia nhóm (email → accept/decline)
+-- -------------------------------------------
+CREATE TABLE group_invites (
+    id           BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    group_id     BIGINT UNSIGNED NOT NULL,
+    student_id   BIGINT UNSIGNED NOT NULL,
+    token        VARCHAR(64)  NOT NULL
+                 COMMENT 'hex from crypto.randomBytes(32)',
+    intended_role ENUM('leader','member') NOT NULL DEFAULT 'member',
+
+    status       ENUM('pending','accepted','declined','expired','revoked')
+                     DEFAULT 'pending' NOT NULL,
+
+    expires_at   DATETIME     NOT NULL,
+    invited_by   BIGINT UNSIGNED NULL,
+    outbox_id    BIGINT UNSIGNED NULL,
+
+    email_delivery_status ENUM('queued','sending','sent','failed') NULL DEFAULT NULL,
+    email_attempts INT UNSIGNED NOT NULL DEFAULT 0,
+    email_last_error VARCHAR(512) NULL,
+    email_sent_at TIMESTAMP NULL,
+    email_next_retry_at DATETIME NULL,
+
+    created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+
+    UNIQUE KEY uk_group_invites_token (token),
+    KEY idx_gi_group_student (group_id, student_id),
+    KEY idx_gi_outbox_status (outbox_id, email_delivery_status),
+    KEY idx_gi_student_status (student_id, status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT='Pending group membership until student accepts';
+
+
+-- -------------------------------------------
+-- BẢNG 12c: group_invite_reports — Sinh viên báo sai thông tin nhóm
+-- -------------------------------------------
+CREATE TABLE group_invite_reports (
+    id             BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    group_invite_id BIGINT UNSIGNED NOT NULL,
+    group_id       BIGINT UNSIGNED NOT NULL,
+    student_id     BIGINT UNSIGNED NOT NULL,
+    issue_type     ENUM('group_name','category','topic','member','other') NOT NULL,
+    description    TEXT NOT NULL,
+    created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+
+    KEY idx_gir_group (group_id),
+    KEY idx_gir_student (student_id),
+    KEY idx_gir_created (created_at),
+    KEY idx_gir_invite (group_invite_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT='Sinh viên báo sai thông tin lời mời nhóm';
 
 -- -------------------------------------------
 -- BẢNG 13: audit_logs — Nhật ký thao tác
@@ -521,6 +651,31 @@ ALTER TABLE students
 ALTER TABLE class_students
     ADD CONSTRAINT fk_cs_class   FOREIGN KEY (class_id)   REFERENCES classes(id)  ON DELETE RESTRICT,
     ADD CONSTRAINT fk_cs_student FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE RESTRICT;
+
+-- class_invites
+ALTER TABLE class_invites
+    ADD CONSTRAINT fk_class_invites_student FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
+    ADD CONSTRAINT fk_class_invites_class   FOREIGN KEY (class_id)   REFERENCES classes(id)   ON DELETE CASCADE,
+    ADD CONSTRAINT fk_class_invites_outbox   FOREIGN KEY (outbox_id)   REFERENCES outbox_events(id) ON DELETE SET NULL;
+
+-- inbox_events
+ALTER TABLE inbox_events
+    ADD CONSTRAINT fk_inbox_outbox FOREIGN KEY (outbox_id) REFERENCES outbox_events(id) ON DELETE CASCADE,
+    ADD CONSTRAINT fk_inbox_invite FOREIGN KEY (invite_id) REFERENCES class_invites(id) ON DELETE CASCADE,
+    ADD CONSTRAINT fk_inbox_group_invite FOREIGN KEY (group_invite_id) REFERENCES group_invites(id) ON DELETE CASCADE;
+
+-- group_invites
+ALTER TABLE group_invites
+    ADD CONSTRAINT fk_gi_group   FOREIGN KEY (group_id)   REFERENCES `groups`(id) ON DELETE CASCADE,
+    ADD CONSTRAINT fk_gi_student FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
+    ADD CONSTRAINT fk_gi_inviter FOREIGN KEY (invited_by) REFERENCES users(id) ON DELETE SET NULL,
+    ADD CONSTRAINT fk_gi_outbox   FOREIGN KEY (outbox_id) REFERENCES outbox_events(id) ON DELETE SET NULL;
+
+-- group_invite_reports
+ALTER TABLE group_invite_reports
+    ADD CONSTRAINT fk_gir_invite FOREIGN KEY (group_invite_id) REFERENCES group_invites(id) ON DELETE CASCADE,
+    ADD CONSTRAINT fk_gir_group FOREIGN KEY (group_id) REFERENCES `groups`(id) ON DELETE CASCADE,
+    ADD CONSTRAINT fk_gir_student FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE;
 
 -- groups
 ALTER TABLE `groups`

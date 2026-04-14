@@ -14,14 +14,14 @@ export const createTransactionManager = (db) => {
     const connection = await db.getConnection();
     await connection.beginTransaction();
 
-    logger.debug("[Transaction] Transaction started");
+    // logger.debug("[Transaction] Transaction started");
 
     try {
       // Pass the dedicated connection to the work callback
       const result = await work(connection);
 
       await connection.commit();
-      logger.debug("[Transaction] Transaction committed");
+      // logger.debug("[Transaction] Transaction committed");
       return result;
     } catch (err) {
       await connection.rollback();

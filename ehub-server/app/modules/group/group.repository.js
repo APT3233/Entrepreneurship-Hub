@@ -3,6 +3,33 @@ import { createBaseRepository } from "app/core/database/baseRepository.js";
 export const createGroupRepository = ({ db }) => {
   const base = createBaseRepository(db, "groups");
 
+  const insertWithConn = async (conn, data) => {
+    const now = new Date();
+    const row = {
+      class_id: data.class_id,
+      group_code: data.group_code,
+      group_name: data.group_name,
+      description: data.description ?? null,
+      category: data.category ?? null,
+      topic: data.topic ?? null,
+      topic_desc: data.topic_desc ?? null,
+      zalo_link: data.zalo_link ?? null,
+      mentor_name: data.mentor_name ?? null,
+      mentor_dept: data.mentor_dept ?? null,
+      max_members: data.max_members ?? 6,
+      status: data.status ?? "forming",
+      created_by: data.created_by ?? null,
+      created_at: now,
+      updated_at: now,
+    };
+    const keys = Object.keys(row);
+    const cols = keys.map((k) => `\`${k}\``).join(", ");
+    const ph = keys.map(() => "?").join(", ");
+    const sql = `INSERT INTO \`groups\` (${cols}) VALUES (${ph})`;
+    const [res] = await conn.execute(sql, keys.map((k) => row[k]));
+    return res.insertId;
+  };
+
   const findByCode = async (code, classId) => {
     return base.findOne({ group_code: code, class_id: classId });
   };
@@ -121,6 +148,7 @@ export const createGroupRepository = ({ db }) => {
 
   return {
     ...base,
+    insertWithConn,
     update,
     findByCode,
     findByClass,

@@ -8,6 +8,8 @@ export const ErrorTypes = Object.freeze({
   TOKEN_INVALID: "AUTH_003",
   INSUFFICIENT_PERMISSION: "AUTH_004",
   ACCOUNT_LOCKED: "AUTH_005",
+  /** MSSV đúng format nhưng chưa có bản ghi sinh viên (chưa được GV import) */
+  STUDENT_NOT_IN_ROSTER: "AUTH_006",
 
   // Validation
   VALIDATION_ERROR: "VAL_001",

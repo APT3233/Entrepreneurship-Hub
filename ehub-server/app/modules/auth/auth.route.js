@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { validateRequest } from "app/core/middlewares/validateRequest.js";
 import { authenticate } from "app/core/middlewares/authMiddleware.js";
-import { loginSchema, registerSchema } from "./auth.validation.js";
+import { loginSchema, registerSchema, activatePreviewSchema, activateBodySchema } from "./auth.validation.js";
 
 /**
  * Auth Router — inject authController từ DI Container
@@ -20,6 +20,8 @@ export const createAuthRouter = (container) => {
   // ── Public routes ──────────────────────────────────────
   router.post("/login", validateRequest(loginSchema), authController.login);
   router.post("/register", validateRequest(registerSchema), authController.register);
+  router.get("/activate", validateRequest(activatePreviewSchema), authController.getActivatePreview);
+  router.post("/activate", validateRequest(activateBodySchema), authController.postActivate);
   router.post("/refresh-token", authController.refresh);
   router.post("/logout", authController.logout);
 

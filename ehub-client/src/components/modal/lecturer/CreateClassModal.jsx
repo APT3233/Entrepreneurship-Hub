@@ -2,6 +2,7 @@ import { useState, useRef, useMemo } from "react";
 import { X } from "lucide-react";
 import Dropdown from "@/components/ui/filter/DropDown";
 import ImportStudentsStep from "./ImportStudentsStep";
+import { useToast } from "@/components/ui/Toast";
 
 const SUBJECTS_OPTIONS = [
   { label: "EXE101", value: "EXE101" },
@@ -27,7 +28,8 @@ const getExpectedClassCodes = (subject, classSection) => {
   ];
 };
 
-export default function CreateClassModal({ isOpen, onClose, onCreate, loading = false, error: apiError }) {
+export default function CreateClassModal({ isOpen, onClose, onCreate, onClearError, loading = false, error: apiError }) {
+  const toast = useToast();
   const currentYear = new Date().getFullYear();
 
   const YEAR_OPTIONS = Array.from({ length: 2 }, (_, i) => {
@@ -92,7 +94,7 @@ export default function CreateClassModal({ isOpen, onClose, onCreate, loading = 
     }
 
     if (files.length === 0) {
-      setImportError("Vui lòng import danh sách sinh viên trước khi tạo lớp.");
+      toast.error("Vui lòng import danh sách sinh viên trước khi tạo lớp.");
       return;
     }
 
@@ -236,6 +238,7 @@ export default function CreateClassModal({ isOpen, onClose, onCreate, loading = 
             <ImportStudentsStep
               expectedClassCodes={expectedClassCodes}
               onParsed={({ students, summary }) => {
+                onClearError?.(); // Clear server error if any
                 setFiles(students);
                 setImportSummary(summary);
                 let err = "";
@@ -260,7 +263,7 @@ export default function CreateClassModal({ isOpen, onClose, onCreate, loading = 
               </p>
             )}
             {apiError && (
-              <p className="text-xs text-red-500 mt-1">
+              <p className="text-xs text-red-500 mt-1 break-words leading-relaxed">
                 {apiError}
               </p>
             )}
@@ -271,7 +274,7 @@ export default function CreateClassModal({ isOpen, onClose, onCreate, loading = 
         <div className="px-5 sm:px-7 pb-6 sm:pb-7 pt-2 sticky bottom-0 bg-white">
           <button
             onClick={handleSubmit}
-            disabled={loading || !!displayImportError || importSummary.needReview > 0 || files.length === 0}
+            disabled={loading || !!displayImportError || importSummary.needReview > 0}
             className="
               w-full py-3 rounded-xl
               bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99]

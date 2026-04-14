@@ -13,6 +13,7 @@ import SemesterApi from "@/api/semester";
 import GroupApi from "@/api/group";
 
 const VALUE_ALL_CLASSES = "all";
+const VALUE_ALL_SEMESTERS = "all";
 
 export default function ClassDetailPage() {
   const toast = useToast();
@@ -25,6 +26,8 @@ export default function ClassDetailPage() {
   const [filterSemesterId, setFilterSemesterId] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedGroup, setSelectedGroup] = useState("all");
+  /** all | activated | not_activated */
+  const [activationFilter, setActivationFilter] = useState("all");
    const [createGroupModalOpen, setCreateGroupModalOpen] = useState(false);
    const [createGroupLoading, setCreateGroupLoading] = useState(false);
    const [groupFormKey, setGroupFormKey] = useState(0);
@@ -62,11 +65,11 @@ export default function ClassDetailPage() {
     if (filterYear == null || !filterSemesterId) return;
     const fetchClasses = async () => {
       try {
-        const sem = semesterList.find((s) => s.id === filterSemesterId);
+        const sem = filterSemesterId !== VALUE_ALL_SEMESTERS ? semesterList.find((s) => s.id === filterSemesterId) : null;
         const params = { year: filterYear, lecturerScope: "mine", limit: 100, page: 1 };
         if (sem?.semester_code) params.semester_code = sem.semester_code;
         const res = await ClassApi.getList(params);
-        const list = res?.data ?? [];
+        const list = (res?.data?.data || res?.data) || [];
         setClassList(list.map((c) => ({ id: c.id, class_code: c.class_code })));
       } catch {
         setClassList([]);
@@ -101,7 +104,12 @@ export default function ClassDetailPage() {
   // Kỳ chỉ hiện khi đã chọn năm (thứ tự: Năm → Kỳ → Lớp)
   const semesterOptions = useMemo(
     () =>
-      !filterYear ? [] : semestersInYear.map((s) => ({ value: s.id, label: s.semester_name })),
+      !filterYear 
+        ? [] 
+        : [
+            { label: "Tất cả kỳ", value: VALUE_ALL_SEMESTERS },
+            ...semestersInYear.map((s) => ({ value: s.id, label: s.semester_name }))
+          ],
     [filterYear, semestersInYear]
   );
 
@@ -115,9 +123,7 @@ export default function ClassDetailPage() {
 
   const handleYearChange = (year) => {
     setFilterYear(year);
-    const inYear = semesterList.filter((s) => s.year === year);
-    if (inYear.length > 0) setFilterSemesterId(inYear[0].id);
-    else setFilterSemesterId(null);
+    setFilterSemesterId(VALUE_ALL_SEMESTERS);
   };
 
   const groupOptions = useMemo(
@@ -128,21 +134,36 @@ export default function ClassDetailPage() {
     [detail?.groups]
   );
 
+  const activationOptions = useMemo(
+    () => [
+      { label: "Trạng thái", value: "all" },
+      { label: "Đã kích hoạt", value: "activated" },
+      { label: "Chưa kích hoạt", value: "not_activated" },
+    ],
+    []
+  );
+
   const filteredStudents = useMemo(() => {
     const list = detail?.students || [];
     const byGroup =
       selectedGroup === "all"
         ? list
         : list.filter((s) => String(s.groupId) === selectedGroup);
-    if (!searchQuery.trim()) return byGroup;
+    const byActivation =
+      activationFilter === "activated"
+        ? byGroup.filter((s) => s.accountActivated === true)
+        : activationFilter === "not_activated"
+          ? byGroup.filter((s) => !s.accountActivated)
+          : byGroup;
+    if (!searchQuery.trim()) return byActivation;
     const q = searchQuery.trim().toLowerCase();
-    return byGroup.filter(
+    return byActivation.filter(
       (s) =>
         (s.name && s.name.toLowerCase().includes(q)) ||
         (s.mssv && s.mssv.toLowerCase().includes(q)) ||
         (s.email && s.email.toLowerCase().includes(q))
     );
-  }, [detail?.students, selectedGroup, searchQuery]);
+  }, [detail?.students, selectedGroup, activationFilter, searchQuery]);
 
   const studentsWithGroupName = useMemo(() => {
     const groups = detail?.groups || [];
@@ -178,7 +199,7 @@ export default function ClassDetailPage() {
     try {
       const groupCode =
         name.trim().replace(/\s+/g, "_").slice(0, 30) + "_" + Date.now().toString(36);
-      const createRes = await GroupApi.create({
+      const body = {
         class_id: Number(detail.id),
         group_code: groupCode,
         group_name: name.trim(),
@@ -190,19 +211,26 @@ export default function ClassDetailPage() {
         mentor_dept: "Khoa Hệ thống Thông tin", // Default as seen in image
         max_members: 6,
         status: "forming",
-      });
-      const groupId = createRes?.data?.data?.id ?? createRes?.data?.id;
-      if (groupId && Array.isArray(members) && members.length > 0) {
-        for (const memberId of members) {
-          await GroupApi.addMember(groupId, {
-            student_id: Number(memberId),
-            role: Number(memberId) === Number(leaderId) ? "leader" : "member",
-          });
-        }
+      };
+      if (Array.isArray(members) && members.length > 0 && leaderId != null) {
+        body.members = members.map((id) => ({ student_id: Number(id) }));
+        body.leader_student_id = Number(leaderId);
+      }
+      const createRes = await GroupApi.create(body);
+      const created = createRes?.data ?? createRes;
+      const groupId = created?.id;
+      if (!groupId) {
+        throw new Error("Phản hồi tạo nhóm không hợp lệ.");
       }
       setCreateGroupModalOpen(false);
       setGroupFormKey((prev) => prev + 1);
       toast.success("Tạo nhóm thành công.");
+      if (created?.mail_dispatch_id) {
+        toast.info(
+          "Đang gửi email mời tham gia nhóm",
+          `Mã theo dõi: ${created.mail_dispatch_id}`
+        );
+      }
       await fetchDetail();
     } catch (err) {
       const msg = err?.message || "Không thể tạo nhóm. Vui lòng thử lại.";
@@ -277,9 +305,9 @@ export default function ClassDetailPage() {
             <Dropdown
               label="Lớp"
               options={classFilterOptions}
-              value={detail?.id != null ? detail.id : id}
+              value={classList.some(c => Number(c.id) === Number(id)) ? Number(id) : VALUE_ALL_CLASSES}
               onChange={handleClassChange}
-              disabled={filterYear == null || filterSemesterId == null}
+              disabled={filterYear == null}
             />
           </div>
           <button
@@ -314,6 +342,7 @@ export default function ClassDetailPage() {
             lecturer={detail.lecturer}
             subject={detail.subject}
             semester={detail.semester}
+            semesterStatus={semesterStatus}
           />
         </section>
       )}
@@ -339,6 +368,9 @@ export default function ClassDetailPage() {
             groupOptions={groupOptions}
             selectedGroup={selectedGroup}
             onGroupChange={setSelectedGroup}
+            activationOptions={activationOptions}
+            selectedActivation={activationFilter}
+            onActivationChange={setActivationFilter}
           />
         </section>
       )}

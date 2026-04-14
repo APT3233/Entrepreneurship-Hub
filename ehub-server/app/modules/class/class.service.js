@@ -1,11 +1,16 @@
+import crypto from "node:crypto";
 import { createBaseService } from "app/core/services/baseService.js";
 import { NotFound, Forbidden, BadRequest } from "app/core/errors/errorFactory.js";
 import { parsePagination } from "app/core/utils/pagination.js";
 import { chunkArray } from "app/core/utils/chunk.js";
 import { acquireUploadLock, releaseUploadLock } from "app/core/utils/uploadLock.js";
 import { Events } from "app/core/constants/events.js";
+import { OUTBOX_CLASS_INVITE_EMAIL_DISPATCH } from "app/core/constants/outboxEventTypes.js";
+import { appConfig } from "app/config/app.js";
 
 const SEMESTER_CODES = { 1: "SP", 2: "SU", 3: "FA" };
+const SEMESTER_NAMES = { 1: "Spring", 2: "Summer", 3: "Fall" };
+const SEMESTER_START_MONTHS = { 1: 0, 2: 4, 3: 8 }; // Jan, May, Sept
 
 export const createClassService = ({
   classRepository,
@@ -18,6 +23,8 @@ export const createClassService = ({
   transaction,
   eventBus,
   redis,
+  inviteRepository,
+  outboxRepository,
 }) => {
   const base = createBaseService(classRepository, "Class");
 
@@ -107,6 +114,8 @@ export const createClassService = ({
       })),
       students: enrollments.map((e) => {
         const gr = studentToGroup.get(e.student_id);
+        const uid = e.user_id;
+        const accountActivated = uid != null && uid !== "" && Number(uid) > 0;
         return {
           id: e.student_id,
           mssv: e.student_code,
@@ -114,6 +123,8 @@ export const createClassService = ({
           name: e.full_name,
           email: e.email,
           major: e.major,
+          avatar: e.avatar_url || null,
+          accountActivated,
           isLeader: gr ? gr.isLeader : false,
           groupId: gr ? gr.groupId : null,
           groupName: gr ? gr.groupName : null,
@@ -186,8 +197,33 @@ export const createClassService = ({
     const subject = await subjectRepository.findByCode(subjectCode);
     if (!subject) throw BadRequest(`Subject not found: ${subjectCode}`);
     const semCode = `${SEMESTER_CODES[semesterType] || "SP"}${year}`;
-    const semester = await semesterRepository.findByCode(semCode);
-    if (!semester) throw BadRequest(`Semester not found: ${semCode}`);
+    let semester = await semesterRepository.findByCode(semCode);
+    
+    // Nếu học kỳ chưa tồn tại, kiểm tra xem có cho phép tạo trước không
+    if (!semester) {
+      const startMonth = SEMESTER_START_MONTHS[semesterType] ?? 0;
+      const startDate = new Date(year, startMonth, 1);
+      const now = new Date();
+      
+      // Tính khoảng cách thời gian (đơn vị tháng)
+      const diffMonths = (startDate.getFullYear() - now.getFullYear()) * 12 + (startDate.getMonth() - now.getMonth());
+      
+      if (diffMonths <= 3 && diffMonths >= -12) { // Cho phép tạo trước 3 tháng và cũ không quá 1 năm (để an toàn)
+        console.log(`[createClass] Tự động tạo học kỳ mới: ${semCode}`);
+        const endDate = new Date(year, startMonth + 3, 30); // Giả định mỗi kỳ 4 tháng
+        semester = await semesterRepository.create({
+          semester_code: semCode,
+          semester_name: `${SEMESTER_NAMES[semesterType]} ${year}`,
+          year: year,
+          start_date: startDate,
+          end_date: endDate,
+          status: "upcoming",
+        });
+      } else {
+        throw BadRequest(`Học kỳ ${semCode} chưa được mở (chỉ cho phép tạo trước tối đa 3 tháng).`);
+      }
+    }
+    
     const classCode = `${subjectCode}-${String(classSection).padStart(2, "0")}-${semCode}`;
 
     // Kiểm tra lớp đã tồn tại chưa
@@ -200,9 +236,10 @@ export const createClassService = ({
     const locked = redis ? await acquireUploadLock(redis, lockKey) : true;
     if (!locked) throw BadRequest("Upload in progress, please try again later");
     try {
-      const { classId, insertedCount } = await transaction.run(async (conn) => {
+      const { classId, insertedCount, pendingInvitees, mailDispatchPublicId } = await transaction.run(async (conn) => {
         // Kiểm tra trước: sinh viên đã ở lớp khác cùng môn cùng kỳ?
         const studentList = Array.isArray(students?.list) ? students.list : Array.isArray(students) ? students : [];
+        const pendingInvitees = [];
         const preCheckConflicts = [];
         for (const s of studentList) {
           const studentCode = String(s.memberCode || s.rollNumber || "").trim();
@@ -255,47 +292,101 @@ export const createClassService = ({
             const fullName = String(s.fullname || s.full_name || "").trim();
             const emailVal = String(s.email || "").trim();
             const majorVal = String(s.major || "").trim();
-            const statusVal = ["active", "inactive", "graduated", "suspended"].includes(s?.status) ? s.status : "inactive";
+            const importStatus = ["active", "inactive", "graduated", "suspended", "pending"].includes(s?.status) ? s.status : null;
             console.log(`[createClass] Chunk ${i + 1} student ${j + 1}/${chunk.length}: code=${studentCode || "(empty)"} email=${emailVal || "(empty)"} fullname=${fullName || "(empty)"} major=${majorVal || "(empty)"}`);
             if (!studentCode || !emailVal || !fullName) {
               console.log(`[createClass] SKIP student ${j + 1}: missing code/email/fullname`);
               continue;
             }
-            const [userRows] = await conn.execute("SELECT id FROM users WHERE email = ? AND deleted_at IS NULL LIMIT 1", [emailVal]);
-            const userId = userRows?.[0]?.id || null;
 
             const [existingRows] = await conn.execute(
-              "SELECT id FROM students WHERE student_code = ? LIMIT 1",
+              "SELECT id, user_id, status FROM students WHERE student_code = ? LIMIT 1",
               [studentCode]
             );
             let studentId;
+            let linkedUserId = null;
+            let statusVal;
             if (existingRows && existingRows.length > 0) {
               studentId = existingRows[0].id;
+              linkedUserId = existingRows[0].user_id;
+              const prevStatus = existingRows[0].status;
+              if (linkedUserId) {
+                statusVal =
+                  importStatus && importStatus !== "pending"
+                    ? importStatus
+                    : ["active", "inactive", "graduated", "suspended"].includes(prevStatus)
+                      ? prevStatus
+                      : "active";
+              } else {
+                statusVal = "pending";
+              }
               await conn.execute(
                 "UPDATE students SET full_name = ?, email = ?, major = ?, status = ?, user_id = ?, updated_at = NOW(), deleted_at = NULL WHERE id = ?",
-                [fullName, emailVal, majorVal || null, statusVal, userId, studentId]
+                [fullName, emailVal, majorVal || null, statusVal, linkedUserId, studentId]
               );
             } else {
               const [insResult] = await conn.execute(
-                "INSERT INTO students (student_code, full_name, email, major, status, user_id) VALUES (?, ?, ?, ?, ?, ?)",
-                [studentCode, fullName, emailVal, majorVal || null, statusVal, userId]
+                "INSERT INTO students (student_code, full_name, email, major, status, user_id) VALUES (?, ?, ?, ?, 'pending', NULL)",
+                [studentCode, fullName, emailVal, majorVal || null]
               );
               studentId = insResult.insertId;
+              linkedUserId = null;
+              statusVal = "pending";
             }
             await conn.execute(
               "INSERT INTO class_students (class_id, student_id, status) VALUES (?, ?, 'enrolled') ON DUPLICATE KEY UPDATE status = 'enrolled'",
               [classId, studentId]
             );
             insertedCount++;
+            if (!linkedUserId) pendingInvitees.push({ studentId, email: emailVal });
           }
           console.log(`[createClass] Chunk ${i + 1} done, inserted so far: ${insertedCount}`);
         }
-        eventBus.emit(Events.CLASS_CREATED, { classId, classCode, studentCount: insertedCount });
-        eventBus.emit(Events.STUDENTS_UPLOADED, { classCode, semester: semCode, count: insertedCount });
-        return { classId, insertedCount };
+        let mailDispatchPublicId = null;
+        if (pendingInvitees.length > 0) {
+          const inviteIds = [];
+          const expiryMs = Math.max(1, appConfig.invite.expiryDays) * 24 * 60 * 60 * 1000;
+          const expiresAt = new Date(Date.now() + expiryMs);
+          for (const p of pendingInvitees) {
+            await inviteRepository.invalidateUnusedForPairConn(conn, p.studentId, classId);
+            const token = crypto.randomBytes(32).toString("hex");
+            const insId = await inviteRepository.insertQueuedInviteConn(conn, {
+              email: p.email,
+              student_id: p.studentId,
+              class_id: classId,
+              token,
+              expires_at: expiresAt,
+            });
+            inviteIds.push(insId);
+          }
+          const chunkSize = appConfig.outbox.inviteChunkSize;
+          const idChunks = chunkArray(inviteIds, chunkSize);
+          let dispatchPid = null;
+          for (const chunk of idChunks) {
+            const { id: outboxRowId, dispatchPublicId } = await outboxRepository.insertWithConn(conn, {
+              eventType: OUTBOX_CLASS_INVITE_EMAIL_DISPATCH,
+              payload: { classId, classCode, inviteIds: chunk },
+              dispatchPublicId: dispatchPid,
+            });
+            if (!dispatchPid) dispatchPid = dispatchPublicId;
+            await inviteRepository.setOutboxIdForInvitesConn(conn, outboxRowId, chunk);
+          }
+          mailDispatchPublicId = dispatchPid;
+        }
+        return { classId, insertedCount, pendingInvitees, mailDispatchPublicId };
       });
+      eventBus.emit(Events.CLASS_CREATED, {
+        classId,
+        classCode,
+        studentCount: insertedCount,
+      });
+      eventBus.emit(Events.STUDENTS_UPLOADED, { classCode, semester: semCode, count: insertedCount });
       const cls = await classRepository.findWithDetails(classId);
-      return { ...cls, student_count: insertedCount };
+      return {
+        ...cls,
+        student_count: insertedCount,
+        ...(mailDispatchPublicId && { mail_dispatch_id: mailDispatchPublicId }),
+      };
     } finally {
       if (redis) await releaseUploadLock(redis, lockKey);
     }

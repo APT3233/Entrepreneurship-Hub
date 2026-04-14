@@ -36,7 +36,8 @@ instance.interceptors.response.use(
     // auth/me 401 vẫn retry: gọi refresh-token rồi retry auth/me để restore session sau reload
     const isAuthEndpoint =
       requestUrl.includes("auth/login") ||
-      requestUrl.includes("auth/refresh-token");
+      requestUrl.includes("auth/refresh-token") ||
+      requestUrl.includes("auth/activate");
 
     if (
       error.response?.status === 401 &&
@@ -67,14 +68,19 @@ instance.interceptors.response.use(
       }
     }
 
-    // Extract error message from API response
+    // Extract error message + mã lỗi (client phân nhánh UI, vd modal MSSV chưa import)
+    const payload = error.response?.data;
     const message =
-      error.response?.data?.error?.message ||
-      error.response?.data?.message ||
+      payload?.error?.message ||
+      payload?.message ||
       error.message ||
       "An unexpected error occurred";
 
-    return Promise.reject(new Error(message));
+    const apiError = new Error(message);
+    if (payload?.error?.code) apiError.code = payload.error.code;
+    if (payload?.error?.details) apiError.details = payload.error.details;
+    apiError.status = error.response?.status;
+    return Promise.reject(apiError);
   },
 );
 

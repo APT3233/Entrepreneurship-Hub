@@ -25,6 +25,10 @@ export const Forbidden = (message = "Forbidden") =>
 export const AccountLocked = () =>
   AppError("Account is locked", 403, ErrorTypes.ACCOUNT_LOCKED);
 
+export const StudentNotInRoster = (
+  message = "MSSV của bạn chưa được giảng viên thêm vào hệ thống. Vui lòng liên hệ giảng viên để được cấp quyền."
+) => AppError(message, 403, ErrorTypes.STUDENT_NOT_IN_ROSTER);
+
 // ─── 404 ────────────────────────────────────────────
 export const NotFound = (resource = "Resource") =>
   AppError(`${resource} not found`, 404, ErrorTypes.NOT_FOUND);
@@ -49,5 +53,5 @@ export const InternalError = (message = "Internal server error") =>
 export const DatabaseError = (message = "Database error") =>
   AppError(message, 500, ErrorTypes.DB_ERROR);
 
-export const ServiceUnavailable = (service = "Service") =>
-  AppError(`${service} is unavailable`, 503, ErrorTypes.SERVICE_UNAVAILABLE);
+export const ServiceUnavailable = (message = "Service unavailable", details = null) =>
+  AppError(message, 503, ErrorTypes.SERVICE_UNAVAILABLE, details);

@@ -1,9 +1,59 @@
+import { useState } from "react";
+import { Pencil, Trash2, UserPlus } from "lucide-react";
 import { Avatar, Skeleton } from "./Common";
+import GroupApi from "@/api/group";
+import { useToast } from "@/components/ui/Toast";
+import AddGroupMemberModal from "@/components/modal/lecturer/AddGroupMemberModal";
+import EditGroupMemberModal from "@/components/modal/lecturer/EditGroupMemberModal";
+
+const STATUS_LABEL = {
+  active: { text: "Đang tham gia", className: "text-emerald-700 bg-emerald-50 border-emerald-100" },
+  left: { text: "Đã rời nhóm", className: "text-slate-600 bg-slate-100 border-slate-200" },
+  removed: { text: "Đã gỡ", className: "text-red-700 bg-red-50 border-red-100" },
+};
+
+function formatJoinedAt(value) {
+  if (!value) return "—";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
+}
 
 /**
- * Members Tab Component
+ * Tab thành viên nhóm — hiển thị MSSV, vai trò, trạng thái; GV/Admin quản lý thêm/sửa/xóa.
  */
-export default function MembersTab({ members = [], loading }) {
+export default function MembersTab({
+  members = [],
+  loading,
+  groupId,
+  classId,
+  canManageMembers = false,
+  onMembersChanged,
+}) {
+  const toast = useToast();
+  const [addOpen, setAddOpen] = useState(false);
+  const [editMember, setEditMember] = useState(null);
+
+  const MAJOR_CONFIG = {
+    IT: "text-blue-600 bg-blue-50 border-blue-100",
+    "Kinh tế": "text-emerald-600 bg-emerald-50 border-emerald-100",
+    Design: "text-purple-600 bg-purple-50 border-purple-100",
+  };
+
+  const getMajorStyle = (major) => MAJOR_CONFIG[major] ?? "text-gray-500 bg-gray-50 border-gray-100";
+
+  const handleRemove = async (m) => {
+    const name = m.full_name || m.fullName || m.student_code || m.mssv;
+    if (!window.confirm(`Xóa ${name} khỏi nhóm? Hành động này không thể hoàn tác.`)) return;
+    try {
+      await GroupApi.removeMember(groupId, m.student_id);
+      toast.success("Đã xóa thành viên khỏi nhóm.");
+      onMembersChanged?.();
+    } catch (err) {
+      toast.error(err?.message || "Xóa thành viên thất bại.");
+    }
+  };
+
   if (loading) {
     return (
       <div className="mt-6 md:mt-8 space-y-4">
@@ -14,30 +64,32 @@ export default function MembersTab({ members = [], loading }) {
     );
   }
 
-  const MAJOR_CONFIG = {
-    IT: "text-blue-600 bg-blue-50 border-blue-100",
-    "Kinh tế": "text-emerald-600 bg-emerald-50 border-emerald-100",
-    Design: "text-purple-600 bg-purple-50 border-purple-100",
-  };
-
-  const getMajorStyle = (major) => {
-    return MAJOR_CONFIG[major] ?? "text-gray-500 bg-gray-50 border-gray-100";
-  };
-
   return (
     <div className="mt-6 md:mt-8 mb-10">
-      <div className="mb-4 md:mb-6 flex flex-row items-center justify-between gap-3">
+      <div className="mb-4 md:mb-6 flex flex-row items-center justify-between gap-3 flex-wrap">
         <p className="text-sm md:text-base font-semibold text-gray-900 tracking-tight">
           Danh sách sinh viên
         </p>
-        <span className="text-xs md:text-sm text-gray-500 font-medium">
-          {members.length} thành viên
-        </span>
+        <div className="flex items-center gap-3">
+          <span className="text-xs md:text-sm text-gray-500 font-medium">
+            {members.length} thành viên
+          </span>
+          {canManageMembers && classId && groupId ? (
+            <button
+              type="button"
+              onClick={() => setAddOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 text-white text-xs font-semibold px-3 py-2 hover:bg-indigo-700 transition-colors"
+            >
+              <UserPlus className="h-3.5 w-3.5" />
+              Thêm thành viên
+            </button>
+          ) : null}
+        </div>
       </div>
 
       <div className="bg-white border border-gray-100 rounded-3xl overflow-hidden shadow-sm w-full">
         <div className="overflow-x-auto w-full">
-          <table className="w-full text-sm text-left border-collapse whitespace-nowrap min-w-[600px]">
+          <table className="w-full text-sm text-left border-collapse whitespace-nowrap min-w-[720px]">
             <thead>
               <tr className="bg-indigo-50/20 border-b border-gray-50">
                 <th className="px-4 py-4 md:px-6 md:py-5 text-[10px] md:text-[11px] font-bold text-gray-400 uppercase tracking-widest">
@@ -46,64 +98,131 @@ export default function MembersTab({ members = [], loading }) {
                 <th className="px-4 py-4 md:px-6 md:py-5 text-[10px] md:text-[11px] font-bold text-gray-400 uppercase tracking-widest">
                   Họ và tên
                 </th>
-                <th className="px-4 py-4 md:px-6 md:py-5 ml-2 text-[10px] md:text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+                <th className="px-4 py-4 md:px-6 md:py-5 text-[10px] md:text-[11px] font-bold text-gray-400 uppercase tracking-widest">
                   Email
                 </th>
-                <th className="px-4 py-4 md:px-6 md:py-5 text-[10px] md:text-[11px] font-extrabold text-gray-400 uppercase tracking-widest text-center">
+                <th className="px-4 py-4 md:px-6 md:py-5 text-[10px] md:text-[11px] font-bold text-gray-400 uppercase tracking-widest text-center">
                   Chuyên ngành
                 </th>
+                <th className="px-4 py-4 md:px-6 md:py-5 text-[10px] md:text-[11px] font-bold text-gray-400 uppercase tracking-widest text-center">
+                  Vai trò
+                </th>
+                <th className="px-4 py-4 md:px-6 md:py-5 text-[10px] md:text-[11px] font-bold text-gray-400 uppercase tracking-widest text-center">
+                  Trạng thái
+                </th>
+                <th className="px-4 py-4 md:px-6 md:py-5 text-[10px] md:text-[11px] font-bold text-gray-400 uppercase tracking-widest text-center">
+                  Tham gia
+                </th>
+                {canManageMembers ? (
+                  <th className="px-4 py-4 md:px-6 md:py-5 text-[10px] md:text-[11px] font-bold text-gray-400 uppercase tracking-widest text-right">
+                    Thao tác
+                  </th>
+                ) : null}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {members.map((m, idx) => (
-                <tr
-                  key={m.id}
-                  className="hover:bg-indigo-50/10 transition-colors group cursor-default"
-                >
-                  <td className="px-4 py-3 md:px-6 md:py-5">
-                    <span className="font-mono text-[11px] md:text-xs font-semibold text-gray-600 bg-gray-50 px-2 py-1 rounded-lg group-hover:bg-white transition-colors">
-                      {m.student_code || m.mssv}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 md:px-6 md:py-5">
-                    <div className="flex items-center gap-3">
-                      <Avatar
-                        name={(m.fullName || m.full_name || "N A")}
-                        avatar={m.avatar}
-                        index={idx}
-                      />
-                      <div className="flex flex-col gap-0.5">
+              {members.map((m, idx) => {
+                const st = STATUS_LABEL[m.status] || STATUS_LABEL.active;
+                const isLeader = m.role === "leader";
+                return (
+                  <tr
+                    key={m.id ?? `${m.student_id}-${idx}`}
+                    className="hover:bg-indigo-50/10 transition-colors group cursor-default"
+                  >
+                    <td className="px-4 py-3 md:px-6 md:py-5">
+                      <span className="font-mono text-[11px] md:text-xs font-semibold text-gray-600 bg-gray-50 px-2 py-1 rounded-lg group-hover:bg-white transition-colors">
+                        {m.student_code || m.mssv}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 md:px-6 md:py-5">
+                      <div className="flex items-center gap-3">
+                        <Avatar
+                          name={m.full_name || m.fullName || "N A"}
+                          avatar={m.avatar}
+                          index={idx}
+                        />
                         <span className="font-medium text-gray-800 text-xs md:text-sm leading-none group-hover:text-indigo-600 transition-colors">
-                          {m.fullName || m.full_name}
+                          {m.full_name || m.fullName}
                         </span>
-                        {(m.role === "leader" || m.isLeader) && (
-                          <p className="text-[9px] md:text-[10px] text-emerald-600 font-bold uppercase tracking-tight mt-1">
-                            Nhóm trưởng
-                          </p>
-                        )}
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 md:px-6 md:py-5">
-                    <span className="text-gray-400 font-medium text-[11px] md:text-xs leading-none">
-                      {m.email}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 md:px-6 md:py-5 text-center">
-                    <span
-                      className={`text-[9px] md:text-[10px] font-bold px-2 md:px-3 py-1 md:py-1.5 rounded-full border uppercase tracking-wider ${getMajorStyle(
-                        m.major || m.major
-                      )} shadow-sm`}
-                    >
-                      {m.major || m.major || "Chưa cập nhật"}
-                    </span>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    <td className="px-4 py-3 md:px-6 md:py-5">
+                      <span className="text-gray-400 font-medium text-[11px] md:text-xs leading-none">
+                        {m.email || "—"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 md:px-6 md:py-5 text-center">
+                      <span
+                        className={`text-[9px] md:text-[10px] font-bold px-2 md:px-3 py-1 md:py-1.5 rounded-full border uppercase tracking-wider ${getMajorStyle(m.major)} shadow-sm`}
+                      >
+                        {m.major || "Chưa cập nhật"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 md:px-6 md:py-5 text-center">
+                      <span
+                        className={`text-[10px] md:text-xs font-semibold px-2 py-1 rounded-lg ${
+                          isLeader ? "text-indigo-700 bg-indigo-50" : "text-gray-600 bg-gray-50"
+                        }`}
+                      >
+                        {isLeader ? "Nhóm trưởng" : "Thành viên"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 md:px-6 md:py-5 text-center">
+                      <span
+                        className={`text-[9px] md:text-[10px] font-bold px-2 py-1 rounded-full border ${st.className}`}
+                      >
+                        {st.text}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 md:px-6 md:py-5 text-center text-[11px] text-gray-500">
+                      {formatJoinedAt(m.joined_at)}
+                    </td>
+                    {canManageMembers ? (
+                      <td className="px-4 py-3 md:px-6 md:py-5 text-right">
+                        <div className="inline-flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => setEditMember(m)}
+                            className="p-2 rounded-lg text-indigo-600 hover:bg-indigo-50 transition-colors"
+                            title="Sửa"
+                            aria-label="Sửa thành viên"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleRemove(m)}
+                            className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
+                            title="Xóa khỏi nhóm"
+                            aria-label="Xóa thành viên"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
+                    ) : null}
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
       </div>
+
+      <AddGroupMemberModal
+        isOpen={addOpen}
+        onClose={() => setAddOpen(false)}
+        classId={classId}
+        groupId={groupId}
+        onSuccess={onMembersChanged}
+      />
+      <EditGroupMemberModal
+        isOpen={!!editMember}
+        member={editMember}
+        groupId={groupId}
+        onClose={() => setEditMember(null)}
+        onSuccess={onMembersChanged}
+      />
     </div>
   );
 }

@@ -7,8 +7,14 @@ import { loadRoutes } from "./routes.loader.js";
 import { loadContainer } from "./container.loader.js";
 import { setAuthRedis } from "app/core/middlewares/authMiddleware.js";
 import { logger } from "app/core/logger/index.js";
+import { appConfig } from "app/config/app.js";
+import { startOutboxMailWorker } from "app/core/workers/outboxMail.worker.js";
+import { forkMailOutboxWorker } from "app/workers/forkMailOutboxWorker.js";
+import dns from "node:dns";
 
 export const bootstrap = async () => {
+  dns.setDefaultResultOrder("ipv4first");
+
   const app = express();
 
   // Express middlewares
@@ -26,10 +32,18 @@ export const bootstrap = async () => {
   // Routes
   loadRoutes(app, container);
 
+  const ob = appConfig.outbox;
+  let stopOutboxMailWorker = async () => {};
+  if (ob.workerEnabled && ob.workerInApi) {
+    stopOutboxMailWorker = startOutboxMailWorker({ db, redis, container });
+  } else if (ob.workerEnabled && !ob.workerInApi) {
+    stopOutboxMailWorker = forkMailOutboxWorker();
+  }
+
   // Error handlers
   loadErrorHandlers(app);
 
   logger.info("[Bootstrap] App oke");
 
-  return { app, db, redis, minio, container };
+  return { app, db, redis, minio, container, stopOutboxMailWorker };
 };

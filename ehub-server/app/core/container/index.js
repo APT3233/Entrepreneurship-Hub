@@ -7,6 +7,7 @@ import { eventBus } from "app/core/events/index.js";
 import { createTransactionManager } from "app/core/database/transaction.js";
 import { createEmailService } from "app/core/services/email.service.js";
 import { createAuditService } from "app/core/services/audit.service.js";
+import { appConfig } from "app/config/app.js";
 
 /**
  * Enterprise DI Container using Awilix — Proxy Mode
@@ -28,7 +29,12 @@ export const createContainer = ({ db, redis, minio }) => {
     auditService: asValue(createAuditService()),
     email: asValue(
       createEmailService({
-        driver: process.env.NODE_ENV === "production" ? "smtp" : "console",
+        driver:
+          process.env.EMAIL_DRIVER ||
+          (process.env.NODE_ENV === "production" ? "smtp" : "console"),
+        enabled: appConfig.mail.enabled,
+        from: appConfig.mail.from,
+        smtp: appConfig.mail.smtp,
       }),
     ),
   });

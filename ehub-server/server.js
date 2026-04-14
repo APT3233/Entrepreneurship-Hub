@@ -3,7 +3,7 @@ import { appConfig } from "app/config/app.js";
 import { logger } from "app/core/logger/index.js";
 
 const start = async () => {
-  const { app } = await bootstrap();
+  const { app, stopOutboxMailWorker } = await bootstrap();
 
   const server = app.listen(appConfig.port, appConfig.host, () => {
     logger.info(
@@ -17,6 +17,7 @@ const start = async () => {
     logger.info(`${signal} received — shutting down gracefully`);
 
     server.close(async () => {
+      if (typeof stopOutboxMailWorker === "function") await stopOutboxMailWorker();
       const { destroyDatabase } = await import("app/loaders/database.loader.js");
       const { disconnectRedis } = await import("app/loaders/redis.loader.js");
 

@@ -7,15 +7,42 @@ export const createUserRepository = ({ db }) => {
     return base.findOne({ email });
   };
 
-  const findByUsername = async (username) => {
+  /** Profile đầy đủ (roles) cho GET /auth/me — không dùng password trong response. */
+  const findProfileById = async (id) => {
     const sql = `
-      SELECT 
+      SELECT
         u.*,
-        GROUP_CONCAT(r.role_code) as roles
+        GROUP_CONCAT(DISTINCT r.role_code ORDER BY r.role_code) AS roles,
+        MAX(s.major) AS major
       FROM users u
       LEFT JOIN user_roles ur ON u.id = ur.user_id
       LEFT JOIN roles r ON ur.role_id = r.id
-      WHERE u.username = :username
+      LEFT JOIN students s ON s.user_id = u.id AND s.deleted_at IS NULL
+      WHERE u.id = :id AND u.deleted_at IS NULL
+      GROUP BY u.id
+      LIMIT 1
+    `;
+    const [rows] = await db.execute(sql, { id });
+    const user = rows[0] || null;
+    if (user && user.roles) {
+      user.roles = user.roles.split(",");
+    } else if (user) {
+      user.roles = [];
+    }
+    return user;
+  };
+
+  const findByUsername = async (username) => {
+    const sql = `
+      SELECT
+        u.*,
+        GROUP_CONCAT(DISTINCT r.role_code ORDER BY r.role_code) AS roles,
+        MAX(s.major) AS major
+      FROM users u
+      LEFT JOIN user_roles ur ON u.id = ur.user_id
+      LEFT JOIN roles r ON ur.role_id = r.id
+      LEFT JOIN students s ON s.user_id = u.id AND s.deleted_at IS NULL
+      WHERE LOWER(TRIM(u.username)) = LOWER(TRIM(:username))
       GROUP BY u.id
       LIMIT 1
     `;
@@ -33,12 +60,14 @@ export const createUserRepository = ({ db }) => {
 
   const findByGoogleId = async (googleId) => {
     const sql = `
-      SELECT 
+      SELECT
         u.*,
-        GROUP_CONCAT(r.role_code) as roles
+        GROUP_CONCAT(DISTINCT r.role_code ORDER BY r.role_code) AS roles,
+        MAX(s.major) AS major
       FROM users u
       LEFT JOIN user_roles ur ON u.id = ur.user_id
       LEFT JOIN roles r ON ur.role_id = r.id
+      LEFT JOIN students s ON s.user_id = u.id AND s.deleted_at IS NULL
       WHERE u.google_id = :googleId
       GROUP BY u.id
       LIMIT 1
@@ -68,6 +97,7 @@ export const createUserRepository = ({ db }) => {
   return {
     ...base,
     findByEmail,
+    findProfileById,
     findByUsername,
     findByGoogleId,
     assignRole,
