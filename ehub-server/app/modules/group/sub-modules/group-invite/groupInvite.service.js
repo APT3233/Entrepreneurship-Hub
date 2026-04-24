@@ -41,6 +41,10 @@ export const createGroupInviteService = ({
           mentor_display_name: grp.mentor_display_name || "—",
           max_members: Number(grp.max_members) || 0,
           active_members: Number(grp.active_members) || 0,
+          created_at: grp.created_at,
+          zalo_link: grp.zalo_link,
+          category: grp.category,
+          topic: grp.topic,
           members: members.map((m) => ({
             student_id: m.student_id,
             student_code: m.student_code,

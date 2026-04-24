@@ -19,15 +19,18 @@ export default function StatCard({
   iconBg = "bg-blue-50",
   iconColor = "text-blue-500",
   className = "",
+  onClick,
 }) {
   return (
     <div
+      onClick={onClick}
       className={`
         relative bg-white rounded-2xl px-4 py-4 sm:px-5 sm:py-5
         border border-gray-100 shadow-sm
         w-full min-w-0
         flex items-center justify-between gap-3 sm:gap-4
         hover:shadow-md transition-shadow duration-200
+        ${onClick ? "cursor-pointer active:scale-[0.98]" : ""}
         ${className}
       `}
     >

@@ -148,7 +148,7 @@ export default function AppSidebar({ items, subtitle = "Cổng giảng viên" })
           <button
             onClick={togglePin}
             title={pinned ? "Tắt ghim" : "Ghim sidebar"}
-            className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200
+            className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 cursor-pointer
               ${
                 pinned
                   ? "bg-indigo-100 text-indigo-600 hover:bg-indigo-200"

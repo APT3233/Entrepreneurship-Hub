@@ -3,7 +3,7 @@ import { X, ChevronDown, Check, Crown } from "lucide-react";
 import { LastNameAvatar } from "@/components/icons/ui";
 
 /**
- * CreateGroupModal
+ * CreateGroupForm
  *
  * Props:
  * - isOpen    : boolean
@@ -93,7 +93,7 @@ function getCompositionStatus(students, memberIds) {
   };
 }
 
-export default function CreateGroupModal({
+export default function CreateGroupForm({
   isOpen = false,
   onClose,
   onSubmit,

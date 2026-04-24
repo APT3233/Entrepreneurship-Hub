@@ -4,6 +4,8 @@ import { createAuthController } from "./auth.controller.js";
 import { createAuthRouter } from "./auth.route.js";
 import { createTokenService } from "app/core/services/tokenService.js";
 import { createAccessLogRepository } from "./accessLog.repository.js";
+
+
 export const AuthModule = {
   name: "auth",
   path: "/auth",

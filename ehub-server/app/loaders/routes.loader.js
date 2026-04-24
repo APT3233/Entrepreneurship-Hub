@@ -1,5 +1,6 @@
 import { appConfig } from "app/config/app.js";
 import { logger } from "app/core/logger/index.js";
+import { AuditModule } from "app/modules/audit/index.js";
 import { AuthModule } from "app/modules/auth/index.js";
 import { UserModule } from "app/modules/user/index.js";
 import { SubjectModule } from "app/modules/subject/index.js";
@@ -9,8 +10,11 @@ import { StudentModule } from "app/modules/student/index.js";
 import { GroupModule } from "app/modules/group/index.js";
 import { AssignmentModule } from "app/modules/assignment/index.js";
 import { MailModule } from "app/modules/mail/index.js";
+import { CheckpointModule } from "app/modules/checkpoint/index.js";
+import { FileModule } from "app/modules/file/index.js";
 
 const MODULES = [
+  AuditModule,
   AuthModule,
   UserModule,
   SubjectModule,
@@ -20,6 +24,8 @@ const MODULES = [
   StudentModule,
   GroupModule,
   AssignmentModule,
+  CheckpointModule,
+  FileModule,
 ];
 
 /** Đăng ký DI của toàn bộ module (repositories, services). Dùng chung API + worker fork (mailOutbox.entry). */

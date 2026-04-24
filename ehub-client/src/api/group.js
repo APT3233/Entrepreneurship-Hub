@@ -48,6 +48,10 @@ const GroupApi = {
     const response = await instance.put(`/groups/${id}`, body);
     return response;
   },
+  getMyGroups: async () => {
+    const response = await instance.get("/groups/my-groups");
+    return response;
+  },
 };
 
 export default GroupApi;

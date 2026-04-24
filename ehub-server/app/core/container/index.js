@@ -6,7 +6,7 @@ import {
 import { eventBus } from "app/core/events/index.js";
 import { createTransactionManager } from "app/core/database/transaction.js";
 import { createEmailService } from "app/core/services/email.service.js";
-import { createAuditService } from "app/core/services/audit.service.js";
+import { createStorageService } from "app/core/services/storage.service.js";
 import { appConfig } from "app/config/app.js";
 
 /**
@@ -26,7 +26,7 @@ export const createContainer = ({ db, redis, minio }) => {
     minio: asValue(minio),
     eventBus: asValue(eventBus),
     transaction: asValue(createTransactionManager(db)),
-    auditService: asValue(createAuditService()),
+    storageService: asValue(createStorageService({ minio })),
     email: asValue(
       createEmailService({
         driver:
@@ -37,6 +37,11 @@ export const createContainer = ({ db, redis, minio }) => {
         smtp: appConfig.mail.smtp,
       }),
     ),
+  });
+
+  // Initialize core services
+  container.resolve("storageService").init().catch(err => {
+     console.error("[Container] Failed to init storageService:", err);
   });
 
   return container;

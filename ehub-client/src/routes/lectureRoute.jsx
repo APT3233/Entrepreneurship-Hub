@@ -10,6 +10,7 @@ const GroupDetailPage = React.lazy(() => import("@/pages/lecture/groups/GroupDet
 const AssignmentsPage = React.lazy(() => import("@/pages/lecture/assignments"));
 const GradingPage = React.lazy(() => import("@/pages/lecture/grading"));
 const SchedulePage = React.lazy(() => import("@/pages/lecture/schedule"));
+const ProfilePage = React.lazy(() => import("@/pages/common/ProfilePage"));
 
 export default function init(routes) {
   const route = {
@@ -25,6 +26,7 @@ export default function init(routes) {
       { path: "assignments", element: <AssignmentsPage /> },
       { path: "grading", element: <GradingPage /> },
       { path: "schedule", element: <SchedulePage /> },
+      { path: "profile", element: <ProfilePage /> },
     ],
   };
   routes.push(route);

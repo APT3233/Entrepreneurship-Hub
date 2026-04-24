@@ -48,6 +48,13 @@ export const Events = Object.freeze({
   ASSIGNMENT_CREATED: "assignment.created",
   ASSIGNMENT_UPDATED: "assignment.updated",
   ASSIGNMENT_DELETED: "assignment.deleted",
+  ASSIGNMENT_SUBMISSION_COMPLETED: "assignment.submission.completed",
+  ASSIGNMENT_SUBMISSION_GRADED: "assignment.submission.graded",
+  
+  // Checkpoint
+  CHECKPOINT_CREATED: "checkpoint.created",
+  CHECKPOINT_UPDATED: "checkpoint.updated",
+  CHECKPOINT_DELETED: "checkpoint.deleted",
 
   // Mail / outbox
   MAIL_DISPATCH_COMPLETED: "mail.dispatch.completed",

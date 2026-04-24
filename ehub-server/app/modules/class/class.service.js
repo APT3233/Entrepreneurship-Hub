@@ -11,6 +11,8 @@ import { appConfig } from "app/config/app.js";
 const SEMESTER_CODES = { 1: "SP", 2: "SU", 3: "FA" };
 const SEMESTER_NAMES = { 1: "Spring", 2: "Summer", 3: "Fall" };
 const SEMESTER_START_MONTHS = { 1: 0, 2: 4, 3: 8 }; // Jan, May, Sept
+// Map ngược prefix mã học kỳ → loại kỳ (1=Spring, 2=Summer, 3=Fall)
+const SEMESTER_TYPE_FROM_PREFIX = { SP: 1, SU: 2, FA: 3 };
 
 export const createClassService = ({
   classRepository,
@@ -20,16 +22,57 @@ export const createClassService = ({
   groupRepository,
   enrollmentRepository,
   groupMemberRepository,
+  checkpointRepository,
+  assignmentRepository,
   transaction,
   eventBus,
   redis,
   inviteRepository,
   outboxRepository,
+  auditService,
 }) => {
   const base = createBaseService(classRepository, "Class");
 
   const isLecturerOnly = (user) =>
     user?.roles?.length && !user.roles.some((r) => ["admin", "department_head"].includes(String(r).toLowerCase()));
+
+  /**
+   * Đảm bảo tồn tại 1 học kỳ có semester_code = semCode.
+   * Quy tắc:
+   *   - Nếu đã có và chưa xóa mềm → trả về luôn.
+   *   - Nếu có nhưng đang xóa mềm → restore.
+   *   - Nếu chưa có → auto-create với điều kiện thời gian (≤ 3 tháng tương lai, ≤ 12 tháng quá khứ),
+   *     ngoài khoảng đó thì throw BadRequest.
+   * Dùng chung cho cả luồng tạo và sửa lớp.
+   */
+  const ensureSemester = async (semCode, semesterType, year) => {
+    const existing = await semesterRepository.findByCode(semCode);
+    if (existing) return existing;
+
+    const anySem = await semesterRepository.findAnyByCode(semCode);
+    if (anySem) return semesterRepository.restore(anySem.id);
+
+    const startMonth = SEMESTER_START_MONTHS[semesterType] ?? 0;
+    const startDate = new Date(year, startMonth, 1);
+    const now = new Date();
+    const diffMonths =
+      (startDate.getFullYear() - now.getFullYear()) * 12 + (startDate.getMonth() - now.getMonth());
+
+    // Cho phép tự tạo trước 3 tháng và quá khứ tối đa 12 tháng (an toàn cho thao tác chỉnh sửa)
+    if (diffMonths > 3 || diffMonths < -12) {
+      throw BadRequest(`Học kỳ ${semCode} chưa được mở (chỉ cho phép tạo trước tối đa 3 tháng).`);
+    }
+
+    const endDate = new Date(year, startMonth + 3, 30); // Giả định mỗi kỳ ~4 tháng
+    return semesterRepository.create({
+      semester_code: semCode,
+      semester_name: `${SEMESTER_NAMES[semesterType]} ${year}`,
+      year,
+      start_date: startDate,
+      end_date: endDate,
+      status: "upcoming",
+    });
+  };
 
   const resolveSemesters = async (query) => {
     const year = query.year != null ? Number(query.year) : null;
@@ -104,6 +147,8 @@ export const createClassService = ({
       semester_status: cls.semester_status || null,
       year: cls.year ?? null,
       semester_id: cls.semester_id ?? null,
+      // Trả thêm semester_code để FE có thể derive đúng loại kỳ (SP/SU/FA → 1/2/3) khi sửa lớp
+      semester_code: cls.semester_code || null,
       studentCount,
       groupCount,
       assignmentCount: 0,
@@ -130,6 +175,9 @@ export const createClassService = ({
           groupName: gr ? gr.groupName : null,
         };
       }),
+      createdAt: cls.created_at,
+      updatedAt: cls.updated_at,
+      manipulationDays: appConfig.class.manipulationDays,
     };
   };
 
@@ -137,15 +185,77 @@ export const createClassService = ({
   const getStats = async (query, lecturerId) => {
     const { semesterId, semesterIds } = await resolveSemesters(query);
     const useIds = Array.isArray(semesterIds) && semesterIds.length > 0 ? semesterIds : null;
-    const [classCount, groupCount] = await Promise.all([
+    const [
+      classCount,
+      groupCount,
+      submissionStats,
+      groupStats,
+      needGradingCheckpoints,
+      needGradingAssignments,
+      managedStudentCount,
+      totalStudentCount,
+    ] = await Promise.all([
       classRepository.countByLecturer(lecturerId, semesterId, useIds),
       groupRepository.countByLecturer({ lecturerId, semesterId: semesterId ?? undefined, semesterIds: useIds || undefined }),
+      checkpointRepository.getSubmissionStatsByLecturer(lecturerId, semesterId, useIds),
+      groupRepository.getGroupStatsByLecturer(lecturerId, semesterId, useIds),
+      checkpointRepository.countNeedGradingByLecturer(lecturerId, semesterId, useIds),
+      assignmentRepository.countNeedGradingByLecturer(lecturerId, semesterId, useIds),
+      classRepository.countStudentsByLecturer(lecturerId),
+      studentRepository.countTotalActive(),
     ]);
     return {
       classCount,
       groupCount,
-      assignmentCount: 0,
-      needGradingCount: 0,
+      checkpointStats: submissionStats,
+      groupStats,
+      assignmentCount: submissionStats.total_checkpoints,
+      needGradingCount: needGradingCheckpoints + needGradingAssignments,
+      managedStudentCount,
+      totalStudentCount,
+    };
+  };
+
+  /** Thống kê dashboard student: trạng thái nhóm, checkpoint cần xử lý */
+  const getStudentStats = async (userId) => {
+    const [checkpointStats, assignmentStats, groups] = await Promise.all([
+      checkpointRepository.getStudentStats(userId),
+      assignmentRepository.getStudentStats(userId),
+      groupRepository.findByStudent(userId),
+    ]);
+
+    // Gộp thống kê từ cả Checkpoint và Assignment
+    const combinedStats = {
+      total: checkpointStats.total + assignmentStats.total,
+      submitted: checkpointStats.submitted + assignmentStats.submitted,
+      pending: checkpointStats.pending + assignmentStats.pending,
+      late: checkpointStats.late + assignmentStats.late,
+      avgScore: 0
+    };
+
+    // Tính điểm trung bình chung chính xác
+    const totalSum = checkpointStats.sumScore + assignmentStats.sumScore;
+    const totalCount = checkpointStats.scoredCount + assignmentStats.scoredCount;
+    if (totalCount > 0) {
+      combinedStats.avgScore = Number((totalSum / totalCount).toFixed(1));
+    }
+
+    // Lấy thông tin nhóm hiện tại (nhóm mới nhất hoặc đang hoạt động)
+    const activeGroup = groups.length > 0 ? groups[0] : null;
+    let groupMemberStats = null;
+
+    if (activeGroup) {
+      groupMemberStats = await groupRepository.getMemberStatsByGroupId(activeGroup.id);
+    }
+
+    return {
+      checkpointStats: combinedStats,
+      group: activeGroup ? {
+        id: activeGroup.id,
+        name: activeGroup.group_name || activeGroup.group_code,
+        classCode: activeGroup.class_code,
+        memberStats: groupMemberStats,
+      } : null,
     };
   };
 
@@ -176,6 +286,20 @@ export const createClassService = ({
       return { data, ...pagination, total };
     }
 
+    // --- STUDENT SCOPE ---
+    // Nếu là sinh viên, chỉ trả về các lớp họ đang học (kèm info môn học)
+    const isStudent = lecturerId && query.studentScope === "mine";
+    if (isStudent) {
+      const student = await studentRepository.findByUserId(lecturerId);
+      if (student) {
+        const data = await classRepository.findEnrolledByStudent(student.id, {
+          semesterId: semesterId ?? undefined,
+          year: query.year ? Number(query.year) : undefined,
+        });
+        return { data, total: data.length, page: 1, limit: data.length };
+      }
+    }
+
     return base.getList(query, {
       allowedSortColumns: ["class_code", "class_name", "status", "max_students", "created_at"],
       filters,
@@ -197,90 +321,124 @@ export const createClassService = ({
     const subject = await subjectRepository.findByCode(subjectCode);
     if (!subject) throw BadRequest(`Subject not found: ${subjectCode}`);
     const semCode = `${SEMESTER_CODES[semesterType] || "SP"}${year}`;
-    let semester = await semesterRepository.findByCode(semCode);
-    
-    // Nếu học kỳ chưa tồn tại, kiểm tra xem có cho phép tạo trước không
-    if (!semester) {
-      const startMonth = SEMESTER_START_MONTHS[semesterType] ?? 0;
-      const startDate = new Date(year, startMonth, 1);
-      const now = new Date();
-      
-      // Tính khoảng cách thời gian (đơn vị tháng)
-      const diffMonths = (startDate.getFullYear() - now.getFullYear()) * 12 + (startDate.getMonth() - now.getMonth());
-      
-      if (diffMonths <= 3 && diffMonths >= -12) { // Cho phép tạo trước 3 tháng và cũ không quá 1 năm (để an toàn)
-        console.log(`[createClass] Tự động tạo học kỳ mới: ${semCode}`);
-        const endDate = new Date(year, startMonth + 3, 30); // Giả định mỗi kỳ 4 tháng
-        semester = await semesterRepository.create({
-          semester_code: semCode,
-          semester_name: `${SEMESTER_NAMES[semesterType]} ${year}`,
-          year: year,
-          start_date: startDate,
-          end_date: endDate,
-          status: "upcoming",
-        });
-      } else {
-        throw BadRequest(`Học kỳ ${semCode} chưa được mở (chỉ cho phép tạo trước tối đa 3 tháng).`);
-      }
-    }
-    
-    const classCode = `${subjectCode}-${String(classSection).padStart(2, "0")}-${semCode}`;
+    const semester = await ensureSemester(semCode, semesterType, year);
 
-    // Kiểm tra lớp đã tồn tại chưa
-    const existingClass = await classRepository.findByCode(classCode, semester.id);
-    if (existingClass) {
-      throw BadRequest(`Lớp học "${classCode}" đã tồn tại trong học kỳ này.`);
-    }
+    const classCode = `${subjectCode}-${String(classSection).padStart(2, "0")}-${semCode}`;
 
     const lockKey = `lock:upload:${classCode}`;
     const locked = redis ? await acquireUploadLock(redis, lockKey) : true;
     if (!locked) throw BadRequest("Upload in progress, please try again later");
     try {
       const { classId, insertedCount, pendingInvitees, mailDispatchPublicId } = await transaction.run(async (conn) => {
-        // Kiểm tra trước: sinh viên đã ở lớp khác cùng môn cùng kỳ?
-        const studentList = Array.isArray(students?.list) ? students.list : Array.isArray(students) ? students : [];
-        const pendingInvitees = [];
-        const preCheckConflicts = [];
-        for (const s of studentList) {
-          const studentCode = String(s.memberCode || s.rollNumber || "").trim();
-          if (!studentCode || !s.email || !(s.fullname || s.full_name)) continue;
-          const [existingRows] = await conn.execute("SELECT id FROM students WHERE student_code = ? LIMIT 1", [studentCode]);
-          if (!existingRows?.length) continue;
-          const studentId = existingRows[0].id;
-          const [enrolled] = await conn.execute(
-            `SELECT c.class_code FROM class_students cs
-             JOIN classes c ON c.id = cs.class_id AND c.deleted_at IS NULL
-             WHERE cs.student_id = ? AND c.semester_id = ? AND c.subject_id = ? LIMIT 1`,
-            [studentId, semester.id, subject.id]
-          );
-          if (enrolled?.length > 0) {
-            preCheckConflicts.push({ studentCode, existingClass: enrolled[0].class_code });
-          }
-        }
-        if (preCheckConflicts.length > 0) {
-          const list = preCheckConflicts.map((c) => `${c.studentCode} (đã ở ${c.existingClass})`).join(", ");
-          throw BadRequest(
-            `Một sinh viên không thể học 2 lớp cùng môn trong cùng kỳ. Các sinh viên trùng: ${list}`
-          );
+        // 1) Guard: cấm tạo trùng mã lớp đang active trong cùng học kỳ.
+        //    Re-check trong transaction để tránh race condition khi 2 request chạy song song.
+        const [activeRows] = await conn.execute(
+          "SELECT id FROM `classes` WHERE class_code = ? AND semester_id = ? AND deleted_at IS NULL LIMIT 1",
+          [classCode, semester.id]
+        );
+        if (activeRows.length > 0) {
+          throw BadRequest(`Lớp học "${classCode}" đã tồn tại trong học kỳ này.`);
         }
 
-        const [classRow] = await conn.execute(
-          `INSERT INTO \`classes\` (subject_id, semester_id, class_code, class_name, lecturer_id, max_students, min_group_members, max_group_members, status, created_by)
-           VALUES (:subject_id, :semester_id, :class_code, :class_name, :lecturer_id, :max_students, :min_group_members, :max_group_members, :status, :created_by)`,
-          {
-            subject_id: subject.id,
-            semester_id: semester.id,
-            class_code: classCode,
-            class_name: data.class_name || null,
-            lecturer_id: data.lecturer_id || created_by || null,
-            max_students: data.max_students ?? 40,
-            min_group_members: data.min_group_members ?? 4,
-            max_group_members: data.max_group_members ?? 6,
-            status: data.status || "draft",
-            created_by: created_by || null,
-          }
+        // 2) Nếu tồn tại bản ghi đã xóa mềm cùng class_code + semester_id → restore và làm mới.
+        //    Thao tác này nằm trong transaction để đảm bảo atomic: nếu bước sau fail thì rollback sạch.
+        const [softDeletedRows] = await conn.execute(
+          "SELECT id FROM `classes` WHERE class_code = ? AND semester_id = ? AND deleted_at IS NOT NULL LIMIT 1",
+          [classCode, semester.id]
         );
-        const classId = classRow.insertId;
+        let classId = null;
+        if (softDeletedRows.length > 0) {
+          classId = softDeletedRows[0].id;
+          await conn.execute(
+            `UPDATE \`classes\`
+               SET deleted_at = NULL,
+                   subject_id = ?,
+                   class_name = ?,
+                   lecturer_id = ?,
+                   max_students = ?,
+                   min_group_members = ?,
+                   max_group_members = ?,
+                   status = 'draft',
+                   created_by = ?,
+                   updated_at = NOW()
+             WHERE id = ?`,
+            [
+              subject.id,
+              data.class_name || classCode,
+              data.lecturer_id || null,
+              data.max_students || 40,
+              data.min_group_members || 4,
+              data.max_group_members || 6,
+              data.created_by || null,
+              classId,
+            ]
+          );
+          // Xóa sạch danh sách SV cũ để nạp danh sách mới
+          await conn.execute("DELETE FROM class_students WHERE class_id = ?", [classId]);
+        }
+
+        // 3) Pre-check: 1 sinh viên không được thuộc 2 lớp bất kỳ trong cùng học kỳ (toàn cục, bỏ qua subject).
+        //    Gom thành 1 query IN để tránh N+1.
+        const studentList = Array.isArray(students?.list) ? students.list : Array.isArray(students) ? students : [];
+        const studentCodes = [
+          ...new Set(
+            studentList
+              .map((s) => String(s.memberCode || s.rollNumber || "").trim())
+              .filter(Boolean)
+          ),
+        ];
+        if (studentCodes.length > 0) {
+          const placeholders = studentCodes.map(() => "?").join(",");
+          const conflictSql = `
+            SELECT s.student_code, c.class_code
+              FROM class_students cs
+              JOIN students s ON s.id = cs.student_id
+              JOIN \`classes\` c ON c.id = cs.class_id AND c.deleted_at IS NULL
+             WHERE s.student_code IN (${placeholders})
+               AND c.semester_id = ?
+               ${classId ? "AND c.id <> ?" : ""}
+          `;
+          const conflictParams = classId
+            ? [...studentCodes, semester.id, classId]
+            : [...studentCodes, semester.id];
+          const [conflictRows] = await conn.execute(conflictSql, conflictParams);
+          if (conflictRows.length > 0) {
+            const preview = conflictRows
+              .slice(0, 10)
+              .map((r) => `${r.student_code} (đã ở ${r.class_code})`)
+              .join(", ");
+            const suffix = conflictRows.length > 10
+              ? `, ... và ${conflictRows.length - 10} sinh viên khác`
+              : "";
+            throw BadRequest(
+              `Một sinh viên không thể học 2 lớp trong cùng học kỳ. Các sinh viên trùng: ${preview}${suffix}.`
+            );
+          }
+        }
+
+        // 4) Insert class mới nếu không phải trường hợp restore
+        if (!classId) {
+          const [classRow] = await conn.execute(
+            `INSERT INTO \`classes\` (subject_id, semester_id, class_code, class_name, lecturer_id, max_students, min_group_members, max_group_members, status, created_by)
+             VALUES (:subject_id, :semester_id, :class_code, :class_name, :lecturer_id, :max_students, :min_group_members, :max_group_members, :status, :created_by)`,
+            {
+              subject_id: subject.id,
+              semester_id: semester.id,
+              class_code: classCode,
+              class_name: data.class_name || classCode,
+              lecturer_id: data.lecturer_id || null,
+              max_students: data.max_students || 40,
+              min_group_members: data.min_group_members || 4,
+              max_group_members: data.max_group_members || 6,
+              status: "draft",
+              created_by: data.created_by || null,
+            }
+          );
+          classId = classRow.insertId;
+        }
+
+        const pendingInvitees = [];
+
         const chunks = chunkArray(studentList, 10);
         let insertedCount = 0;
         for (let i = 0; i < chunks.length; i++) {
@@ -382,6 +540,17 @@ export const createClassService = ({
       });
       eventBus.emit(Events.STUDENTS_UPLOADED, { classCode, semester: semCode, count: insertedCount });
       const cls = await classRepository.findWithDetails(classId);
+      
+      // Ghi log audit
+      await auditService.log({
+        userId: created_by || null,
+        action: "create_class",
+        tableName: "classes",
+        recordId: classId,
+        title: classCode,
+        newValues: { class_code: classCode, student_count: insertedCount }
+      });
+
       return {
         ...cls,
         student_count: insertedCount,
@@ -395,21 +564,122 @@ export const createClassService = ({
   const update = async (id, data, user = null) => {
     const cls = await classRepository.findWithDetails(id);
     if (!cls) throw NotFound("Class");
-    if (isLecturerOnly(user) && Number(cls.lecturer_id) !== Number(user.id)) throw Forbidden("Class does not belong to you");
-    return base.update(id, data);
+    
+    if (isLecturerOnly(user)) {
+      if (Number(cls.lecturer_id) !== Number(user.id)) throw Forbidden("Lớp học không thuộc quyền quản lý của bạn");
+
+      const createdAt = new Date(cls.created_at);
+      const now = new Date();
+      const diffDays = (now - createdAt) / (1000 * 60 * 60 * 24);
+      const isNewlyCreated = diffDays <= appConfig.class.manipulationDays;
+      if (cls.semester_status !== "upcoming" && !isNewlyCreated) {
+        throw BadRequest(`Chỉ có thể sửa thông tin lớp học ở học kỳ sắp diễn ra hoặc lớp mới được tạo trong vòng ${appConfig.class.manipulationDays} ngày.`);
+      }
+    }
+
+    const { subject: subjectCode, classSection, year, semester: semesterType, ...otherData } = data;
+    const updateData = { ...otherData };
+
+    // Chỉ recompute mã lớp khi có thay đổi 1 trong 4 field định danh
+    const wantsRecompute = subjectCode != null || classSection != null || year != null || semesterType != null;
+    if (wantsRecompute) {
+      const targetSubjectCode = subjectCode ?? cls.subject_code;
+      const targetClassSection =
+        classSection ?? parseInt(String(cls.class_code || "").split("-")[1], 10) ?? 1;
+      const targetYear = year ?? cls.year;
+
+      // Derive semester type: ưu tiên FE truyền lên, nếu không có thì lấy prefix của semester_code hiện tại.
+      // Lưu ý: cls.semester_id là ID DB, KHÔNG phải type 1/2/3 → bug cũ ở đây.
+      const currentPrefix = String(cls.semester_code || "").slice(0, 2).toUpperCase();
+      const targetSemesterType = semesterType ?? SEMESTER_TYPE_FROM_PREFIX[currentPrefix] ?? 1;
+      if (!SEMESTER_CODES[targetSemesterType]) {
+        throw BadRequest(`Học kỳ không hợp lệ: ${targetSemesterType}.`);
+      }
+
+      const subject = await subjectRepository.findByCode(targetSubjectCode);
+      if (!subject) throw BadRequest(`Subject not found: ${targetSubjectCode}`);
+
+      const semCode = `${SEMESTER_CODES[targetSemesterType]}${targetYear}`;
+      const semester = await ensureSemester(semCode, targetSemesterType, targetYear);
+
+      updateData.subject_id = subject.id;
+      updateData.semester_id = semester.id;
+      updateData.class_code = `${targetSubjectCode}-${String(targetClassSection).padStart(2, "0")}-${semCode}`;
+
+      // Chặn trùng mã lớp với lớp khác đang active trong cùng học kỳ
+      if (updateData.class_code !== cls.class_code || semester.id !== cls.semester_id) {
+        const conflict = await classRepository.findByCode(updateData.class_code, semester.id);
+        if (conflict && Number(conflict.id) !== Number(id)) {
+          throw BadRequest(`Lớp học "${updateData.class_code}" đã tồn tại trong học kỳ này.`);
+        }
+      }
+    }
+
+    // Luôn cập nhật thời gian thay đổi
+    updateData.updated_at = new Date();
+
+    const updated = await base.update(id, updateData);
+
+    // Ghi log audit
+    await auditService.log({
+      userId: user?.id || null,
+      action: "update_class",
+      tableName: "classes",
+      recordId: id,
+      title: updateData.class_code || cls.class_code,
+      oldValues: { class_code: cls.class_code },
+      newValues: { class_code: updateData.class_code || cls.class_code }
+    });
+
+    return updated;
   };
 
   const remove = async (id, user = null) => {
     const cls = await classRepository.findWithDetails(id);
     if (!cls) throw NotFound("Class");
-    if (isLecturerOnly(user) && Number(cls.lecturer_id) !== Number(user.id)) throw Forbidden("Class does not belong to you");
-    return base.remove(id, true);
+    
+    if (isLecturerOnly(user)) {
+      if (Number(cls.lecturer_id) !== Number(user.id)) throw Forbidden("Lớp học không thuộc quyền quản lý của bạn");
+      
+      const createdAt = new Date(cls.created_at);
+      const now = new Date();
+      const diffDays = (now - createdAt) / (1000 * 60 * 60 * 24);
+      const isNewlyCreated = diffDays <= appConfig.class.manipulationDays;
+
+      // Cho phép xóa nếu học kỳ sắp diễn ra (upcoming) HOẶC lớp mới tạo trong manipulationDays ngày
+      if (cls.semester_status !== "upcoming" && !isNewlyCreated) {
+        throw BadRequest(`Chỉ có thể xóa lớp học ở học kỳ sắp diễn ra hoặc lớp mới được tạo trong vòng ${appConfig.class.manipulationDays} ngày.`);
+      }
+    }
+
+    // Chặn xóa nếu đã có bất kỳ bài nộp checkpoint nào thuộc các nhóm của lớp này
+    const submittedCount = await checkpointRepository.countSubmittedByClass(id);
+    if (submittedCount > 0) {
+      throw BadRequest(
+        `Không thể xóa lớp "${cls.class_code}" vì đã có ${submittedCount} bài nộp checkpoint. Vui lòng xử lý các bài nộp trước khi xóa lớp.`
+      );
+    }
+
+    const result = await base.remove(id, true);
+
+    // Ghi log audit
+    await auditService.log({
+      userId: user?.id || null,
+      action: "delete_class",
+      tableName: "classes",
+      recordId: id,
+      title: cls.class_code,
+      oldValues: { class_code: cls.class_code }
+    });
+
+    return result;
   };
 
   return {
     getById,
     getOverview,
     getStats,
+    getStudentStats,
     getList,
     create,
     update,

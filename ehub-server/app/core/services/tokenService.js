@@ -284,6 +284,30 @@ export const createTokenService = ({ redis }) => {
     return decoded;
   };
 
+  /**
+   * Ký một payload bất kỳ với thời hạn ngắn (dùng cho setup password, etc.)
+   */
+  const signPayload = (payload, expiresIn = "15m") => {
+    return jwt.sign(payload, jwtConfig.secret, {
+      expiresIn,
+      issuer: jwtConfig.issuer,
+    });
+  };
+
+  /**
+   * Verify một payload
+   */
+  const verifyPayload = (token) => {
+    try {
+      return jwt.verify(token, jwtConfig.secret, {
+        issuer: jwtConfig.issuer,
+      });
+    } catch (err) {
+      if (err.name === "TokenExpiredError") throw TokenExpired("Liên kết đã hết hạn.");
+      throw TokenInvalid("Liên kết không hợp lệ.");
+    }
+  };
+
   return {
     generateTokenPair,
     refreshTokens,
@@ -291,5 +315,7 @@ export const createTokenService = ({ redis }) => {
     revokeAllTokens,
     verifyAccessToken,
     isBlacklisted,
+    signPayload,
+    verifyPayload,
   };
 };

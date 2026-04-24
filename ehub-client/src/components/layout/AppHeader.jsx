@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Users, LogOut } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
 
 function displayNameFromUser(user) {
   if (!user) return "";
@@ -34,6 +35,8 @@ function UserAvatar({ user }) {
 }
 
 export default function AppHeader({ user = null, onLogout }) {
+  const navigate = useNavigate();
+  const location = useLocation();
   const name = displayNameFromUser(user) || "—";
   const major = user?.major || user?.student_major || "";
   const email = user?.email || "";
@@ -41,13 +44,24 @@ export default function AppHeader({ user = null, onLogout }) {
   const rolesLine =
     Array.isArray(user?.roles) && user.roles.length ? user.roles.join(" · ") : "";
 
+  const handleProfileClick = () => {
+    const isLecturer = location.pathname.startsWith("/lecturer");
+    const isStudent = location.pathname.startsWith("/student");
+    if (isLecturer) navigate("/lecturer/profile");
+    else if (isStudent) navigate("/student/profile");
+    else navigate("/profile");
+  };
+
   return (
     <header className="shrink-0 w-full bg-white border-b border-gray-200 shadow-sm">
       <div className="flex items-center justify-end gap-3 sm:gap-6 px-4 sm:px-6 py-2 sm:py-3">
-        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+        <div 
+          onClick={handleProfileClick}
+          className="flex items-center gap-1.5 sm:gap-2 min-w-0 cursor-pointer group/header"
+        >
           <UserAvatar user={user} />
           <div className="text-right leading-tight min-w-0">
-            <p className="text-xs sm:text-sm font-semibold text-gray-800 truncate" title={name}>
+            <p className="text-xs sm:text-sm font-semibold text-gray-800 truncate group-hover/header:text-indigo-600 transition-colors" title={name}>
               {name}
             </p>
             {major ? (

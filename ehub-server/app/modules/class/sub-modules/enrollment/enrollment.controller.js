@@ -12,7 +12,7 @@ export const createEnrollmentController = ({ enrollmentService }) => {
   });
 
   const enroll = catchAsync(async (req, res) => {
-    const enrollment = await enrollmentService.enroll(req.params.classId, req.body.student_id, req.user);
+    const enrollment = await enrollmentService.enroll(req.params.classId, req.body, req.user);
     return sendCreated(res, {
       data: enrollment,
       message: "Student enrolled successfully",
@@ -24,5 +24,15 @@ export const createEnrollmentController = ({ enrollmentService }) => {
     return sendNoContent(res);
   });
 
-  return { list, enroll, unenroll };
+  const update = catchAsync(async (req, res) => {
+    const updated = await enrollmentService.updateStudentInfo(
+      req.params.classId,
+      req.params.studentId,
+      req.body,
+      req.user,
+    );
+    return sendSuccess(res, { data: updated, message: "Student updated successfully" });
+  });
+
+  return { list, enroll, unenroll, update };
 };

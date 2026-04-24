@@ -29,6 +29,15 @@ export const createClassController = ({ classService }) => {
     });
   });
 
+  const studentStats = catchAsync(async (req, res, next) => {
+    if (!req.user) return next(TokenInvalid());
+    const result = await classService.getStudentStats(req.user.id);
+    return sendSuccess(res, {
+      data: result,
+      message: "Student stats retrieved successfully",
+    });
+  });
+
   const overview = catchAsync(async (req, res, next) => {
     const cls = await classService.getOverview(req.params.id, req.user);
     return sendSuccess(res, {
@@ -47,7 +56,8 @@ export const createClassController = ({ classService }) => {
 
   const create = catchAsync(async (req, res) => {
     const payload = { ...req.body, created_by: req.user?.id || null };
-    if (req.user?.id && !payload.lecturer_id && payload.students?.list?.length) payload.lecturer_id = req.user.id;
+    // Tự gán lecturer_id = user hiện tại nếu client không chỉ định, để scope "mine" hoạt động đúng
+    if (req.user?.id && !payload.lecturer_id) payload.lecturer_id = req.user.id;
     const cls = await classService.create(payload);
     return sendCreated(res, {
       data: cls,
@@ -68,5 +78,5 @@ export const createClassController = ({ classService }) => {
     return sendNoContent(res);
   });
 
-  return { list, getById, overview, stats, create, update, remove };
+  return { list, getById, overview, stats, studentStats, create, update, remove };
 };

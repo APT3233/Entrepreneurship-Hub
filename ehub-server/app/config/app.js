@@ -28,6 +28,9 @@ export const appConfig = Object.freeze({
   invite: {
     expiryDays: toInt(optional("INVITE_EXPIRY_DAYS", "7"), 7),
   },
+  class: {
+    manipulationDays: toInt(optional("CLASS_MANIPULATION_DAYS", "1"), 7),
+  },
   mail: {
     enabled: toBool(optional("MAIL_ENABLED", "true"), true),
     from: optional("MAIL_FROM", "noreply@ehub.edu.vn"),

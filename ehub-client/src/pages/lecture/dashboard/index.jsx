@@ -32,12 +32,22 @@ const LectureDashboard = () => {
   useEffect(() => {
     const fetchSemesters = async () => {
       const list = await SemesterApi.getList();
-      setSemesterList(Array.isArray(list) ? list : []);
-      if (list?.length) {
-        const firstYear = list[0].year;
-        const inFirstYear = list.filter((s) => s.year === firstYear);
-        setSelectedYear(firstYear);
-        setSelectedSemesterId(inFirstYear.length > 1 ? VALUE_ALL_SEMESTERS : inFirstYear[0].id);
+      const safeList = Array.isArray(list) ? list : [];
+      setSemesterList(safeList);
+      if (safeList.length) {
+        // Tự động chọn học kỳ đang diễn ra
+        const ongoing = safeList.find((s) => s.status === "ongoing");
+        if (ongoing) {
+          setSelectedYear(ongoing.year);
+          setSelectedSemesterId(ongoing.id);
+        } else {
+          const years = [...new Set(safeList.map((s) => s.year))].sort((a, b) => b - a);
+          const currentYear = new Date().getFullYear();
+          const selectedYear = years.includes(currentYear) ? currentYear : years[0];
+          const inYear = safeList.filter((s) => s.year === selectedYear);
+          setSelectedYear(selectedYear);
+          setSelectedSemesterId(inYear.length > 1 ? VALUE_ALL_SEMESTERS : inYear[0].id);
+        }
       } else {
         setPageLoading(false);
       }
@@ -54,7 +64,10 @@ const LectureDashboard = () => {
     { value: VALUE_ALL_SEMESTERS, label: "Tất cả kỳ" },
     ...semestersInYear.map((s) => ({
       value: s.id,
-      label: s.semester_name.replace(/\s?\d{4}$/, ""),
+      label:
+        s.status === "ongoing"
+          ? `${s.semester_name.replace(/\s?\d{4}$/, "")} (Hiện tại)`
+          : s.semester_name.replace(/\s?\d{4}$/, ""),
     })),
   ];
 
@@ -96,6 +109,8 @@ const LectureDashboard = () => {
           groupCount: statsRes?.data?.groupCount ?? 0,
           assignmentCount: statsRes?.data?.assignmentCount ?? 0,
           needGradingCount: statsRes?.data?.needGradingCount ?? 0,
+          groupStats: statsRes?.data?.groupStats,
+          checkpointStats: statsRes?.data?.checkpointStats,
         });
         const list = listRes?.data ?? [];
         setRecentClasses(
@@ -119,10 +134,38 @@ const LectureDashboard = () => {
   return (
     <>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <StatCard title="Lớp học" value={stats.classCount} icon={<BookOpenIcon />} iconBg="bg-blue-100" iconColor="text-blue-500" />
-        <StatCard title="Nhóm sinh viên" value={stats.groupCount} icon={<StatIconGroups />} iconBg="bg-amber-100" iconColor="text-amber-600" />
-        <StatCard title="Bài tập" value={stats.assignmentCount} icon={<StatIconAssignment />} iconBg="bg-purple-100" iconColor="text-violet-600" />
-        <StatCard title="Cần chấm" value={stats.needGradingCount} icon={<StatIconGrading />} iconBg="bg-green-100" iconColor="text-green-600" />
+        <StatCard 
+          title="Lớp học" 
+          value={stats.classCount} 
+          icon={<BookOpenIcon />} 
+          iconBg="bg-blue-100" 
+          iconColor="text-blue-500" 
+          onClick={() => navigate("/lecturer/classes")}
+        />
+        <StatCard 
+          title="Nhóm sinh viên" 
+          value={stats.groupCount} 
+          icon={<StatIconGroups />} 
+          iconBg="bg-amber-100" 
+          iconColor="text-amber-600" 
+          onClick={() => navigate("/lecturer/groups")}
+        />
+        <StatCard 
+          title="Checkpoint" 
+          value={stats.assignmentCount} 
+          icon={<StatIconAssignment />} 
+          iconBg="bg-purple-100" 
+          iconColor="text-violet-600" 
+          onClick={() => navigate("/lecturer/assignments?tab=checkpoints")}
+        />
+        <StatCard 
+          title="Cần chấm" 
+          value={stats.needGradingCount} 
+          icon={<StatIconGrading />} 
+          iconBg="bg-green-100" 
+          iconColor="text-green-600" 
+          onClick={() => navigate("/lecturer/assignments")}
+        />
       </div>
       <div className="w-full p-4 bg-white rounded-2xl shadow-sm mt-4">
         <div className="flex justify-start gap-4">
@@ -177,15 +220,15 @@ const LectureDashboard = () => {
             </div>
             <div className="h-full w-full">
               <GroupStatus
-                stats={{ eligible: 0, needsReview: 0, ineligible: 0 }}
+                stats={stats.groupStats || { eligible: 0, needsReview: 0, ineligible: 0 }}
                 onDetail={() => navigate("/lecturer/groups")}
               />
             </div>
             <div className="h-full w-full">
               <AssignmentStatus
-                stats={{ submitted: 0, pending: 0, late: 0 }}
-                unit="%"
-                onCreate={() => navigate("/lecturer/assignments")}
+                stats={stats.checkpointStats || { submitted: 0, pending: 0, late: 0 }}
+                unit=""
+                onCreate={() => navigate("/lecturer/assignments?tab=checkpoints")}
               />
             </div>
           </div>

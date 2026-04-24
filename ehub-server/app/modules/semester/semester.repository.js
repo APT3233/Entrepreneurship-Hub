@@ -4,7 +4,7 @@ export const createSemesterRepository = ({ db }) => {
   const base = createBaseRepository(db, "semesters");
 
   const findByCode = async (code) => {
-    return base.findOne({ semester_code: code });
+    return base.findOne({ semester_code: code, deleted_at: null });
   };
 
   const findManyByYear = async (year) => {
@@ -18,11 +18,20 @@ export const createSemesterRepository = ({ db }) => {
     const [rows] = await db.execute(sql);
     return rows[0] || null;
   };
+  const findAnyByCode = async (code) => {
+    return base.findOne({ semester_code: code });
+  };
+
+  const restore = async (id) => {
+    return base.update(id, { deleted_at: null, updated_at: new Date() });
+  };
 
   return {
     ...base,
     findByCode,
+    findAnyByCode,
     findManyByYear,
     findCurrentSemester,
+    restore,
   };
 };

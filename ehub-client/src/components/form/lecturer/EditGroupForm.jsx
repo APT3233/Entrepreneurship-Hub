@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { X, ChevronDown } from "lucide-react";
 
 /**
- * EditGroupModal Component
+ * EditGroupForm Component
  * - Displays a form to edit group information.
  * - Matches the design provided in the user's image.
  */
@@ -51,7 +51,7 @@ function SelectField({ value, onChange, options, placeholder }) {
 
 const DEFAULT_CATEGORIES = ["Web Development", "Mobile App", "AI / ML", "Kinh doanh", "Thiết kế"];
 
-export default function EditGroupModal({
+export default function EditGroupForm({
   isOpen = false,
   onClose,
   onSubmit,

@@ -18,6 +18,8 @@ CREATE TABLE users (
                         COMMENT 'NULL nếu đăng nhập bằng Google',
     full_name       VARCHAR(150)  NOT NULL,
     phone           VARCHAR(20)       NULL,
+    campus          VARCHAR(50)       NULL
+                        COMMENT 'Cơ sở: Hà Nội, Đà Nẵng, Quy Nhơn, Cần Thơ, Hồ Chí Minh',
     avatar_url      VARCHAR(500)      NULL,
 
     -- Đăng nhập bằng Google
@@ -287,6 +289,8 @@ CREATE TABLE class_students (
     enrolled_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     dropped_at  TIMESTAMP     NULL,
     note        TEXT          NULL,
+    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,
 
     UNIQUE KEY uk_class_student (class_id, student_id),
     INDEX      idx_cs_student   (student_id),
@@ -431,6 +435,8 @@ CREATE TABLE group_members (
     joined_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     left_at    TIMESTAMP     NULL,
     note       TEXT          NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,
 
     -- 1 SV chỉ thuộc 1 nhóm trong cùng 1 group
     UNIQUE KEY uk_group_student (group_id, student_id),
@@ -501,8 +507,7 @@ CREATE TABLE audit_logs (
     id          BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id     BIGINT UNSIGNED     NULL,
 
-    action      ENUM('create','update','delete','restore',
-                     'export','import','login','logout')  NOT NULL,
+    action      VARCHAR(64)  NOT NULL,
 
     table_name  VARCHAR(64)  NOT NULL,
     record_id   BIGINT UNSIGNED  NULL,
@@ -875,6 +880,8 @@ CREATE TABLE checkpoints (
                   COMMENT 'Giới hạn dung lượng mỗi file (MB)',
     max_files           TINYINT UNSIGNED  DEFAULT 5  NOT NULL
                   COMMENT 'Số file tối đa được nộp',
+    attachment_url      TEXT              NULL
+                  COMMENT 'File đính kèm GV: một link hoặc JSON ["url1",...] (tối đa 5)',
 
     status        ENUM('draft','open','closed','archived')
                       DEFAULT 'draft' NOT NULL
@@ -970,6 +977,8 @@ CREATE TABLE checkpoint_submission_files (
     uploaded_by    BIGINT UNSIGNED     NULL
                    COMMENT 'Ai đã upload file này',
     uploaded_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,
 
     is_deleted     TINYINT(1) DEFAULT 0 NOT NULL
                    COMMENT '1 = đã xoá (soft delete)',
@@ -1071,6 +1080,12 @@ CREATE TABLE assignments (
     status         ENUM('open','closed','archived')
                       DEFAULT 'open' NOT NULL
                   COMMENT 'Trạng thái bài tập',
+    -- Cấu hình file
+    required_file_types VARCHAR(200)  DEFAULT 'pdf,docx' NULL,
+    max_file_size_mb    SMALLINT UNSIGNED DEFAULT 20     NULL,
+    max_files           TINYINT UNSIGNED  DEFAULT 5      NULL,
+    attachment_url      TEXT                             NULL
+                        COMMENT 'Đính kèm GV: URL hoặc JSON mảng URL (tối đa 5 file)',
     created_by     BIGINT UNSIGNED  NULL,
     created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -1110,6 +1125,44 @@ CREATE TABLE assignment_submissions (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='Bài nộp của nhóm cho bài tập thường xuyên';
 
+
+-- -------------------------------------------
+-- BẢNG 21b: assignment_submission_files — File nộp bài assignment (theo nhóm)
+-- Tương tự checkpoint_submission_files; mỗi assignment_submissions có thể có nhiều file
+-- -------------------------------------------
+CREATE TABLE assignment_submission_files (
+    id             BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    submission_id  BIGINT UNSIGNED NOT NULL
+                   COMMENT 'FK assignment_submissions',
+
+    file_name      VARCHAR(255)    NOT NULL
+                   COMMENT 'Tên file gốc',
+    file_path      VARCHAR(1000)   NOT NULL
+                   COMMENT 'Object key / đường dẫn lưu trữ (MinIO)',
+    file_url       VARCHAR(1000)       NULL
+                   COMMENT 'URL tải/preview sau khi upload',
+    file_type      VARCHAR(20)         NULL
+                   COMMENT 'Phần mở rộng: pdf, docx...',
+    mime_type      VARCHAR(100)        NULL,
+    file_size      INT UNSIGNED        NULL
+                   COMMENT 'Kích thước (bytes)',
+
+    uploaded_by    BIGINT UNSIGNED     NULL
+                   COMMENT 'User nộp file (sinh viên)',
+    uploaded_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,
+
+    is_deleted     TINYINT(1) DEFAULT 0 NOT NULL
+                   COMMENT '1 = soft delete',
+    deleted_at     TIMESTAMP               NULL,
+
+    INDEX idx_asf_submission (submission_id),
+    INDEX idx_asf_uploader   (uploaded_by)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT='File nộp assignment theo nhóm';
+
+
 -- -------------------------------------------
 -- FOREIGN KEYS cho Module Assignment
 -- -------------------------------------------
@@ -1122,4 +1175,53 @@ ALTER TABLE assignment_submissions
     ADD CONSTRAINT fk_assignment_sub_group      FOREIGN KEY (group_id)      REFERENCES `groups`(id)    ON DELETE RESTRICT,
     ADD CONSTRAINT fk_assignment_sub_submitter  FOREIGN KEY (submitted_by)  REFERENCES users(id)       ON DELETE SET NULL,
     ADD CONSTRAINT fk_assignment_sub_grader     FOREIGN KEY (graded_by)     REFERENCES users(id)       ON DELETE SET NULL;
+
+ALTER TABLE assignment_submission_files
+    ADD CONSTRAINT fk_asf_submission FOREIGN KEY (submission_id) REFERENCES assignment_submissions(id) ON DELETE CASCADE,
+    ADD CONSTRAINT fk_asf_uploader   FOREIGN KEY (uploaded_by)   REFERENCES users(id)               ON DELETE SET NULL;
+
+
+-- =============================================
+-- MODULE 4: UPLOAD SESSION — Presigned URL Upload Tracking
+-- =============================================
+
+-- -------------------------------------------
+-- BẢNG 22: upload_sessions — Theo dõi vòng đời upload presigned URL
+-- -------------------------------------------
+CREATE TABLE upload_sessions (
+    id             BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id        BIGINT UNSIGNED NOT NULL,
+    checkpoint_id  BIGINT UNSIGNED NOT NULL,
+    group_id       BIGINT UNSIGNED NOT NULL,
+    status         ENUM('initiated','uploading','completed','expired')
+                       DEFAULT 'initiated' NOT NULL,
+    file_count     TINYINT UNSIGNED NOT NULL DEFAULT 0
+                   COMMENT 'Số file trong session',
+    expires_at     DATETIME NOT NULL
+                   COMMENT 'Presigned URLs hết hạn sau thời gian này',
+    created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+
+    INDEX idx_us_user               (user_id),
+    INDEX idx_us_checkpoint_group   (checkpoint_id, group_id),
+    INDEX idx_us_status             (status),
+    INDEX idx_us_expires            (expires_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT='Theo dõi vòng đời upload qua presigned URL';
+
+ALTER TABLE upload_sessions
+    ADD CONSTRAINT fk_us_user       FOREIGN KEY (user_id)       REFERENCES users(id)        ON DELETE CASCADE,
+    ADD CONSTRAINT fk_us_checkpoint FOREIGN KEY (checkpoint_id) REFERENCES checkpoints(id)  ON DELETE RESTRICT,
+    ADD CONSTRAINT fk_us_group      FOREIGN KEY (group_id)      REFERENCES `groups`(id)     ON DELETE RESTRICT;
+
+-- File upload state tracking
+ALTER TABLE checkpoint_submission_files
+    ADD COLUMN upload_status ENUM('pending','uploaded','failed') DEFAULT 'pending' NOT NULL
+        COMMENT 'Trạng thái upload qua presigned URL' AFTER file_size,
+    ADD COLUMN etag VARCHAR(255) NULL
+        COMMENT 'ETag trả về từ MinIO sau khi upload thành công' AFTER upload_status,
+    ADD COLUMN session_id BIGINT UNSIGNED NULL
+        COMMENT 'FK upload_sessions — NULL cho file upload kiểu cũ (multer)' AFTER etag;
+
+ALTER TABLE checkpoint_submission_files
+    ADD CONSTRAINT fk_subfile_session FOREIGN KEY (session_id) REFERENCES upload_sessions(id) ON DELETE SET NULL;
 

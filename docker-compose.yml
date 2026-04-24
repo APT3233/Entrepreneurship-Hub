@@ -68,6 +68,8 @@ services:
       - ./data:/data                   
     command: server /data --console-address ":9001"
     restart: always
+    mem_limit: 2048m
+    cpus: 2.0
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 30s

@@ -4,7 +4,7 @@ import GroupApi from "@/api/group";
 import { useToast } from "@/components/ui/Toast";
 import DropDown from "@/components/ui/filter/DropDown";
 
-export default function EditGroupMemberModal({
+export default function EditGroupMemberForm({
   isOpen,
   onClose,
   groupId,

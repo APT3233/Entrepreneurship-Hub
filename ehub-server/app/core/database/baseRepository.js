@@ -96,6 +96,10 @@ export const createBaseRepository = (db, tableName) => {
   };
 
   const update = async (id, data) => {
+    return updateWithConn(db, id, data);
+  };
+
+  const updateWithConn = async (conn, id, data) => {
     const keys = Object.keys(data);
     if (!keys.length) return null;
 
@@ -107,7 +111,7 @@ export const createBaseRepository = (db, tableName) => {
 
     const sql = `UPDATE \`${tableName}\` SET ${setClause} WHERE id = :whereId`;
 
-    await db.execute(sql, updateData);
+    await conn.execute(sql, updateData);
     return findById(id);
   };
 
@@ -176,6 +180,7 @@ export const createBaseRepository = (db, tableName) => {
     count,
     create,
     update,
+    updateWithConn,
     updateWhere,
     softDelete,
     hardDelete,

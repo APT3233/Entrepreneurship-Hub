@@ -177,7 +177,8 @@ export const createGroupInviteRepository = ({ db }) => {
 
   const findActiveGroupSnapshotByStudentId = async (studentId) => {
     const [rows] = await db.execute(
-      `SELECT g.id AS group_id, g.group_name, g.group_code, g.max_members,
+      `SELECT g.id AS group_id, g.group_name, g.group_code, g.max_members, g.created_at, g.zalo_link,
+              g.category, g.topic,
               c.class_code,
               COALESCE(NULLIF(TRIM(g.mentor_name), ''), lec.full_name) AS mentor_display_name,
               sem.semester_name AS semester_name,

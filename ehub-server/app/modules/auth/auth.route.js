@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { validateRequest } from "app/core/middlewares/validateRequest.js";
 import { authenticate } from "app/core/middlewares/authMiddleware.js";
-import { loginSchema, registerSchema, activatePreviewSchema, activateBodySchema } from "./auth.validation.js";
+import { loginSchema, registerSchema, activatePreviewSchema, activateBodySchema, updateProfileSchema, changePasswordSchema } from "./auth.validation.js";
 
 /**
  * Auth Router — inject authController từ DI Container
@@ -30,10 +30,14 @@ export const createAuthRouter = (container) => {
   // GET /authorize/google → callback từ Google (code), đổi code lấy token, tạo/ghép user, set cookie, redirect frontend
   router.get("/google", authController.redirectToGoogle);
   router.get("/authorize/google", authController.authorizeGoogle);
+  router.get("/google/setup-preview", authController.getGoogleSetupPreview);
+  router.post("/google/complete-setup", authController.postGoogleSetup);
 
   // ── Authenticated routes ───────────────────────────────
   router.post("/logout-all", authenticate, authController.logoutAll);
   router.get("/me", authenticate, authController.getProfile);
+  router.put("/me", authenticate, validateRequest(updateProfileSchema), authController.updateProfile);
+  router.put("/change-password", authenticate, validateRequest(changePasswordSchema), authController.changePassword);
 
   return router;
 };

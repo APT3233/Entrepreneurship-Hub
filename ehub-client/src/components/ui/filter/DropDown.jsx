@@ -1,14 +1,41 @@
 import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { ChevronDown } from "lucide-react";
 
-// ── Dropdown dùng chung ──────────────────────────────────────────────────────
+// ── Dropdown dùng chung (Sử dụng Portal để tránh lỗi overflow) ────────────────
 function Dropdown({ label, options, value, onChange, disabled = false }) {
   const [open, setOpen] = useState(false);
+  const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
   const ref = useRef(null);
+
+  const updateCoords = () => {
+    if (ref.current) {
+      const rect = ref.current.getBoundingClientRect();
+      setCoords({
+        top: rect.bottom + window.scrollY,
+        left: rect.left + window.scrollX,
+        width: rect.width,
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (open) {
+      updateCoords();
+      window.addEventListener("resize", updateCoords);
+      window.addEventListener("scroll", updateCoords, true);
+    }
+    return () => {
+      window.removeEventListener("resize", updateCoords);
+      window.removeEventListener("scroll", updateCoords, true);
+    };
+  }, [open]);
 
   useEffect(() => {
     const handler = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+      if (ref.current && !ref.current.contains(e.target) && !e.target.closest(".portal-dropdown")) {
+        setOpen(false);
+      }
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -16,12 +43,19 @@ function Dropdown({ label, options, value, onChange, disabled = false }) {
 
   const selected = options.find((o) => o.value === value);
 
+  const handleToggle = () => {
+    if (!disabled) {
+      if (!open) updateCoords();
+      setOpen(!open);
+    }
+  };
+
   return (
     <div ref={ref} className="relative flex-1 min-w-0 md:flex-none md:w-auto md:min-w-[120px]">
       {/* Trigger */}
       <button
         type="button"
-        onClick={() => !disabled && setOpen(!open)}
+        onClick={handleToggle}
         disabled={disabled}
         className={`
           flex items-center justify-between gap-1 sm:gap-2 px-2 sm:px-4 py-2 rounded-lg border text-sm font-medium w-full
@@ -43,14 +77,16 @@ function Dropdown({ label, options, value, onChange, disabled = false }) {
         />
       </button>
 
-      {/* Dropdown list */}
-      {open && !disabled && (
-        <div className="
-          absolute top-[calc(100%+6px)] left-0 right-0 z-50
-          bg-white border border-gray-100 rounded-xl shadow-lg
-          w-full overflow-hidden
-          animate-in fade-in slide-in-from-top-1 duration-150
-        ">
+      {/* Dropdown list - Render via Portal */}
+      {open && !disabled && createPortal(
+        <div 
+          className="portal-dropdown fixed z-[9999] bg-white border border-gray-100 rounded-xl shadow-lg overflow-hidden animate-in fade-in duration-100"
+          style={{
+            top: coords.top - window.scrollY + 6,
+            left: coords.left,
+            width: coords.width,
+          }}
+        >
           {/* Header — hiện giá trị đang chọn */}
           <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-100">
             <span className="text-sm font-semibold text-gray-700">
@@ -82,7 +118,8 @@ function Dropdown({ label, options, value, onChange, disabled = false }) {
               );
             })}
           </ul>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

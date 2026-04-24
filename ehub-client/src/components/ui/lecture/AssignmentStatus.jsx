@@ -43,7 +43,7 @@ export default function AssignmentStatus({
 
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-base font-bold text-gray-900">Bài tập cần xử lý</h2>
+        <h2 className="text-base font-bold text-gray-900">Checkpoint cần xử lý</h2>
         <button
           onClick={onCreate}
           className="text-sm font-medium text-blue-500 hover:text-blue-600 transition-colors duration-150 cursor-pointer"

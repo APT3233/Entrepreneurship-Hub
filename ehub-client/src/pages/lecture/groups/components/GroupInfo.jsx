@@ -119,21 +119,22 @@ export default function GroupInfo({
         {/* Separator */}
         <div className="w-full h-px bg-gray-200" />
 
-        {/* Row 3: Topic */}
-        <div className="flex flex-col md:flex-row items-start justify-between gap-6 pr-4">
-          <div className="flex flex-col gap-1.5 flex-1">
+        {/* Row 3: Topic & Zalo */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="flex flex-col gap-1.5 min-w-0">
             <span className="text-xs text-gray-400 uppercase tracking-wider">
               Topic
             </span>
             <div className="flex flex-col gap-0.5">
-              <h3 className="text-sm font-semibold text-gray-800 leading-relaxed tracking-tight">
+              <h3 className="text-sm font-semibold text-gray-800 leading-relaxed tracking-tight break-words">
                 {topic}
               </h3>
-              <p className="text-xs text-gray-400">{topicDescription}</p>
+              <p className="text-xs text-gray-400 break-words">{topicDescription}</p>
             </div>
           </div>
+          
           {zaloLink && (
-            <div className="flex flex-col gap-1.5 shrink-0">
+            <div className="flex flex-col gap-1.5 min-w-0">
               <span className="text-xs text-gray-400 uppercase tracking-wider">
                 Link Zalo
               </span>

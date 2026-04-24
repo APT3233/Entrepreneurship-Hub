@@ -3,8 +3,9 @@ import { Pencil, Trash2, UserPlus } from "lucide-react";
 import { Avatar, Skeleton } from "./Common";
 import GroupApi from "@/api/group";
 import { useToast } from "@/components/ui/Toast";
-import AddGroupMemberModal from "@/components/modal/lecturer/AddGroupMemberModal";
-import EditGroupMemberModal from "@/components/modal/lecturer/EditGroupMemberModal";
+import AddGroupMemberForm from "@/components/form/lecturer/AddGroupMemberForm";
+import EditGroupMemberForm from "@/components/form/lecturer/EditGroupMemberForm";
+import ConfirmModal from "@/components/modal/ConfirmModal";
 
 const STATUS_LABEL = {
   active: { text: "Đang tham gia", className: "text-emerald-700 bg-emerald-50 border-emerald-100" },
@@ -33,6 +34,10 @@ export default function MembersTab({
   const toast = useToast();
   const [addOpen, setAddOpen] = useState(false);
   const [editMember, setEditMember] = useState(null);
+  
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [memberToDelete, setMemberToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const MAJOR_CONFIG = {
     IT: "text-blue-600 bg-blue-50 border-blue-100",
@@ -42,15 +47,25 @@ export default function MembersTab({
 
   const getMajorStyle = (major) => MAJOR_CONFIG[major] ?? "text-gray-500 bg-gray-50 border-gray-100";
 
-  const handleRemove = async (m) => {
-    const name = m.full_name || m.fullName || m.student_code || m.mssv;
-    if (!window.confirm(`Xóa ${name} khỏi nhóm? Hành động này không thể hoàn tác.`)) return;
+  const handleRemoveMember = (studentId, name) => {
+    if (!groupId || !studentId) return;
+    setMemberToDelete({ id: studentId, name });
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDeleteMember = async () => {
+    if (!groupId || !memberToDelete?.id || isDeleting) return;
+    setIsDeleting(true);
     try {
-      await GroupApi.removeMember(groupId, m.student_id);
-      toast.success("Đã xóa thành viên khỏi nhóm.");
+      await GroupApi.removeMember(groupId, memberToDelete.id);
+      toast.success(`Đã xóa ${memberToDelete.name} khỏi nhóm.`);
+      setIsDeleteModalOpen(false);
+      setMemberToDelete(null);
       onMembersChanged?.();
     } catch (err) {
-      toast.error(err?.message || "Xóa thành viên thất bại.");
+      toast.error(err?.message || "Không thể xóa thành viên.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -78,7 +93,7 @@ export default function MembersTab({
             <button
               type="button"
               onClick={() => setAddOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 text-white text-xs font-semibold px-3 py-2 hover:bg-indigo-700 transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 text-white text-xs font-semibold px-3 py-2 hover:bg-indigo-700 transition-colors cursor-pointer"
             >
               <UserPlus className="h-3.5 w-3.5" />
               Thêm thành viên
@@ -191,7 +206,7 @@ export default function MembersTab({
                           </button>
                           <button
                             type="button"
-                            onClick={() => handleRemove(m)}
+                            onClick={() => handleRemoveMember(m.student_id, m.full_name || m.fullName || m.student_code || m.mssv)}
                             className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
                             title="Xóa khỏi nhóm"
                             aria-label="Xóa thành viên"
@@ -209,19 +224,34 @@ export default function MembersTab({
         </div>
       </div>
 
-      <AddGroupMemberModal
+      <AddGroupMemberForm
         isOpen={addOpen}
         onClose={() => setAddOpen(false)}
+        onAdd={onMembersChanged}
+        groupId={groupId}
         classId={classId}
-        groupId={groupId}
-        onSuccess={onMembersChanged}
+        currentMembers={members}
       />
-      <EditGroupMemberModal
+
+      <EditGroupMemberForm
         isOpen={!!editMember}
-        member={editMember}
-        groupId={groupId}
         onClose={() => setEditMember(null)}
-        onSuccess={onMembersChanged}
+        onUpdate={onMembersChanged}
+        member={editMember}
+      />
+
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setMemberToDelete(null);
+        }}
+        onYes={confirmDeleteMember}
+        title="Xóa thành viên"
+        subtitle={`Bạn có chắc chắn muốn xóa ${memberToDelete?.name} khỏi nhóm? Hành động này không thể hoàn tác.`}
+        color="red"
+        yesLabel={isDeleting ? "Đang xóa..." : "Xác nhận xóa"}
+        yesIcon={<Trash2 className="h-4 w-4" />}
       />
     </div>
   );

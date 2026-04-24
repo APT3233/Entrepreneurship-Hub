@@ -33,6 +33,7 @@ export const createGroupRouter = (container) => {
 
   router.use("/invites", createGroupInviteRouter(container));
 
+  router.get("/my-groups", authenticate, groupController.getMyGroups);
   router.get("/", optionalAuthenticate, validateRequest(listGroupSchema), groupController.list);
   router.get("/:id", optionalAuthenticate, validateRequest(groupParamsSchema), groupController.getById);
 

@@ -31,7 +31,7 @@ export const createGroupRepository = ({ db }) => {
   };
 
   const findByCode = async (code, classId) => {
-    return base.findOne({ group_code: code, class_id: classId });
+    return base.findOne({ group_code: code, class_id: classId, deleted_at: null });
   };
 
   const findByClass = async (classId) => {
@@ -130,6 +130,95 @@ export const createGroupRepository = ({ db }) => {
     return Number(rows[0].total);
   };
 
+  /**
+   * Get group stats (eligible, needsReview, ineligible) for lecturer
+   */
+  const getGroupStatsByLecturer = async (lecturerId, semesterId = null, semesterIds = null) => {
+    const params = { lecturerId };
+    let whereClause = "c.lecturer_id = :lecturerId AND g.deleted_at IS NULL AND c.deleted_at IS NULL";
+    
+    if (Array.isArray(semesterIds) && semesterIds.length > 0) {
+      const placeholders = semesterIds.map((_, idx) => `:sem${idx}`).join(", ");
+      whereClause += ` AND c.semester_id IN (${placeholders})`;
+      semesterIds.forEach((id, idx) => { params[`sem${idx}`] = id; });
+    } else if (semesterId != null) {
+      whereClause += " AND c.semester_id = :semesterId";
+      params.semesterId = semesterId;
+    }
+
+    const sql = `
+      SELECT 
+        g.id,
+        (SELECT COUNT(*) FROM group_members gm JOIN students s ON s.id = gm.student_id WHERE gm.group_id = g.id AND gm.status = 'active' AND s.student_code LIKE 'DE%') AS de_count,
+        (SELECT COUNT(*) FROM group_members gm JOIN students s ON s.id = gm.student_id WHERE gm.group_id = g.id AND gm.status = 'active' AND (s.student_code LIKE 'DS%' OR s.student_code LIKE 'DA%')) AS dsda_count
+      FROM \`groups\` g
+      JOIN classes c ON c.id = g.class_id
+      WHERE ${whereClause}
+    `;
+    const [rows] = await db.execute(sql, params);
+    
+    let eligible = 0;
+    let needsReview = 0;
+    let ineligible = 0;
+
+    for (const row of rows) {
+      const de = Number(row.de_count);
+      const dsda = Number(row.dsda_count);
+      
+      if (de === 0 || dsda === 0) {
+        ineligible++;
+      } else if (de < 2 || dsda < 2) {
+        needsReview++;
+      } else {
+        eligible++;
+      }
+    }
+
+    return { eligible, needsReview, ineligible };
+  };
+
+  /**
+   * Get member stats (DE vs DSDA) for a single group
+   */
+  const getMemberStatsByGroupId = async (groupId) => {
+    const sql = `
+      SELECT 
+        (SELECT COUNT(*) FROM group_members gm JOIN students s ON s.id = gm.student_id WHERE gm.group_id = :groupId AND gm.status = 'active' AND s.student_code LIKE 'DE%') AS de_count,
+        (SELECT COUNT(*) FROM group_members gm JOIN students s ON s.id = gm.student_id WHERE gm.group_id = :groupId AND gm.status = 'active' AND (s.student_code LIKE 'DS%' OR s.student_code LIKE 'DA%')) AS dsda_count
+    `;
+    const [rows] = await db.execute(sql, { groupId });
+    const row = rows[0];
+    const de = Number(row?.de_count || 0);
+    const dsda = Number(row?.dsda_count || 0);
+
+    let status = "ineligible";
+    if (de >= 2 && dsda >= 2) status = "eligible";
+    else if (de > 0 && dsda > 0) status = "needs_review";
+
+    return { de, dsda, status };
+  };
+
+  /** Find groups where student is a member */
+  const findByStudent = async (studentUserId) => {
+    const sql = `
+      SELECT g.*, 
+             c.class_code, c.class_name,
+             sem.semester_name, sem.year,
+             gm.role as my_role
+      FROM \`groups\` g
+      JOIN group_members gm ON gm.group_id = g.id
+      JOIN students s ON s.id = gm.student_id
+      JOIN classes c ON c.id = g.class_id
+      JOIN semesters sem ON sem.id = c.semester_id
+      WHERE s.user_id = :studentUserId 
+        AND g.deleted_at IS NULL 
+        AND gm.status = 'active'
+      ORDER BY sem.year DESC, sem.semester_name DESC
+    `;
+    const [rows] = await db.execute(sql, { studentUserId });
+    return rows;
+  };
+
   const update = async (id, data) => {
     const keys = Object.keys(data);
     if (!keys.length) return null;
@@ -156,5 +245,8 @@ export const createGroupRepository = ({ db }) => {
     findManyByLecturer,
     findClassWithSemesterStatus,
     countByLecturer,
+    getGroupStatsByLecturer,
+    getMemberStatsByGroupId,
+    findByStudent,
   };
 };

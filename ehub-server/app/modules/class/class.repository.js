@@ -4,7 +4,7 @@ export const createClassRepository = ({ db }) => {
   const base = createBaseRepository(db, "classes");
 
   const findByCode = async (code, semesterId) => {
-    return base.findOne({ class_code: code, semester_id: semesterId });
+    return base.findOne({ class_code: code, semester_id: semesterId, deleted_at: null });
   };
 
   const findBySubjectAndSemester = async (subjectId, semesterId) => {
@@ -40,23 +40,25 @@ export const createClassRepository = ({ db }) => {
 
   /** Số lớp của lecturer, có thể lọc theo semester_id */
   const countByLecturer = async (lecturerId, semesterId = null, semesterIds = null) => {
+    const params = { lecturerId };
+    let whereClause = "c.deleted_at IS NULL AND c.lecturer_id = :lecturerId";
+    
     if (Array.isArray(semesterIds) && semesterIds.length > 0) {
-      const params = { lecturerId };
       const placeholders = semesterIds.map((_, idx) => `:sem${idx}`).join(", ");
+      whereClause += ` AND c.semester_id IN (${placeholders})`;
       semesterIds.forEach((id, idx) => { params[`sem${idx}`] = id; });
-      const sql = `
-        SELECT COUNT(*) AS total
-        FROM \`classes\` c
-        WHERE c.deleted_at IS NULL
-          AND c.lecturer_id = :lecturerId
-          AND c.semester_id IN (${placeholders})
-      `;
-      const [rows] = await db.execute(sql, params);
-      return Number(rows[0]?.total || 0);
+    } else if (semesterId != null) {
+      whereClause += " AND c.semester_id = :semesterId";
+      params.semesterId = semesterId;
     }
-    const conditions = { lecturer_id: lecturerId };
-    if (semesterId != null) conditions.semester_id = semesterId;
-    return base.count(conditions);
+
+    const sql = `
+      SELECT COUNT(*) AS total
+      FROM \`classes\` c
+      WHERE ${whereClause}
+    `;
+    const [rows] = await db.execute(sql, params);
+    return Number(rows[0]?.total || 0);
   };
 
   /** Danh sách lớp của lecturer kèm student_count, group_count (cho dashboard) */
@@ -116,12 +118,65 @@ export const createClassRepository = ({ db }) => {
     return rows;
   };
 
+  /** Danh sách lớp sinh viên đang theo học kèm thông tin môn, kỳ */
+  const findEnrolledByStudent = async (studentId, { semesterId, year } = {}) => {
+    const params = { studentId };
+    let whereClause = "c.deleted_at IS NULL AND cs.student_id = :studentId";
+    
+    if (semesterId != null) {
+      whereClause += " AND c.semester_id = :semesterId";
+      params.semesterId = semesterId;
+    }
+    if (year != null) {
+      whereClause += " AND sem.year = :year";
+      params.year = year;
+    }
+
+    const sql = `
+      SELECT c.id, c.class_code, c.class_name,
+             sub.id AS subject_id, sub.subject_code, sub.subject_name,
+             sem.id AS semester_id, sem.semester_code, sem.semester_name, sem.year
+      FROM \`classes\` c
+      JOIN \`class_students\` cs ON cs.class_id = c.id
+      JOIN \`subjects\` sub ON sub.id = c.subject_id
+      JOIN \`semesters\` sem ON sem.id = c.semester_id
+      WHERE ${whereClause}
+      ORDER BY sem.year DESC, sem.semester_code DESC
+    `;
+    const [rows] = await db.execute(sql, params);
+    return rows;
+  };
+
+  /** Đếm tổng số sinh viên duy nhất mà giảng viên đang quản lý */
+  const countStudentsByLecturer = async (lecturerId) => {
+    const sql = `
+      SELECT COUNT(DISTINCT cs.student_id) AS total
+      FROM \`classes\` c
+      JOIN \`class_students\` cs ON cs.class_id = c.id
+      WHERE c.lecturer_id = :lecturerId AND c.deleted_at IS NULL
+    `;
+    const [rows] = await db.execute(sql, { lecturerId });
+    return Number(rows[0]?.total || 0);
+  };
+
+  const findAnyByCode = async (code, semesterId) => {
+    return base.findOne({ class_code: code, semester_id: semesterId });
+  };
+
+  const restore = async (id) => {
+    return base.update(id, { deleted_at: null, updated_at: new Date() });
+  };
+
   return {
     ...base,
     findByCode,
     findBySubjectAndSemester,
     findWithDetails,
     countByLecturer,
+    countStudentsByLecturer,
     findManyWithCountsByLecturer,
+    findEnrolledByStudent,
+    findAnyByCode,
+    restore,
   };
 };

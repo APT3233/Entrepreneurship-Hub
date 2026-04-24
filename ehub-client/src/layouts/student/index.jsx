@@ -12,7 +12,6 @@ import {
 import NavProgress from "@/components/ui/NavProgress";
 import ConfirmModal from "@/components/modal/ConfirmModal";
 import { authApi } from "@/api/auth";
-import GroupInviteApi from "@/api/groupInvite";
 import { useDispatch, useSelector } from "react-redux";
 import { logout, selectAuthUser } from "@/store/slices/authSlice";
 import { LogOut } from "lucide-react";
@@ -21,8 +20,8 @@ const studentNavItems = [
   { label: "Trang chủ", icon: Home, path: "/student/dashboard" },
   { label: "Nhóm", icon: Users, path: "/student/groups" },
   { label: "Bài tập", icon: ClipboardList, path: "/student/assignments" },
-  { label: "Trạng thái", icon: Activity, path: "/student/status" },
-  { label: "Lịch dạy", icon: Calendar, path: "/student/schedule" },
+  { label: "Trạng thái", icon: Activity, path: "/student/status", disabled: true },
+  { label: "Lịch dạy", icon: Calendar, path: "/student/schedule", disabled: true },
 ];
 
 const StudentLayout = () => {
@@ -34,25 +33,11 @@ const StudentLayout = () => {
   const user = useSelector(selectAuthUser);
 
   useEffect(() => {
-    let mounted = true;
-    const loadGroupGate = async () => {
-      try {
-        const res = await GroupInviteApi.listPending();
-        if (!mounted) return;
-        setHasGroup(Boolean(res?.data?.hasGroup));
-      } catch {
-        if (!mounted) return;
-        setHasGroup(true);
-      }
-    };
-    loadGroupGate();
     const onGate = (event) => {
-      if (!mounted) return;
       if (typeof event?.detail?.hasGroup === "boolean") setHasGroup(event.detail.hasGroup);
     };
     window.addEventListener("student-group-gate", onGate);
     return () => {
-      mounted = false;
       window.removeEventListener("student-group-gate", onGate);
     };
   }, []);

@@ -31,7 +31,10 @@ export const createAccessLogRepository = ({ db }) => {
         logData.responseTime || 0,
       ]);
     } catch (error) {
-      console.error("[AccessLog] Failed to write audit log:", error.message);
+      console.error(
+        `[AccessLog] Failed to write audit log (Action: ${logData.action}, UserID: ${logData.userId}):`,
+        error.message
+      );
     }
   };
 

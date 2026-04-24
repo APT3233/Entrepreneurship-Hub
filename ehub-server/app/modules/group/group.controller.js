@@ -55,5 +55,13 @@ export const createGroupController = ({ groupService }) => {
     return sendNoContent(res);
   });
 
-  return { list, getById, create, update, remove };
+  const getMyGroups = catchAsync(async (req, res) => {
+    const result = await groupService.getByStudent(req.user.id);
+    return sendSuccess(res, {
+      data: result.data,
+      message: "My groups retrieved successfully",
+    });
+  });
+
+  return { list, getById, create, update, remove, getMyGroups };
 };

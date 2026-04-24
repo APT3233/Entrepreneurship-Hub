@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { usePendingGroupInvites } from "@/hooks/usePendingGroupInvites";
 import GroupInviteConfirmCard from "@/components/form/student/GroupInviteConfirmCard";
 import StudentNoGroupEmptyState from "@/components/ui/student/StudentNoGroupEmptyState";
 
@@ -14,13 +13,12 @@ export default function PendingGroupInvitesSection({
   onStateChange,
   data,
 }) {
-  const hook = usePendingGroupInvites();
-  const invites = data?.invites ?? hook.invites;
-  const hasGroup = typeof data?.hasGroup === "boolean" ? data.hasGroup : hook.hasGroup;
-  const activeGroup = data?.activeGroup ?? hook.activeGroup;
-  const loading = typeof data?.loading === "boolean" ? data.loading : hook.loading;
-  const error = data?.error ?? hook.error;
-  const refresh = data?.refresh ?? hook.refresh;
+  const invites = data?.invites || [];
+  const hasGroup = !!data?.hasGroup;
+  const activeGroup = data?.activeGroup || null;
+  const loading = !!data?.loading;
+  const error = data?.error || null;
+  const refresh = data?.refresh || (() => {});
   const [searchParams] = useSearchParams();
   const focusToken = searchParams.get("group_invite");
 
@@ -42,7 +40,7 @@ export default function PendingGroupInvitesSection({
     return () => clearTimeout(timer);
   }, [focusToken, loading, invites]);
 
-  if (error) return null;
+  // if (error) return null; // Removed to prevent blank screen on error
   if (loading && invites.length === 0) {
     return (
       <div
@@ -53,8 +51,7 @@ export default function PendingGroupInvitesSection({
     );
   }
   if (!invites.length) {
-    if (!hasGroup) return <StudentNoGroupEmptyState className={className} />;
-    return null;
+    return <StudentNoGroupEmptyState className={className} />;
   }
 
   return (

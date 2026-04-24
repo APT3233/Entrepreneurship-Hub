@@ -5,6 +5,7 @@ import { roleGuard } from "app/core/middlewares/roleGuard.js";
 import {
   enrollStudentSchema,
   unenrollStudentSchema,
+  updateEnrollmentSchema,
   listEnrollmentSchema,
 } from "./enrollment.validation.js";
 
@@ -14,6 +15,7 @@ import {
  * GET    /                   — list enrolled students
  * POST   /                   — enroll student          [LECTURER+]
  * DELETE /:studentId         — unenroll student         [LECTURER+]
+ * PUT    /:studentId         — update student info      [LECTURER+]
  */
 export const createEnrollmentRouter = (container) => {
   const { enrollmentController } = container.cradle;
@@ -35,6 +37,14 @@ export const createEnrollmentRouter = (container) => {
     roleGuard("admin", "department_head", "lecturer"),
     validateRequest(unenrollStudentSchema),
     enrollmentController.unenroll,
+  );
+
+  router.put(
+    "/:studentId",
+    authenticate,
+    roleGuard("admin", "department_head", "lecturer"),
+    validateRequest(updateEnrollmentSchema),
+    enrollmentController.update,
   );
 
   return router;

@@ -48,3 +48,23 @@ export const activateBodySchema = {
     password: Joi.string().min(6).max(128).required(),
   }),
 };
+
+export const updateProfileSchema = {
+  body: Joi.object({
+    full_name: Joi.string().min(2).max(150),
+    avatar_url: Joi.string().max(255).allow(null, ""),
+    phone: Joi.string().max(20).allow(null, ""),
+    campus: Joi.string().valid("Hà Nội", "Đà Nẵng", "Quy Nhơn", "Cần Thơ", "Hồ Chí Minh").allow(null, ""),
+  }).min(1),
+};
+export const changePasswordSchema = {
+  body: Joi.object({
+    old_password: Joi.string().required().messages({
+      "any.required": "Mật khẩu cũ là bắt buộc",
+    }),
+    new_password: Joi.string().min(6).max(128).required().messages({
+      "string.min": "Mật khẩu mới phải có ít nhất 6 ký tự",
+      "any.required": "Mật khẩu mới là bắt buộc",
+    }),
+  }),
+};

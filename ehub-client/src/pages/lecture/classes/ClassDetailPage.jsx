@@ -1,19 +1,21 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect } from "react"; // Trigger reload
 import { useParams, useNavigate } from "react-router-dom";
-import { Plus, Users } from "lucide-react";
+import { Plus, Users, Trash2, AlertTriangle, Settings2 } from "lucide-react";
 import StatCard from "@/components/ui/Card/StatCard";
 import { StatIconGrading, StatIconAssignment, StatIconGroups } from "@/components/icons/lecture";
 import Dropdown from "@/components/ui/filter/DropDown";
 import ClassInfo from "./components/ClassInfo";
 import StudentList from "./components/StudentList";
-import CreateGroupModal from "@/components/modal/lecturer/CreateGroupModal";
+import CreateGroupForm from "@/components/form/lecturer/CreateGroupForm";
+import EditClassForm from "@/components/form/lecturer/EditClassForm";
+import ManualStudentForm from "@/components/form/lecturer/ManualStudentForm";
+import ConfirmModal from "@/components/modal/ConfirmModal";
 import { useToast } from "@/components/ui/Toast";
 import ClassApi from "@/api/class";
 import SemesterApi from "@/api/semester";
 import GroupApi from "@/api/group";
+import EnrollmentApi from "@/api/enrollment";
 
-const VALUE_ALL_CLASSES = "all";
-const VALUE_ALL_SEMESTERS = "all";
 
 export default function ClassDetailPage() {
   const toast = useToast();
@@ -31,6 +33,20 @@ export default function ClassDetailPage() {
    const [createGroupModalOpen, setCreateGroupModalOpen] = useState(false);
    const [createGroupLoading, setCreateGroupLoading] = useState(false);
    const [groupFormKey, setGroupFormKey] = useState(0);
+   
+   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+   const [isDeleting, setIsDeleting] = useState(false);
+   
+   const [editClassModalOpen, setEditClassModalOpen] = useState(false);
+   const [updateLoading, setUpdateLoading] = useState(false);
+   
+   const [addStudentModalOpen, setAddStudentModalOpen] = useState(false);
+   const [enrollLoading, setEnrollLoading] = useState(false);
+   const [selectedStudentForEdit, setSelectedStudentForEdit] = useState(null);
+
+   const [isDeleteStudentModalOpen, setIsDeleteStudentModalOpen] = useState(false);
+   const [studentToDelete, setStudentToDelete] = useState(null);
+   const [isDeletingStudent, setIsDeletingStudent] = useState(false);
 
   useEffect(() => {
     const fetchSemesters = async () => {
@@ -65,7 +81,7 @@ export default function ClassDetailPage() {
     if (filterYear == null || !filterSemesterId) return;
     const fetchClasses = async () => {
       try {
-        const sem = filterSemesterId !== VALUE_ALL_SEMESTERS ? semesterList.find((s) => s.id === filterSemesterId) : null;
+        const sem = semesterList.find((s) => s.id === filterSemesterId);
         const params = { year: filterYear, lecturerScope: "mine", limit: 100, page: 1 };
         if (sem?.semester_code) params.semester_code = sem.semester_code;
         const res = await ClassApi.getList(params);
@@ -106,24 +122,23 @@ export default function ClassDetailPage() {
     () =>
       !filterYear 
         ? [] 
-        : [
-            { label: "Tất cả kỳ", value: VALUE_ALL_SEMESTERS },
-            ...semestersInYear.map((s) => ({ value: s.id, label: s.semester_name }))
-          ],
+        : semestersInYear.map((s) => ({ value: s.id, label: s.semester_name })),
     [filterYear, semestersInYear]
   );
 
   const classFilterOptions = useMemo(
-    () => [
-      { label: "Tất cả lớp", value: VALUE_ALL_CLASSES },
-      ...classList.map((c) => ({ label: c.class_code, value: c.id })),
-    ],
+    () => classList.map((c) => ({ label: c.class_code, value: c.id })),
     [classList]
   );
 
   const handleYearChange = (year) => {
     setFilterYear(year);
-    setFilterSemesterId(VALUE_ALL_SEMESTERS);
+    const inYear = semesterList.filter((s) => s.year === year);
+    if (inYear.length > 0) {
+      setFilterSemesterId(inYear[0].id);
+    } else {
+      setFilterSemesterId(null);
+    }
   };
 
   const groupOptions = useMemo(
@@ -184,12 +199,14 @@ export default function ClassDetailPage() {
   // Nếu backend chưa trả về semester_status thì cho phép (tránh khóa nút khi API chưa có field).
   const semesterStatus = detail?.semester_status ?? detail?.semesterStatus;
   const canCreateGroup = semesterStatus == null || semesterStatus === "ongoing";
+  const isNewlyCreated = useMemo(() => {
+    if (!detail?.createdAt) return false;
+    const diff = Date.now() - new Date(detail.createdAt).getTime();
+    const days = detail.manipulationDays || 7;
+    return diff <= days * 24 * 60 * 60 * 1000;
+  }, [detail?.createdAt, detail?.manipulationDays]);
 
   const handleClassChange = (value) => {
-    if (value === VALUE_ALL_CLASSES) {
-      navigate("/lecturer/classes");
-      return;
-    }
     if (value && Number(value) !== Number(id)) navigate(`/lecturer/classes/${value}`);
   };
 
@@ -237,6 +254,98 @@ export default function ClassDetailPage() {
       toast.error(msg);
     } finally {
       setCreateGroupLoading(false);
+    }
+  };
+
+  const refreshData = async () => {
+    if (!id) return;
+    try {
+      const resp = await ClassApi.getOverview(id);
+      if (resp.data) setDetail(resp.data);
+    } catch (err) {
+      console.error("Failed to refresh data:", err);
+    }
+  };
+
+  const handleUpdateClass = async (data) => {
+    if (!detail?.id) return;
+    setUpdateLoading(true);
+    try {
+      await ClassApi.update(detail.id, data);
+      toast.success("Cập nhật thông tin lớp học thành công.");
+      setEditClassModalOpen(false);
+      refreshData();
+    } catch (err) {
+      const msg = err?.message || "Không thể cập nhật lớp học.";
+      toast.error(msg);
+    } finally {
+      setUpdateLoading(false);
+    }
+  };
+
+  const handleEnrollStudent = async (data) => {
+    if (!detail?.id) return;
+    setEnrollLoading(true);
+    try {
+      if (selectedStudentForEdit) {
+        await EnrollmentApi.update(detail.id, selectedStudentForEdit.id, data);
+        toast.success(`Đã cập nhật thông tin sinh viên ${data.student_code}.`);
+      } else {
+        await EnrollmentApi.enroll(detail.id, data);
+        toast.success(`Đã thêm sinh viên ${data.student_code} vào lớp.`);
+      }
+      setAddStudentModalOpen(false);
+      setSelectedStudentForEdit(null);
+      refreshData();
+    } catch (err) {
+      const msg = err?.message || "Không thể thực hiện thao tác.";
+      toast.error(msg);
+    } finally {
+      setEnrollLoading(false);
+    }
+  };
+
+  const handleUnenrollStudent = (student) => {
+    if (!detail?.id || !student?.id) return;
+    setStudentToDelete(student);
+    setIsDeleteStudentModalOpen(true);
+  };
+
+  const confirmDeleteStudent = async () => {
+    if (!detail?.id || !studentToDelete?.id || isDeletingStudent) return;
+    setIsDeletingStudent(true);
+    try {
+      await EnrollmentApi.unenroll(detail.id, studentToDelete.id);
+      toast.success(`Đã xóa sinh viên ${studentToDelete.mssv} khỏi lớp.`);
+      setIsDeleteStudentModalOpen(false);
+      setStudentToDelete(null);
+      refreshData();
+    } catch (err) {
+      const msg = err?.message || "Không thể xóa sinh viên.";
+      toast.error(msg);
+    } finally {
+      setIsDeletingStudent(false);
+    }
+  };
+
+  const handleDeleteClass = () => {
+    if (!detail?.id) return;
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!detail?.id || isDeleting) return;
+    setIsDeleting(true);
+    try {
+      await ClassApi.remove(detail.id);
+      toast.success("Xóa lớp học thành công.");
+      setIsDeleteModalOpen(false);
+      navigate("/lecturer/classes", { replace: true });
+    } catch (err) {
+      const msg = err?.message || "Không thể xóa lớp học. Vui lòng thử lại.";
+      toast.error(msg);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -305,7 +414,7 @@ export default function ClassDetailPage() {
             <Dropdown
               label="Lớp"
               options={classFilterOptions}
-              value={classList.some(c => Number(c.id) === Number(id)) ? Number(id) : VALUE_ALL_CLASSES}
+              value={Number(id)}
               onChange={handleClassChange}
               disabled={filterYear == null}
             />
@@ -343,6 +452,12 @@ export default function ClassDetailPage() {
             subject={detail.subject}
             semester={detail.semester}
             semesterStatus={semesterStatus}
+            isNewlyCreated={isNewlyCreated}
+            createdAt={detail?.createdAt}
+            updatedAt={detail?.updatedAt}
+            manipulationDays={detail?.manipulationDays}
+            onDelete={handleDeleteClass}
+            onEdit={() => setEditClassModalOpen(true)}
           />
         </section>
       )}
@@ -371,11 +486,21 @@ export default function ClassDetailPage() {
             activationOptions={activationOptions}
             selectedActivation={activationFilter}
             onActivationChange={setActivationFilter}
+            canEdit={semesterStatus === "upcoming" || isNewlyCreated}
+            onAddStudent={() => {
+              setSelectedStudentForEdit(null);
+              setAddStudentModalOpen(true);
+            }}
+            onEditStudent={(s) => {
+              setSelectedStudentForEdit(s);
+              setAddStudentModalOpen(true);
+            }}
+            onDeleteStudent={handleUnenrollStudent}
           />
         </section>
       )}
 
-      <CreateGroupModal
+      <CreateGroupForm
         key={groupFormKey}
         isOpen={createGroupModalOpen}
         onClose={() => setCreateGroupModalOpen(false)}
@@ -384,6 +509,50 @@ export default function ClassDetailPage() {
         students={(detail?.students || [])
           .filter((s) => s.groupId == null)
           .map((s) => ({ id: s.id, name: s.name, student_code: s.student_code, major: s.major || "" }))}
+      />
+
+      <EditClassForm
+        isOpen={editClassModalOpen}
+        onClose={() => setEditClassModalOpen(false)}
+        onUpdate={handleUpdateClass}
+        initialData={detail}
+        loading={updateLoading}
+      />
+
+      <ManualStudentForm
+        isOpen={addStudentModalOpen}
+        onClose={() => {
+          setAddStudentModalOpen(false);
+          setSelectedStudentForEdit(null);
+        }}
+        onSubmit={handleEnrollStudent}
+        initialData={selectedStudentForEdit}
+        loading={enrollLoading}
+      />
+
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onYes={confirmDelete}
+        title="Xóa lớp học"
+        subtitle={`Bạn có chắc chắn muốn xóa lớp học "${detail?.classCode}"? Tất cả dữ liệu liên quan sẽ bị xóa và không thể khôi phục.`}
+        color="red"
+        yesLabel={isDeleting ? "Đang xóa..." : "Xác nhận xóa"}
+        yesIcon={<Trash2 />}
+      />
+
+      <ConfirmModal
+        isOpen={isDeleteStudentModalOpen}
+        onClose={() => {
+          setIsDeleteStudentModalOpen(false);
+          setStudentToDelete(null);
+        }}
+        onYes={confirmDeleteStudent}
+        title="Xóa sinh viên"
+        subtitle={`Bạn có chắc chắn muốn xóa sinh viên ${studentToDelete?.name} (${studentToDelete?.mssv}) khỏi lớp học?`}
+        color="red"
+        yesLabel={isDeletingStudent ? "Đang xóa..." : "Xác nhận xóa"}
+        yesIcon={<Trash2 />}
       />
     </>
   );

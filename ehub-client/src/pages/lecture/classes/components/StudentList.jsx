@@ -1,21 +1,11 @@
 import { useMemo } from "react";
+import { Plus, Trash2, Pencil } from "lucide-react";
 import Dropdown from "@/components/ui/filter/DropDown";
 import { LastNameAvatar } from "@/components/icons/ui";
 
 /**
  * StudentList — Danh sách sinh viên (sau khi tạo nhóm: có cột Nhóm*, Nhóm trưởng, lọc theo nhóm)
  * Sắp xếp: theo nhóm (cùng nhóm đứng gần nhau), sinh viên chưa có nhóm xuống cuối.
- *
- * Props:
- * - students       : Array<{ id, mssv, name, email, major, avatar?, accountActivated?, isLeader?, groupId?, groupName? }>
- * - totalCount     : number
- * - groupCount     : number | null  — null = "Chưa có nhóm"
- * - searchValue    : string
- * - onSearchChange : (value: string) => void
- * - groupOptions   : [{ label, value }] — options lọc nhóm (vd: Tất cả, Alpha, Beta)
- * - selectedGroup  : string  — value đang chọn
- * - onGroupChange  : (value: string) => void
- * - activationOptions, selectedActivation, onActivationChange — lọc đã/chưa kích hoạt tài khoản
  */
 
 const MAJOR_COLOR = {
@@ -24,12 +14,12 @@ const MAJOR_COLOR = {
   "Design": "text-blue-500",
 };
 
-function majorColor(major) {
-  return MAJOR_COLOR[major] ?? "text-gray-600";
-}
+// function majorColor(major) {
+//   return MAJOR_COLOR[major] ?? "text-gray-600";
+// }
 
-const columnsWithoutGroup = ["STT", "MSSV", "Họ và tên", "Email", "Kích hoạt", "Chuyên ngành"];
-const columnsWithGroup = ["STT", "MSSV", "Họ và tên", "Email", "Kích hoạt", "Chuyên ngành", "Nhóm*"];
+const columnsWithoutGroup = ["STT", "MSSV", "Họ và tên", "Email", "Kích hoạt"];
+const columnsWithGroup = ["STT", "MSSV", "Họ và tên", "Email", "Nhóm*", "Kích hoạt"];
 
 export default function StudentList({
   students = [],
@@ -43,9 +33,14 @@ export default function StudentList({
   activationOptions = [],
   selectedActivation = "all",
   onActivationChange,
+  canEdit = false,
+  onDeleteStudent,
+  onAddStudent,
+  onEditStudent,
 }) {
   const hasGroups = groupOptions.length > 0;
-  const columns = hasGroups ? columnsWithGroup : columnsWithoutGroup;
+  const columns = [...(hasGroups ? columnsWithGroup : columnsWithoutGroup)];
+  if (canEdit) columns.push("Hành động");
 
   // Sắp xếp: có nhóm trước (cùng nhóm đứng gần nhau), chưa có nhóm xuống cuối; trong nhóm: leader trước, rồi mssv
   const sortedStudents = useMemo(() => {
@@ -64,21 +59,32 @@ export default function StudentList({
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 md:p-6 w-full">
 
-      {/* Header: tiêu đề bên trái; bên phải: lọc nhóm (nếu có) + tìm kiếm */}
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
         <div>
           <h2 className="text-sm md:text-base font-bold text-gray-900">Danh sách sinh viên</h2>
-          <p className="text-xs text-gray-400 mt-0.5">Tổng số: {totalCount} sinh viên</p>
-          <p className="text-xs text-gray-400">
-            Số nhóm: {groupCount != null ? `${groupCount} nhóm` : "Chưa có nhóm"}
-          </p>
+          <div className="flex flex-col gap-0.5 mt-1">
+             <p className="text-xs text-gray-400">Tổng số: {totalCount} sinh viên</p>
+             <p className="text-xs text-gray-400">
+               Số nhóm: {groupCount != null ? `${groupCount} nhóm` : "Chưa có nhóm"}
+             </p>
+          </div>
           {students.length !== totalCount && totalCount > 0 && (
-            <p className="text-xs text-indigo-600 font-medium mt-0.5">
+            <p className="text-xs text-indigo-600 font-medium mt-1">
               Đang hiển thị: {students.length} / {totalCount} sinh viên
             </p>
           )}
         </div>
         <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
+          {canEdit && onAddStudent && (
+            <button
+              onClick={onAddStudent}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-50 text-indigo-600 text-xs font-bold hover:bg-indigo-100 transition-colors border border-indigo-100"
+            >
+              <Plus size={16} strokeWidth={2.5} />
+              Thêm sinh viên
+            </button>
+          )}
           {hasGroups && onGroupChange && (
             <Dropdown
               label="Nhóm: Tất cả"
@@ -107,10 +113,9 @@ export default function StudentList({
         </div>
       </div>
 
-      {/* Table wrapper — scroll ngang trên mobile */}
+      {/* Table */}
       <div className="rounded-xl border border-gray-100 overflow-x-auto w-full">
         <table className="w-full min-w-[920px] text-sm border-collapse whitespace-nowrap">
-
           <thead>
             <tr className="bg-indigo-50/20 border-b border-gray-50">
               {columns.map((col) => (
@@ -133,7 +138,7 @@ export default function StudentList({
               </tr>
             ) : (
               sortedStudents.map((s, i) => (
-                <tr key={s.id ?? i} className="hover:bg-gray-50 transition-colors duration-100">
+                <tr key={s.id ?? i} className="hover:bg-gray-50 transition-colors duration-100 group">
                   <td className="px-4 py-3 md:px-6 md:py-5 text-gray-500 font-medium text-[11px] md:text-xs">{i + 1}</td>
                   <td className="px-4 py-3 md:px-6 md:py-5">
                     <span className="font-mono text-xs md:text-sm font-semibold text-gray-700 leading-none">
@@ -160,6 +165,17 @@ export default function StudentList({
                       {s.email}
                     </span>
                   </td>
+
+                  {hasGroups && (
+                    <td className="px-4 py-3 md:px-6 md:py-5 text-gray-700 font-medium text-[11px] md:text-xs">
+                      {s.groupId != null ? (
+                        <span className="font-semibold text-gray-700">{s.groupName ?? "—"}</span>
+                      ) : (
+                        <span className="text-gray-400 italic">Chưa phân nhóm</span>
+                      )}
+                    </td>
+                  )}
+
                   <td className="px-4 py-3 md:px-6 md:py-5">
                     {s.accountActivated ? (
                       <span className="inline-flex items-center px-2 md:px-2.5 py-1 rounded-full text-[9px] md:text-[10px] font-bold uppercase tracking-wide bg-emerald-50 text-emerald-700 border border-emerald-100">
@@ -171,18 +187,30 @@ export default function StudentList({
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-3 md:px-6 md:py-5 text-left">
-                    <span className={`text-[11px] md:text-xs font-semibold ${majorColor(s.major)}`}>
-                      {s.major}
-                    </span>
-                  </td>
-                  {hasGroups && (
-                    <td className="px-4 py-3 md:px-6 md:py-5 text-gray-700 font-medium text-[11px] md:text-xs">
-                      {s.groupId != null ? (
-                        <span className="font-semibold text-gray-700">{s.groupName ?? "—"}</span>
-                      ) : (
-                        <span className="text-gray-400 italic">Chưa phân nhóm</span>
-                      )}
+
+                  {canEdit && (
+                    <td className="px-4 py-3 md:px-6 md:py-5">
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => onEditStudent?.(s)}
+                          title="Sửa thông tin"
+                          className="p-2 rounded-lg text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-200 active:scale-95"
+                        >
+                          <Pencil size={15} />
+                        </button>
+                        <button
+                          onClick={() => onDeleteStudent?.(s)}
+                          disabled={s.groupId != null}
+                          title={s.groupId != null ? "Không thể xóa sinh viên đã có nhóm" : "Xóa khỏi lớp"}
+                          className={`p-2 rounded-lg transition-all duration-200 ${
+                            s.groupId != null
+                              ? "text-gray-200 cursor-not-allowed"
+                              : "text-gray-400 hover:bg-red-50 hover:text-red-600 active:scale-95"
+                          }`}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
                     </td>
                   )}
                 </tr>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Loader2 } from "lucide-react";
 import GroupApi from "@/api/group";
+import CheckpointApi from "@/api/checkpoint";
 import GroupInfo from "./components/GroupInfo";
 import { useToast } from "@/components/ui/Toast";
 import { useSelector } from "react-redux";
@@ -13,8 +13,8 @@ import { BarChart2, Users, CheckSquare } from "lucide-react";
 import OverviewTab from "./components/OverviewTab";
 import MembersTab from "./components/MembersTab";
 import CheckpointTab from "./components/CheckpointTab";
-import EditGroupModal from "@/components/modal/lecturer/EditGroupModal";
-import CheckpointDetailModal from "@/components/modal/lecturer/CheckpointDetailModal";
+import EditGroupForm from "@/components/form/lecturer/EditGroupForm";
+import CheckpointDetailForm from "@/components/form/lecturer/CheckpointDetailForm";
 
 const TABS = [
   { key: "overview", label: "Tổng quan", icon: BarChart2 },
@@ -45,35 +45,8 @@ export default function GroupDetailPage() {
 
   const [selectedCpId, setSelectedCpId] = useState(null);
 
-  // Mock checkpoints — sẽ thay bằng API khi backend hoàn thiện
-  const [checkpoints, setCheckpoints] = useState([
-    {
-      id: 1, name: "Checkpoint 1 – Ý tưởng", title: "Checkpoint 1 – Ý tưởng",
-      deadline: "28/02/2026", status: "graded", submittedAt: "27/02/2026",
-      score: 8, maxScore: 10,
-      feedback: "Nhận xét khoảng 15 đến 20 từ",
-      submitters: [],
-      files: [
-        { id: "f1", file_type: "pdf", file_name: "Bao_cao_y_tuong_du_an.pdf", file_size: 2516582 },
-        { id: "f2", file_type: "docx", file_name: "Thiet_ke_giao_dien.docx", file_size: 1887437 },
-      ],
-    },
-    {
-      id: 2, name: "Checkpoint 2 – Ý tưởng", title: "Checkpoint 2 – Ý tưởng",
-      deadline: "28/02/2026", status: "submitted", submittedAt: "27/02/2026",
-      score: null, maxScore: 10, feedback: "",
-      submitters: [],
-      files: [
-        { id: "f3", file_type: "pdf", file_name: "Bao_cao_y_tuong_du_an.pdf", file_size: 2516582 },
-        { id: "f4", file_type: "docx", file_name: "Thiet_ke_giao_dien.docx", file_size: 1887437 },
-      ],
-    },
-    {
-      id: 3, name: "Checkpoint 3 – Lập trình backend", title: "Checkpoint 3 – Lập trình backend",
-      deadline: "05/04/2026", status: "not_submitted",
-      files: [], submitters: [],
-    },
-  ]);
+  const [checkpoints, setCheckpoints] = useState([]);
+  const [isLoadingCheckpoints, setIsLoadingCheckpoints] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -98,6 +71,23 @@ export default function GroupDetailPage() {
 
       if (membersRes?.data) {
         setMembers(Array.isArray(membersRes.data) ? membersRes.data : []);
+      }
+
+      // Fetch Checkpoints for this group
+      setIsLoadingCheckpoints(true);
+      try {
+        const cpRes = await CheckpointApi.getByGroup(id);
+        if (cpRes?.data) {
+          setCheckpoints(cpRes.data.map(cp => ({
+            ...cp,
+            name: cp.title,
+            status: cp.submission_status || "not_submitted",
+            submittedAt: cp.submitted_at,
+            maxScore: cp.max_score
+          })));
+        }
+      } finally {
+        setIsLoadingCheckpoints(false);
       }
     } catch (error) {
       console.error("Error fetching group details:", error);
@@ -148,13 +138,25 @@ export default function GroupDetailPage() {
 
   const selectedCp = enrichedCheckpoints.find(c => c.id === selectedCpId) ?? null;
 
-  const handleSaveGrade = async ({ id, score, feedback }) => {
-    // Cập nhật mock data (thay bằng API call sau)
-    setCheckpoints(prev => prev.map(cp =>
-      cp.id === id ? { ...cp, score, feedback, status: "graded" } : cp
-    ));
-    toast.success("Đã lưu điểm checkpoint!");
-    setSelectedCpId(null);
+  const handleSaveGrade = async ({ score, feedback }) => {
+    try {
+      await CheckpointApi.updateGrade(selectedCpId, id, { score, feedback });
+      toast.success("Đã lưu điểm checkpoint!");
+      setSelectedCpId(null);
+      // Refresh checkpoints list
+      const cpRes = await CheckpointApi.getByGroup(id);
+      if (cpRes?.data) {
+        setCheckpoints(cpRes.data.map(cp => ({
+          ...cp,
+          name: cp.title,
+          status: cp.submission_status || "not_submitted",
+          submittedAt: cp.submitted_at,
+          maxScore: cp.max_score
+        })));
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.error?.message || "Không thể lưu điểm");
+    }
   };
 
   const handleViewDetail = (cpId) => setSelectedCpId(cpId);
@@ -189,27 +191,22 @@ export default function GroupDetailPage() {
         />
       )}
 
-      {/* Edit Modal */}
-      {group && (
-        <EditGroupModal
+      {/* Edit Form */}
+      {isEditModalOpen && (
+        <EditGroupForm
           isOpen={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}
-          onSubmit={handleUpdateGroup}
+          onUpdate={handleUpdateGroup}
+          initialData={group}
           loading={isSaving}
-          groupData={{
-            name: group.group_name || group.group_code,
-            category: group.category,
-            topic: group.topic,
-            topic_desc: group.topic_desc,
-            zalo_link: group.zalo_link
-          }}
         />
       )}
 
-      {/* Checkpoint Detail Modal */}
-      <CheckpointDetailModal
+      {/* Checkpoint Detail Form */}
+      <CheckpointDetailForm
         isOpen={!!selectedCpId}
         checkpoint={selectedCp}
+        groupId={id}
         onClose={() => setSelectedCpId(null)}
         onSaveGrade={handleSaveGrade}
       />

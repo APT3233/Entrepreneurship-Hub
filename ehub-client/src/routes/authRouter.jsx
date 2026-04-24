@@ -1,6 +1,7 @@
 import React from "react";
 import LoginPage from "@/pages/auth/loginPage";
 import ActivatePage from "@/pages/auth/ActivatePage";
+import SetupPasswordPage from "@/pages/auth/SetupPasswordPage";
 
 export default function init(routes) {
   const authRoutes = {
@@ -9,6 +10,10 @@ export default function init(routes) {
       {
         path: "login",
         element: <LoginPage />,
+      },
+      {
+        path: "setup-password",
+        element: <SetupPasswordPage />,
       },
     ],
   };

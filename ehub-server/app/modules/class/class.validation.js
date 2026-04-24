@@ -64,6 +64,11 @@ export const updateClassSchema = {
       .min(Joi.ref("min_group_members"))
       .max(20),
     status: Joi.string().valid("draft", "active", "completed", "archived"),
+    // New format support
+    subject: Joi.string().max(20),
+    classSection: Joi.number().integer().min(1).max(99),
+    year: Joi.number().integer().min(2000).max(3000),
+    semester: Joi.number().integer().valid(1, 2, 3),
   }).min(1),
 };
 

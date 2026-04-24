@@ -14,6 +14,7 @@ export const createGroupService = ({
   outboxRepository,
   inviteRepository,
   studentRepository,
+  auditService,
 }) => {
   const base = createBaseService(groupRepository, "Group");
   const ALLOWED_SORT = ["group_code", "group_name", "status", "max_members", "created_at"];
@@ -219,13 +220,36 @@ export const createGroupService = ({
       });
 
       const full = await groupRepository.findWithMembers(groupId);
+
+      // Ghi log audit
+      await auditService.log({
+        userId: user?.id || null,
+        action: "create_group",
+        tableName: "groups",
+        recordId: groupId,
+        title: groupPayload.group_code,
+        newValues: { group_code: groupPayload.group_code, class_id: classId }
+      });
+
       return {
         ...full,
         ...(mailDispatchPublicId && { mail_dispatch_id: mailDispatchPublicId }),
       };
     }
 
-    return base.create({ ...groupPayload, class_id: classId, created_by: createdBy ?? user?.id ?? null });
+    const result = await base.create({ ...groupPayload, class_id: classId, created_by: createdBy ?? user?.id ?? null });
+
+    // Ghi log audit
+    await auditService.log({
+      userId: user?.id || null,
+      action: "create_group",
+      tableName: "groups",
+      recordId: result.id,
+      title: groupPayload.group_code,
+      newValues: { group_code: groupPayload.group_code, class_id: classId }
+    });
+
+    return result;
   };
 
   const verifyGroupOwnership = async (groupId, user) => {
@@ -245,12 +269,43 @@ export const createGroupService = ({
 
   const update = async (id, data, user = null) => {
     await verifyGroupOwnership(id, user);
-    return base.update(id, data);
+    const result = await base.update(id, data);
+
+    const group = await groupRepository.findById(id);
+    // Ghi log audit
+    await auditService.log({
+      userId: user?.id || null,
+      action: "update_group",
+      tableName: "groups",
+      recordId: id,
+      title: group?.group_code || group?.group_name,
+      newValues: data
+    });
+
+    return result;
   };
 
   const remove = async (id, user = null) => {
     await verifyGroupOwnership(id, user);
-    return base.remove(id, true);
+    const group = await groupRepository.findById(id);
+    const result = await base.remove(id, true);
+
+    // Ghi log audit
+    await auditService.log({
+      userId: user?.id || null,
+      action: "delete_group",
+      tableName: "groups",
+      recordId: id,
+      title: group?.group_code || group?.group_name,
+      oldValues: { group_code: group?.group_code || group?.group_name }
+    });
+
+    return result;
+  };
+
+  const getByStudent = async (studentUserId) => {
+    const data = await groupRepository.findByStudent(studentUserId);
+    return { data };
   };
 
   return {
@@ -259,5 +314,6 @@ export const createGroupService = ({
     create,
     update,
     remove,
+    getByStudent,
   };
 };

@@ -125,6 +125,14 @@ export const createAuthController = ({ authService }) => {
     });
   });
 
+  const updateProfile = catchAsync(async (req, res) => {
+    const profile = await authService.updateProfile(req.user.id, req.body);
+    return sendSuccess(res, {
+      data: profile,
+      message: "Profile updated successfully",
+    });
+  });
+
   const redirectToGoogle = catchAsync(async (_req, res) => {
     let url;
     try {
@@ -153,14 +161,34 @@ export const createAuthController = ({ authService }) => {
       if (!code) return toLogin("error=missing_code");
       const deviceInfo = getDeviceInfo(req);
       const result = await authService.loginWithGoogle(code, deviceInfo);
+
+      if (result.setup_required) {
+        return res.redirect(302, `${base}/auth/setup-password?token=${result.setup_token}`);
+      }
+
       setTokenCookies(res, result.tokens, req);
-      return res.redirect(302, `${base}?google_login=success`);
+      return res.redirect(302, `${base}/auth/login?google_login=success`);
     } catch (err) {
       const apiCode = err?.errorCode;
       if (err?.isOperational && apiCode) return toLogin(`google_error=${encodeURIComponent(apiCode)}`);
       return toLogin(`google_error=${encodeURIComponent("GEN")}`);
     }
   };
+
+  const postGoogleSetup = catchAsync(async (req, res) => {
+    const deviceInfo = getDeviceInfo(req);
+    const result = await authService.completeGoogleSetup(req.body, deviceInfo);
+    setTokenCookies(res, result.tokens, req);
+    return sendCreated(res, {
+      data: { user: result.user },
+      message: "Account setup successfully",
+    });
+  });
+
+  const getGoogleSetupPreview = catchAsync(async (req, res) => {
+    const data = await authService.getGoogleSetupPreview(req.query.token);
+    return sendSuccess(res, { data, message: "Token valid" });
+  });
 
   const getActivatePreview = catchAsync(async (req, res) => {
     const data = await authService.getActivatePreview(req.query.token);
@@ -177,5 +205,27 @@ export const createAuthController = ({ authService }) => {
     });
   });
 
-  return { login, register, refresh, logout, logoutAll, getProfile, redirectToGoogle, authorizeGoogle, getActivatePreview, postActivate };
+  const changePassword = catchAsync(async (req, res) => {
+    await authService.changePassword(req.user.id, req.body);
+    return sendSuccess(res, {
+      message: "Đổi mật khẩu thành công",
+    });
+  });
+
+  return {
+    login,
+    register,
+    refresh,
+    logout,
+    logoutAll,
+    getProfile,
+    updateProfile,
+    changePassword,
+    redirectToGoogle,
+    authorizeGoogle,
+    postGoogleSetup,
+    getGoogleSetupPreview,
+    getActivatePreview,
+    postActivate,
+  };
 };

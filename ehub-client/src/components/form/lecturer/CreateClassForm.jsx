@@ -1,13 +1,9 @@
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef, useMemo, useEffect } from "react";
 import { X } from "lucide-react";
 import Dropdown from "@/components/ui/filter/DropDown";
-import ImportStudentsStep from "./ImportStudentsStep";
+import ImportStudentsStep from "@/components/modal/lecturer/ImportStudentsStep";
 import { useToast } from "@/components/ui/Toast";
-
-const SUBJECTS_OPTIONS = [
-  { label: "EXE101", value: "EXE101" },
-  { label: "EXE201", value: "EXE201" },
-];
+import SubjectApi from "@/api/subject";
 
 const CLASS_OPTIONS = Array.from({ length: 25 }, (_, i) => ({
   label: String(i + 1).padStart(2, "0"),
@@ -28,7 +24,7 @@ const getExpectedClassCodes = (subject, classSection) => {
   ];
 };
 
-export default function CreateClassModal({ isOpen, onClose, onCreate, onClearError, loading = false, error: apiError }) {
+export default function CreateClassForm({ isOpen, onClose, onCreate, onClearError, loading = false, error: apiError }) {
   const toast = useToast();
   const currentYear = new Date().getFullYear();
 
@@ -37,10 +33,25 @@ export default function CreateClassModal({ isOpen, onClose, onCreate, onClearErr
     return { label: String(y), value: y };
   });
 
+  const [subjects, setSubjects] = useState([]);
   const [subject, setSubject] = useState("");
   const [classSection, setClassSection] = useState(1);
   const [year, setYear] = useState(currentYear);
   const [semester, setSemester] = useState(1);
+
+  useEffect(() => {
+    const fetchSubjects = async () => {
+      try {
+        const resp = await SubjectApi.list();
+        if (resp.data) {
+          setSubjects(resp.data.map((s) => ({ label: s.subject_code, value: s.subject_code })));
+        }
+      } catch (err) {
+        console.error("Failed to fetch subjects:", err);
+      }
+    };
+    if (isOpen) fetchSubjects();
+  }, [isOpen]);
   const [files, setFiles] = useState([]);
   const [importSummary, setImportSummary] = useState({
     total: 0,
@@ -168,7 +179,7 @@ export default function CreateClassModal({ isOpen, onClose, onCreate, onClearErr
 
               <Dropdown
                 label="Chọn môn học"
-                options={SUBJECTS_OPTIONS}
+                options={subjects}
                 value={subject}
                 onChange={(v) => {
                   setSubject(v);

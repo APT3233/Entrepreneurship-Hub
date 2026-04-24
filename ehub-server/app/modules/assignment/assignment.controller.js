@@ -21,6 +21,27 @@ export const createAssignmentController = ({ assignmentService }) => {
     });
   });
 
+  const getSubmissions = catchAsync(async (req, res) => {
+    const data = await assignmentService.getSubmissions(req.params.id, req.user);
+    return sendSuccess(res, {
+      data,
+      message: "Assignment submissions retrieved successfully",
+    });
+  });
+
+  const gradeGroupSubmission = catchAsync(async (req, res) => {
+    const data = await assignmentService.gradeGroupSubmission(
+      req.params.id,
+      req.params.groupId,
+      { score: req.body.score, feedback: req.body.feedback },
+      req.user
+    );
+    return sendSuccess(res, {
+      data,
+      message: "Đã lưu điểm và nhận xét",
+    });
+  });
+
   const create = catchAsync(async (req, res) => {
     const assignments = await assignmentService.createBulk(req.body, req.user);
     return sendCreated(res, {
@@ -50,5 +71,58 @@ export const createAssignmentController = ({ assignmentService }) => {
     return sendNoContent(res);
   });
 
-  return { list, getById, create, update, updateStatus, remove };
+  const initiateUpload = catchAsync(async (req, res) => {
+    const result = await assignmentService.initiateUpload(req.body.file, req.user);
+    return sendSuccess(res, {
+      data: result,
+      message: "Upload session created",
+    });
+  });
+
+  const confirmUpload = catchAsync(async (req, res) => {
+    const result = await assignmentService.confirmUpload(req.body.upload_token, req.user);
+    return sendSuccess(res, {
+      data: result,
+      message: "Upload confirmed successfully",
+    });
+  });
+
+  const initiateStudentSubmit = catchAsync(async (req, res) => {
+    const result = await assignmentService.initiateStudentSubmit(
+      req.params.id,
+      req.user,
+      req.body.files
+    );
+    return sendSuccess(res, {
+      data: result,
+      message: "Submit upload session created",
+    });
+  });
+
+  const confirmStudentSubmit = catchAsync(async (req, res) => {
+    const result = await assignmentService.confirmStudentSubmit(
+      req.params.id,
+      req.user,
+      req.body.session_id
+    );
+    return sendSuccess(res, {
+      data: result,
+      message: "Bài tập đã được nộp thành công",
+    });
+  });
+
+  return {
+    list,
+    getById,
+    getSubmissions,
+    gradeGroupSubmission,
+    create,
+    update,
+    updateStatus,
+    remove,
+    initiateUpload,
+    confirmUpload,
+    initiateStudentSubmit,
+    confirmStudentSubmit,
+  };
 };

@@ -44,6 +44,7 @@ export const createAuthService = ({
   tokenService,
   accessLogRepository,
   inviteRepository,
+  auditService,
   transaction,
 }) => {
   /**
@@ -54,6 +55,84 @@ export const createAuthService = ({
     if (!row) throw NotFound("User");
     const { password: _, ...userInfo } = row;
     return userInfo;
+  };
+
+  /**
+   * Cập nhật thông tin profile (Full name, Avatar, Phone, Campus)
+   */
+  const updateProfile = async (userId, data) => {
+    const user = await userRepository.findById(userId);
+    if (!user) throw NotFound("User");
+
+    const { full_name, avatar_url, phone, campus } = data;
+
+    // Lấy dữ liệu cũ để ghi log
+    const oldUser = await getProfile(userId);
+
+    await transaction.run(async (conn) => {
+      // 1. Cập nhật bảng users (full_name, avatar_url, phone, campus)
+      const userUpdates = {};
+      if (full_name !== undefined) userUpdates.full_name = full_name;
+      if (avatar_url !== undefined) userUpdates.avatar_url = avatar_url;
+      if (phone !== undefined) userUpdates.phone = phone;
+      if (campus !== undefined) userUpdates.campus = campus;
+
+      if (Object.keys(userUpdates).length > 0) {
+        await userRepository.updateWithConn(conn, userId, {
+          ...userUpdates,
+          updated_at: new Date(),
+        });
+      }
+
+      // 2. Nếu là sinh viên, cập nhật bảng students (phone, campus) để đồng bộ
+      const student = await studentRepository.findByUserId(userId);
+      if (student) {
+        const studentUpdates = {};
+        if (phone !== undefined) studentUpdates.phone = phone;
+        if (campus !== undefined) studentUpdates.campus = campus;
+
+        if (Object.keys(studentUpdates).length > 0) {
+          await studentRepository.updateWithConn(conn, student.id, {
+            ...studentUpdates,
+            updated_at: new Date(),
+          });
+        }
+      }
+    });
+
+    // 3. Ghi log hoạt động sau khi transaction thành công
+    const newValues = {};
+    const oldValues = {};
+    if (full_name !== undefined && full_name !== oldUser.full_name) {
+      newValues.full_name = full_name;
+      oldValues.full_name = oldUser.full_name;
+    }
+    if (avatar_url !== undefined && avatar_url !== oldUser.avatar_url) {
+      newValues.avatar_url = avatar_url;
+      oldValues.avatar_url = oldUser.avatar_url;
+    }
+    if (phone !== undefined && phone !== oldUser.phone) {
+      newValues.phone = phone;
+      oldValues.phone = oldUser.phone;
+    }
+    if (campus !== undefined && campus !== oldUser.campus) {
+      newValues.campus = campus;
+      oldValues.campus = oldUser.campus;
+    }
+
+    if (Object.keys(newValues).length > 0) {
+      await auditService.log({
+        userId,
+        action: "update_profile",
+        tableName: "users",
+        recordId: userId,
+        title: full_name || oldUser.full_name,
+        oldValues,
+        newValues,
+      });
+    }
+
+    return getProfile(userId);
   };
 
   /**
@@ -99,6 +178,17 @@ export const createAuthService = ({
       status: "SUCCESS",
     });
 
+    // Ghi log vào bảng audit_logs để hiển thị ở Profile
+    await auditService.log({
+      userId: user.id,
+      action: "login",
+      tableName: "users",
+      recordId: user.id,
+      title: user.username,
+      ipAddress: deviceInfo.ip,
+      userAgent: deviceInfo.userAgent,
+    });
+
     const { password: _, ...userInfo } = user;
     return { user: userInfo, tokens };
   };
@@ -139,6 +229,18 @@ export const createAuthService = ({
     });
 
     const { password: _, ...userInfo } = newUser;
+
+    // Ghi log vào bảng audit_logs
+    await auditService.log({
+      userId: newUser.id,
+      action: "register",
+      tableName: "users",
+      recordId: newUser.id,
+      title: newUser.username,
+      ipAddress: deviceInfo.ip,
+      userAgent: deviceInfo.userAgent,
+    });
+
     return { user: userInfo, tokens };
   };
 
@@ -276,6 +378,22 @@ export const createAuthService = ({
     }
     // ---------------------------
 
+    // --- YÊU CẦU SET PASSWORD (NẾU LÀ SINH VIÊN MỚI TỪ ROSTER) ---
+    if (!existingUserMatch && studentMatch) {
+      // Sinh viên có trong roster nhưng chưa có account -> Bắt buộc qua trang set password
+      const setupToken = tokenService.signPayload({
+        googleId,
+        email,
+        name: name || email,
+        picture: picture || null,
+        studentCode: studentMatch.student_code,
+        studentId: studentMatch.id,
+        type: "google_setup",
+      });
+      return { setup_required: true, setup_token: setupToken };
+    }
+    // -------------------------------------------------------------
+
     let user = await userRepository.findByGoogleId(googleId);
     if (user) {
       // Đã có user với google_id → cập nhật avatar & last_login_at (dùng rawQuery để tránh lỗi placeholder)
@@ -300,6 +418,7 @@ export const createAuthService = ({
         );
         user = await userRepository.findByGoogleId(googleId);
       } else {
+        // Đây thường là Lecturer hoặc User tự do (nếu whitelist cho phép) -> tạo local account không pass
         const base = email.replace(/@.*$/, "").replace(/[^a-zA-Z0-9_]/g, "_").slice(0, 45) || `user_${String(googleId).slice(0, 8)}`;
         let candidate = base;
         let n = 0;
@@ -340,18 +459,94 @@ export const createAuthService = ({
 
     const tokens = await tokenService.generateTokenPair(user, deviceInfo);
     const responseTime = deviceInfo.startTime ? Date.now() - deviceInfo.startTime : 0;
-    accessLogRepository.logAction({
-      userId: user.id,
-      action: "LOGIN",
-      ipAddress: deviceInfo.ip,
-      userAgent: deviceInfo.userAgent,
-      requestId: deviceInfo.requestId,
-      responseTime,
-      status: "SUCCESS",
-    });
+    if (user?.id) {
+      accessLogRepository.logAction({
+        userId: user.id,
+        action: "LOGIN",
+        ipAddress: deviceInfo.ip,
+        userAgent: deviceInfo.userAgent,
+        requestId: deviceInfo.requestId,
+        responseTime,
+        status: "SUCCESS",
+      });
+    }
 
     const { password: _, ...userInfo } = user;
     return { user: userInfo, tokens };
+  };
+
+  /**
+   * Hoàn tất thiết lập tài khoản Google cho sinh viên mới (Set password + Link MSSV)
+   */
+  const completeGoogleSetup = async ({ token, password }, deviceInfo = {}) => {
+    const data = tokenService.verifyPayload(token);
+    if (data.type !== "google_setup") throw BadRequest("Token không hợp lệ.");
+
+    const hashedPassword = await bcrypt.hash(password, 12);
+
+    const result = await transaction.run(async (conn) => {
+      // Kiểm tra lần cuối xem email đã bị đăng ký bởi ai khác chưa (race condition)
+      const [existing] = await conn.execute(
+        "SELECT id FROM users WHERE email = ? AND deleted_at IS NULL LIMIT 1 FOR UPDATE",
+        [data.email]
+      );
+      if (existing.length) throw Conflict("Email đã được đăng ký.");
+
+      // Username = student_code (MSSV)
+      const username = String(data.studentCode || "").trim();
+      if (!username) throw BadRequest("Không tìm thấy mã số sinh viên trong thông tin lớp học.");
+
+      const [userIns] = await conn.execute(
+        `INSERT INTO users (username, email, password, full_name, avatar_url, google_id, auth_provider, status, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, 'google', 'active', NOW(), NOW())`,
+        [username, data.email, hashedPassword, data.name, data.picture, data.googleId]
+      );
+      const uid = userIns.insertId;
+
+      // Gán role student
+      const [[roleRow]] = await conn.execute("SELECT id FROM roles WHERE role_code = 'student' LIMIT 1");
+      if (roleRow) {
+        await conn.execute("INSERT IGNORE INTO user_roles (user_id, role_id, assigned_at) VALUES (?, ?, NOW())", [uid, roleRow.id]);
+      }
+
+      // Link bảng students
+      await conn.execute("UPDATE students SET user_id = ?, status = 'active', updated_at = NOW() WHERE id = ?", [uid, data.studentId]);
+
+      return uid;
+    });
+
+    const user = await userRepository.findProfileById(result);
+    const tokens = await tokenService.generateTokenPair(user, deviceInfo);
+
+    const responseTime = deviceInfo.startTime ? Date.now() - deviceInfo.startTime : 0;
+    if (user?.id) {
+      accessLogRepository.logAction({
+        userId: user.id,
+        action: "REGISTER",
+        ipAddress: deviceInfo.ip,
+        userAgent: deviceInfo.userAgent,
+        requestId: deviceInfo.requestId,
+        responseTime,
+        status: "SUCCESS",
+      });
+    }
+
+    const { password: _, ...userInfo } = user;
+    return { user: userInfo, tokens };
+  };
+
+  /**
+   * Xem trước thông tin từ setup token (dùng cho frontend hiển thị tên/MSSV)
+   */
+  const getGoogleSetupPreview = async (token) => {
+    const data = tokenService.verifyPayload(token);
+    if (data.type !== "google_setup") throw BadRequest("Token không hợp lệ.");
+    return {
+      name: data.name,
+      email: data.email,
+      studentCode: data.studentCode,
+      picture: data.picture,
+    };
   };
 
   const logoutAll = async (userId, deviceInfo = {}) => {
@@ -463,6 +658,42 @@ export const createAuthService = ({
     return { user: userInfo, tokens };
   };
 
+  /**
+   * Đổi mật khẩu người dùng
+   */
+  const changePassword = async (userId, { old_password, new_password }) => {
+    const user = await userRepository.findById(userId);
+    if (!user) throw NotFound("User");
+
+    // 1. Kiểm tra mật khẩu cũ
+    const isMatch = await bcrypt.compare(old_password, user.password);
+    if (!isMatch) {
+      throw BadRequest("Mật khẩu cũ không chính xác");
+    }
+
+    // 2. Mã hóa mật khẩu mới
+    const hashedPassword = await bcrypt.hash(new_password, 12);
+
+    // 3. Cập nhật database
+    await userRepository.update(userId, {
+      password: hashedPassword,
+      updated_at: new Date(),
+    });
+
+    // 4. Ghi log audit
+    await auditService.log({
+      userId,
+      action: "change_password",
+      tableName: "users",
+      recordId: userId,
+      title: "Thay đổi mật khẩu",
+      oldValues: { password: "[HIDDEN]" },
+      newValues: { password: "[HIDDEN]" },
+    });
+
+    return true;
+  };
+
   const service = {
     login,
     register,
@@ -470,8 +701,12 @@ export const createAuthService = ({
     logout,
     logoutAll,
     getProfile,
+    updateProfile,
+    changePassword,
     getGoogleAuthUrl,
     loginWithGoogle,
+    completeGoogleSetup,
+    getGoogleSetupPreview,
     getActivatePreview,
     activateWithInvite,
   };

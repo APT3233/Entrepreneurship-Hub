@@ -48,7 +48,7 @@ export default function GroupInviteReportModal({ isOpen, submitting = false, onC
               Vui lòng cho biết thông tin nào đang bị sai để giảng viên kiểm tra và điều chỉnh.
             </p>
           </div>
-          <button type="button" onClick={handleClose} className="text-slate-400 hover:text-slate-600 transition-colors shrink-0" aria-label="Đóng">
+          <button type="button" onClick={handleClose} className="text-slate-400 hover:text-slate-600 transition-colors shrink-0 cursor-pointer" aria-label="Đóng">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -84,10 +84,10 @@ export default function GroupInviteReportModal({ isOpen, submitting = false, onC
         </div>
 
         <div className="mt-6 flex flex-wrap justify-end gap-2">
-          <button type="button" onClick={handleClose} disabled={submitting} className="rounded-xl bg-slate-100 px-4 py-2.5 text-slate-700 text-sm font-semibold hover:bg-slate-200 disabled:opacity-60">
+          <button type="button" onClick={handleClose} disabled={submitting} className="rounded-xl bg-slate-100 px-4 py-2.5 text-slate-700 text-sm font-semibold hover:bg-slate-200 disabled:opacity-60 cursor-pointer">
             Hủy
           </button>
-          <button type="submit" disabled={submitting} className="rounded-xl bg-violet-600 px-4 py-2.5 text-white text-sm font-semibold hover:bg-violet-700 disabled:opacity-60">
+          <button type="submit" disabled={submitting} className="rounded-xl bg-violet-600 px-4 py-2.5 text-white text-sm font-semibold hover:bg-violet-700 disabled:opacity-60 cursor-pointer">
             {submitting ? "Đang gửi..." : "Gửi báo lỗi"}
           </button>
         </div>

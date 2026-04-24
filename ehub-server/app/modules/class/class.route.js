@@ -29,6 +29,7 @@ export const createClassRouter = (container) => {
 
   router.get("/", optionalAuthenticate, validateRequest(listClassSchema), classController.list);
   router.get("/stats", authenticate, roleGuard("admin", "department_head", "lecturer"), validateRequest(statsClassSchema), classController.stats);
+  router.get("/student-stats", authenticate, classController.studentStats);
   router.get("/:id/overview", optionalAuthenticate, validateRequest(classParamsSchema), classController.overview);
   router.get("/:id", optionalAuthenticate, validateRequest(classParamsSchema), classController.getById);
 

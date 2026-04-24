@@ -23,9 +23,10 @@ const STATUS_OPTIONS = [
 export default function GroupsPage() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterClass, setFilterClass] = useState(VALUE_ALL);
+  const [filterClass, setFilterClass] = useState(null);
   const [filterStatus, setFilterStatus] = useState(VALUE_ALL);
-  const [filterSemesterId, setFilterSemesterId] = useState(VALUE_ALL);
+  const [filterYear, setFilterYear] = useState(null);
+  const [filterSemesterId, setFilterSemesterId] = useState(null);
   const [semesterList, setSemesterList] = useState([]);
   const [classList, setClassList] = useState([]);
   const [stats, setStats] = useState({
@@ -40,18 +41,62 @@ export default function GroupsPage() {
   useEffect(() => {
     const fetchSemesters = async () => {
       const list = await SemesterApi.getList();
-      setSemesterList(Array.isArray(list) ? list : []);
+      const safeList = Array.isArray(list) ? list : [];
+      setSemesterList(safeList);
+      
+      if (safeList.length) {
+        // Tự động chọn học kỳ đang diễn ra
+        const ongoing = safeList.find(s => s.status === 'ongoing');
+        if (ongoing) {
+          setFilterYear(ongoing.year);
+          setFilterSemesterId(String(ongoing.id));
+        } else {
+          const years = [...new Set(safeList.map((s) => s.year))].sort((a, b) => b - a);
+          const currentYear = new Date().getFullYear();
+          const selectedYear = years.includes(currentYear) ? currentYear : years[0];
+          setFilterYear(selectedYear);
+          
+          const inYear = safeList.filter(s => s.year === selectedYear);
+          setFilterSemesterId(String(inYear[0].id));
+        }
+      }
     };
     fetchSemesters();
   }, []);
 
+  // Fetch Classes when Semester changes
   useEffect(() => {
-    const fetchStatsAndClasses = async () => {
+    if (filterYear == null || filterSemesterId == null) return;
+    const fetchClasses = async () => {
       try {
-        const [statsRes, classesRes] = await Promise.all([
-          ClassApi.getStats({}),
-          ClassApi.getList({ lecturerScope: "mine", limit: 100, page: 1 }),
-        ]);
+        const res = await ClassApi.getList({ 
+          lecturerScope: "mine", 
+          limit: 100, 
+          year: filterYear,
+          semester_id: filterSemesterId
+        });
+        const list = res?.data || [];
+        const mapped = list.map((c) => ({ id: c.id, class_code: c.class_code }));
+        setClassList(mapped);
+
+        // Mặc định chọn lớp đầu tiên
+        if (mapped.length > 0) {
+          setFilterClass(String(mapped[0].id));
+        } else {
+          setFilterClass(null);
+        }
+      } catch {
+        setClassList([]);
+        setFilterClass(null);
+      }
+    };
+    fetchClasses();
+  }, [filterYear, filterSemesterId]);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const statsRes = await ClassApi.getStats({});
         const s = statsRes?.data || {};
         setStats({
           classCount: s.classCount ?? 0,
@@ -59,17 +104,19 @@ export default function GroupsPage() {
           assignmentCount: s.assignmentCount ?? 0,
           needGradingCount: s.needGradingCount ?? 0,
         });
-        const list = classesRes?.data || [];
-        setClassList(list.map((c) => ({ id: c.id, class_code: c.class_code })));
       } catch {
         setStats({ classCount: 0, groupCount: 0, assignmentCount: 0, needGradingCount: 0 });
-        setClassList([]);
       }
     };
-    fetchStatsAndClasses();
+    fetchStats();
   }, []);
 
   useEffect(() => {
+    if (!filterClass) {
+      setGroups([]);
+      setLoading(false);
+      return;
+    }
     const fetchGroups = async () => {
       setLoading(true);
       try {
@@ -77,6 +124,7 @@ export default function GroupsPage() {
           lecturerScope: "mine",
           limit: 100,
           page: 1,
+          class_id: filterClass,
         });
         const data = res?.data?.data ?? res?.data ?? [];
         setGroups(
@@ -104,28 +152,29 @@ export default function GroupsPage() {
       }
     };
     fetchGroups();
-  }, []);
+  }, [filterClass]);
 
-  const classOptions = useMemo(
-    () => [
-      { label: "Tất cả lớp", value: VALUE_ALL },
-      ...classList.map((c) => ({
-        label: c.class_code.split("_")[0] || c.class_code,
-        value: String(c.id),
-      })),
-    ],
-    [classList]
+  const yearOptions = useMemo(
+    () => [...new Set(semesterList.map((s) => s.year))].sort((a, b) => b - a).map(y => ({ value: y, label: `${y}` })),
+    [semesterList]
   );
 
   const semesterOptions = useMemo(
-    () => [
-      { label: "Tất cả kỳ", value: VALUE_ALL },
-      ...semesterList.map((s) => ({
-        label: s.semester_name.replace(/\s?\d{4}$/, ""),
-        value: String(s.id),
-      })),
-    ],
-    [semesterList]
+    () => semesterList.filter(s => s.year === filterYear).map((s) => ({
+      label: s.status === 'ongoing' 
+        ? `${s.semester_name.replace(/\s?\d{4}$/, "")} (Hiện tại)`
+        : s.semester_name.replace(/\s?\d{4}$/, ""),
+      value: String(s.id),
+    })),
+    [semesterList, filterYear]
+  );
+
+  const classOptions = useMemo(
+    () => classList.map((c) => ({
+      label: c.class_code,
+      value: String(c.id),
+    })),
+    [classList]
   );
 
   const filteredGroups = useMemo(() => {
@@ -199,24 +248,32 @@ export default function GroupsPage() {
               className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
             />
           </div>
-          <div className="grid grid-cols-3 gap-2 sm:gap-4 w-full md:w-auto md:flex">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 w-full md:w-auto md:flex">
           <Dropdown
-            label="Tất cả lớp"
+            label="Năm"
+            options={yearOptions}
+            value={filterYear}
+            onChange={(v) => setFilterYear(v)}
+          />
+          <Dropdown
+            label="Kỳ"
+            options={semesterOptions}
+            value={filterSemesterId}
+            onChange={(v) => setFilterSemesterId(v)}
+            disabled={!filterYear}
+          />
+          <Dropdown
+            label="Lớp"
             options={classOptions}
             value={filterClass}
             onChange={(v) => setFilterClass(v)}
+            disabled={!filterSemesterId}
           />
           <Dropdown
             label="Trạng thái"
             options={STATUS_OPTIONS}
             value={filterStatus}
             onChange={(v) => setFilterStatus(v)}
-          />
-          <Dropdown
-            label="Học kì"
-            options={semesterOptions}
-            value={filterSemesterId}
-            onChange={(v) => setFilterSemesterId(v)}
           />
           </div>
         </div>

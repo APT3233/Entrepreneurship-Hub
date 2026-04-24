@@ -14,6 +14,18 @@ export default function AssignmentCard({ assignment, isSelected, onEdit, onDelet
     totalGroups,
   } = assignment;
 
+  const formatDate = (dateString) => {
+    if (!dateString) return "---";
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat('vi-VN', {
+      hour: '2-digit',
+      minute: '2-digit',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    }).format(date);
+  };
+
   return (
     <div
       onClick={onClick}
@@ -50,7 +62,7 @@ export default function AssignmentCard({ assignment, isSelected, onEdit, onDelet
         </div>
 
         {/* Description */}
-        <p className="mt-1.5 text-xs sm:text-sm text-gray-500 leading-relaxed line-clamp-2">
+        <p className="mt-1.5 text-xs sm:text-sm text-gray-500 leading-relaxed line-clamp-2 whitespace-pre-wrap">
           {description}
         </p>
 
@@ -58,7 +70,7 @@ export default function AssignmentCard({ assignment, isSelected, onEdit, onDelet
         <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1.5">
           <span className="flex items-center gap-1.5 text-xs text-gray-500">
             <Calendar size={13} className="text-gray-400" />
-            Hạn nộp: {deadline}
+            Hạn nộp: {formatDate(deadline)}
           </span>
           <span className="flex items-center gap-1.5 text-xs text-gray-500">
             <Trophy size={13} className="text-gray-400" />

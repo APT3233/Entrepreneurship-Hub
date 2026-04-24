@@ -6,22 +6,20 @@ import { StatIconGrading, StatIconAssignment, StatIconGroups } from "@/component
 import Dropdown from "@/components/ui/filter/DropDown";
 import EmptyClasses from "./components/EmptyClasses";
 import ClassCard from "./components/ClassCard";
-import CreateClassModal from "@/components/modal/lecturer/CreateClassModal";
+import CreateClassForm from "@/components/form/lecturer/CreateClassForm";
 import SemesterApi from "@/api/semester";
 import ClassApi from "@/api/class";
 import { useToast } from "@/components/ui/Toast";
 
-const VALUE_ALL_SEMESTERS = "all";
-const VALUE_ALL_CLASSES = "all";
 
 export default function ClassesPage() {
   const toast = useToast();
   const navigate = useNavigate();
-  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [createFormOpen, setCreateFormOpen] = useState(false);
   const [semesterList, setSemesterList] = useState([]);
   const [filterYear, setFilterYear] = useState(null);
   const [filterSemesterId, setFilterSemesterId] = useState(null);
-  const [filterClass, setFilterClass] = useState(VALUE_ALL_CLASSES);
+  const [filterClass, setFilterClass] = useState(null);
   const [classes, setClasses] = useState([]);
   const [stats, setStats] = useState({
     classCount: 0,
@@ -39,14 +37,21 @@ export default function ClassesPage() {
       const safeList = Array.isArray(list) ? list : [];
       setSemesterList(safeList);
       if (safeList.length) {
-        const years = [...new Set(safeList.map((s) => s.year))].sort((a, b) => b - a);
-        const currentYear = new Date().getFullYear();
-        const hasCurrentYear = years.includes(currentYear);
-        const selectedYear = hasCurrentYear ? currentYear : years[0];
-        const inYear = safeList.filter((s) => s.year === selectedYear);
-        setFilterYear(selectedYear);
-        setFilterSemesterId(inYear.length > 1 ? VALUE_ALL_SEMESTERS : inYear[0].id);
-        setFilterClass(VALUE_ALL_CLASSES);
+        // Tìm học kỳ đang diễn ra (ongoing)
+        const ongoingSemester = safeList.find((s) => s.status === "ongoing");
+
+        if (ongoingSemester) {
+          setFilterYear(ongoingSemester.year);
+          setFilterSemesterId(ongoingSemester.id);
+        } else {
+          const years = [...new Set(safeList.map((s) => s.year))].sort((a, b) => b - a);
+          const currentYear = new Date().getFullYear();
+          const selectedYear = years.includes(currentYear) ? currentYear : years[0];
+          const inYear = safeList.filter((s) => s.year === selectedYear);
+          setFilterYear(selectedYear);
+          setFilterSemesterId(inYear[0].id);
+        }
+        setFilterClass(null);
       } else {
         setPageLoading(false);
       }
@@ -67,63 +72,57 @@ export default function ClassesPage() {
     [semesterList, filterYear]
   );
 
-  const activatableSemestersInYear = useMemo(
-    () => semestersInYear.filter((s) => s.status === "ongoing" || s.status === "upcoming"),
-    [semestersInYear]
-  );
+  // const activatableSemestersInYear = useMemo(
+  //   () => semestersInYear.filter((s) => s.status === "ongoing" || s.status === "upcoming"),
+  //   [semestersInYear]
+  // );
 
   // Kỳ chỉ hiện khi đã chọn năm; options = các kỳ trong năm đó
   const semesterOptions = useMemo(() => {
     if (!filterYear) return [];
-    return [
-      { value: VALUE_ALL_SEMESTERS, label: "Tất cả kỳ" },
-      ...semestersInYear.map((s) => ({
-        value: s.id,
-        label: s.semester_name.replace(/\s?\d{4}$/, ""),
-      })),
-    ];
+    return semestersInYear.map((s) => ({
+      value: s.id,
+      label:
+        s.status === "ongoing"
+          ? `${s.semester_name.replace(/\s?\d{4}$/, "")} (Hiện tại)`
+          : s.semester_name.replace(/\s?\d{4}$/, ""),
+    }));
   }, [filterYear, semestersInYear]);
 
   const handleYearChange = (year) => {
     setFilterYear(year);
     const inYear = semesterList.filter((s) => s.year === year);
-    if (inYear.length > 1) {
-      setFilterSemesterId(VALUE_ALL_SEMESTERS);
-    } else if (inYear.length === 1) {
+    if (inYear.length > 0) {
       setFilterSemesterId(inYear[0].id);
     } else {
       setFilterSemesterId(null);
     }
-    setFilterClass(VALUE_ALL_CLASSES);
+    setFilterClass(null);
   };
 
   const handleSemesterChange = (value) => {
     setFilterSemesterId(value);
-    setFilterClass(VALUE_ALL_CLASSES);
+    setFilterClass(null);
   };
 
   const canCreateClass = useMemo(() => {
     if (!filterYear || !semestersInYear.length) return false;
 
     // Đang chọn 1 kỳ cụ thể → cho tạo khi kỳ đó đang ongoing hoặc upcoming
-    if (filterSemesterId && filterSemesterId !== VALUE_ALL_SEMESTERS) {
+    if (filterSemesterId) {
       const sem = semesterList.find((s) => s.id === filterSemesterId);
       return sem?.status === "ongoing" || sem?.status === "upcoming";
     }
 
-    // Chọn "Tất cả kỳ" trong năm → cho tạo nếu trong năm có ít nhất 1 kỳ active
-    return activatableSemestersInYear.length > 0;
-  }, [filterYear, filterSemesterId, semestersInYear, activatableSemestersInYear, semesterList]);
+    return false;
+  }, [filterYear, filterSemesterId, semestersInYear, semesterList]);
 
   // Fetch stats + danh sách lớp chỉ khi đã chọn Năm và Kỳ (thứ tự: Năm → Kỳ → Lớp)
   useEffect(() => {
     if (filterYear == null || filterSemesterId == null) return;
     const fetchData = async () => {
       const baseParams = { year: filterYear };
-      const semesterId =
-        filterSemesterId && filterSemesterId !== VALUE_ALL_SEMESTERS
-          ? filterSemesterId
-          : undefined;
+      const semesterId = filterSemesterId;
       const params = {
         ...baseParams,
         ...(semesterId != null && { semester_id: semesterId }),
@@ -176,10 +175,9 @@ export default function ClassesPage() {
     fetchData();
   }, [filterYear, filterSemesterId]);
 
-  // Dropdown lọc lớp — luôn gồm "Tất cả lớp" + các lớp hiện tại
+  // Dropdown lọc lớp — các lớp hiện tại
   const classFilterOptions = useMemo(
     () => [
-      { label: "Tất cả lớp", value: VALUE_ALL_CLASSES },
       ...classes.map((c) => ({
         label: c.code.split("_")[0] || c.code,
         value: c.id,
@@ -189,7 +187,7 @@ export default function ClassesPage() {
   );
 
   const visibleClasses = useMemo(() => {
-    if (filterClass === VALUE_ALL_CLASSES) return classes;
+    if (!filterClass) return classes;
     return classes.filter((c) => c.id === filterClass);
   }, [classes, filterClass]);
 
@@ -213,7 +211,7 @@ export default function ClassesPage() {
     };
     try {
       await ClassApi.create(body);
-      setCreateModalOpen(false);
+      setCreateFormOpen(false);
       toast.success("Tạo lớp học thành công");
 
       if (data.year) setFilterYear(data.year);
@@ -247,7 +245,7 @@ export default function ClassesPage() {
           avatars: c.avatars ?? [],
         }))
       );
-      setFilterClass(VALUE_ALL_CLASSES);
+      setFilterClass(null);
     } catch (err) {
       const mainMsg = err?.message || "Không thể tạo lớp";
       let detailMsg = "";
@@ -337,7 +335,7 @@ export default function ClassesPage() {
           <button
             type="button"
             disabled={!canCreateClass}
-            onClick={canCreateClass ? () => setCreateModalOpen(true) : undefined}
+            onClick={canCreateClass ? () => setCreateFormOpen(true) : undefined}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold shadow-sm transition-colors shrink-0 ${
               canCreateClass
                 ? "bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer"
@@ -363,7 +361,7 @@ export default function ClassesPage() {
             ))}
           </div>
         ) : visibleClasses.length === 0 ? (
-          <EmptyClasses onCreate={canCreateClass ? () => setCreateModalOpen(true) : undefined} />
+          <EmptyClasses onCreate={canCreateClass ? () => setCreateFormOpen(true) : undefined} />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 full-width">
             {visibleClasses.map((c) => (
@@ -383,11 +381,11 @@ export default function ClassesPage() {
         )}
       </div>
 
-      <CreateClassModal
-        key={createModalOpen ? "open" : "closed"}
-        isOpen={createModalOpen}
+      <CreateClassForm
+        key={createFormOpen ? "open" : "closed"}
+        isOpen={createFormOpen}
         onClose={() => {
-          setCreateModalOpen(false);
+          setCreateFormOpen(false);
           setCreateError(null);
         }}
         onCreate={handleCreateClass}
