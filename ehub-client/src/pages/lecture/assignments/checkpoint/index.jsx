@@ -134,6 +134,7 @@ export default function CheckpointManagement() {
   };
 
   const handleSave = async (data) => {
+    const editedId = selectedCheckpoint?.id != null ? Number(selectedCheckpoint.id) : null;
     try {
       if (selectedCheckpoint) {
         await CheckpointApi.update(selectedCheckpoint.id, data);
@@ -146,9 +147,26 @@ export default function CheckpointManagement() {
         toast.success("Tạo checkpoint mới thành công");
       }
       setIsEditModalOpen(false);
-      // Refresh list
-      const res = await CheckpointApi.getList({ class_id: filterClassId });
-      setCheckpoints(Array.isArray(res?.data) ? res.data : []);
+
+      const [res, resAll] = await Promise.all([
+        CheckpointApi.getList({ class_id: filterClassId }),
+        filterSemesterId
+          ? CheckpointApi.getList({
+              lecturerScope: "mine",
+              semester_id: filterSemesterId !== VALUE_ALL_SEMESTERS ? filterSemesterId : undefined,
+              year: filterYear,
+            })
+          : Promise.resolve({ data: [] }),
+      ]);
+      const list = Array.isArray(res?.data) ? res.data : [];
+      const all = Array.isArray(resAll?.data) ? resAll.data : [];
+      setCheckpoints(list);
+      setAllCheckpoints(all);
+
+      if (editedId != null) {
+        const fresh = list.find((c) => Number(c.id) === editedId);
+        if (fresh) setSelectedCheckpoint(fresh);
+      }
     } catch (err) {
       toast.error(err?.message || "Thao tác thất bại");
     }

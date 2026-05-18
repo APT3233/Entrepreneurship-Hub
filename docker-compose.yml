@@ -100,10 +100,14 @@ services:
       TZ: ${TZ:-Asia/Ho_Chi_Minh}
       REDIS_URL: redis://redis:6379
       REDIS_PORT: 6379
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: 9000
     depends_on:
       mysql:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      minio:
         condition: service_healthy
     networks:
       - ehub-network

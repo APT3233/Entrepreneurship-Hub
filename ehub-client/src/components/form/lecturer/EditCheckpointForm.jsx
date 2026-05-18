@@ -5,9 +5,15 @@ import { useToast } from "@/components/ui/Toast";
 import {
   parseLecturerAttachmentUrls,
   serializeLecturerAttachmentUrls,
+  getAttachmentDisplayFileName,
   LECTURER_ATTACH_MAX_FILES,
   LECTURER_ATTACH_MAX_BYTES,
 } from "@/utils/lecturerAttachments";
+
+function formatDatetimeLocalValue(d = new Date()) {
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 
 const FILE_TYPE_OPTIONS = [
   { value: "pdf", label: "PDF", icon: <FileText size={14} className="text-rose-500" /> },
@@ -224,12 +230,6 @@ const STATUS_OPTIONS = [
   { value: "closed", label: "Đã đóng" },
 ];
 
-const getDisplayFileName = (url = "") => {
-  const fileWithQuery = String(url).split("/").pop() || "";
-  const fileName = decodeURIComponent(fileWithQuery.split("?")[0] || "");
-  return fileName.replace(/^\d+_/, "");
-};
-
 export default function EditCheckpointForm({ isOpen, checkpoint, onClose, onSave, loading, existingOrders = [], classOptions = [], allCheckpoints = [] }) {
   const toast = useToast();
   const fileInputRef = useRef(null);
@@ -245,6 +245,7 @@ export default function EditCheckpointForm({ isOpen, checkpoint, onClose, onSave
     if (!isOpen) {
       setPendingFiles([]);
       setExistingAttachmentUrls([]);
+      setPrevCheckpointId(undefined);
     }
   }, [isOpen]);
 
@@ -258,7 +259,7 @@ export default function EditCheckpointForm({ isOpen, checkpoint, onClose, onSave
   const firstAvailableOrder = CHECKPOINT_TYPE_OPTIONS
     .map(o => o.value)
     .find(n => !existingOrders.includes(n)) || 1;
-  const [prevCheckpointId, setPrevCheckpointId] = useState(checkpoint?.id);
+  const [prevCheckpointId, setPrevCheckpointId] = useState();
   const [formData, setFormData] = useState({
     class_ids: [],
     title: checkpoint?.title || "",
@@ -337,6 +338,8 @@ export default function EditCheckpointForm({ isOpen, checkpoint, onClose, onSave
 
   if (!isOpen) return null;
 
+  const minDeadlineLocal = formatDatetimeLocalValue(new Date());
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -399,6 +402,12 @@ export default function EditCheckpointForm({ isOpen, checkpoint, onClose, onSave
       return;
     }
 
+    const deadlineMs = new Date(formData.deadline).getTime();
+    if (Number.isNaN(deadlineMs) || deadlineMs <= Date.now()) {
+      toast.error("Hạn nộp phải sau thời điểm hiện tại.");
+      return;
+    }
+
     const maxScore = Number(formData.max_score);
     if (isNaN(maxScore) || maxScore <= 0) {
       toast.error("Thang điểm phải là số dương.");
@@ -443,7 +452,7 @@ export default function EditCheckpointForm({ isOpen, checkpoint, onClose, onSave
       attachmentUrl = serializeLecturerAttachmentUrls(existingAttachmentUrls);
     }
 
-    onSave({ ...formData, attachment_url: attachmentUrl });
+    await Promise.resolve(onSave({ ...formData, attachment_url: attachmentUrl }));
   };
 
   return (
@@ -505,7 +514,14 @@ export default function EditCheckpointForm({ isOpen, checkpoint, onClose, onSave
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-1.5">
               <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Hạn nộp bài</label>
-              <input type="datetime-local" name="deadline" value={formData.deadline} onChange={handleChange} className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-100 focus:bg-white focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50 outline-none transition-all text-sm font-medium" />
+              <input
+                type="datetime-local"
+                name="deadline"
+                min={minDeadlineLocal}
+                value={formData.deadline}
+                onChange={handleChange}
+                className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-100 focus:bg-white focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50 outline-none transition-all text-sm font-medium"
+              />
             </div>
             <div className="space-y-1.5 overflow-visible">
               <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Loại file chấp nhận</label>
@@ -559,7 +575,7 @@ export default function EditCheckpointForm({ isOpen, checkpoint, onClose, onSave
                           <Paperclip size={16} />
                         </div>
                         <div className="min-w-0">
-                          <p className="text-sm font-bold text-indigo-900 truncate">{getDisplayFileName(url)}</p>
+                          <p className="text-sm font-bold text-indigo-900 truncate">{getAttachmentDisplayFileName(url)}</p>
                           <a href={url} target="_blank" rel="noreferrer" className="text-[11px] text-indigo-500 hover:underline">Mở</a>
                         </div>
                       </div>

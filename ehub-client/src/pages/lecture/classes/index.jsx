@@ -11,6 +11,11 @@ import SemesterApi from "@/api/semester";
 import ClassApi from "@/api/class";
 import { useToast } from "@/components/ui/Toast";
 
+/** Khớp với BE: semester 1/2/3 → SP/SU/FA + năm → semester_code */
+const semesterTypeToCode = (semesterType, year) => {
+  const prefix = { 1: "SP", 2: "SU", 3: "FA" }[Number(semesterType)] || "SP";
+  return `${prefix}${Number(year)}`;
+};
 
 export default function ClassesPage() {
   const toast = useToast();
@@ -30,11 +35,13 @@ export default function ClassesPage() {
   const [createLoading, setCreateLoading] = useState(false);
   const [createError, setCreateError] = useState(null);
   const [pageLoading, setPageLoading] = useState(true);
+  /** Tăng sau khi tạo lớp thành công để ép refetch dù filterYear/filterSemesterId không đổi (React không re-run effect nếu deps bằng nhau). */
+  const [classesDataKey, setClassesDataKey] = useState(0);
 
   useEffect(() => {
     const fetchSemesters = async () => {
       const list = await SemesterApi.getList();
-      const safeList = Array.isArray(list) ? list : [];
+      const safeList = Array.isArray(list) ? list : Array.isArray(list?.data) ? list.data : [];
       setSemesterList(safeList);
       if (safeList.length) {
         // Tìm học kỳ đang diễn ra (ongoing)
@@ -173,7 +180,7 @@ export default function ClassesPage() {
       }
     };
     fetchData();
-  }, [filterYear, filterSemesterId]);
+  }, [filterYear, filterSemesterId, classesDataKey]);
 
   // Dropdown lọc lớp — các lớp hiện tại
   const classFilterOptions = useMemo(
@@ -214,38 +221,30 @@ export default function ClassesPage() {
       setCreateFormOpen(false);
       toast.success("Tạo lớp học thành công");
 
-      if (data.year) setFilterYear(data.year);
-      const targetYear = data.year || filterYear;
-      const baseParams = { year: targetYear };
-    
-      const params = { ...baseParams, lecturerScope: "mine", limit: 50, page: 1 };
-      
-      const [statsRes, listRes] = await Promise.all([
-        ClassApi.getStats(params),
-        ClassApi.getList(params),
-      ]);
-      const s = statsRes?.data?.data || statsRes?.data || {};
-      setStats({
-        classCount: s.classCount ?? 0,
-        groupCount: s.groupCount ?? 0,
-        assignmentCount: s.assignmentCount ?? 0,
-        needGradingCount: s.needGradingCount ?? 0,
-      });
-      const list = listRes?.data?.data || listRes?.data || [];
-      setClasses(
-        list.map((c) => ({
-          id: c.id,
-          code: c.class_code,
-          subject: c.class_name || "",
-          students: c.student_count ?? 0,
-          groups: c.group_count ?? 0,
-          completion: 0,
-          semester_id: c.semester_id,
-          semester_status: c.semester_status,
-          avatars: c.avatars ?? [],
-        }))
-      );
+      // Làm mới danh sách học kỳ (kỳ có thể vừa được auto-create trên server), rồi chọn đúng kỳ vừa tạo lớp
+      // để useEffect [filterYear, filterSemesterId] gọi getStats/getList kèm semester_id — không lấy lớp mọi kỳ.
+      const rawSemesters = await SemesterApi.getList();
+      const safeSemesters = Array.isArray(rawSemesters)
+        ? rawSemesters
+        : Array.isArray(rawSemesters?.data)
+          ? rawSemesters.data
+          : [];
+      setSemesterList(safeSemesters);
+
+      const targetYear = data.year != null ? Number(data.year) : filterYear;
+      const semCode = semesterTypeToCode(data.semester, targetYear);
+      const matchedSem = safeSemesters.find((s) => String(s.semester_code) === semCode);
+
+      if (targetYear != null) setFilterYear(targetYear);
+      if (matchedSem) {
+        setFilterSemesterId(matchedSem.id);
+      } else if (targetYear != null && safeSemesters.length > 0) {
+        const inYear = safeSemesters.filter((s) => Number(s.year) === targetYear);
+        if (inYear.length > 0) setFilterSemesterId(inYear[0].id);
+      }
       setFilterClass(null);
+      // Luôn refetch stats + danh sách lớp theo kỳ vừa chọn (kể cả khi năm/kỳ trùng filter hiện tại → vẫn có GET /classes & /classes/stats)
+      setClassesDataKey((k) => k + 1);
     } catch (err) {
       const mainMsg = err?.message || "Không thể tạo lớp";
       let detailMsg = "";

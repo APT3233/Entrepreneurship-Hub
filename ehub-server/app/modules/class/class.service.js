@@ -14,6 +14,33 @@ const SEMESTER_START_MONTHS = { 1: 0, 2: 4, 3: 8 }; // Jan, May, Sept
 // Map ngược prefix mã học kỳ → loại kỳ (1=Spring, 2=Summer, 3=Fall)
 const SEMESTER_TYPE_FROM_PREFIX = { SP: 1, SU: 2, FA: 3 };
 
+/** Chuẩn hóa về Date local 00:00 để so sánh với cột DATE từ MySQL */
+const toLocalDay = (d) => {
+  if (d == null) return null;
+  if (d instanceof Date && !Number.isNaN(d.getTime())) {
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  }
+  if (typeof d === "string" && /^\d{4}-\d{2}-\d{2}/.test(d)) {
+    const [y, m, day] = d.slice(0, 10).split("-").map(Number);
+    return new Date(y, m - 1, day);
+  }
+  const x = new Date(d);
+  if (Number.isNaN(x.getTime())) return null;
+  return new Date(x.getFullYear(), x.getMonth(), x.getDate());
+};
+
+/** Trạng thái học kỳ theo lịch: chưa bắt đầu → upcoming, đã hết → completed, còn trong kỳ → ongoing */
+const computeSemesterStatusFromDates = (startDate, endDate, refDate = new Date()) => {
+  const start = toLocalDay(startDate);
+  const end = toLocalDay(endDate);
+  const ref = toLocalDay(refDate);
+  if (!start || !end || !ref) return "upcoming";
+  const tRef = ref.getTime();
+  if (tRef < start.getTime()) return "upcoming";
+  if (tRef > end.getTime()) return "completed";
+  return "ongoing";
+};
+
 export const createClassService = ({
   classRepository,
   semesterRepository,
@@ -46,11 +73,27 @@ export const createClassService = ({
    * Dùng chung cho cả luồng tạo và sửa lớp.
    */
   const ensureSemester = async (semCode, semesterType, year) => {
+    /** Nếu status trong DB lệch so với start/end (vd đã qua kỳ mà vẫn upcoming) → cập nhật */
+    const syncSemesterRowStatusIfNeeded = async (sem) => {
+      if (!sem?.start_date || !sem?.end_date) return sem;
+      const correct = computeSemesterStatusFromDates(sem.start_date, sem.end_date);
+      if (sem.status !== correct) {
+        await semesterRepository.update(sem.id, { status: correct, updated_at: new Date() });
+        return { ...sem, status: correct };
+      }
+      return sem;
+    };
+
     const existing = await semesterRepository.findByCode(semCode);
-    if (existing) return existing;
+    if (existing) return syncSemesterRowStatusIfNeeded(existing);
 
     const anySem = await semesterRepository.findAnyByCode(semCode);
-    if (anySem) return semesterRepository.restore(anySem.id);
+    if (anySem) {
+      await semesterRepository.restore(anySem.id);
+      const restored = await semesterRepository.findById(anySem.id);
+      if (!restored) throw BadRequest(`Không thể khôi phục học kỳ ${semCode}.`);
+      return syncSemesterRowStatusIfNeeded(restored);
+    }
 
     const startMonth = SEMESTER_START_MONTHS[semesterType] ?? 0;
     const startDate = new Date(year, startMonth, 1);
@@ -64,13 +107,14 @@ export const createClassService = ({
     }
 
     const endDate = new Date(year, startMonth + 3, 30); // Giả định mỗi kỳ ~4 tháng
+    const status = computeSemesterStatusFromDates(startDate, endDate);
     return semesterRepository.create({
       semester_code: semCode,
       semester_name: `${SEMESTER_NAMES[semesterType]} ${year}`,
       year,
       start_date: startDate,
       end_date: endDate,
-      status: "upcoming",
+      status,
     });
   };
 

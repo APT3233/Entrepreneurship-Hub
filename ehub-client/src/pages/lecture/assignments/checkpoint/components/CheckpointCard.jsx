@@ -29,10 +29,14 @@ export default function CheckpointCard({ checkpoint, onEdit, onDetail, onDelete 
 
   const getStatusInfo = (status) => {
     switch (status) {
-      case "open": return { label: "Đang mở", color: "bg-emerald-50 text-emerald-600 border-emerald-100" };
-      case "closed": return { label: "Đã đóng", color: "bg-gray-50 text-gray-500 border-gray-100" };
-      case "draft": return { label: "Bản nháp", color: "bg-amber-50 text-amber-600 border-amber-100" };
-      default: return { label: status, color: "bg-gray-50 text-gray-500 border-gray-100" };
+      case "open":
+        return { label: "Đang mở", color: "bg-emerald-50 text-emerald-700 border-emerald-200" };
+      case "closed":
+        return { label: "Đã đóng", color: "bg-slate-100 text-slate-700 border-slate-200" };
+      case "draft":
+        return { label: "Bản nháp", color: "bg-amber-50 text-amber-700 border-amber-200" };
+      default:
+        return { label: status, color: "bg-gray-100 text-gray-600 border-gray-200" };
     }
   };
 

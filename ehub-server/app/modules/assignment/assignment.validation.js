@@ -1,11 +1,21 @@
 import Joi from "joi";
 
+/** Hạn nộp phải sau thời điểm hiện tại (không cho chọn quá khứ). */
+const deadlineMustBeFuture = (value, helpers) => {
+  if (value === undefined || value === null) return value;
+  const t = new Date(value).getTime();
+  if (Number.isNaN(t) || t <= Date.now()) {
+    return helpers.error("any.custom", { message: "Hạn nộp không được là thời điểm đã qua." });
+  }
+  return value;
+};
+
 export const createAssignmentSchema = {
   body: Joi.object({
     class_ids: Joi.array().items(Joi.number().integer().positive()).min(1).required(),
     title: Joi.string().max(200).required(),
     description: Joi.string().allow(null, ""),
-    deadline: Joi.date().iso().required(),
+    deadline: Joi.date().iso().required().custom(deadlineMustBeFuture),
     max_score: Joi.number().positive().max(1000).default(10),
     status: Joi.string().valid("open", "closed", "archived").default("open"),
     required_file_types: Joi.string().max(200).default("pdf,docx"),
@@ -22,7 +32,7 @@ export const updateAssignmentSchema = {
   body: Joi.object({
     title: Joi.string().max(200),
     description: Joi.string().allow(null, ""),
-    deadline: Joi.date().iso(),
+    deadline: Joi.date().iso().custom(deadlineMustBeFuture),
     max_score: Joi.number().positive().max(1000),
     status: Joi.string().valid("open", "closed", "archived"),
     required_file_types: Joi.string().max(200),

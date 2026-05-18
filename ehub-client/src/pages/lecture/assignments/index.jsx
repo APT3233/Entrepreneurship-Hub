@@ -167,25 +167,29 @@ export default function AssignmentManagement() {
   };
 
   const fetchCheckpoints = async () => {
+    let nextCheckpoints = [];
+    let nextAll = [];
     try {
       setIsLoadingCheckpoints(true);
-      
-      // Fetch checkpoints for the specific selected class
+
       if (filterClass) {
         const res = await CheckpointApi.getList({ class_id: filterClass });
-        setCheckpoints(Array.isArray(res?.data) ? res.data : []);
+        nextCheckpoints = Array.isArray(res?.data) ? res.data : [];
+        setCheckpoints(nextCheckpoints);
       } else {
         setCheckpoints([]);
       }
 
-      // Also fetch ALL checkpoints for the lecturer in this semester to validate bulk creation
       if (filterSemesterId) {
-        const resAll = await CheckpointApi.getList({ 
-          lecturerScope: "mine", 
+        const resAll = await CheckpointApi.getList({
+          lecturerScope: "mine",
           semester_id: filterSemesterId,
-          year: filterYear
+          year: filterYear,
         });
-        setAllCheckpoints(Array.isArray(resAll?.data) ? resAll.data : []);
+        nextAll = Array.isArray(resAll?.data) ? resAll.data : [];
+        setAllCheckpoints(nextAll);
+      } else {
+        setAllCheckpoints([]);
       }
     } catch (err) {
       console.error("Failed to fetch checkpoints:", err);
@@ -194,6 +198,7 @@ export default function AssignmentManagement() {
     } finally {
       setIsLoadingCheckpoints(false);
     }
+    return { checkpoints: nextCheckpoints, allCheckpoints: nextAll };
   };
 
   // Fetch Data based on active tab
@@ -250,6 +255,7 @@ export default function AssignmentManagement() {
 
   // Handlers for Checkpoints
   const handleSaveCheckpoint = async (data) => {
+    const editedId = selectedCheckpoint?.id != null ? Number(selectedCheckpoint.id) : null;
     try {
       if (selectedCheckpoint?.id) {
         await CheckpointApi.update(selectedCheckpoint.id, data);
@@ -262,7 +268,11 @@ export default function AssignmentManagement() {
         toast.success("Tạo checkpoint thành công");
       }
       setIsEditCheckpointOpen(false);
-      fetchCheckpoints();
+      const { checkpoints: list } = await fetchCheckpoints();
+      if (editedId != null && Array.isArray(list)) {
+        const fresh = list.find((c) => Number(c.id) === editedId);
+        if (fresh) setSelectedCheckpoint(fresh);
+      }
     } catch (error) {
       toast.error(error.response?.data?.error?.message || "Không thể lưu checkpoint");
     }
@@ -275,7 +285,7 @@ export default function AssignmentManagement() {
       toast.success("Xóa checkpoint thành công");
       setIsDeleteConfirmOpen(false);
       setCheckpointToDelete(null);
-      fetchCheckpoints();
+      await fetchCheckpoints();
     } catch (error) {
       toast.error(error.response?.data?.error?.message || "Không thể xóa checkpoint");
     }

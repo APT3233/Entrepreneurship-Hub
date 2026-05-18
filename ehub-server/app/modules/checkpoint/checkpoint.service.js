@@ -86,6 +86,13 @@ export const createCheckpointService = ({ checkpointRepository, eventBus, storag
     return cleaned;
   };
 
+  const assertDeadlineNotPast = (deadlineIso) => {
+    const t = new Date(deadlineIso).getTime();
+    if (Number.isNaN(t) || t <= Date.now()) {
+      throw BadRequest("Hạn nộp không được là thời điểm đã qua.");
+    }
+  };
+
   /**
    * Check if user has permission to manage checkpoint
    * @param {number} checkpointId 
@@ -117,6 +124,8 @@ export const createCheckpointService = ({ checkpointRepository, eventBus, storag
     if (!classRow) {
       throw BadRequest("Lớp học không tồn tại hoặc không thuộc quyền quản lý của bạn");
     }
+
+    assertDeadlineNotPast(data.deadline);
 
     // Check if checkpoint number already exists for this class
     const alreadyExists = await checkpointRepository.exists({ 
@@ -150,6 +159,8 @@ export const createCheckpointService = ({ checkpointRepository, eventBus, storag
   const createBulk = async (data, user) => {
     if (!user?.id) throw Forbidden("User not authorized");
     const { class_ids, ...checkpointData } = data;
+
+    assertDeadlineNotPast(checkpointData.deadline);
 
     const results = [];
     const errors = [];
@@ -243,6 +254,8 @@ export const createCheckpointService = ({ checkpointRepository, eventBus, storag
         throw BadRequest(`Checkpoint ${data.order_index} đã tồn tại trong lớp này.`);
       }
     }
+
+    if (data.deadline != null) assertDeadlineNotPast(data.deadline);
 
     const result = await base.update(id, cleanData(data));
     

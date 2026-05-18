@@ -4,9 +4,11 @@ import AssignmentApi from "@/api/assignment";
 import {
   parseLecturerAttachmentUrls,
   serializeLecturerAttachmentUrls,
+  getAttachmentDisplayFileName,
   LECTURER_ATTACH_MAX_FILES,
   LECTURER_ATTACH_MAX_BYTES,
 } from "@/utils/lecturerAttachments";
+import { useToast } from "@/components/ui/Toast";
 
 const FILE_TYPE_OPTIONS = [
   { value: "pdf", label: "PDF", icon: <FileText size={14} className="text-rose-500" /> },
@@ -127,13 +129,12 @@ const STATUS_OPTIONS = [
   { value: "archived", label: "Lưu trữ" },
 ];
 
-import { useToast } from "@/components/ui/Toast";
 
-const getDisplayFileName = (url = "") => {
-  const fileWithQuery = String(url).split("/").pop() || "";
-  const fileName = decodeURIComponent(fileWithQuery.split("?")[0] || "");
-  return fileName.replace(/^\d+_/, "");
-};
+
+function formatDatetimeLocalValue(d = new Date()) {
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 
 export default function EditAssignmentForm({ isOpen, assignment, onClose, onSave, loading }) {
   const toast = useToast();
@@ -189,6 +190,8 @@ export default function EditAssignmentForm({ isOpen, assignment, onClose, onSave
 
   if (!isOpen) return null;
 
+  const minDeadlineLocal = formatDatetimeLocalValue(new Date());
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -240,6 +243,14 @@ export default function EditAssignmentForm({ isOpen, assignment, onClose, onSave
     if (!formData.title.trim()) {
       toast.error("Vui lòng nhập tên bài tập.");
       return;
+    }
+
+    if (formData.deadline) {
+      const picked = new Date(formData.deadline);
+      if (Number.isNaN(picked.getTime()) || picked.getTime() <= Date.now()) {
+        toast.error("Hạn nộp phải sau thời điểm hiện tại.");
+        return;
+      }
     }
 
     let attachmentUrl = formData.attachment_url;
@@ -301,7 +312,14 @@ export default function EditAssignmentForm({ isOpen, assignment, onClose, onSave
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-1.5">
               <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Hạn nộp</label>
-              <input type="datetime-local" name="deadline" value={formData.deadline} onChange={handleChange} className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-100 focus:bg-white focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50 outline-none transition-all text-sm font-medium" />
+              <input
+                type="datetime-local"
+                name="deadline"
+                min={minDeadlineLocal}
+                value={formData.deadline}
+                onChange={handleChange}
+                className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-100 focus:bg-white focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50 outline-none transition-all text-sm font-medium"
+              />
             </div>
             <div className="space-y-1.5 overflow-visible">
               <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Loại file chấp nhận</label>
@@ -346,7 +364,7 @@ export default function EditAssignmentForm({ isOpen, assignment, onClose, onSave
                           <Paperclip size={16} />
                         </div>
                         <div className="min-w-0">
-                          <p className="text-sm font-bold text-indigo-900 truncate">{getDisplayFileName(url)}</p>
+                          <p className="text-sm font-bold text-indigo-900 truncate">{getAttachmentDisplayFileName(url)}</p>
                           <a href={url} target="_blank" rel="noreferrer" className="text-[11px] text-indigo-500 hover:underline">Mở</a>
                         </div>
                       </div>

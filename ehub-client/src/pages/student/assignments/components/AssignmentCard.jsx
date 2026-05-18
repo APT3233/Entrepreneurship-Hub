@@ -36,7 +36,13 @@ export default function AssignmentCard({ assignment, onClick }) {
       <div className="p-5">
         {/* Top row: status + class */}
         <div className="flex items-center gap-2 mb-3">
-          <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${isOpen ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-gray-50 text-gray-500 border-gray-100"}`}>
+          <span
+            className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
+              isOpen
+                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                : "bg-slate-100 text-slate-700 border-slate-200"
+            }`}
+          >
             {isOpen ? "Đang mở" : "Đã đóng"}
           </span>
           <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-indigo-50 text-indigo-600 border border-indigo-100">

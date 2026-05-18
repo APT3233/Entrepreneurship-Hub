@@ -26,6 +26,24 @@ export const createSemesterRepository = ({ db }) => {
     return base.update(id, { deleted_at: null, updated_at: new Date() });
   };
 
+  /**
+   * Cập nhật status theo ngày thực tế (so với CURDATE() trên DB): upcoming / ongoing / completed.
+   * Tránh học kỳ đã qua vẫn bị giữ "upcoming" do tạo tự động hoặc dữ liệu cũ.
+   */
+  const reconcileActiveSemesterStatusesFromDates = async () => {
+    const sql = `
+      UPDATE \`semesters\`
+      SET \`status\` = CASE
+        WHEN CURDATE() < DATE(\`start_date\`) THEN 'upcoming'
+        WHEN CURDATE() > DATE(\`end_date\`) THEN 'completed'
+        ELSE 'ongoing'
+      END,
+      \`updated_at\` = CURRENT_TIMESTAMP
+      WHERE \`deleted_at\` IS NULL
+    `;
+    await db.execute(sql);
+  };
+
   return {
     ...base,
     findByCode,
@@ -33,5 +51,6 @@ export const createSemesterRepository = ({ db }) => {
     findManyByYear,
     findCurrentSemester,
     restore,
+    reconcileActiveSemesterStatusesFromDates,
   };
 };

@@ -1,5 +1,15 @@
 import Joi from "joi";
 
+/** Hạn nộp phải sau thời điểm hiện tại (không cho quá khứ). */
+const deadlineMustBeFuture = (value, helpers) => {
+  if (value === undefined || value === null) return value;
+  const t = new Date(value).getTime();
+  if (Number.isNaN(t) || t <= Date.now()) {
+    return helpers.error("any.custom", { message: "Hạn nộp không được là thời điểm đã qua." });
+  }
+  return value;
+};
+
 /**
  * Validations for Checkpoint module
  * Following Enterprise standards and Joi best practices
@@ -11,7 +21,7 @@ export const createCheckpointSchema = {
     title: Joi.string().max(255).required(),
     description: Joi.string().allow(null, ""),
     order_index: Joi.number().integer().min(1).default(1),
-    deadline: Joi.date().iso().required(),
+    deadline: Joi.date().iso().required().custom(deadlineMustBeFuture),
     open_at: Joi.date().iso().allow(null, ""),
     max_score: Joi.number().min(0).max(100).default(10),
     weight: Joi.number().min(0).max(1).default(0.25),
@@ -29,7 +39,7 @@ export const bulkCreateCheckpointSchema = {
     title: Joi.string().max(255).required(),
     description: Joi.string().allow(null, ""),
     order_index: Joi.number().integer().min(1).default(1),
-    deadline: Joi.date().iso().required(),
+    deadline: Joi.date().iso().required().custom(deadlineMustBeFuture),
     open_at: Joi.date().iso().allow(null, ""),
     max_score: Joi.number().min(0).max(100).default(10),
     weight: Joi.number().min(0).max(1).default(0.25),
@@ -49,7 +59,7 @@ export const updateCheckpointSchema = {
     title: Joi.string().max(255),
     description: Joi.string().allow(null, ""),
     order_index: Joi.number().integer().min(1),
-    deadline: Joi.date().iso(),
+    deadline: Joi.date().iso().custom(deadlineMustBeFuture),
     open_at: Joi.date().iso().allow(null, ""),
     max_score: Joi.number().min(0).max(100),
     weight: Joi.number().min(0).max(1),

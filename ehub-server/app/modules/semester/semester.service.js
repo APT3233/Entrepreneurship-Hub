@@ -4,6 +4,8 @@ export const createSemesterService = ({ semesterRepository }) => {
   const base = createBaseService(semesterRepository, "Semester");
 
   const getList = async (query) => {
+    // Đồng bộ status theo start_date/end_date trước khi trả list (idempotent, 1 query)
+    await semesterRepository.reconcileActiveSemesterStatusesFromDates();
     return base.getList(query, {
       allowedSortColumns: [
         "semester_code",

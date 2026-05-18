@@ -4,9 +4,16 @@ import AssignmentApi from "@/api/assignment";
 import {
   parseLecturerAttachmentUrls,
   serializeLecturerAttachmentUrls,
+  getAttachmentDisplayFileName,
   LECTURER_ATTACH_MAX_FILES,
   LECTURER_ATTACH_MAX_BYTES,
 } from "@/utils/lecturerAttachments";
+
+/** Giá trị yyyy-MM-ddTHH:mm theo giờ local cho datetime-local (min + kiểm tra quá khứ). */
+function formatDatetimeLocalValue(d = new Date()) {
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 
 const FILE_TYPE_OPTIONS = [
   { value: "pdf", label: "PDF", icon: <FileText size={14} className="text-rose-500" /> },
@@ -203,12 +210,6 @@ const CLASS_OPTIONS = [
 
 import { useToast } from "@/components/ui/Toast";
 
-const getDisplayFileName = (url = "") => {
-  const fileWithQuery = String(url).split("/").pop() || "";
-  const fileName = decodeURIComponent(fileWithQuery.split("?")[0] || "");
-  return fileName.replace(/^\d+_/, "");
-};
-
 // ... (previous constants)
 
 // ── CreateAssignmentForm ─────────────────────────────────────────────────────
@@ -255,8 +256,7 @@ export default function CreateAssignmentForm({
 
   if (!open) return null;
 
-  const now = new Date();
-  const today = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  const minDeadlineLocal = formatDatetimeLocalValue(new Date());
 
   // ── Helpers ────────────────────────────────────────────────────────────────
   const set = (field) => (e) =>
@@ -297,8 +297,11 @@ export default function CreateAssignmentForm({
     if (!form.title.trim()) errs.title       = "Vui lòng nhập tên bài tập.";
     if (!form.deadline) {
       errs.deadline = "Vui lòng chọn deadline.";
-    } else if (form.deadline < today) {
-      errs.deadline = "Deadline không được ở trong quá khứ.";
+    } else {
+      const picked = new Date(form.deadline);
+      if (Number.isNaN(picked.getTime()) || picked.getTime() <= Date.now()) {
+        errs.deadline = "Hạn nộp phải sau thời điểm hiện tại.";
+      }
     }
     if (!form.max_score || isNaN(Number(form.max_score)) || Number(form.max_score) <= 0)
       errs.max_score = "Thang điểm phải là số dương.";
@@ -431,7 +434,7 @@ export default function CreateAssignmentForm({
               <div className="relative">
                 <input
                   type="datetime-local"
-                  min={today}
+                  min={minDeadlineLocal}
                   value={form.deadline}
                   onChange={set("deadline")}
                   className={`${inputCls} pr-10`}
@@ -504,7 +507,7 @@ export default function CreateAssignmentForm({
                           <Paperclip size={16} />
                         </div>
                         <div className="min-w-0">
-                          <p className="text-sm font-bold text-indigo-900 truncate">{getDisplayFileName(url)}</p>
+                          <p className="text-sm font-bold text-indigo-900 truncate">{getAttachmentDisplayFileName(url)}</p>
                           <a href={url} target="_blank" rel="noreferrer" className="text-[11px] text-indigo-500 hover:underline">Mở</a>
                         </div>
                       </div>

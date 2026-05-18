@@ -1,16 +1,13 @@
-[] Quản lý 1 nhóm của 2 kỳ
-
-Bài toán:
-
-Phân tích:
-  - 1 student học 2 kỳ gồm các môn EXE101(kỳ 1) và EXE201(kỳ 2) --> 2 nhóm khác nhau
-    + Thêm điều kiện cho api http://localhost:5173/api/v1/groups/invites/pending để trả về group của kỳ hiện tại 
-    
-  - Kỳ 1 và kỳ 2 có thể là giảng viên khác nhau 
+[] Tạo lớp
+  [x] Tạo 2 lớp giống nhau cùng kỳ --> Reject
+    [x] Tạo 2 lớp giống nhau nhưng khác sinh viên cùng kỳ --> Reject
+  [x] Tạo 2 lớp giống nhau khác kì --> Accept
+  [] Tạo lớp đã có sinh viên thuộc lớp khác cùng kỳ --> Reject
   
+  [x] Tạo 2 lớp cùng nhau vào 1/2 môn học trong cùng 1 kỳ --> Reject
+  [] SV đã "dropped" → add lại --> Accept
 
+  [] Tạo lại class_code đã bị deleted cùng kỳ --> Accept
 
-
-
-[] Quản lý nhóm giữa các kỳ
- - 
+  [] Tạo sinh viên đã tồn tại trong cùng 1 kỳ --> Reject 
+  [] Tạo sinh viên đã tồn tại khác kỳ --> Accept

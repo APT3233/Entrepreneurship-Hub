@@ -8,7 +8,10 @@ import FileIcon from "@/components/icons/FileIcon";
 import CheckpointApi from "@/api/checkpoint";
 import AssignmentApi from "@/api/assignment";
 import { useToast } from "@/components/ui/Toast";
-import { parseLecturerAttachmentUrls } from "@/utils/lecturerAttachments";
+import {
+  parseLecturerAttachmentUrls,
+  getAttachmentDisplayFileName,
+} from "@/utils/lecturerAttachments";
 
 function fmtSize(bytes) {
   if (!bytes) return "";
@@ -26,12 +29,6 @@ function formatDate(dateString) {
   const hours = String(date.getHours()).padStart(2, '0');
   const minutes = String(date.getMinutes()).padStart(2, '0');
   return `${day}/${month}/${year} | ${hours}:${minutes}`;
-}
-
-function getDisplayFileName(url = "") {
-  const fileWithQuery = String(url).split("/").pop() || "";
-  const fileName = decodeURIComponent(fileWithQuery.split("?")[0] || "");
-  return fileName.replace(/^\d+_/, "");
 }
 
 export default function StudentCheckpointModal({ checkpoint: task, isOpen, onClose, onSuccess }) {
@@ -300,7 +297,7 @@ export default function StudentCheckpointModal({ checkpoint: task, isOpen, onClo
                           </div>
                           <div className="flex flex-col overflow-hidden min-w-0">
                             <span className="text-sm font-bold text-emerald-900 truncate">
-                              {getDisplayFileName(url)}
+                              {getAttachmentDisplayFileName(url)}
                             </span>
                             <span className="text-[10px] text-emerald-500 font-bold uppercase">Tài liệu tham khảo từ GV</span>
                           </div>

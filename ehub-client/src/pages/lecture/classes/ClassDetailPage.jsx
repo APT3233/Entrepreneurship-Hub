@@ -51,7 +51,8 @@ export default function ClassDetailPage() {
   useEffect(() => {
     const fetchSemesters = async () => {
       const list = await SemesterApi.getList();
-      setSemesterList(Array.isArray(list) ? list : []);
+      const safeList = Array.isArray(list) ? list : Array.isArray(list?.data) ? list.data : [];
+      setSemesterList(safeList);
     };
     fetchSemesters();
   }, []);
@@ -67,8 +68,8 @@ export default function ClassDetailPage() {
         }
         const data = res.data;
         setDetail(data);
-        if (data.year != null) setFilterYear(data.year);
-        if (data.semester_id != null) setFilterSemesterId(data.semester_id);
+        if (data.year != null) setFilterYear(Number(data.year));
+        if (data.semester_id != null) setFilterSemesterId(Number(data.semester_id));
       } catch {
         navigate("/lecturer/classes", { replace: true });
       }
@@ -76,23 +77,28 @@ export default function ClassDetailPage() {
     fetchDetail();
   }, [id, navigate]);
 
-  // Danh sách lớp cùng năm/kỳ để chọn nhanh (dropdown "Tất cả lớp")
+  // Danh sách lớp đúng kỳ đã chọn (dropdown "Lớp") — luôn gửi semester_id để BE lọc theo 1 kỳ, không chỉ year (year = mọi kỳ trong năm).
   useEffect(() => {
-    if (filterYear == null || !filterSemesterId) return;
+    if (filterYear == null || filterSemesterId == null) return;
     const fetchClasses = async () => {
       try {
-        const sem = semesterList.find((s) => s.id === filterSemesterId);
-        const params = { year: filterYear, lecturerScope: "mine", limit: 100, page: 1 };
-        if (sem?.semester_code) params.semester_code = sem.semester_code;
+        const params = {
+          year: filterYear,
+          semester_id: Number(filterSemesterId),
+          lecturerScope: "mine",
+          limit: 100,
+          page: 1,
+        };
         const res = await ClassApi.getList(params);
         const list = (res?.data?.data || res?.data) || [];
-        setClassList(list.map((c) => ({ id: c.id, class_code: c.class_code })));
+        const rows = Array.isArray(list) ? list : [];
+        setClassList(rows.map((c) => ({ id: c.id, class_code: c.class_code })));
       } catch {
         setClassList([]);
       }
     };
     fetchClasses();
-  }, [filterYear, filterSemesterId, semesterList]);
+  }, [filterYear, filterSemesterId]);
 
   const fetchDetail = async () => {
     if (!id) return;
@@ -122,7 +128,7 @@ export default function ClassDetailPage() {
     () =>
       !filterYear 
         ? [] 
-        : semestersInYear.map((s) => ({ value: s.id, label: s.semester_name })),
+        : semestersInYear.map((s) => ({ value: Number(s.id), label: s.semester_name })),
     [filterYear, semestersInYear]
   );
 
@@ -135,10 +141,16 @@ export default function ClassDetailPage() {
     setFilterYear(year);
     const inYear = semesterList.filter((s) => s.year === year);
     if (inYear.length > 0) {
-      setFilterSemesterId(inYear[0].id);
+      setFilterSemesterId(Number(inYear[0].id));
     } else {
       setFilterSemesterId(null);
     }
+    setClassList([]);
+  };
+
+  const handleSemesterChange = (semesterId) => {
+    setFilterSemesterId(semesterId != null ? Number(semesterId) : null);
+    setClassList([]);
   };
 
   const groupOptions = useMemo(
@@ -408,7 +420,7 @@ export default function ClassDetailPage() {
               label="Kỳ"
               options={semesterOptions}
               value={filterSemesterId}
-              onChange={(v) => setFilterSemesterId(v)}
+              onChange={handleSemesterChange}
               disabled={filterYear == null}
             />
             <Dropdown
@@ -416,7 +428,7 @@ export default function ClassDetailPage() {
               options={classFilterOptions}
               value={Number(id)}
               onChange={handleClassChange}
-              disabled={filterYear == null}
+              disabled={filterYear == null || filterSemesterId == null}
             />
           </div>
           <button

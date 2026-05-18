@@ -68,10 +68,18 @@ export const createAssignmentService = ({ assignmentRepository, storageService, 
     return row;
   };
 
+  const assertDeadlineNotPast = (deadlineIso) => {
+    const t = new Date(deadlineIso).getTime();
+    if (Number.isNaN(t) || t <= Date.now()) {
+      throw BadRequest("Hạn nộp không được là thời điểm đã qua.");
+    }
+  };
+
   const createBulk = async (data, user) => {
     const classIds = [...new Set((data.class_ids || []).map((id) => Number(id)).filter(Boolean))];
     if (!classIds.length) throw BadRequest("class_ids is required");
     if (!user?.id) throw Forbidden("User not authorized");
+    assertDeadlineNotPast(data.deadline);
     const classes = await assignmentRepository.findClassesByIdsAndLecturer(classIds, user.id);
     if (classes.length !== classIds.length) throw BadRequest("Một hoặc nhiều lớp không tồn tại hoặc không thuộc quyền giảng viên");
     const payloads = classIds.map((classId) => ({
@@ -242,6 +250,7 @@ export const createAssignmentService = ({ assignmentRepository, storageService, 
 
   const update = async (id, data, user) => {
     const assignment = await checkOwnership(id, user);
+    if (data.deadline != null) assertDeadlineNotPast(data.deadline);
     await base.update(id, data);
 
     // Ghi log audit
