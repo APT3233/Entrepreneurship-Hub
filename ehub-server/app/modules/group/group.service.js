@@ -19,6 +19,20 @@ export const createGroupService = ({
   const base = createBaseService(groupRepository, "Group");
   const ALLOWED_SORT = ["group_code", "group_name", "status", "max_members", "created_at"];
 
+  const userRoles = (user) => (user?.roles || []).map((r) => String(r).toLowerCase());
+  const hasRole = (user, ...roles) => userRoles(user).some((role) => roles.includes(role));
+  const isAdminOrDept = (user) => hasRole(user, "admin", "department_head");
+  const isLecturerOnly = (user) =>
+    hasRole(user, "lecturer") && !isAdminOrDept(user);
+
+  const assertLecturerCanReadClass = async (classId, user) => {
+    if (!classId || !isLecturerOnly(user)) return;
+    const cls = await groupRepository.findClassWithSemesterStatus(classId);
+    if (!cls || Number(cls.lecturer_id) !== Number(user.id)) {
+      throw Forbidden("Class does not belong to you");
+    }
+  };
+
   const getById = async (id, user = null) => {
     const group = await groupRepository.findWithMembers(id);
     if (!group) return group;
@@ -26,22 +40,26 @@ export const createGroupService = ({
     return group;
   };
 
-  const getList = async (query, lecturerId = null) => {
-    if (query.lecturerScope === "mine" && lecturerId) {
+  const getList = async (query, user = null) => {
+    if (isLecturerOnly(user)) {
+      await assertLecturerCanReadClass(query.class_id, user);
       const pagination = parsePagination(query);
       const sort = parseSort(query.sort, ALLOWED_SORT);
       const [data, total] = await Promise.all([
         groupRepository.findManyByLecturer({
-          lecturerId,
+          lecturerId: user.id,
           status: query.status,
           classId: query.class_id,
           pagination,
           sort,
         }),
-        groupRepository.countByLecturer({ lecturerId, status: query.status, classId: query.class_id }),
+        groupRepository.countByLecturer({ lecturerId: user.id, status: query.status, classId: query.class_id }),
       ]);
       return { data, ...pagination, total };
     }
+
+    if (!isAdminOrDept(user)) throw Forbidden("Group access denied");
+
     return base.getList(query, {
       allowedSortColumns: ALLOWED_SORT,
       filters: {
@@ -253,7 +271,9 @@ export const createGroupService = ({
   };
 
   const verifyGroupOwnership = async (groupId, user) => {
-    if (!user?.roles?.length || user.roles.some((r) => ["admin", "department_head"].includes(String(r).toLowerCase()))) return;
+    if (!user?.roles?.length) throw Forbidden("Authentication required");
+    if (isAdminOrDept(user)) return;
+    if (!isLecturerOnly(user)) throw Forbidden("Group access denied");
     const group = await base.getById(groupId);
     if (!group) return;
     const rows = await groupRepository.rawQuery(
@@ -262,8 +282,7 @@ export const createGroupService = ({
     );
     const c = rows?.[0];
     if (c && Number(c.lecturer_id) !== Number(user.id)) {
-      const { Forbidden: F } = await import("app/core/errors/errorFactory.js");
-      throw F("Group does not belong to your class");
+      throw Forbidden("Group does not belong to your class");
     }
   };
 

@@ -20,8 +20,11 @@ export const createGroupMemberService = ({
   inviteRepository,
 }) => {
   const assertCanManageGroup = async (groupId, user) => {
-    if (!user?.roles?.length) return;
+    if (!user?.roles?.length) throw Forbidden("Authentication required");
     if (user.roles.some((r) => ["admin", "department_head"].includes(String(r).toLowerCase()))) return;
+    if (!user.roles.some((r) => String(r).toLowerCase() === "lecturer")) {
+      throw Forbidden("Group access denied");
+    }
     const group = await groupRepository.findById(groupId);
     if (!group) throw NotFound("Group");
     const rows = await groupRepository.rawQuery(
@@ -37,7 +40,8 @@ export const createGroupMemberService = ({
   /**
    * List members of a group
    */
-  const getByGroup = async (groupId) => {
+  const getByGroup = async (groupId, user = null) => {
+    await assertCanManageGroup(groupId, user);
     const group = await groupRepository.findById(groupId);
     if (!group) throw NotFound("Group");
     return groupMemberRepository.findByGroup(groupId);

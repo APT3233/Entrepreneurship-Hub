@@ -74,6 +74,9 @@ export const updateCheckpointSchema = {
 export const listCheckpointSchema = {
   query: Joi.object({
     class_id: Joi.number().integer().positive(),
+    semester_id: Joi.number().integer().positive(),
+    year: Joi.number().integer().min(2000).max(3000),
+    lecturerScope: Joi.string().valid("mine"),
     status: Joi.string().valid("draft", "open", "closed"),
   }),
 };

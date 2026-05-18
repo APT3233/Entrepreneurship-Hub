@@ -51,6 +51,10 @@ export const createCheckpointRepository = ({ db }) => {
       clauses.push("sem.year = :year");
       params.year = Number(filters.year);
     }
+    if (filters.status) {
+      clauses.push("cp.status = :status");
+      params.status = filters.status;
+    }
 
     const sql = `
       SELECT cp.*, c.class_code, c.class_name,
@@ -277,6 +281,20 @@ export const createCheckpointRepository = ({ db }) => {
     `;
     const [rows] = await db.execute(sql, { groupId: Number(groupId) });
     return rows;
+  };
+
+  const findGroupClassById = async (groupId) => {
+    const sql = `
+      SELECT g.id, g.class_id, c.lecturer_id
+      FROM \`groups\` g
+      JOIN classes c ON c.id = g.class_id
+      WHERE g.id = :groupId
+        AND g.deleted_at IS NULL
+        AND c.deleted_at IS NULL
+      LIMIT 1
+    `;
+    const [rows] = await db.execute(sql, { groupId: Number(groupId) });
+    return rows[0] || null;
   };
 
   /**
@@ -698,6 +716,7 @@ export const createCheckpointRepository = ({ db }) => {
     findCheckpointsByGroup,
     findCheckpointsByStudent,
     findWithFilters,
+    findGroupClassById,
     findSubmissionsByCheckpoint,
     findGroupMembersByGroupIds,
     findSubmissionByCheckpointAndGroup,

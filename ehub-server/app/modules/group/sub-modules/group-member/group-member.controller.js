@@ -7,7 +7,7 @@ import { catchAsync } from "app/core/utils/catchAsync.js";
 
 export const createGroupMemberController = ({ groupMemberService }) => {
   const list = catchAsync(async (req, res) => {
-    const members = await groupMemberService.getByGroup(req.params.groupId);
+    const members = await groupMemberService.getByGroup(req.params.groupId, req.user);
     return sendSuccess(res, {
       data: members,
       message: "Group members retrieved successfully",

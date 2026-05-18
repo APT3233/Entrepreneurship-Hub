@@ -8,9 +8,8 @@ import { catchAsync } from "app/core/utils/catchAsync.js";
 import { TokenInvalid } from "app/core/errors/errorFactory.js";
 
 export const createClassController = ({ classService }) => {
-  const list = catchAsync(async (req, res, next) => {
-    if (req.query.lecturerScope === "mine" && !req.user) return next(TokenInvalid());
-    const result = await classService.getList(req.query, req.user?.id);
+  const list = catchAsync(async (req, res) => {
+    const result = await classService.getList(req.query, req.user);
     return sendPaginated(res, {
       data: result.data,
       page: result.page,

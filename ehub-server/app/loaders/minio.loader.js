@@ -12,6 +12,7 @@ export const getMinio = () => {
       useSSL:    minioConfig.useSSL,
       accessKey: minioConfig.accessKey,
       secretKey: minioConfig.secretKey,
+      region:    minioConfig.region,
     })
   }
   return minioInstance

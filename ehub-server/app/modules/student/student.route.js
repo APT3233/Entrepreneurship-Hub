@@ -23,7 +23,13 @@ export const createStudentRouter = (container) => {
   const { studentController } = container.cradle;
   const router = Router();
 
-  router.get("/", validateRequest(listStudentSchema), studentController.list);
+  router.get(
+    "/",
+    authenticate,
+    roleGuard("admin", "department_head", "lecturer"),
+    validateRequest(listStudentSchema),
+    studentController.list,
+  );
 
   // Export — must be before /:id to avoid matching "export" as id
   router.get(
@@ -35,6 +41,8 @@ export const createStudentRouter = (container) => {
 
   router.get(
     "/:id",
+    authenticate,
+    roleGuard("admin", "department_head", "lecturer"),
     validateRequest(studentParamsSchema),
     studentController.getById,
   );

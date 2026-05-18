@@ -1,5 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import { Client as MinioClient } from "minio";
+import { minioConfig } from "app/config/minio.js";
 import { logger } from "app/core/logger/index.js";
 
 /**
@@ -16,6 +18,29 @@ export const createStorageService = (
 ) => {
   const isLocal = config.driver === "local";
   const isMinio = config.driver === "minio";
+  let publicPresignClient = null;
+
+  const getPublicPresignClient = () => {
+    if (!isMinio) return null;
+    if (
+      minioConfig.publicEndPoint === minioConfig.endPoint &&
+      Number(minioConfig.publicPort) === Number(minioConfig.port) &&
+      Boolean(minioConfig.publicUseSSL) === Boolean(minioConfig.useSSL)
+    ) {
+      return minio;
+    }
+    if (!publicPresignClient) {
+      publicPresignClient = new MinioClient({
+        endPoint: minioConfig.publicEndPoint,
+        port: minioConfig.publicPort,
+        useSSL: minioConfig.publicUseSSL,
+        accessKey: minioConfig.accessKey,
+        secretKey: minioConfig.secretKey,
+        region: minioConfig.region,
+      });
+    }
+    return publicPresignClient;
+  };
 
   /**
    * Initialize storage (ensure bucket exists)
@@ -103,8 +128,9 @@ export const createStorageService = (
    * Generate a presigned PUT URL for direct client upload
    */
   const generatePresignedPutUrl = async (objectKey, expiry = 900) => {
-    if (isMinio && minio) {
-      return await minio.presignedPutObject(config.bucket, objectKey, expiry);
+    const presignClient = getPublicPresignClient();
+    if (isMinio && presignClient) {
+      return await presignClient.presignedPutObject(config.bucket, objectKey, expiry);
     }
     throw new Error(`presignedPut not supported for driver [${config.driver}]`);
   };

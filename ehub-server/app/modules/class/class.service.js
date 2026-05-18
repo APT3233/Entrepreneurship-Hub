@@ -60,8 +60,36 @@ export const createClassService = ({
 }) => {
   const base = createBaseService(classRepository, "Class");
 
+  const userRoles = (user) => (user?.roles || []).map((r) => String(r).toLowerCase());
+  const hasRole = (user, ...roles) => userRoles(user).some((role) => roles.includes(role));
+  const isAdminOrDept = (user) => hasRole(user, "admin", "department_head");
   const isLecturerOnly = (user) =>
-    user?.roles?.length && !user.roles.some((r) => ["admin", "department_head"].includes(String(r).toLowerCase()));
+    hasRole(user, "lecturer") && !isAdminOrDept(user);
+  const isStudentOnly = (user) =>
+    userRoles(user).length > 0 && userRoles(user).every((role) => role === "student");
+
+  const emptyPage = (query) => {
+    const pagination = parsePagination(query);
+    return { data: [], ...pagination, total: 0 };
+  };
+
+  const assertCanReadClass = async (cls, user) => {
+    if (isAdminOrDept(user)) return;
+    if (isLecturerOnly(user)) {
+      if (Number(cls.lecturer_id) !== Number(user.id)) throw Forbidden("Class does not belong to you");
+      return;
+    }
+    if (isStudentOnly(user)) {
+      const student = await studentRepository.findByUserId(user.id);
+      if (!student) throw Forbidden("Class does not belong to you");
+      const enrollment = await enrollmentRepository.findByClassAndStudent(cls.id, student.id);
+      if (!enrollment || String(enrollment.status) !== "enrolled") {
+        throw Forbidden("Class does not belong to you");
+      }
+      return;
+    }
+    throw Forbidden("Class access denied");
+  };
 
   /**
    * Đảm bảo tồn tại 1 học kỳ có semester_code = semCode.
@@ -140,7 +168,7 @@ export const createClassService = ({
   const getById = async (id, user = null) => {
     const cls = await classRepository.findWithDetails(id);
     if (!cls) throw NotFound("Class");
-    if (isLecturerOnly(user) && Number(cls.lecturer_id) !== Number(user.id)) throw Forbidden("Class does not belong to you");
+    await assertCanReadClass(cls, user);
     return cls;
   };
 
@@ -151,7 +179,7 @@ export const createClassService = ({
   const getOverview = async (id, user = null) => {
     const cls = await classRepository.findWithDetails(id);
     if (!cls) throw NotFound("Class");
-    if (isLecturerOnly(user) && Number(cls.lecturer_id) !== Number(user.id)) throw Forbidden("Class does not belong to you");
+    await assertCanReadClass(cls, user);
 
     const classId = Number(id);
     const [enrollments, groups, memberRows] = await Promise.all([
@@ -303,26 +331,27 @@ export const createClassService = ({
     };
   };
 
-  const getList = async (query, lecturerId = null) => {
+  const getList = async (query, user = null) => {
     const { semesterId, semesterIds } = await resolveSemesters(query);
+    if (Array.isArray(semesterIds) && semesterIds.length === 0) return emptyPage(query);
+
     const filters = {
       ...(query.status && { status: query.status }),
       ...(query.subject_id && { subject_id: query.subject_id }),
       ...(semesterId != null && { semester_id: semesterId }),
-      ...(query.lecturerScope === "mine" && lecturerId && { lecturer_id: lecturerId }),
     };
 
-    if (query.lecturerScope === "mine" && lecturerId) {
+    if (isLecturerOnly(user)) {
       const pagination = parsePagination(query);
       const [data, total] = await Promise.all([
-        classRepository.findManyWithCountsByLecturer(lecturerId, {
+        classRepository.findManyWithCountsByLecturer(user.id, {
           semesterId: semesterId ?? undefined,
           semesterIds: semesterIds && semesterIds.length ? semesterIds : undefined,
           limit: pagination.limit,
           offset: pagination.offset,
         }),
         classRepository.countByLecturer(
-          lecturerId,
+          user.id,
           semesterId ?? undefined,
           semesterIds && semesterIds.length ? semesterIds : null
         ),
@@ -330,19 +359,20 @@ export const createClassService = ({
       return { data, ...pagination, total };
     }
 
-    // --- STUDENT SCOPE ---
-    // Nếu là sinh viên, chỉ trả về các lớp họ đang học (kèm info môn học)
-    const isStudent = lecturerId && query.studentScope === "mine";
-    if (isStudent) {
-      const student = await studentRepository.findByUserId(lecturerId);
+    if (isStudentOnly(user)) {
+      const pagination = parsePagination(query);
+      const student = await studentRepository.findByUserId(user.id);
       if (student) {
         const data = await classRepository.findEnrolledByStudent(student.id, {
           semesterId: semesterId ?? undefined,
           year: query.year ? Number(query.year) : undefined,
         });
-        return { data, total: data.length, page: 1, limit: data.length };
+        return { data, total: data.length, page: pagination.page, limit: pagination.limit };
       }
+      return { data: [], total: 0, page: pagination.page, limit: pagination.limit };
     }
+
+    if (!isAdminOrDept(user)) throw Forbidden("Class access denied");
 
     return base.getList(query, {
       allowedSortColumns: ["class_code", "class_name", "status", "max_students", "created_at"],

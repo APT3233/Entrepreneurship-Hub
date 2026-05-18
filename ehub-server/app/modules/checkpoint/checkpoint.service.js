@@ -11,6 +11,12 @@ import { getFileProxyUrl } from "app/core/utils/file.js";
 export const createCheckpointService = ({ checkpointRepository, eventBus, storageService, auditService }) => {
   const base = createBaseService(checkpointRepository, "Checkpoint");
 
+  const userRoles = (user) => (user?.roles || []).map((r) => String(r).toLowerCase());
+  const hasRole = (user, ...roles) => userRoles(user).some((role) => roles.includes(role));
+  const isAdminOrDept = (user) => hasRole(user, "admin", "department_head");
+  const isLecturerOnly = (user) =>
+    hasRole(user, "lecturer") && !isAdminOrDept(user);
+
   const parseLecturerAttachmentUrlsForDto = (raw) => {
     if (raw == null || raw === "") return [];
     const s = String(raw).trim();
@@ -101,16 +107,22 @@ export const createCheckpointService = ({ checkpointRepository, eventBus, storag
   const checkOwnership = async (checkpointId, user) => {
     const row = await checkpointRepository.findByIdWithClass(checkpointId);
     if (!row) throw NotFound("Checkpoint");
+    if (!user?.roles?.length) throw Forbidden("User not authorized");
     
     // Admin and Department Head have full access
-    const isAdminOrDept = user.roles?.some((r) => ["admin", "department_head"].includes(String(r).toLowerCase()));
-    if (isAdminOrDept) return row;
+    if (isAdminOrDept(user)) return row;
 
     // Lecturer must own the class
-    if (Number(row.lecturer_id) !== Number(user.id)) {
+    if (!isLecturerOnly(user) || Number(row.lecturer_id) !== Number(user.id)) {
       throw Forbidden("You do not have permission to manage this checkpoint");
     }
     return row;
+  };
+
+  const assertLecturerCanReadClass = async (classId, user) => {
+    if (!classId || !isLecturerOnly(user)) return;
+    const cls = await checkpointRepository.findClassByIdAndLecturer(classId, user.id);
+    if (!cls) throw Forbidden("Class does not belong to you");
   };
 
   /**
@@ -218,22 +230,24 @@ export const createCheckpointService = ({ checkpointRepository, eventBus, storag
    * List checkpoints for a class
    */
   const getList = async (query, user) => {
+    if (!user?.roles?.length) throw Forbidden("User not authorized");
     const filters = {
       ...(query.class_id && { class_id: Number(query.class_id) }),
       ...(query.semester_id && { semester_id: Number(query.semester_id) }),
       ...(query.year && { year: Number(query.year) }),
+      ...(query.status && { status: query.status }),
     };
 
-    if (query.lecturerScope === "mine") {
-      if (!user?.id) throw Forbidden("User not authorized");
+    if (isLecturerOnly(user)) {
+      await assertLecturerCanReadClass(query.class_id, user);
       filters.lecturer_id = user.id;
       const data = (await checkpointRepository.findWithFilters(filters)).map(enrichCheckpointRow);
       return { data };
     }
 
-    if (!filters.class_id) throw BadRequest("class_id is required");
-    
-    const data = (await checkpointRepository.findByClass(filters.class_id)).map(enrichCheckpointRow);
+    if (!isAdminOrDept(user)) throw Forbidden("Checkpoint access denied");
+
+    const data = (await checkpointRepository.findWithFilters(filters)).map(enrichCheckpointRow);
     return { data };
   };
 
@@ -365,8 +379,16 @@ export const createCheckpointService = ({ checkpointRepository, eventBus, storag
    * Get all checkpoints for a group (from its class)
    */
   const getByGroup = async (groupId, user) => {
-    // Basic auth check: lecturer must teach the class or student must be in the group
-    // For now, let's just fetch. Permissions can be tightened later if needed.
+    if (!user?.roles?.length) throw Forbidden("User not authorized");
+    if (isLecturerOnly(user)) {
+      const group = await checkpointRepository.findGroupClassById(groupId);
+      if (!group) throw NotFound("Group");
+      if (Number(group.lecturer_id) !== Number(user.id)) {
+        throw Forbidden("Group does not belong to your class");
+      }
+    } else if (!isAdminOrDept(user)) {
+      throw Forbidden("Checkpoint access denied");
+    }
     const data = (await checkpointRepository.findCheckpointsByGroup(groupId)).map(enrichCheckpointRow);
     return { data };
   };
@@ -607,7 +629,10 @@ export const createCheckpointService = ({ checkpointRepository, eventBus, storag
     return { sessionId, status: "completed" };
   };
 
-  const getById = async (id) => enrichCheckpointRow(await base.getById(id));
+  const getById = async (id, user) => {
+    await checkOwnership(id, user);
+    return enrichCheckpointRow(await base.getById(id));
+  };
 
   return {
     ...base,

@@ -83,6 +83,7 @@ export const listClassSchema = {
     semester_id: Joi.number().integer().positive().description("Filter by semester id"),
     semester_code: Joi.string().max(20).description("Filter by semester e.g. SP2026, SU2025, FA2025"),
     lecturerScope: Joi.string().valid("mine").description("Filter classes by current lecturer"),
+    studentScope: Joi.string().valid("mine").description("Filter classes by current student"),
   }),
 };
 

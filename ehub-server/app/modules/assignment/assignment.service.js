@@ -8,6 +8,13 @@ export const createAssignmentService = ({ assignmentRepository, storageService, 
   const base = createBaseService(assignmentRepository, "Assignment");
   const ALLOWED_SORT = ["title", "deadline", "max_score", "status", "created_at"];
 
+  const userRoles = (user) => (user?.roles || []).map((r) => String(r).toLowerCase());
+  const hasRole = (user, ...roles) => userRoles(user).some((role) => roles.includes(role));
+  const isAdminOrDept = (user) => hasRole(user, "admin", "department_head");
+  const isLecturerOnly = (user) =>
+    hasRole(user, "lecturer") && !isAdminOrDept(user);
+  const isStudent = (user) => hasRole(user, "student");
+
   const parseLecturerAttachmentUrlsForDto = (raw) => {
     if (raw == null || raw === "") return [];
     const s = String(raw).trim();
@@ -62,9 +69,10 @@ export const createAssignmentService = ({ assignmentRepository, storageService, 
   const checkOwnership = async (assignmentId, user) => {
     const row = await assignmentRepository.findByIdWithClass(assignmentId);
     if (!row) throw NotFound("Assignment");
-    if (!user?.roles?.length) return row;
-    const isAdminOrDept = user.roles.some((r) => ["admin", "department_head"].includes(String(r).toLowerCase()));
-    if (!isAdminOrDept && Number(row.lecturer_id) !== Number(user.id)) throw Forbidden("Assignment does not belong to your class");
+    if (!user?.roles?.length) throw Forbidden("User not authorized");
+    if (!isAdminOrDept(user) && Number(row.lecturer_id) !== Number(user.id)) {
+      throw Forbidden("Assignment does not belong to your class");
+    }
     return row;
   };
 
@@ -115,6 +123,7 @@ export const createAssignmentService = ({ assignmentRepository, storageService, 
   };
 
   const getList = async (query, user) => {
+    if (!user?.roles?.length) throw Forbidden("User not authorized");
     const pagination = parsePagination(query);
     const sort = parseSort(query.sort, ALLOWED_SORT);
     const filters = {
@@ -123,14 +132,9 @@ export const createAssignmentService = ({ assignmentRepository, storageService, 
       ...(query.semester_id && { semester_id: Number(query.semester_id) }),
       ...(query.year && { year: Number(query.year) }),
     };
-    if (query.lecturerScope === "mine") {
-      if (!user?.id) throw Forbidden("User not authorized");
-      filters.lecturer_id = user.id;
-    }
 
     // If student, filter by enrolled classes and include submission info
-    const isStudent = user.roles.some((r) => String(r).toLowerCase() === "student");
-    if (isStudent) {
+    if (isStudent(user)) {
       const data = await assignmentRepository.findByStudent(user.id, filters);
       const cards = await Promise.all(
         data.map(async (row) => {
@@ -148,6 +152,16 @@ export const createAssignmentService = ({ assignmentRepository, storageService, 
         })
       );
       return { data: cards, total: cards.length, page: 1, limit: 1000 };
+    }
+
+    if (isLecturerOnly(user)) {
+      if (query.class_id) {
+        const classes = await assignmentRepository.findClassesByIdsAndLecturer([query.class_id], user.id);
+        if (classes.length !== 1) throw Forbidden("Class does not belong to you");
+      }
+      filters.lecturer_id = user.id;
+    } else if (!isAdminOrDept(user)) {
+      throw Forbidden("Assignment access denied");
     }
 
     const [data, total] = await Promise.all([

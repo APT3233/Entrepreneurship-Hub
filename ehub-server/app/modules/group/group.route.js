@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { validateRequest } from "app/core/middlewares/validateRequest.js";
-import { authenticate, optionalAuthenticate } from "app/core/middlewares/authMiddleware.js";
+import { authenticate } from "app/core/middlewares/authMiddleware.js";
 import { roleGuard } from "app/core/middlewares/roleGuard.js";
 import {
   createGroupSchema,
@@ -34,8 +34,8 @@ export const createGroupRouter = (container) => {
   router.use("/invites", createGroupInviteRouter(container));
 
   router.get("/my-groups", authenticate, groupController.getMyGroups);
-  router.get("/", optionalAuthenticate, validateRequest(listGroupSchema), groupController.list);
-  router.get("/:id", optionalAuthenticate, validateRequest(groupParamsSchema), groupController.getById);
+  router.get("/", authenticate, roleGuard("admin", "department_head", "lecturer"), validateRequest(listGroupSchema), groupController.list);
+  router.get("/:id", authenticate, roleGuard("admin", "department_head", "lecturer"), validateRequest(groupParamsSchema), groupController.getById);
 
   router.post(
     "/",

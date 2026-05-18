@@ -23,6 +23,8 @@ export const createGroupMemberRouter = (container) => {
 
   router.get(
     "/",
+    authenticate,
+    roleGuard("admin", "department_head", "lecturer"),
     validateRequest(listGroupMemberSchema),
     groupMemberController.list,
   );

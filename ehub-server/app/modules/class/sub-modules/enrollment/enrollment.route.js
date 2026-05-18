@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { validateRequest } from "app/core/middlewares/validateRequest.js";
-import { authenticate, optionalAuthenticate } from "app/core/middlewares/authMiddleware.js";
+import { authenticate } from "app/core/middlewares/authMiddleware.js";
 import { roleGuard } from "app/core/middlewares/roleGuard.js";
 import {
   enrollStudentSchema,
@@ -21,7 +21,13 @@ export const createEnrollmentRouter = (container) => {
   const { enrollmentController } = container.cradle;
   const router = Router({ mergeParams: true });
 
-  router.get("/", optionalAuthenticate, validateRequest(listEnrollmentSchema), enrollmentController.list);
+  router.get(
+    "/",
+    authenticate,
+    roleGuard("admin", "department_head", "lecturer"),
+    validateRequest(listEnrollmentSchema),
+    enrollmentController.list,
+  );
 
   router.post(
     "/",

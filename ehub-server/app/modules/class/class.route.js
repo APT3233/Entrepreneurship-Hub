@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { validateRequest } from "app/core/middlewares/validateRequest.js";
-import { authenticate, optionalAuthenticate } from "app/core/middlewares/authMiddleware.js";
+import { authenticate } from "app/core/middlewares/authMiddleware.js";
 import { roleGuard } from "app/core/middlewares/roleGuard.js";
 import {
   createClassSchema,
@@ -27,11 +27,11 @@ export const createClassRouter = (container) => {
   const { classController } = container.cradle;
   const router = Router();
 
-  router.get("/", optionalAuthenticate, validateRequest(listClassSchema), classController.list);
+  router.get("/", authenticate, validateRequest(listClassSchema), classController.list);
   router.get("/stats", authenticate, roleGuard("admin", "department_head", "lecturer"), validateRequest(statsClassSchema), classController.stats);
   router.get("/student-stats", authenticate, classController.studentStats);
-  router.get("/:id/overview", optionalAuthenticate, validateRequest(classParamsSchema), classController.overview);
-  router.get("/:id", optionalAuthenticate, validateRequest(classParamsSchema), classController.getById);
+  router.get("/:id/overview", authenticate, validateRequest(classParamsSchema), classController.overview);
+  router.get("/:id", authenticate, validateRequest(classParamsSchema), classController.getById);
 
   router.post("/", authenticate, roleGuard("admin", "department_head", "lecturer"), validateRequest(createClassSchema), classController.create);
   router.put("/:id", authenticate, roleGuard("admin", "department_head", "lecturer"), validateRequest(updateClassSchema), classController.update);
