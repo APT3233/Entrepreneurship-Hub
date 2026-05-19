@@ -490,7 +490,8 @@ export const createAssignmentService = ({ assignmentRepository, storageService, 
       if (pl.p !== "asubmit") throw BadRequest("Token không dùng cho nộp bài");
       if (Number(pl.u) !== Number(user.id)) throw Forbidden("Upload token không thuộc về bạn");
       if (Number(pl.aid) !== Number(assignmentId)) throw BadRequest("Token không khớp bài tập");
-      const expectedPrefix = `assignments/submit/${Number(assignmentId)}/group_${Number(pl.gid)}/`;
+      const semesterFolder = (access.semester_code || "UNKNOWN").toUpperCase();
+      const expectedPrefix = `${semesterFolder}/assignments/submit/${Number(assignmentId)}/group_${Number(pl.gid)}/`;
       if (!String(pl.k || "").startsWith(expectedPrefix)) throw BadRequest("Object key không hợp lệ");
       payloads.push({ pl });
     }

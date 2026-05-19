@@ -3,6 +3,11 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 
+const minioProxy = {
+  target: "http://127.0.0.1:9000",
+  changeOrigin: false,
+};
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
@@ -22,6 +27,8 @@ export default defineConfig({
         target: "http://127.0.0.1:7777",
         changeOrigin: true,
       },
+      "/ehub/": minioProxy,
+      "/ehubd/": minioProxy,
     },
   },
 });
