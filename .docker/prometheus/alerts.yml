@@ -1,0 +1,65 @@
+groups:
+  - name: ehub_monitoring_alerts
+    rules:
+      - alert: MonitoringTargetDown
+        expr: up == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Monitoring target is down"
+          description: "{{ $labels.job }} target {{ $labels.instance }} has been down for more than 2 minutes."
+
+      - alert: HostHighCpu
+        expr: ehub:host_cpu_busy_percent > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Host CPU usage is high"
+          description: "Host CPU has been above 85% for more than 5 minutes."
+
+      - alert: HostHighMemory
+        expr: ehub:host_memory_used_percent > 90
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Host memory usage is high"
+          description: "Host memory has been above 90% for more than 5 minutes."
+
+      - alert: HostLowDiskSpace
+        expr: ehub:host_filesystem_used_percent{mountpoint="/"} > 85
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Host disk usage is high"
+          description: "Root filesystem has been above 85% for more than 10 minutes."
+
+      - alert: NginxExporterDown
+        expr: nginx_up == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Nginx exporter cannot scrape Nginx"
+          description: "Nginx stub_status scrape is failing."
+
+      - alert: MySqlExporterDown
+        expr: mysql_up == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "MySQL exporter cannot scrape MySQL"
+          description: "MySQL exporter reports mysql_up=0."
+
+      - alert: ContainerRestarted
+        expr: increase(docker_container_status_restart_count{com_docker_compose_project=~"ehub|ehub-monitoring"}[15m]) > 0
+        for: 0m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Container restarted"
+          description: "{{ $labels.container_name }} restarted in the last 15 minutes."

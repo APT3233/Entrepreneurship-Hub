@@ -1,0 +1,23 @@
+groups:
+  - name: ehub_monitoring_rules
+    rules:
+      - record: job:up:ratio
+        expr: avg by (job) (up)
+
+      - record: ehub:host_cpu_busy_percent
+        expr: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
+
+      - record: ehub:host_memory_used_percent
+        expr: 100 * (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes))
+
+      - record: ehub:host_filesystem_used_percent
+        expr: 100 * (1 - (node_filesystem_avail_bytes{fstype!~"tmpfs|overlay|squashfs"} / node_filesystem_size_bytes{fstype!~"tmpfs|overlay|squashfs"}))
+
+      - record: ehub:mysql_connections_used_percent
+        expr: 100 * (mysql_global_status_threads_connected / mysql_global_variables_max_connections)
+
+      - record: ehub:docker_cpu_percent
+        expr: sum by (com_docker_compose_service) (docker_container_cpu_usage_percent{com_docker_compose_project=~"ehub|ehub-monitoring", com_docker_compose_service!=""})
+
+      - record: ehub:docker_memory_bytes
+        expr: sum by (com_docker_compose_service) (docker_container_mem_usage{com_docker_compose_project=~"ehub|ehub-monitoring", com_docker_compose_service!=""})

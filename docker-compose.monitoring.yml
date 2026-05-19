@@ -1,0 +1,150 @@
+name: ehub-monitoring
+
+services:
+  prometheus:
+    image: prom/prometheus:v2.51.2
+    container_name: ehub-prometheus
+    restart: unless-stopped
+    volumes:
+      - ./.docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./.docker/prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - ./.docker/prometheus/recording_rules.yml:/etc/prometheus/recording_rules.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=30d"
+      - "--web.console.libraries=/etc/prometheus/console_libraries"
+      - "--web.console.templates=/etc/prometheus/consoles"
+      - "--web.enable-lifecycle"
+    ports:
+      - "127.0.0.1:9090:9090"
+    networks:
+      - monitoring
+    depends_on:
+      - loki
+      - promtail
+      - node-exporter
+      - docker-metrics
+      - nginx-exporter
+      - mysql-exporter
+
+  grafana:
+    image: grafana/grafana-oss:10.4.2
+    container_name: ehub-grafana
+    restart: unless-stopped
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./.docker/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./.docker/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_SERVER_ROOT_URL: ${GRAFANA_ROOT_URL:-http://localhost:3000}
+      TZ: ${TZ:-Asia/Ho_Chi_Minh}
+    ports:
+      - "127.0.0.1:3000:3000"
+    networks:
+      - monitoring
+    depends_on:
+      - prometheus
+      - loki
+
+  loki:
+    image: grafana/loki:2.9.8
+    container_name: ehub-loki
+    restart: unless-stopped
+    volumes:
+      - ./.docker/loki/loki-config.yml:/etc/loki/local-config.yaml:ro
+      - loki_data:/loki
+    command:
+      - "-config.file=/etc/loki/local-config.yaml"
+    ports:
+      - "127.0.0.1:3100:3100"
+    networks:
+      - monitoring
+
+  promtail:
+    image: grafana/promtail:2.9.8
+    container_name: ehub-promtail
+    restart: unless-stopped
+    volumes:
+      - ./.docker/promtail/promtail-config.yml:/etc/promtail/config.yml:ro
+      - promtail_positions:/run/promtail
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    command:
+      - "-config.file=/etc/promtail/config.yml"
+    networks:
+      - monitoring
+      - ehub-network
+    depends_on:
+      - loki
+
+  node-exporter:
+    image: prom/node-exporter:v1.8.1
+    container_name: ehub-node-exporter
+    restart: unless-stopped
+    pid: host
+    command:
+      - "--path.procfs=/host/proc"
+      - "--path.sysfs=/host/sys"
+      - "--path.rootfs=/host/root"
+      - "--collector.filesystem.mount-points-exclude=^/(dev|proc|run/credentials/.+|sys|var/lib/docker/.+|var/lib/containers/storage/.+)($|/)"
+      - "--no-collector.hwmon"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/host/root:ro,rslave
+    networks:
+      - monitoring
+
+  docker-metrics:
+    image: telegraf:1.30-alpine
+    container_name: ehub-docker-metrics
+    restart: unless-stopped
+    user: "0:0"
+    entrypoint:
+      - telegraf
+    volumes:
+      - ./.docker/telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - monitoring
+
+  nginx-exporter:
+    image: nginx/nginx-prometheus-exporter:1.1.0
+    container_name: ehub-nginx-exporter
+    restart: unless-stopped
+    command:
+      - "--nginx.scrape-uri=http://nginx:8080/nginx_status"
+    networks:
+      - monitoring
+      - ehub-network
+
+  mysql-exporter:
+    image: prom/mysqld-exporter:v0.15.1
+    container_name: ehub-mysql-exporter
+    restart: unless-stopped
+    environment:
+      MYSQLD_EXPORTER_PASSWORD: ${MYSQL_PASSWORD:-fptu_ehub_passwd}
+    command:
+      - "--mysqld.address=mysql:3306"
+      - "--mysqld.username=${MYSQL_USER:-fptu_ehub_user}"
+      - "--no-collect.slave_status"
+    networks:
+      - monitoring
+      - ehub-network
+
+volumes:
+  prometheus_data:
+  grafana_data:
+  loki_data:
+  promtail_positions:
+
+networks:
+  monitoring:
+    driver: bridge
+  ehub-network:
+    external: true
+    name: ehub_ehub-network

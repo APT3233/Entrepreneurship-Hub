@@ -7,10 +7,15 @@ export const errorHandler = (err, req, res, _next) => {
   // chỉ log 500+ errors hoặc non-operational, hoặc lỗi validation để debug
   if (statusCode >= 500 || statusCode === 400 || !err.isOperational) {
     logger.error(`${err.message} (${statusCode})`, {
-      err,
+      error: err,
       details: err.details,
-      req: { method: req.method, url: req.originalUrl, ip: req.ip },
-      requestId: req.requestId,
+      trace_id: req.requestId,
+      http_method: req.method,
+      http_path: req.originalUrl,
+      http_status: statusCode,
+      client_ip: req.ip,
+      user_id: req.user?.id ?? req.user?.user_id ?? null,
+      session_id: null,
     });
   }
 

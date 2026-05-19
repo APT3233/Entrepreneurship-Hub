@@ -8,6 +8,7 @@ import {
   blacklistKey,
 } from "../cache/keys.js";
 import { TokenExpired, TokenInvalid } from "../errors/errorFactory.js";
+import { logger } from "app/core/logger/index.js";
 
 /**
  * Token Service — Single Responsibility: chỉ quản lý JWT + Redis token lifecycle
@@ -139,9 +140,9 @@ export const createTokenService = ({ redis }) => {
       data.fingerprintHash !== currentHash
     ) {
       // Bị trộm token sang máy khác!
-      console.warn(
-        `[Security] Fingerprint mismatch for user ${userId}. Revoking all tokens.`,
-      );
+      logger.warn("[Security] Fingerprint mismatch. Revoking all tokens.", {
+        user_id: userId,
+      });
       await revokeAllTokens(userId);
       throw TokenInvalid(
         "Thiết bị không hợp lệ hoặc phiên đăng nhập đã bị đánh cắp.",

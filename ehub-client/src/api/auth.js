@@ -1,7 +1,7 @@
 import instance from "@/api/instance";
 
 const getBaseUrl = () => {
-  const base = import.meta.env.VITE_BACKEND_URL || "http://localhost:4444/api/v1";
+  const base = import.meta.env.VITE_BACKEND_URL || "http://localhost:7777/api/v1";
   return base.endsWith("/") ? base.slice(0, -1) : base;
 };
 

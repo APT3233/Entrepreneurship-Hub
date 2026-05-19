@@ -8,6 +8,7 @@ import { createTransactionManager } from "app/core/database/transaction.js";
 import { createEmailService } from "app/core/services/email.service.js";
 import { createStorageService } from "app/core/services/storage.service.js";
 import { appConfig } from "app/config/app.js";
+import { logger } from "app/core/logger/index.js";
 
 /**
  * Enterprise DI Container using Awilix — Proxy Mode
@@ -41,7 +42,7 @@ export const createContainer = ({ db, redis, minio }) => {
 
   // Initialize core services
   container.resolve("storageService").init().catch(err => {
-     console.error("[Container] Failed to init storageService:", err);
+     logger.error("[Container] Failed to init storageService", { err });
   });
 
   return container;

@@ -1,4 +1,5 @@
 import { createBaseRepository } from "app/core/database/baseRepository.js";
+import { logger } from "app/core/logger/index.js";
 
 export const createAuditRepository = ({ db }) => {
   const base = createBaseRepository(db, "audit_logs");
@@ -15,7 +16,7 @@ export const createAuditRepository = ({ db }) => {
     const offs = Number(offset);
     
     if (isNaN(uId)) {
-      console.error("[AuditRepository] Invalid userId:", userId);
+      logger.warn("[AuditRepository] Invalid userId", { user_id: userId });
       return [];
     }
 

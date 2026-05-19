@@ -7,6 +7,7 @@ import { acquireUploadLock, releaseUploadLock } from "app/core/utils/uploadLock.
 import { Events } from "app/core/constants/events.js";
 import { OUTBOX_CLASS_INVITE_EMAIL_DISPATCH } from "app/core/constants/outboxEventTypes.js";
 import { appConfig } from "app/config/app.js";
+import { logger } from "app/core/logger/index.js";
 
 const SEMESTER_CODES = { 1: "SP", 2: "SU", 3: "FA" };
 const SEMESTER_NAMES = { 1: "Spring", 2: "Summer", 3: "Fall" };
@@ -385,7 +386,10 @@ export const createClassService = ({
     const classSection = data.classSection ?? data.lop;
     const semesterType = data.semester ?? data.ky;
     const useNewFormat = subjectCode != null && data.year != null && semesterType != null && classSection != null;
-    console.log(`[createClass] Request received, useNewFormat=${useNewFormat}, students.list.length=${data?.students?.list?.length ?? data?.students?.length ?? 0}`);
+    logger.debug("[createClass] Request received", {
+      use_new_format: useNewFormat,
+      student_count: data?.students?.list?.length ?? data?.students?.length ?? 0,
+    });
     if (useNewFormat) return createWithStudents({ ...data, subject: subjectCode, classSection, semester: semesterType });
     return base.create(data);
   };
@@ -517,7 +521,11 @@ export const createClassService = ({
         let insertedCount = 0;
         for (let i = 0; i < chunks.length; i++) {
           const chunk = chunks[i];
-          console.log(`[createClass] Insert chunk ${i + 1}/${chunks.length}, size=${chunk.length}`);
+          logger.debug("[createClass] Insert chunk", {
+            chunk_index: i + 1,
+            chunk_total: chunks.length,
+            chunk_size: chunk.length,
+          });
           for (let j = 0; j < chunk.length; j++) {
             const s = chunk[j];
             const studentCode = String(s.memberCode || s.rollNumber || "").trim();
@@ -525,9 +533,19 @@ export const createClassService = ({
             const emailVal = String(s.email || "").trim();
             const majorVal = String(s.major || "").trim();
             const importStatus = ["active", "inactive", "graduated", "suspended", "pending"].includes(s?.status) ? s.status : null;
-            console.log(`[createClass] Chunk ${i + 1} student ${j + 1}/${chunk.length}: code=${studentCode || "(empty)"} email=${emailVal || "(empty)"} fullname=${fullName || "(empty)"} major=${majorVal || "(empty)"}`);
+            logger.debug("[createClass] Processing student import row", {
+              chunk_index: i + 1,
+              row_index: j + 1,
+              row_total: chunk.length,
+              student_code: studentCode || null,
+              email: emailVal || null,
+              full_name: fullName || null,
+              major: majorVal || null,
+            });
             if (!studentCode || !emailVal || !fullName) {
-              console.log(`[createClass] SKIP student ${j + 1}: missing code/email/fullname`);
+              logger.debug("[createClass] Skip student import row with missing required fields", {
+                row_index: j + 1,
+              });
               continue;
             }
 
@@ -572,7 +590,10 @@ export const createClassService = ({
             insertedCount++;
             if (!linkedUserId) pendingInvitees.push({ studentId, email: emailVal });
           }
-          console.log(`[createClass] Chunk ${i + 1} done, inserted so far: ${insertedCount}`);
+          logger.debug("[createClass] Chunk done", {
+            chunk_index: i + 1,
+            inserted_count: insertedCount,
+          });
         }
         let mailDispatchPublicId = null;
         if (pendingInvitees.length > 0) {

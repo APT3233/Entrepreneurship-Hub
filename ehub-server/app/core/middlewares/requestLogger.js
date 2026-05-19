@@ -1,56 +1,46 @@
 import { logger } from "app/core/logger/index.js";
-import { AUTH_HEADER_BEARER_PREFIX } from "../constants/authHttp.js";
+import { sanitizeLogMeta } from "app/core/logger/redact.js";
 
-const SENSITIVE_FIELDS = ["password", "token", "secret", "authorization"];
 const SKIP_PATHS = ["/health", "/favicon.ico"];
-/**
- * Mask sensitive fields in an object before logging
- */
-const maskSensitive = (obj) => {
-  if (!obj || typeof obj !== "object") return obj;
-  if (Array.isArray(obj)) return obj.map(maskSensitive);
-  return Object.fromEntries(
-    Object.entries(obj).map(([k, v]) => [
-      k,
-      SENSITIVE_FIELDS.some((f) => k.toLowerCase().includes(f))
-        ? "***"
-        : maskSensitive(v),
-    ]),
-  );
+
+const getClientIp = (req) => {
+  const forwarded = req.headers["x-forwarded-for"];
+  if (typeof forwarded === "string" && forwarded.length) {
+    return forwarded.split(",")[0].trim();
+  }
+  return req.ip;
+};
+
+const getRequestLogMeta = (req) => {
+  const meta = {
+    trace_id: req.requestId,
+    user_id: req.user?.id ?? req.user?.user_id ?? null,
+    session_id: null,
+    http_method: req.method,
+    http_path: req.originalUrl,
+    client_ip: getClientIp(req),
+  };
+
+  return sanitizeLogMeta(meta);
 };
 
 /**
  * Request logger middleware
- * Logs on every incoming request and on response finish.
- *
- * Example output:
- *   → POST /api/v1/auth/login  body:{email:"a@b.com",password:"***"}  cookies:{refresh_token:"***"}
- *   ← POST /api/v1/auth/login  200  45ms
+ * Emits structured start/finish events without raw body, cookies, or auth headers.
  */
 export const requestLogger = (req, res, next) => {
   if (SKIP_PATHS.includes(req.path)) return next();
-  const rid = req.requestId;
-  const { method, originalUrl, body, cookies, headers } = req;
 
-  // Log incoming request
-  const meta = { requestId: rid };
-  if (body && Object.keys(body).length) meta.body = maskSensitive(body);
-  if (cookies && Object.keys(cookies).length)
-    meta.cookies = maskSensitive(cookies);
+  logger.info("HTTP request started", getRequestLogMeta(req));
 
-  const authHeader = headers.authorization;
-  if (authHeader)
-    meta.auth = authHeader.startsWith(AUTH_HEADER_BEARER_PREFIX) ? "Bearer ***" : "***";
-
-  logger.info(`→ ${method} ${originalUrl}`, meta);
-
-  const startTime = Date.now();
   res.on("finish", () => {
     const ms = Date.now() - req.startTime;
     const logFn =
       res.statusCode >= 500 ? "error" : res.statusCode >= 400 ? "warn" : "info";
-    logger[logFn](`← ${method} ${originalUrl}  ${res.statusCode}  ${ms}ms`, {
-      requestId: rid,
+    logger[logFn]("HTTP request completed", {
+      ...getRequestLogMeta(req),
+      http_status: res.statusCode,
+      duration_ms: ms,
     });
   });
 

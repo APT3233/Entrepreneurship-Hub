@@ -1,0 +1,78 @@
+{
+  "uid": "ehub-containers",
+  "title": "EHub Docker Containers",
+  "tags": ["ehub", "docker", "cadvisor"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "10s",
+  "time": {"from": "now-6h", "to": "now"},
+  "templating": {
+    "list": [
+      {
+        "name": "project",
+        "type": "query",
+        "datasource": {"type": "prometheus", "uid": "Prometheus"},
+        "query": "label_values(docker_container_cpu_usage_percent, com_docker_compose_project)",
+        "refresh": 1,
+        "multi": true,
+        "includeAll": true,
+        "allValue": ".*",
+        "current": {"selected": true, "text": "All", "value": ".*"}
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "CPU By Service",
+      "datasource": {"type": "prometheus", "uid": "Prometheus"},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+      "targets": [{"refId": "A", "expr": "sum by (com_docker_compose_service) (docker_container_cpu_usage_percent{com_docker_compose_project=~\"$project\", com_docker_compose_service!=\"\"})", "legendFormat": "{{com_docker_compose_service}}"}],
+      "fieldConfig": {"defaults": {"unit": "percent"}, "overrides": []}
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Memory Working Set",
+      "datasource": {"type": "prometheus", "uid": "Prometheus"},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+      "targets": [{"refId": "A", "expr": "sum by (com_docker_compose_service) (docker_container_mem_usage{com_docker_compose_project=~\"$project\", com_docker_compose_service!=\"\"})", "legendFormat": "{{com_docker_compose_service}}"}],
+      "fieldConfig": {"defaults": {"unit": "bytes"}, "overrides": []}
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Container Network",
+      "datasource": {"type": "prometheus", "uid": "Prometheus"},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+      "targets": [
+        {"refId": "A", "expr": "sum by (com_docker_compose_service) (rate(docker_container_net_rx_bytes{com_docker_compose_project=~\"$project\", com_docker_compose_service!=\"\"}[5m]))", "legendFormat": "{{com_docker_compose_service}} rx"},
+        {"refId": "B", "expr": "sum by (com_docker_compose_service) (rate(docker_container_net_tx_bytes{com_docker_compose_project=~\"$project\", com_docker_compose_service!=\"\"}[5m]))", "legendFormat": "{{com_docker_compose_service}} tx"}
+      ],
+      "fieldConfig": {"defaults": {"unit": "Bps"}, "overrides": []}
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Container Block IO",
+      "datasource": {"type": "prometheus", "uid": "Prometheus"},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+      "targets": [
+        {"refId": "A", "expr": "sum by (com_docker_compose_service) (rate(docker_container_blkio_io_service_bytes_recursive_read{com_docker_compose_project=~\"$project\", com_docker_compose_service!=\"\"}[5m]))", "legendFormat": "{{com_docker_compose_service}} read"},
+        {"refId": "B", "expr": "sum by (com_docker_compose_service) (rate(docker_container_blkio_io_service_bytes_recursive_write{com_docker_compose_project=~\"$project\", com_docker_compose_service!=\"\"}[5m]))", "legendFormat": "{{com_docker_compose_service}} write"}
+      ],
+      "fieldConfig": {"defaults": {"unit": "Bps"}, "overrides": []}
+    },
+    {
+      "id": 5,
+      "type": "logs",
+      "title": "Container Warnings And Errors",
+      "datasource": {"type": "loki", "uid": "Loki"},
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 16},
+      "targets": [{"refId": "A", "expr": "{compose_project=~\"$project\"} |~ \"(?i)warn|error|fatal|failed|exception\"", "queryType": "range"}],
+      "options": {"showTime": true, "wrapLogMessage": true, "sortOrder": "Descending", "dedupStrategy": "none", "enableLogDetails": true}
+    }
+  ]
+}

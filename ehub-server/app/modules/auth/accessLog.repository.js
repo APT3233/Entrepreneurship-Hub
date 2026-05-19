@@ -1,4 +1,5 @@
 import { createBaseRepository } from "app/core/database/baseRepository.js";
+import { logger } from "app/core/logger/index.js";
 
 export const createAccessLogRepository = ({ db }) => {
   const base = createBaseRepository(db, "api_access_logs");
@@ -31,10 +32,11 @@ export const createAccessLogRepository = ({ db }) => {
         logData.responseTime || 0,
       ]);
     } catch (error) {
-      console.error(
-        `[AccessLog] Failed to write audit log (Action: ${logData.action}, UserID: ${logData.userId}):`,
-        error.message
-      );
+      logger.error("[AccessLog] Failed to write audit log", {
+        error,
+        action: logData.action,
+        user_id: logData.userId,
+      });
     }
   };
 

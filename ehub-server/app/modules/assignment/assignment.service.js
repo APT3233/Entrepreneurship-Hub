@@ -14,6 +14,8 @@ export const createAssignmentService = ({ assignmentRepository, storageService, 
   const isLecturerOnly = (user) =>
     hasRole(user, "lecturer") && !isAdminOrDept(user);
   const isStudent = (user) => hasRole(user, "student");
+  const canManageAssignmentAttachments = (user) =>
+    isAdminOrDept(user) || hasRole(user, "lecturer");
 
   const parseLecturerAttachmentUrlsForDto = (raw) => {
     if (raw == null || raw === "") return [];
@@ -319,6 +321,7 @@ export const createAssignmentService = ({ assignmentRepository, storageService, 
 
   const initiateUpload = async (file, user) => {
     if (!user?.id) throw Forbidden("User not authorized");
+    if (!canManageAssignmentAttachments(user)) throw Forbidden("Assignment attachment upload denied");
     const maxSizeBytes = 25 * 1024 * 1024;
     if (Number(file.size) > maxSizeBytes) throw BadRequest("Dung lượng file vượt quá giới hạn cho phép (25MB).");
 
@@ -345,6 +348,7 @@ export const createAssignmentService = ({ assignmentRepository, storageService, 
 
   const confirmUpload = async (uploadToken, user) => {
     if (!user?.id) throw Forbidden("User not authorized");
+    if (!canManageAssignmentAttachments(user)) throw Forbidden("Assignment attachment upload denied");
 
     let payload = null;
     try {

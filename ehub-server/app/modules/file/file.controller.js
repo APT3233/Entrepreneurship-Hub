@@ -4,7 +4,7 @@ import { NotFound } from "app/core/errors/errorFactory.js";
 /**
  * File Controller — Handles secure file downloads via proxy
  */
-export const createFileController = ({ storageService }) => {
+export const createFileController = ({ fileService }) => {
   /**
    * Proxy download: GET /api/v1/files/download?path=...&name=...
    * This hides MinIO credentials and internal structure from the user.
@@ -17,11 +17,7 @@ export const createFileController = ({ storageService }) => {
     }
 
     try {
-      // Check if file exists
-      const stat = await storageService.statObject(filePath);
-      if (!stat) {
-        return next(NotFound("File not found in storage"));
-      }
+      const { stat, stream } = await fileService.getDownloadStream(filePath, req.user);
 
       // Set headers for download
       res.setHeader("Content-Disposition", `attachment; filename="${encodeURIComponent(fileName || "download")}"`);
@@ -29,8 +25,6 @@ export const createFileController = ({ storageService }) => {
       res.setHeader("Content-Length", stat.size);
 
       // Stream file from storage to response
-      const stream = await storageService.getStream(filePath);
-      
       if (stream.pipe) {
         stream.pipe(res);
       } else {

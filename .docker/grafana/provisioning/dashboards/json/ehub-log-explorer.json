@@ -1,0 +1,81 @@
+{
+  "uid": "ehub-log-explorer",
+  "title": "EHub Log Explorer",
+  "tags": ["ehub", "loki", "logs"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "10s",
+  "time": {"from": "now-6h", "to": "now"},
+  "templating": {
+    "list": [
+      {
+        "name": "service",
+        "type": "query",
+        "datasource": {"type": "loki", "uid": "Loki"},
+        "query": "label_values(compose_service)",
+        "refresh": 1,
+        "multi": true,
+        "includeAll": true,
+        "allValue": ".*",
+        "current": {"selected": true, "text": "All", "value": ".*"}
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Log Volume",
+      "datasource": {"type": "loki", "uid": "Loki"},
+      "gridPos": {"h": 7, "w": 12, "x": 0, "y": 0},
+      "targets": [{"refId": "A", "expr": "sum by (compose_service) (count_over_time({compose_service=~\"$service\"}[5m]))", "queryType": "range", "legendFormat": "{{compose_service}}"}],
+      "fieldConfig": {"defaults": {"unit": "short"}, "overrides": []}
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Warnings And Errors",
+      "datasource": {"type": "loki", "uid": "Loki"},
+      "gridPos": {"h": 7, "w": 12, "x": 12, "y": 0},
+      "targets": [{"refId": "A", "expr": "sum by (compose_service) (count_over_time({compose_service=~\"$service\"} |~ \"(?i)warn|error|fatal|exception|failed|timeout\" [5m]))", "queryType": "range", "legendFormat": "{{compose_service}}"}],
+      "fieldConfig": {"defaults": {"unit": "short"}, "overrides": []}
+    },
+    {
+      "id": 3,
+      "type": "logs",
+      "title": "All Selected Service Logs",
+      "datasource": {"type": "loki", "uid": "Loki"},
+      "gridPos": {"h": 10, "w": 12, "x": 0, "y": 7},
+      "targets": [{"refId": "A", "expr": "{compose_service=~\"$service\"}", "queryType": "range"}],
+      "options": {"showTime": true, "wrapLogMessage": true, "sortOrder": "Descending", "dedupStrategy": "none", "enableLogDetails": true}
+    },
+    {
+      "id": 4,
+      "type": "logs",
+      "title": "Errors And Security Signals",
+      "datasource": {"type": "loki", "uid": "Loki"},
+      "gridPos": {"h": 10, "w": 12, "x": 12, "y": 7},
+      "targets": [{"refId": "A", "expr": "{compose_service=~\"$service\"} |~ \"(?i)error|fatal|exception|failed|unauthorized|forbidden|denied|mismatch|timeout\"", "queryType": "range"}],
+      "options": {"showTime": true, "wrapLogMessage": true, "sortOrder": "Descending", "dedupStrategy": "none", "enableLogDetails": true}
+    },
+    {
+      "id": 5,
+      "type": "logs",
+      "title": "Nginx API Access Logs",
+      "datasource": {"type": "loki", "uid": "Loki"},
+      "gridPos": {"h": 9, "w": 12, "x": 0, "y": 17},
+      "targets": [{"refId": "A", "expr": "{compose_service=\"nginx\"} | json | request=~\".* /api/.*\"", "queryType": "range"}],
+      "options": {"showTime": true, "wrapLogMessage": true, "sortOrder": "Descending", "dedupStrategy": "none", "enableLogDetails": true}
+    },
+    {
+      "id": 6,
+      "type": "logs",
+      "title": "MySQL Warnings",
+      "datasource": {"type": "loki", "uid": "Loki"},
+      "gridPos": {"h": 9, "w": 12, "x": 12, "y": 17},
+      "targets": [{"refId": "A", "expr": "{compose_service=\"mysql\"} |~ \"(?i)warning|error|shutdown|ready for connections\"", "queryType": "range"}],
+      "options": {"showTime": true, "wrapLogMessage": true, "sortOrder": "Descending", "dedupStrategy": "none", "enableLogDetails": true}
+    }
+  ]
+}

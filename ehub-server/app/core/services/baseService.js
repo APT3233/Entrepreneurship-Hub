@@ -90,7 +90,8 @@ export const withLogging = (target, name) => {
           );
           return result;
         } catch (error) {
-          logger.error(`[Service] ${name}.${String(prop)} - Failed`, { error });
+          const logFn = error?.statusCode >= 500 || !error?.isOperational ? "error" : "warn";
+          logger[logFn](`[Service] ${name}.${String(prop)} - Failed`, { error });
           throw error;
         }
       };

@@ -11,7 +11,7 @@ export const createFileRouter = (container) => {
 
   /** 
    * Tải file qua proxy: GET /api/v1/files/download?path=...&name=...
-   * Yêu cầu đăng nhập để đảm bảo không ai có thể tải file trái phép
+   * Yêu cầu đăng nhập và kiểm quyền theo resource chứa file.
    */
   router.get("/download", authenticate, fileController.download);
 

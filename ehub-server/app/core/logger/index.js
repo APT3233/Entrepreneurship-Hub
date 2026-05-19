@@ -4,6 +4,7 @@ import fs from "fs";
 import path from "path";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { getLocalDateString } from "app/core/utils/time.js";
+import { sanitizeLogMeta, serializeError } from "./redact.js";
 
 export const loggerContext = new AsyncLocalStorage();
 export const getLoggerContext = () => loggerContext.getStore() || {};
@@ -22,6 +23,29 @@ const logFilePath = path.join(loggerConfig.file.dir, logFileName);
 const addContextFormat = format((info) => {
   const ctx = getLoggerContext();
   return { ...ctx, ...info };
+});
+
+const normalizeJsonFormat = format((info) => {
+  const { requestId, err, error, stack, ...rest } = info;
+  const normalized = {
+    ...rest,
+    level: String(info.level).toUpperCase(),
+    service: loggerConfig.service,
+  };
+
+  if (requestId && !normalized.trace_id) normalized.trace_id = requestId;
+
+  const errorSource = err instanceof Error ? err : error instanceof Error ? error : null;
+  if (errorSource) {
+    Object.assign(
+      normalized,
+      serializeError(errorSource, { includeStack: loggerConfig.includeStack }),
+    );
+  } else if (stack && loggerConfig.includeStack) {
+    normalized.error_stack = stack;
+  }
+
+  return sanitizeLogMeta(normalized);
 });
 
 const baseFormat = format.combine(
@@ -45,8 +69,10 @@ const baseFormat = format.combine(
 );
 
 const prodFormat = format.combine(
+  addContextFormat(),
   format.timestamp(),
   format.errors({ stack: true }),
+  normalizeJsonFormat(),
   format.json(),
 );
 
@@ -76,8 +102,55 @@ export const logger = createLogger({
   transports: appTransports,
 });
 
-logger.fatal = (message, meta = {}) => {
-  logger.error(`[FATAL] ${message}`, meta);
+const normalizeLogArgs = (messageOrMeta, metaOrMessage = {}) => {
+  if (messageOrMeta instanceof Error) {
+    return { message: messageOrMeta.message, meta: { err: messageOrMeta } };
+  }
+
+  if (
+    messageOrMeta &&
+    typeof messageOrMeta === "object" &&
+    typeof metaOrMessage === "string"
+  ) {
+    return { message: metaOrMessage, meta: messageOrMeta };
+  }
+
+  if (typeof messageOrMeta === "string") {
+    return {
+      message: messageOrMeta,
+      meta:
+        metaOrMessage instanceof Error
+          ? { err: metaOrMessage }
+          : metaOrMessage && typeof metaOrMessage === "object"
+            ? metaOrMessage
+            : {},
+    };
+  }
+
+  if (messageOrMeta && typeof messageOrMeta === "object") {
+    return {
+      message: messageOrMeta.message ?? "Log event",
+      meta: messageOrMeta,
+    };
+  }
+
+  return { message: String(messageOrMeta), meta: {} };
+};
+
+const rawLog = logger.log.bind(logger);
+const logWithNormalizedArgs = (level, messageOrMeta, metaOrMessage) => {
+  const { message, meta } = normalizeLogArgs(messageOrMeta, metaOrMessage);
+  rawLog(level, message, meta);
+};
+
+for (const level of ["error", "warn", "info", "debug"]) {
+  logger[level] = (messageOrMeta, metaOrMessage) =>
+    logWithNormalizedArgs(level, messageOrMeta, metaOrMessage);
+}
+
+logger.fatal = (messageOrMeta, metaOrMessage = {}) => {
+  const { message, meta } = normalizeLogArgs(messageOrMeta, metaOrMessage);
+  logWithNormalizedArgs("error", message, { ...meta, fatal: true });
 };
 
 export const createAppLogger = (moduleName) => ({

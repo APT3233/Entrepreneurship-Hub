@@ -50,8 +50,8 @@ export const createAssignmentRouter = (container) => {
   );
   router.get("/:id", authenticate, roleGuard("admin", "department_head", "lecturer", "student"), validateRequest(assignmentParamsSchema), assignmentController.getById);
   router.post("/", authenticate, roleGuard("admin", "department_head", "lecturer"), validateRequest(createAssignmentSchema), assignmentController.create);
-  router.post("/initiate-upload", authenticate, roleGuard("admin", "department_head", "lecturer", "student"), validateRequest(initiateAssignmentUploadSchema), assignmentController.initiateUpload);
-  router.post("/confirm-upload", authenticate, roleGuard("admin", "department_head", "lecturer", "student"), validateRequest(confirmAssignmentUploadSchema), assignmentController.confirmUpload);
+  router.post("/initiate-upload", authenticate, roleGuard("admin", "department_head", "lecturer"), validateRequest(initiateAssignmentUploadSchema), assignmentController.initiateUpload);
+  router.post("/confirm-upload", authenticate, roleGuard("admin", "department_head", "lecturer"), validateRequest(confirmAssignmentUploadSchema), assignmentController.confirmUpload);
   router.put("/:id", authenticate, roleGuard("admin", "department_head", "lecturer"), validateRequest(updateAssignmentSchema), assignmentController.update);
   router.patch("/:id/status", authenticate, roleGuard("admin", "department_head", "lecturer"), validateRequest(updateAssignmentStatusSchema), assignmentController.updateStatus);
   router.delete("/:id", authenticate, roleGuard("admin", "department_head", "lecturer"), validateRequest(assignmentParamsSchema), assignmentController.remove);

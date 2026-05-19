@@ -11,7 +11,7 @@ export const requestContext = (req, res, next) => {
   res.setHeader("x-request-id", requestId);
 
   // Chạy các middleware/handlers tiếp theo trong context của logger
-  loggerContext.run({ requestId }, () => {
+  loggerContext.run({ trace_id: requestId, session_id: null }, () => {
     next();
   });
 };
