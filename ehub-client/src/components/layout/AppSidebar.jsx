@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { NavLink } from "react-router-dom";
 import {
   Home,
@@ -11,18 +11,22 @@ import {
   PinOff,
 } from "lucide-react";
 import { GraduationCapIcon } from "@/components/icons/education";
+import { useTranslation } from "@/context/TranslationContext";
 
-const defaultNavItems = [
-  { label: "Trang chủ", icon: Home, path: "/lecturer/dashboard" },
-  { label: "Lớp học", icon: BookOpen, path: "/lecturer/classes" },
-  { label: "Nhóm Sinh viên", icon: Users, path: "/lecturer/groups" },
-  { label: "Bài tập", icon: ClipboardList, path: "/lecturer/assignments" },
-  { label: "Chấm điểm", icon: Star, path: "/lecturer/grading" },
-  { label: "Lịch dạy", icon: Calendar, path: "/lecturer/schedule" },
-];
+export default function AppSidebar({ items, subtitle }) {
+  const { t } = useTranslation();
 
-export default function AppSidebar({ items, subtitle = "Cổng giảng viên" }) {
-  const navItems = items && items.length ? items : defaultNavItems;
+  const localizedDefaultNavItems = useMemo(() => [
+    { label: t("lecturer.dashboard"), icon: Home, path: "/lecturer/dashboard" },
+    { label: t("lecturer.classes"), icon: BookOpen, path: "/lecturer/classes" },
+    { label: t("lecturer.groups"), icon: Users, path: "/lecturer/groups" },
+    { label: t("lecturer.assignments"), icon: ClipboardList, path: "/lecturer/assignments" },
+    { label: t("lecturer.grading"), icon: Star, path: "/lecturer/grading" },
+    { label: t("lecturer.schedule"), icon: Calendar, path: "/lecturer/schedule" },
+  ], [t]);
+
+  const navItems = items && items.length ? items : localizedDefaultNavItems;
+  const actualSubtitle = subtitle || t("lecturer.portal");
   const [hovered, setHovered] = useState(false);
   const [pinned, setPinned] = useState(() => {
     return localStorage.getItem("sidebar_pinned") === "true";
@@ -66,7 +70,7 @@ export default function AppSidebar({ items, subtitle = "Cổng giảng viên" })
               E-HUB
             </p>
             <p className="text-xs text-gray-400 font-medium mt-0.5">
-              {subtitle}
+              {actualSubtitle}
             </p>
           </div>
         </div>
@@ -147,7 +151,7 @@ export default function AppSidebar({ items, subtitle = "Cổng giảng viên" })
         <div className="mt-auto border-t border-gray-100 px-[14px] py-4 flex items-center gap-3 overflow-hidden">
           <button
             onClick={togglePin}
-            title={pinned ? "Tắt ghim" : "Ghim sidebar"}
+            title={pinned ? t("common.unpin") : t("common.pin")}
             className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 cursor-pointer
               ${
                 pinned
@@ -166,9 +170,9 @@ export default function AppSidebar({ items, subtitle = "Cổng giảng viên" })
             className="text-xs whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out"
           >
             {pinned ? (
-              <span className="text-indigo-500 font-medium">Đã ghim</span>
+              <span className="text-indigo-500 font-medium">{t("common.pinned")}</span>
             ) : (
-              <span className="text-gray-400">Tự động thu</span>
+              <span className="text-gray-400">{t("common.autoCollapse")}</span>
             )}
           </span>
         </div>

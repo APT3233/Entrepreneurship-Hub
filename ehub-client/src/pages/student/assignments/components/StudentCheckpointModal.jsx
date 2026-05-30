@@ -12,23 +12,13 @@ import {
   parseLecturerAttachmentUrls,
   getAttachmentDisplayFileName,
 } from "@/utils/lecturerAttachments";
+import { formatDate } from "@/utils/dateTimeDisplay";
 
 function fmtSize(bytes) {
   if (!bytes) return "";
   if (bytes >= 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
   if (bytes >= 1024) return `${(bytes / 1024).toFixed(0)} KB`;
   return `${bytes} B`;
-}
-
-function formatDate(dateString) {
-  if (!dateString) return "—";
-  const date = new Date(dateString);
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = date.getFullYear();
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  return `${day}/${month}/${year} | ${hours}:${minutes}`;
 }
 
 export default function StudentCheckpointModal({ checkpoint: task, isOpen, onClose, onSuccess }) {

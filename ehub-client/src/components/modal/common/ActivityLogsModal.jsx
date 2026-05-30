@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, memo } from "react";
 import { X, History, ChevronLeft, ChevronRight, Monitor, MapPin, Clock } from "lucide-react";
 import { authApi } from "@/api/auth";
+import DateTimeCell from "@/components/ui/DateTimeCell";
 
 const ActivityLogsModal = memo(({ isOpen, onClose }) => {
   const [activities, setActivities] = useState([]);
@@ -118,9 +119,13 @@ const ActivityLogsModal = memo(({ isOpen, onClose }) => {
                           <p className="text-base font-bold text-gray-800 group-hover:text-indigo-600 transition-colors">
                             {actionLabel}
                           </p>
-                          <div className="flex items-center gap-1.5 text-gray-400 font-semibold text-[10px] uppercase tracking-widest">
-                            <Clock size={12} />
-                            {new Date(act.created_at).toLocaleString('vi-VN')}
+                          <div className="flex items-center gap-1.5 text-gray-400">
+                            <Clock size={12} className="shrink-0" />
+                            <DateTimeCell
+                              value={act.created_at}
+                              dateClassName="text-[10px] font-semibold uppercase tracking-widest text-gray-500"
+                              timeClassName="text-[10px] font-medium text-gray-400"
+                            />
                           </div>
                         </div>
                         

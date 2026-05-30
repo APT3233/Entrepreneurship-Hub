@@ -1,14 +1,5 @@
 import { Calendar, FileText, Target, Pencil, Trash2 } from "lucide-react";
-const formatDate = (dateString) => {
-  if (!dateString) return "—";
-  const date = new Date(dateString);
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = date.getFullYear();
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  return `${day}/${month}/${year} | ${hours}:${minutes}`;
-};
+import { formatDate } from "@/utils/dateTimeDisplay";
 
 export default function CheckpointCard({ checkpoint, onEdit, onDetail, onDelete }) {
   const { 
@@ -23,7 +14,6 @@ export default function CheckpointCard({ checkpoint, onEdit, onDetail, onDelete 
     total_groups = 0
   } = checkpoint;
 
-  const formattedDeadline = formatDate(deadline);
   const isExpired = deadline ? new Date() > new Date(deadline) : false;
   const progress = total_groups > 0 ? (submitted_groups / total_groups) * 100 : 0;
 
@@ -79,7 +69,7 @@ export default function CheckpointCard({ checkpoint, onEdit, onDetail, onDelete 
             <span className="text-[10px] font-bold uppercase tracking-wider">Hạn nộp</span>
           </div>
           <p className={`text-xs font-bold ${isExpired ? "text-rose-500" : "text-gray-700"}`}>
-            {formattedDeadline}
+            {formatDate(deadline)}
           </p>
         </div>
         <div className="space-y-1">

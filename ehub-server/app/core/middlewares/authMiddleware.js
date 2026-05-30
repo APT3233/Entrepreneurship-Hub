@@ -4,6 +4,7 @@ import {
   TokenExpired,
   TokenInvalid,
   Forbidden,
+  AccountLocked,
 } from "../errors/errorFactory.js";
 import { hasMinRole } from "../constants/roles.js";
 import { blacklistKey } from "../cache/keys.js";
@@ -22,12 +23,28 @@ import {
  * Sau khi container loaded, gọi setRedis(redis) để bật smart mode.
  */
 let _redis = null;
+/** @type {((userId: number) => Promise<string|null>)|null} */
+let _loadUserStatus = null;
 
 /**
  * Gọi hàm này sau khi DI container loaded để bật check blacklist
  */
 export const setAuthRedis = (redis) => {
   _redis = redis;
+};
+
+/** Gọi sau bootstrap để kiểm tra users.status trên mọi request có JWT. */
+export const setAuthUserStatusLoader = (loader) => {
+  _loadUserStatus = loader;
+};
+
+const assertRequestUserStatus = async (userId) => {
+  if (!_loadUserStatus || !userId) return;
+  const status = String(await _loadUserStatus(userId) || "active").toLowerCase();
+  if (status === "locked") throw AccountLocked();
+  if (status === "inactive") {
+    throw Forbidden("Tài khoản đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên.");
+  }
 };
 
 /**
@@ -58,6 +75,8 @@ export const authenticate = async (req, _res, next) => {
       const isBlacklisted = await _redis.get(blacklistKey(decoded.jti));
       if (isBlacklisted) return next(TokenInvalid());
     }
+
+    await assertRequestUserStatus(decoded.sub);
 
     req.user = {
       id: decoded.sub,

@@ -21,8 +21,11 @@ import ActivityLogsModal from "@/components/modal/common/ActivityLogsModal";
 import { authApi } from "@/api/auth";
 import ClassApi from "@/api/class";
 import { useToast } from "@/components/ui/Toast";
+import { useTranslation } from "@/context/TranslationContext";
+import DateTimeCell from "@/components/ui/DateTimeCell";
 
 export default function ProfilePage() {
+  const { t, language } = useTranslation();
   const user = useSelector(selectAuthUser);
   const dispatch = useDispatch();
   const toast = useToast();
@@ -33,16 +36,7 @@ export default function ProfilePage() {
   const [stats, setStats] = useState(null);
   const [isLoadingActivities, setIsLoadingActivities] = useState(false);
 
-  if (!user) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-      </div>
-    );
-  }
-  
-  const name = user.full_name || user.fullName || user.name || "N/A";
-  const roles = Array.isArray(user.roles) ? user.roles : [];
+  const roles = Array.isArray(user?.roles) ? user.roles : [];
   const isStudent = roles.includes("student");
   const isLecturer = roles.includes("lecturer");
 
@@ -68,36 +62,46 @@ export default function ProfilePage() {
   }, []);
 
   useEffect(() => {
-    fetchActivities();
-    if (isLecturer) {
-      fetchStats();
+    if (user) {
+      fetchActivities();
+      if (isLecturer) {
+        fetchStats();
+      }
     }
-  }, [fetchActivities, fetchStats, isLecturer]);
+  }, [fetchActivities, fetchStats, isLecturer, user]);
 
   const handleSaveProfile = useCallback(async (data) => {
     try {
       const res = await authApi.updateProfile(data);
       dispatch(setUser(res.data));
-      toast.success("Cập nhật hồ sơ thành công");
+      toast.success(t("profile.successUpdate"));
       fetchActivities();
     } catch (error) {
-      toast.error(error.message || "Cập nhật hồ sơ thất bại");
+      toast.error(error.message || t("profile.failUpdate"));
       throw error;
     }
-  }, [dispatch, toast, fetchActivities]);
+  }, [dispatch, toast, fetchActivities, t]);
 
   const handlePasswordChange = useCallback(async (data) => {
     try {
       await authApi.changePassword(data);
-      toast.success("Đổi mật khẩu thành công");
+      toast.success(t("profile.successPassword"));
       fetchActivities();
     } catch (error) {
-      toast.error(error.message || "Đổi mật khẩu thất bại");
+      toast.error(error.message || t("profile.failPassword"));
       throw error;
     }
-  }, [toast, fetchActivities]);
+  }, [toast, fetchActivities, t]);
 
-
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
+  
+  const name = user.full_name || user.fullName || user.name || "N/A";
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
@@ -150,7 +154,7 @@ export default function ProfilePage() {
               </div>
               <p className="text-gray-500 font-medium flex items-center justify-center sm:justify-start gap-2 text-sm">
                 <Mail size={16} className="text-gray-400" />
-                {user.email || "Chưa cập nhật email"}
+                {user.email || t("profile.emailNotUpdated")}
               </p>
             </div>
 
@@ -158,17 +162,17 @@ export default function ProfilePage() {
             <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
               <button 
                 onClick={() => setIsPasswordModalOpen(true)}
-                className="w-full sm:w-auto px-6 py-2.5 rounded-2xl bg-white border border-gray-200 text-gray-600 text-sm font-semibold hover:bg-gray-50 transition-all active:scale-95 flex items-center justify-center gap-2"
+                className="w-full sm:w-auto px-6 py-2.5 rounded-2xl bg-white border border-gray-200 text-gray-600 text-sm font-semibold hover:bg-gray-50 transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Shield size={18} />
-                Đổi mật khẩu
+                {t("profile.changePassword")}
               </button>
               <button 
                 onClick={() => setIsEditModalOpen(true)}
-                className="w-full sm:w-auto px-6 py-2.5 rounded-2xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-all active:scale-95 flex items-center justify-center gap-2"
+                className="w-full sm:w-auto px-6 py-2.5 rounded-2xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Edit2 size={18} />
-                Chỉnh sửa hồ sơ
+                {t("profile.editProfile")}
               </button>
             </div>
           </div>
@@ -180,7 +184,7 @@ export default function ProfilePage() {
         {/* Left Column - Details */}
         <div className="lg:col-span-1 space-y-6">
           <div className="bg-white rounded-[32px] p-8 shadow-sm border border-gray-100">
-            <h3 className="text-lg font-bold text-gray-900 mb-6">Thông tin chi tiết</h3>
+            <h3 className="text-lg font-bold text-gray-900 mb-6">{t("profile.title")}</h3>
             <div className="space-y-6">
               {isStudent && (
                 <div className="flex items-center gap-4 group">
@@ -188,7 +192,7 @@ export default function ProfilePage() {
                     <GraduationCap size={20} />
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Chuyên ngành</p>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t("profile.major")}</p>
                     <p className="text-sm font-bold text-gray-700">{user.major || user.student_major || "N/A"}</p>
                   </div>
                 </div>
@@ -199,7 +203,7 @@ export default function ProfilePage() {
                     <Briefcase size={20} />
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Bộ môn / Khoa</p>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t("profile.department")}</p>
                     <p className="text-sm font-bold text-gray-700">{user.department || "N/A"}</p>
                   </div>
                 </div>
@@ -209,7 +213,9 @@ export default function ProfilePage() {
                   <Shield size={20} />
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{isStudent ? "Mã sinh viên" : "Mã giảng viên"}</p>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                    {isStudent ? t("profile.studentCode") : t("profile.lecturerCode")}
+                  </p>
                   <p className="text-sm font-bold text-gray-700">{user.username || user.memberCode || "N/A"}</p>
                 </div>
               </div>
@@ -218,23 +224,25 @@ export default function ProfilePage() {
                   <Calendar size={20} />
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Ngày tham gia</p>
-                  <p className="text-sm font-bold text-gray-700">{user.created_at ? new Date(user.created_at).toLocaleDateString("vi-VN", { month: "long", year: "numeric" }) : "N/A"}</p>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t("profile.joinDate")}</p>
+                  <p className="text-sm font-bold text-gray-700">
+                    {user.created_at ? new Date(user.created_at).toLocaleDateString(language === "en" ? "en-US" : "vi-VN", { month: "long", year: "numeric" }) : "N/A"}
+                  </p>
                 </div>
               </div>
             </div>
           </div>
 
           <div className="bg-white rounded-[32px] p-8 shadow-sm border border-gray-100">
-            <h3 className="text-lg font-bold text-gray-900 mb-6">Liên hệ</h3>
+            <h3 className="text-lg font-bold text-gray-900 mb-6">{t("profile.contact")}</h3>
             <div className="space-y-6">
               <div className="flex items-center gap-4 group">
                 <div className="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center text-rose-500 group-hover:scale-110 transition-transform">
                   <Phone size={20} />
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Số điện thoại</p>
-                  <p className="text-sm font-bold text-gray-700">{user.phone || "Chưa cập nhật"}</p>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t("profile.phone")}</p>
+                  <p className="text-sm font-bold text-gray-700">{user.phone || t("profile.phoneNotUpdated")}</p>
                 </div>
               </div>
               <div className="flex items-center gap-4 group">
@@ -242,8 +250,8 @@ export default function ProfilePage() {
                   <MapPin size={20} />
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Cơ sở (Campus)</p>
-                  <p className="text-sm font-bold text-gray-700">{user.campus ? `FPT University, ${user.campus}` : "Chưa cập nhật"}</p>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t("profile.campus")}</p>
+                  <p className="text-sm font-bold text-gray-700">{user.campus ? `FPT University, ${user.campus}` : t("common.noData")}</p>
                 </div>
               </div>
             </div>
@@ -254,9 +262,9 @@ export default function ProfilePage() {
         <div className="lg:col-span-2 space-y-6">
           {/* Bio / About */}
           <div className="bg-white rounded-[32px] p-8 shadow-sm border border-gray-100">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Giới thiệu</h3>
+            <h3 className="text-lg font-bold text-gray-900 mb-4">{t("profile.about")}</h3>
             <p className="text-gray-500 leading-relaxed font-medium">
-              {user.bio || "Thành viên của Entrepreneurship Hub. Đam mê khởi nghiệp và đổi mới sáng tạo."}
+              {user.bio || t("profile.defaultBio")}
             </p>
           </div>
 
@@ -265,17 +273,17 @@ export default function ProfilePage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div className="bg-indigo-600 rounded-[32px] p-8 text-white shadow-xl shadow-indigo-100 relative overflow-hidden group">
                 <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500"></div>
-                <p className="text-indigo-100 text-[10px] font-bold uppercase tracking-widest mb-1">Số lớp quản lý</p>
+                <p className="text-indigo-100 text-[10px] font-bold uppercase tracking-widest mb-1">{t("profile.managedClasses")}</p>
                 <h4 className="text-3xl font-black mb-2">{stats?.classCount || 0}</h4>
-                <p className="text-indigo-200 text-xs font-medium">Lớp học đang phụ trách</p>
+                <p className="text-indigo-200 text-xs font-medium">{t("profile.managedClassesSub")}</p>
               </div>
               <div className="bg-white rounded-[32px] p-8 shadow-sm border border-gray-100 relative overflow-hidden group">
                 <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-slate-50 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500"></div>
-                <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-1">Tổng số sinh viên quản lý</p>
+                <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-1">{t("profile.managedStudents")}</p>
                 <h4 className="text-3xl font-black text-gray-900 mb-2">
                   {stats?.managedStudentCount || 0} / {stats?.totalStudentCount || 0}
                 </h4>
-                <p className="text-gray-500 text-xs font-medium">Tỉ lệ sinh viên trên hệ thống</p>
+                <p className="text-gray-500 text-xs font-medium">{t("profile.managedStudentsSub")}</p>
               </div>
             </div>
           )}
@@ -283,12 +291,12 @@ export default function ProfilePage() {
           {/* Recent Activity Placeholder */}
           <div className="bg-white rounded-[32px] p-8 shadow-sm border border-gray-100">
             <div className="flex items-center justify-between mb-8">
-              <h3 className="text-lg font-bold text-gray-900">Hoạt động gần đây</h3>
+              <h3 className="text-lg font-bold text-gray-900">{t("profile.recentActivity")}</h3>
               <button 
                 onClick={() => setIsActivityModalOpen(true)}
-                className="text-xs font-bold text-indigo-600 hover:bg-indigo-50 px-3 py-1.5 rounded-lg transition-colors"
+                className="text-xs font-bold text-indigo-600 hover:bg-indigo-50 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
               >
-                Xem tất cả
+                {t("profile.viewAll")}
               </button>
             </div>
             <div className="space-y-8">
@@ -309,30 +317,7 @@ export default function ProfilePage() {
                    const entityName = act.title || "";
                    
                     const getActionLabel = (action, title) => {
-                      const labels = {
-                        login: "Đăng nhập hệ thống",
-                        register: "Đăng ký tài khoản",
-                        update_profile: "Cập nhật hồ sơ",
-                        change_password: "Thay đổi mật khẩu",
-                        create_class: "Tạo lớp học",
-                        update_class: "Cập nhật lớp học",
-                        delete_class: "Xóa lớp học",
-                        create_group: "Tạo nhóm",
-                        update_group: "Cập nhật nhóm",
-                        delete_group: "Xóa nhóm",
-                        create_assignment: "Tạo bài tập",
-                        update_assignment: "Cập nhật bài tập",
-                        update_assignment_status: "Thay đổi trạng thái bài tập",
-                        delete_assignment: "Xóa bài tập",
-                        grade_assignment: "Chấm điểm bài tập",
-                        submit_assignment: "Nộp bài tập",
-                        create_checkpoint: "Tạo checkpoint",
-                        update_checkpoint: "Cập nhật checkpoint",
-                        delete_checkpoint: "Xóa checkpoint",
-                        grade_checkpoint: "Chấm điểm checkpoint",
-                        submit_checkpoint: "Nộp checkpoint",
-                      };
-                      const base = labels[action] || action;
+                      const base = t(`profile.actions.${action}`) || action;
                       return title ? `${base} ${title}` : base;
                     };
                     const actionLabel = getActionLabel(act.action, entityName);
@@ -347,20 +332,24 @@ export default function ProfilePage() {
                           <p className="text-sm font-bold text-gray-800 group-hover:text-indigo-600 transition-colors">
                             {actionLabel}
                           </p>
-                          <p className="text-xs text-gray-400 font-medium mt-1">
-                            {new Date(act.created_at).toLocaleString('vi-VN')}
+                          <div className="mt-1 flex flex-wrap items-center gap-2">
+                            <DateTimeCell
+                              value={act.created_at}
+                              dateClassName="text-xs font-medium text-gray-500"
+                              timeClassName="text-[11px] font-normal text-gray-400"
+                            />
                             {act.ip_address && act.action === 'login' && (
                               <span className="ml-2 px-2 py-0.5 bg-gray-100 rounded-md text-[10px] text-gray-500">
                                 IP: {act.ip_address}
                               </span>
                             )}
-                          </p>
+                          </div>
                        </div>
                      </div>
                    );
                  })
                ) : (
-                 <p className="text-sm text-gray-400 italic font-medium">Chưa có hoạt động nào gần đây</p>
+                 <p className="text-sm text-gray-400 italic font-medium">{t("profile.noActivity")}</p>
                )}
             </div>
           </div>

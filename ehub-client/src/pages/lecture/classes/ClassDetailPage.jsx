@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react"; // Trigger reload
 import { useParams, useNavigate } from "react-router-dom";
-import { Plus, Users, Trash2, AlertTriangle, Settings2 } from "lucide-react";
+import { Plus, Users, Settings2 } from "lucide-react";
 import StatCard from "@/components/ui/Card/StatCard";
 import { StatIconGrading, StatIconAssignment, StatIconGroups } from "@/components/icons/lecture";
 import Dropdown from "@/components/ui/filter/DropDown";
@@ -15,9 +15,12 @@ import ClassApi from "@/api/class";
 import SemesterApi from "@/api/semester";
 import GroupApi from "@/api/group";
 import EnrollmentApi from "@/api/enrollment";
+import { useTranslation } from "@/context/TranslationContext";
+import { formatSemesterLabel, useSemesterYearOptions } from "@/hooks/useLectureFilterOptions";
 
 
 export default function ClassDetailPage() {
+  const { t } = useTranslation();
   const toast = useToast();
   const { id } = useParams();
   const navigate = useNavigate();
@@ -110,26 +113,22 @@ export default function ClassDetailPage() {
     }
   };
 
-  const yearOptions = useMemo(
-    () =>
-      [...new Set(semesterList.map((s) => s.year))]
-        .sort((a, b) => b - a)
-        .map((y) => ({ value: y, label: `${y}` })),
-    [semesterList]
-  );
+  const yearOptions = useSemesterYearOptions(semesterList);
 
   const semestersInYear = useMemo(
     () => semesterList.filter((s) => s.year === filterYear),
     [semesterList, filterYear]
   );
 
-  // Kỳ chỉ hiện khi đã chọn năm (thứ tự: Năm → Kỳ → Lớp)
   const semesterOptions = useMemo(
     () =>
-      !filterYear 
-        ? [] 
-        : semestersInYear.map((s) => ({ value: Number(s.id), label: s.semester_name })),
-    [filterYear, semestersInYear]
+      !filterYear
+        ? []
+        : semestersInYear.map((s) => ({
+          value: Number(s.id),
+          label: formatSemesterLabel(s, t),
+        })),
+    [filterYear, semestersInYear, t]
   );
 
   const classFilterOptions = useMemo(
@@ -155,19 +154,19 @@ export default function ClassDetailPage() {
 
   const groupOptions = useMemo(
     () => [
-      { label: "Tất cả", value: "all" },
+      { label: t("filters.all"), value: "all" },
       ...(detail?.groups || []).map((g) => ({ label: g.name, value: String(g.id) })),
     ],
-    [detail?.groups]
+    [detail?.groups, t]
   );
 
   const activationOptions = useMemo(
     () => [
-      { label: "Trạng thái", value: "all" },
-      { label: "Đã kích hoạt", value: "activated" },
-      { label: "Chưa kích hoạt", value: "not_activated" },
+      { label: t("lecturer.activationStatus"), value: "all" },
+      { label: t("lecturer.activated"), value: "activated" },
+      { label: t("lecturer.notActivated"), value: "not_activated" },
     ],
-    []
+    [t]
   );
 
   const filteredStudents = useMemo(() => {
@@ -411,20 +410,20 @@ export default function ClassDetailPage() {
         <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-4">
           <div className="flex flex-wrap items-center gap-3 sm:gap-4">
             <Dropdown
-              label="Năm"
+              label={t("lecturer.filterYear")}
               options={yearOptions}
               value={filterYear}
               onChange={handleYearChange}
             />
             <Dropdown
-              label="Kỳ"
+              label={t("lecturer.filterSemester")}
               options={semesterOptions}
               value={filterSemesterId}
               onChange={handleSemesterChange}
               disabled={filterYear == null}
             />
             <Dropdown
-              label="Lớp"
+              label={t("filterLabels.class")}
               options={classFilterOptions}
               value={Number(id)}
               onChange={handleClassChange}
@@ -548,9 +547,9 @@ export default function ClassDetailPage() {
         onYes={confirmDelete}
         title="Xóa lớp học"
         subtitle={`Bạn có chắc chắn muốn xóa lớp học "${detail?.classCode}"? Tất cả dữ liệu liên quan sẽ bị xóa và không thể khôi phục.`}
+        variant="delete"
         color="red"
         yesLabel={isDeleting ? "Đang xóa..." : "Xác nhận xóa"}
-        yesIcon={<Trash2 />}
       />
 
       <ConfirmModal
@@ -562,9 +561,9 @@ export default function ClassDetailPage() {
         onYes={confirmDeleteStudent}
         title="Xóa sinh viên"
         subtitle={`Bạn có chắc chắn muốn xóa sinh viên ${studentToDelete?.name} (${studentToDelete?.mssv}) khỏi lớp học?`}
+        variant="remove"
         color="red"
         yesLabel={isDeletingStudent ? "Đang xóa..." : "Xác nhận xóa"}
-        yesIcon={<Trash2 />}
       />
     </>
   );

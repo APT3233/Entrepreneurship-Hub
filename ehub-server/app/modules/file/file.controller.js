@@ -2,7 +2,7 @@ import { catchAsync } from "app/core/utils/catchAsync.js";
 import { NotFound } from "app/core/errors/errorFactory.js";
 
 /**
- * File Controller — Handles secure file downloads via proxy
+ * File Controller — Handles secure file downloads via proxy & general uploads
  */
 export const createFileController = ({ fileService }) => {
   /**
@@ -36,5 +36,26 @@ export const createFileController = ({ fileService }) => {
     }
   });
 
-  return { download };
+  /**
+   * Initiate a general-purpose file upload (avatar, general attachments)
+   * POST /api/v1/files/initiate-upload
+   * Body: { file: { name, size, type }, purpose?: 'avatar' | 'general' }
+   */
+  const initiateUpload = catchAsync(async (req, res) => {
+    const { file, purpose } = req.body;
+    const result = await fileService.initiateUpload(file, req.user, purpose || "general");
+    res.json({ data: result });
+  });
+
+  /**
+   * Confirm a general-purpose file upload
+   * POST /api/v1/files/confirm-upload
+   * Body: { upload_token }
+   */
+  const confirmUpload = catchAsync(async (req, res) => {
+    const result = await fileService.confirmUpload(req.body.upload_token, req.user);
+    res.json({ data: result });
+  });
+
+  return { download, initiateUpload, confirmUpload };
 };

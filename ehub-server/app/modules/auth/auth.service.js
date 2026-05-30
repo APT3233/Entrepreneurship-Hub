@@ -15,6 +15,7 @@ import { appConfig } from "app/config/app.js";
 import { maskEmail } from "app/core/utils/maskEmail.js";
 import { logger } from "app/core/logger/index.js";
 import { AUTH_HEADER_BEARER_PREFIX } from "app/core/constants/authHttp.js";
+import { assertUserCanAuthenticate } from "app/core/utils/assertUserCanAuthenticate.js";
 
 /**
  * Auth Service — xử lý business logic: login, register, refresh, logout
@@ -53,6 +54,7 @@ export const createAuthService = ({
   const getProfile = async (userId) => {
     const row = await userRepository.findProfileById(userId);
     if (!row) throw NotFound("User");
+    assertUserCanAuthenticate(row);
     const { password: _, ...userInfo } = row;
     return userInfo;
   };
@@ -151,32 +153,18 @@ export const createAuthService = ({
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      const responseTime = deviceInfo.startTime ? Date.now() - deviceInfo.startTime : 0;
-      accessLogRepository.logAction({
-        userId: user.id,
-        action: "LOGIN",
-        ipAddress: deviceInfo.ip,
-        userAgent: deviceInfo.userAgent,
-        requestId: deviceInfo.requestId,
-        responseTime,
-        status: "FAILED",
-        failureReason: "Invalid password",
-      });
       throw InvalidCredentials("Username or password incorrect");
     }
 
+    assertUserCanAuthenticate(user);
+
     const tokens = await tokenService.generateTokenPair(user, deviceInfo);
 
-    const responseTime = deviceInfo.startTime ? Date.now() - deviceInfo.startTime : 0;
-    accessLogRepository.logAction({
-      userId: user.id,
-      action: "LOGIN",
-      ipAddress: deviceInfo.ip,
-      userAgent: deviceInfo.userAgent,
-      requestId: deviceInfo.requestId,
-      responseTime,
-      status: "SUCCESS",
-    });
+    // Cập nhật last_login_at cho user khi đăng nhập thành công
+    await userRepository.rawQuery(
+      "UPDATE users SET last_login_at = ? WHERE id = ?",
+      [new Date(), user.id]
+    );
 
     // Ghi log vào bảng audit_logs để hiển thị ở Profile
     await auditService.log({
@@ -213,20 +201,10 @@ export const createAuthService = ({
       username: data.email.split("@")[0],
       password: hashedPassword,
       role: data.role || "student",
+      last_login_at: new Date(),
     });
 
     const tokens = await tokenService.generateTokenPair(newUser, deviceInfo);
-
-    const responseTime = deviceInfo.startTime ? Date.now() - deviceInfo.startTime : 0;
-    accessLogRepository.logAction({
-      userId: newUser.id,
-      action: "REGISTER",
-      ipAddress: deviceInfo.ip,
-      userAgent: deviceInfo.userAgent,
-      requestId: deviceInfo.requestId,
-      responseTime,
-      status: "SUCCESS",
-    });
 
     const { password: _, ...userInfo } = newUser;
 
@@ -249,41 +227,19 @@ export const createAuthService = ({
    */
   const refresh = async (refreshToken, deviceInfo = {}) => {
     try {
-      const tokens = await tokenService.refreshTokens(refreshToken, deviceInfo);
       const jwt = await import("jsonwebtoken");
       const decoded = jwt.decode(refreshToken);
       const userId = decoded?.sub;
-
       if (userId) {
-        const responseTime = deviceInfo.startTime ? Date.now() - deviceInfo.startTime : 0;
-        accessLogRepository.logAction({
-          userId: userId,
-          action: "REFRESH",
-          ipAddress: deviceInfo.ip,
-          userAgent: deviceInfo.userAgent,
-          requestId: deviceInfo.requestId,
-          responseTime,
-          status: "SUCCESS",
-        });
+        const account = await userRepository.findById(userId);
+        if (!account) throw InvalidCredentials("User not found");
+        assertUserCanAuthenticate(account);
       }
+
+      const tokens = await tokenService.refreshTokens(refreshToken, deviceInfo);
+
       return tokens;
     } catch (error) {
-      const jwt = await import("jsonwebtoken");
-      const decoded = jwt.decode(refreshToken);
-      const userId = decoded?.sub;
-      if (userId) {
-        const responseTime = deviceInfo.startTime ? Date.now() - deviceInfo.startTime : 0;
-        accessLogRepository.logAction({
-          userId: userId,
-          action: "REFRESH",
-          ipAddress: deviceInfo.ip,
-          userAgent: deviceInfo.userAgent,
-          requestId: deviceInfo.requestId,
-          responseTime,
-          status: "FAILED",
-          failureReason: error.message,
-        });
-      }
       throw error;
     }
   };
@@ -457,19 +413,9 @@ export const createAuthService = ({
     }
     // ---------------------------------
 
+    assertUserCanAuthenticate(user);
+
     const tokens = await tokenService.generateTokenPair(user, deviceInfo);
-    const responseTime = deviceInfo.startTime ? Date.now() - deviceInfo.startTime : 0;
-    if (user?.id) {
-      accessLogRepository.logAction({
-        userId: user.id,
-        action: "LOGIN",
-        ipAddress: deviceInfo.ip,
-        userAgent: deviceInfo.userAgent,
-        requestId: deviceInfo.requestId,
-        responseTime,
-        status: "SUCCESS",
-      });
-    }
 
     const { password: _, ...userInfo } = user;
     return { user: userInfo, tokens };
@@ -497,8 +443,8 @@ export const createAuthService = ({
       if (!username) throw BadRequest("Không tìm thấy mã số sinh viên trong thông tin lớp học.");
 
       const [userIns] = await conn.execute(
-        `INSERT INTO users (username, email, password, full_name, avatar_url, google_id, auth_provider, status, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, 'google', 'active', NOW(), NOW())`,
+        `INSERT INTO users (username, email, password, full_name, avatar_url, google_id, auth_provider, status, last_login_at, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, 'google', 'active', NOW(), NOW(), NOW())`,
         [username, data.email, hashedPassword, data.name, data.picture, data.googleId]
       );
       const uid = userIns.insertId;
@@ -613,8 +559,8 @@ export const createAuthService = ({
       }
 
       const [ins] = await conn.execute(
-        `INSERT INTO users (username, email, password, full_name, auth_provider, status, created_at, updated_at)
-         VALUES (?, ?, ?, ?, 'local', 'active', NOW(), NOW())`,
+        `INSERT INTO users (username, email, password, full_name, auth_provider, status, last_login_at, created_at, updated_at)
+         VALUES (?, ?, ?, ?, 'local', 'active', NOW(), NOW(), NOW())`,
         [candidate, row.email, hashedPassword, row.student_full_name || row.email]
       );
       const uid = ins.insertId;

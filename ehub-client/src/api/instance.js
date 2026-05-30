@@ -1,4 +1,7 @@
 import axios from "axios";
+import { store } from "@/store";
+import { logout } from "@/store/slices/authSlice";
+import { API_ERROR_ACCOUNT_LOCKED } from "@/constants/apiErrors";
 
 const rawBaseUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:7777/api/v1";
 const BASE_URL = rawBaseUrl.endsWith("/") ? rawBaseUrl : `${rawBaseUrl}/`;
@@ -80,6 +83,15 @@ instance.interceptors.response.use(
     if (payload?.error?.code) apiError.code = payload.error.code;
     if (payload?.error?.details) apiError.details = payload.error.details;
     apiError.status = error.response?.status;
+
+    if (apiError.code === API_ERROR_ACCOUNT_LOCKED) {
+      store.dispatch(logout());
+      const onAuthPage = typeof window !== "undefined" && window.location.pathname.startsWith("/auth/");
+      if (!onAuthPage && typeof window !== "undefined") {
+        window.location.replace("/auth/login?locked=1");
+      }
+    }
+
     return Promise.reject(apiError);
   },
 );

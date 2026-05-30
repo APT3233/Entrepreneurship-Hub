@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Plus, ListChecks, CheckSquare, Trash2 } from "lucide-react";
+import { Plus, ListChecks, CheckSquare } from "lucide-react";
 import ConfirmModal from "@/components/modal/ConfirmModal";
 import Dropdown from "@/components/ui/filter/DropDown";
 import AssignmentCard from "./components/AssignmentCard";
@@ -11,6 +11,8 @@ import ClassApi from "@/api/class";
 import AssignmentApi from "@/api/assignment";
 import CheckpointApi from "@/api/checkpoint";
 import { useToast } from "@/components/ui/Toast";
+import { useTranslation } from "@/context/TranslationContext";
+import { formatSemesterLabel, useSemesterYearOptions } from "@/hooks/useLectureFilterOptions";
 
 // Components for Checkpoint
 import CheckpointCard from "./checkpoint/components/CheckpointCard";
@@ -22,6 +24,7 @@ import EditAssignmentForm from "@/components/form/lecturer/EditAssignmentForm";
 
 
 export default function AssignmentManagement() {
+  const { t } = useTranslation();
   const toast = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -98,20 +101,15 @@ export default function AssignmentManagement() {
     fetchSemesters();
   }, []);
 
-  const yearOptions = useMemo(
-    () => [...new Set(semesterList.map((s) => s.year))].sort((a, b) => b - a).map(y => ({ value: y, label: `${y}` })),
-    [semesterList]
-  );
+  const yearOptions = useSemesterYearOptions(semesterList);
 
   const semesterOptions = useMemo(() => {
     if (!filterYear) return [];
-    return semesterList.filter(s => s.year === filterYear).map(s => ({
+    return semesterList.filter((s) => s.year === filterYear).map((s) => ({
       value: s.id,
-      label: s.status === 'ongoing' 
-        ? `${s.semester_name.replace(/\s?\d{4}$/, "")} (Hiện tại)`
-        : s.semester_name.replace(/\s?\d{4}$/, ""),
+      label: formatSemesterLabel(s, t),
     }));
-  }, [filterYear, semesterList]);
+  }, [filterYear, semesterList, t]);
 
   // Fetch Classes (Shared)
   useEffect(() => {
@@ -341,10 +339,10 @@ export default function AssignmentManagement() {
 
         {/* Filter Bar */}
         <div className="flex items-center gap-2.5 mb-8 w-full flex-wrap">
-          <Dropdown label="Năm" options={yearOptions} value={filterYear} onChange={setFilterYear} />
-          <Dropdown label="Kỳ" options={semesterOptions} value={filterSemesterId} onChange={setFilterSemesterId} disabled={!filterYear} />
+          <Dropdown label={t("lecturer.filterYear")} options={yearOptions} value={filterYear} onChange={setFilterYear} />
+          <Dropdown label={t("lecturer.filterSemester")} options={semesterOptions} value={filterSemesterId} onChange={setFilterSemesterId} disabled={!filterYear} />
           <div className="h-10 w-[1px] bg-gray-100 mx-1 hidden sm:block" />
-          <Dropdown label="Lớp học" options={classFilterOptions} value={filterClass} onChange={setFilterClass} disabled={!filterSemesterId} />
+          <Dropdown label={t("lecturer.filterClass")} options={classFilterOptions} value={filterClass} onChange={setFilterClass} disabled={!filterSemesterId} />
         </div>
 
         {/* Content Area */}
@@ -515,10 +513,9 @@ export default function AssignmentManagement() {
             isOpen={isDeleteConfirmOpen}
             title="Xóa checkpoint bản nháp"
             subtitle={`Bạn có chắc chắn muốn xóa "${checkpointToDelete?.title}"? Hành động này không thể hoàn tác.`}
-            icon={<Trash2 size={28} />}
+            variant="delete"
             color="red"
             yesLabel="Xóa ngay"
-            yesIcon={<Trash2 />}
             onYes={handleDeleteCheckpoint}
             onClose={() => setIsDeleteConfirmOpen(false)}
           />
@@ -529,10 +526,9 @@ export default function AssignmentManagement() {
             isOpen={isDeleteAssignmentOpen}
             title="Xóa bài tập"
             subtitle={`Bạn có chắc chắn muốn xóa bài tập "${assignmentToDelete?.title}"? Hành động này sẽ gỡ bài tập khỏi tất cả các lớp đã chọn.`}
-            icon={<Trash2 size={28} />}
+            variant="delete"
             color="red"
             yesLabel="Xóa ngay"
-            yesIcon={<Trash2 />}
             onYes={confirmDeleteAssignment}
             onClose={() => setIsDeleteAssignmentOpen(false)}
           />

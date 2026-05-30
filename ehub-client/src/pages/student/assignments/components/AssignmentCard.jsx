@@ -1,4 +1,5 @@
 import { Calendar, Trophy, CheckCircle2, Info } from "lucide-react";
+import { formatDate } from "@/utils/dateTimeDisplay";
 
 export default function AssignmentCard({ assignment, onClick }) {
   const {
@@ -15,18 +16,6 @@ export default function AssignmentCard({ assignment, onClick }) {
   const isSubmitted = submissionStatus === "submitted" || submissionStatus === "graded" || submissionStatus === "resubmitted";
   const isGraded = submissionStatus === "graded";
   const isOpen = status === "open";
-
-  const formatDate = (dateString) => {
-    if (!dateString) return "---";
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('vi-VN', {
-      hour: '2-digit',
-      minute: '2-digit',
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    }).format(date);
-  };
 
   return (
     <div

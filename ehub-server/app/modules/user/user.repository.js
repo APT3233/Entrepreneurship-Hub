@@ -13,12 +13,15 @@ export const createUserRepository = ({ db }) => {
       SELECT
         u.*,
         GROUP_CONCAT(DISTINCT r.role_code ORDER BY r.role_code) AS roles,
+        GROUP_CONCAT(DISTINCT p.permission_code ORDER BY p.permission_code) AS permissions,
         MAX(s.major) AS major,
         u.phone AS phone,
         u.campus AS campus
       FROM users u
       LEFT JOIN user_roles ur ON u.id = ur.user_id
       LEFT JOIN roles r ON ur.role_id = r.id
+      LEFT JOIN role_permissions rp ON rp.role_id = r.id
+      LEFT JOIN permissions p ON p.id = rp.permission_id
       LEFT JOIN students s ON s.user_id = u.id AND s.deleted_at IS NULL
       WHERE u.id = :id AND u.deleted_at IS NULL
       GROUP BY u.id
@@ -30,6 +33,11 @@ export const createUserRepository = ({ db }) => {
       user.roles = user.roles.split(",");
     } else if (user) {
       user.roles = [];
+    }
+    if (user && user.permissions) {
+      user.permissions = user.permissions.split(",");
+    } else if (user) {
+      user.permissions = [];
     }
     return user;
   };

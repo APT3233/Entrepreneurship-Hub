@@ -1,4 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "@/context/TranslationContext";
+import { formatSemesterLabel, useSemesterYearOptions } from "@/hooks/useLectureFilterOptions";
 import StatCard from "@/components/ui/Card/StatCard";
 import { useNavigate } from "react-router-dom";
 import { BookOpenIcon } from "lucide-react";
@@ -15,6 +17,7 @@ import ClassApi from "@/api/class";
 const VALUE_ALL_SEMESTERS = "all";
 
 const LectureDashboard = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [semesterList, setSemesterList] = useState([]);
   const [selectedYear, setSelectedYear] = useState(null);
@@ -55,21 +58,18 @@ const LectureDashboard = () => {
     fetchSemesters();
   }, []);
 
-  const yearOptions = [...new Set(semesterList.map((s) => s.year))]
-    .sort((a, b) => b - a)
-    .map((year) => ({ value: year, label: `${year}` }));
-
+  const yearOptions = useSemesterYearOptions(semesterList);
   const semestersInYear = semesterList.filter((s) => s.year === selectedYear);
-  const semesterOptions = [
-    { value: VALUE_ALL_SEMESTERS, label: "Tất cả kỳ" },
-    ...semestersInYear.map((s) => ({
-      value: s.id,
-      label:
-        s.status === "ongoing"
-          ? `${s.semester_name.replace(/\s?\d{4}$/, "")} (Hiện tại)`
-          : s.semester_name.replace(/\s?\d{4}$/, ""),
-    })),
-  ];
+  const semesterOptions = useMemo(
+    () => [
+      { value: VALUE_ALL_SEMESTERS, label: t("lecturer.allSemesters") },
+      ...semestersInYear.map((s) => ({
+        value: s.id,
+        label: formatSemesterLabel(s, t),
+      })),
+    ],
+    [semestersInYear, t],
+  );
 
   const handleYearChange = (year) => {
     setSelectedYear(year);
@@ -170,13 +170,13 @@ const LectureDashboard = () => {
       <div className="w-full p-4 bg-white rounded-2xl shadow-sm mt-4">
         <div className="flex justify-start gap-4">
           <Dropdown
-            label="Chọn năm học"
+            label={t("lecturer.selectYear")}
             options={yearOptions}
             value={selectedYear}
             onChange={handleYearChange}
           />
           <Dropdown
-            label="Kỳ"
+            label={t("lecturer.filterSemester")}
             options={semesterOptions}
             value={selectedSemesterId}
             onChange={(value) => setSelectedSemesterId(value)}

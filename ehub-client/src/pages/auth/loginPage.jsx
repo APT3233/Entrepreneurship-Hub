@@ -13,9 +13,11 @@ import GoogleButton from "@/components/ui/Button/GoogleButton";
 import StudentNotInRosterModal from "@/components/modal/auth/StudentNotInRosterModal";
 import GoogleAccessDeniedModal from "@/components/modal/auth/GoogleAccessDeniedModal";
 import {
+  API_ERROR_ACCOUNT_LOCKED,
   API_ERROR_STUDENT_NOT_IN_ROSTER,
   API_ERROR_INSUFFICIENT_PERMISSION,
 } from "@/constants/apiErrors";
+import fptOnboarding from "@/assets/images/fpt-onboarding.png";
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 const TabButton = ({ active, onClick, icon, label }) => (
@@ -63,6 +65,14 @@ export default function LoginPage() {
     setFieldErrors({ id: "", password: "", general: "" });
     dispatch(setError(null));
   };
+
+  useEffect(() => {
+    if (searchParams.get("locked") !== "1") return;
+    const msg = "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.";
+    setFieldErrors({ id: "", password: "", general: msg });
+    toast.error("Tài khoản bị khóa", msg);
+    setSearchParams({}, { replace: true });
+  }, [searchParams, setSearchParams, toast]);
 
   const getGoogleErrorMessage = (code) => {
     const messages = {
@@ -148,7 +158,7 @@ export default function LoginPage() {
       });
 
     return () => { mounted = false; };
-  }, [searchParams, setSearchParams, dispatch, navigate]);
+  }, [searchParams, setSearchParams, dispatch, navigate, toast]);
 
   // Nếu đã đăng nhập mà vẫn cố vào /auth/login (vd: bấm Back) → auto redirect về route mặc định
   useEffect(() => {
@@ -208,7 +218,7 @@ export default function LoginPage() {
       const user = result?.data?.user ?? result?.data;
       if (!user) throw new Error("Không lấy được thông tin người dùng.");
       if (role === Roles.STUDENT && !hasAnyRole(user, [Roles.STUDENT])) throw new Error("Tài khoản này không phải sinh viên.");
-      if (role === Roles.LECTURER && !hasAnyRole(user, [Roles.LECTURER, Roles.ADMIN])) throw new Error("Tài khoản này không thuộc cổng giảng viên.");
+      if (role === Roles.LECTURER && !hasAnyRole(user, [Roles.LECTURER, Roles.ADMIN, Roles.DEPARTMENT_HEAD])) throw new Error("Tài khoản này không thuộc cổng giảng viên/quản trị.");
       dispatch(setUser(user));
       const msg = `Chào mừng, ${user.full_name || user.username || "bạn"}! Đăng nhập thành công.`;
       setSuccessMsg(msg);
@@ -220,6 +230,12 @@ export default function LoginPage() {
         dispatch(setError(null));
         setFieldErrors({ id: "", password: "", general: "" });
         setNotInRosterModalOpen(true);
+        return;
+      }
+      if (err?.code === API_ERROR_ACCOUNT_LOCKED) {
+        const lockedMsg = err?.message || "Tài khoản của bạn đã bị khóa.";
+        setFieldErrors({ id: "", password: "", general: lockedMsg });
+        toast.error("Tài khoản bị khóa", lockedMsg);
         return;
       }
       const errMsg = err?.message || "Đăng nhập thất bại.";
@@ -242,12 +258,20 @@ export default function LoginPage() {
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center px-4 py-8 sm:px-6 lg:px-8"
-      style={{
-        background:
-          "linear-gradient(138.81deg, rgba(247, 249, 255, 0.63) 55.36%, rgba(8, 145, 178, 0.063) 148.33%)",
-      }}
+      className="min-h-screen relative flex items-center justify-center px-4 py-8 sm:px-6 lg:px-8 bg-slate-950 overflow-hidden"
     >
+      {/* Background Image with Filter */}
+      <div 
+        className="absolute inset-0 transition-all duration-700 transform scale-100"
+        style={{
+          backgroundImage: `url(${fptOnboarding})`,
+          backgroundSize: "100% 100%",
+          backgroundPosition: "center",
+        }}
+      />
+      {/* Dark gradient & backdrop blur overlay */}
+      <div className="absolute inset-0 bg-gradient-to-tr from-slate-950/90 via-slate-900/70 to-slate-950/90 backdrop-blur-[5px]" />
+
       {/* Fonts + keyframes */}
       <style>{`
         @keyframes fadeSlideIn {
@@ -266,8 +290,8 @@ export default function LoginPage() {
 
       {/* Card */}
       <div
-        className="bg-white rounded-3xl p-6 sm:p-8 lg:p-10 w-full"
-        style={{ boxShadow: "14px 16px 30px 9px #00000014", maxWidth: "520px" }}
+        className="bg-white/95 backdrop-blur-md rounded-3xl p-6 sm:p-8 lg:p-10 w-full z-10 border border-white/20 shadow-2xl"
+        style={{ maxWidth: "520px" }}
       >
         {/* Logo */}
         <div className="flex flex-col items-center mb-7">

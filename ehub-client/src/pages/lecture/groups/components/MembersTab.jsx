@@ -6,6 +6,7 @@ import { useToast } from "@/components/ui/Toast";
 import AddGroupMemberForm from "@/components/form/lecturer/AddGroupMemberForm";
 import EditGroupMemberForm from "@/components/form/lecturer/EditGroupMemberForm";
 import ConfirmModal from "@/components/modal/ConfirmModal";
+import { formatDate } from "@/utils/dateTimeDisplay";
 
 const STATUS_LABEL = {
   active: { text: "Đang tham gia", className: "text-emerald-700 bg-emerald-50 border-emerald-100" },
@@ -13,12 +14,6 @@ const STATUS_LABEL = {
   removed: { text: "Đã gỡ", className: "text-red-700 bg-red-50 border-red-100" },
 };
 
-function formatJoinedAt(value) {
-  if (!value) return "—";
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
-}
 
 /**
  * Tab thành viên nhóm — hiển thị MSSV, vai trò, trạng thái; GV/Admin quản lý thêm/sửa/xóa.
@@ -190,7 +185,7 @@ export default function MembersTab({
                       </span>
                     </td>
                     <td className="px-4 py-3 md:px-6 md:py-5 text-center text-[11px] text-gray-500">
-                      {formatJoinedAt(m.joined_at)}
+                      {formatDate(m.joined_at)}
                     </td>
                     {canManageMembers ? (
                       <td className="px-4 py-3 md:px-6 md:py-5 text-right">
@@ -249,9 +244,9 @@ export default function MembersTab({
         onYes={confirmDeleteMember}
         title="Xóa thành viên"
         subtitle={`Bạn có chắc chắn muốn xóa ${memberToDelete?.name} khỏi nhóm? Hành động này không thể hoàn tác.`}
+        variant="remove"
         color="red"
         yesLabel={isDeleting ? "Đang xóa..." : "Xác nhận xóa"}
-        yesIcon={<Trash2 className="h-4 w-4" />}
       />
     </div>
   );

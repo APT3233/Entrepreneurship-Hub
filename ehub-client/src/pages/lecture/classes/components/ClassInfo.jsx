@@ -1,4 +1,5 @@
 import { Trash2, Settings2 } from "lucide-react";
+import { formatDate } from "@/utils/dateTimeDisplay";
 
 /**
  * ClassInfo — Thông tin lớp học
@@ -22,22 +23,6 @@ export default function ClassInfo({
   onDelete = null,
   onEdit = null,
 }) {
-  const formatDate = (dateStr) => {
-    if (!dateStr) return "—";
-    try {
-      const d = new Date(dateStr);
-      return d.toLocaleString("vi-VN", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-    } catch {
-      return "—";
-    }
-  };
-
   const rows = [
     [
       { label: "Mã lớp học",           value: classCode },

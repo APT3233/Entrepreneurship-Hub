@@ -5,7 +5,7 @@ import { loadRedis } from "./redis.loader.js";
 import { loadMinio } from "./minio.loader.js";
 import { loadRoutes } from "./routes.loader.js";
 import { loadContainer } from "./container.loader.js";
-import { setAuthRedis } from "app/core/middlewares/authMiddleware.js";
+import { setAuthRedis, setAuthUserStatusLoader } from "app/core/middlewares/authMiddleware.js";
 import { logger } from "app/core/logger/index.js";
 import { appConfig } from "app/config/app.js";
 import { startOutboxMailWorker } from "app/core/workers/outboxMail.worker.js";
@@ -29,6 +29,10 @@ export const bootstrap = async () => {
   logger.info("[Bootstrap] DI container oke");
 
   setAuthRedis(redis);
+  setAuthUserStatusLoader(async (userId) => {
+    const user = await container.cradle.userRepository.findById(userId);
+    return user?.status || null;
+  });
 
   // Routes
   loadRoutes(app, container);

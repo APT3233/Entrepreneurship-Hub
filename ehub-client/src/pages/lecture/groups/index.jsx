@@ -8,20 +8,20 @@ import GroupCard from "./components/GroupCard";
 import ClassApi from "@/api/class";
 import GroupApi from "@/api/group";
 import SemesterApi from "@/api/semester";
+import { useTranslation } from "@/context/TranslationContext";
+import {
+  LECTURE_VALUE_ALL,
+  useGroupStatusFilterOptions,
+  useSemesterOptions,
+  useSemesterYearOptions,
+} from "@/hooks/useLectureFilterOptions";
 
-const VALUE_ALL = "all";
-
-const STATUS_OPTIONS = [
-  { label: "Tất cả trạng thái", value: VALUE_ALL },
-  { label: "Đang lập nhóm", value: "forming" },
-  { label: "Đang hoạt động", value: "active" },
-  { label: "Ngưng hoạt động", value: "inactive" },
-  { label: "Đã hoàn thành", value: "completed" },
-  { label: "Đã giải tán", value: "dissolved" },
-];
+const VALUE_ALL = LECTURE_VALUE_ALL;
 
 export default function GroupsPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
+  const statusFilterOptions = useGroupStatusFilterOptions();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterClass, setFilterClass] = useState(null);
   const [filterStatus, setFilterStatus] = useState(VALUE_ALL);
@@ -154,20 +154,8 @@ export default function GroupsPage() {
     fetchGroups();
   }, [filterClass]);
 
-  const yearOptions = useMemo(
-    () => [...new Set(semesterList.map((s) => s.year))].sort((a, b) => b - a).map(y => ({ value: y, label: `${y}` })),
-    [semesterList]
-  );
-
-  const semesterOptions = useMemo(
-    () => semesterList.filter(s => s.year === filterYear).map((s) => ({
-      label: s.status === 'ongoing' 
-        ? `${s.semester_name.replace(/\s?\d{4}$/, "")} (Hiện tại)`
-        : s.semester_name.replace(/\s?\d{4}$/, ""),
-      value: String(s.id),
-    })),
-    [semesterList, filterYear]
-  );
+  const yearOptions = useSemesterYearOptions(semesterList);
+  const semesterOptions = useSemesterOptions(semesterList, filterYear);
 
   const classOptions = useMemo(
     () => classList.map((c) => ({
@@ -250,28 +238,28 @@ export default function GroupsPage() {
           </div>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 w-full md:w-auto md:flex">
           <Dropdown
-            label="Năm"
+            label={t("lecturer.filterYear")}
             options={yearOptions}
             value={filterYear}
             onChange={(v) => setFilterYear(v)}
           />
           <Dropdown
-            label="Kỳ"
+            label={t("lecturer.filterSemester")}
             options={semesterOptions}
             value={filterSemesterId}
             onChange={(v) => setFilterSemesterId(v)}
             disabled={!filterYear}
           />
           <Dropdown
-            label="Lớp"
+            label={t("filterLabels.class")}
             options={classOptions}
             value={filterClass}
             onChange={(v) => setFilterClass(v)}
             disabled={!filterSemesterId}
           />
           <Dropdown
-            label="Trạng thái"
-            options={STATUS_OPTIONS}
+            label={t("filterLabels.status")}
+            options={statusFilterOptions}
             value={filterStatus}
             onChange={(v) => setFilterStatus(v)}
           />

@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import AssignmentApi from "@/api/assignment";
 import { useToast } from "@/components/ui/Toast";
+import { formatDate } from "@/utils/dateTimeDisplay";
 
 /** Cột chấm điểm: điểm + nhận xét diện tích lớn */
 function GradingColumn({ assignmentId, maxScore, group, onSaved }) {
@@ -61,7 +62,7 @@ function GradingColumn({ assignmentId, maxScore, group, onSaved }) {
           <span className="text-gray-500 font-normal"> / {maxScore}</span>
           {group.graderName && group.gradedAt && (
             <span className="block text-xs text-gray-500 font-normal mt-1">
-              {group.graderName} · {new Date(group.gradedAt).toLocaleString("vi-VN")}
+              {group.graderName} · {formatDate(group.gradedAt)}
             </span>
           )}
         </p>
@@ -141,7 +142,7 @@ function SubmissionInfoColumn({ group, maxScore }) {
       )}
       {group.submittedAt && (
         <p className="text-xs text-gray-500 mb-4">
-          Nộp lúc: {new Date(group.submittedAt).toLocaleString("vi-VN")}
+          Nộp lúc: {formatDate(group.submittedAt)}
           {group.isLate ? " · Trễ hạn" : ""}
         </p>
       )}
@@ -357,7 +358,7 @@ export default function AssignmentDetailForm({ assignment, onClose, onConfirm, o
                                   {g.submittedAt && (
                                     <span>
                                       {" "}
-                                      · Nộp {new Date(g.submittedAt).toLocaleString("vi-VN")}
+                                      · Nộp {formatDate(g.submittedAt)}
                                     </span>
                                   )}
                                 </p>

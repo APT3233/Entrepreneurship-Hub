@@ -13,12 +13,7 @@ import {
 } from "lucide-react";
 import CheckpointApi from "@/api/checkpoint";
 import { useToast } from "@/components/ui/Toast";
-
-/* ─── helpers ─────────────────────────────── */
-function formatDateTime(dateString) {
-  if (!dateString) return "—";
-  return new Date(dateString).toLocaleString("vi-VN");
-}
+import { formatDate } from "@/utils/dateTimeDisplay";
 
 function StatusBadge({ status }) {
   const map = {
@@ -69,7 +64,7 @@ function SubmissionInfoColumn({ group, maxScore }) {
       )}
       {group?.submittedAt && (
         <p className="text-xs text-gray-500 mb-2">
-          Nộp lúc: {formatDateTime(group.submittedAt)}
+          Nộp lúc: {formatDate(group.submittedAt)}
           {group.isLate ? " · Trễ hạn" : ""}
         </p>
       )}
@@ -176,7 +171,7 @@ function GradingColumn({ checkpointId, maxScore, detail, onSaved }) {
           <span className="text-gray-500 font-normal"> / {maxScore}</span>
           {detail.graderName && detail.gradedAt && (
             <span className="block text-xs text-gray-500 font-normal mt-1">
-              {detail.graderName} · {formatDateTime(detail.gradedAt)}
+              {detail.graderName} · {formatDate(detail.gradedAt)}
             </span>
           )}
         </p>
@@ -375,8 +370,8 @@ export default function CheckpointDetailForm({ checkpoint, isOpen, onClose, onSa
                     <p className="text-[10px] text-gray-500 font-medium leading-snug">
                       {group.memberCount} thành viên · {group.fileCount} tệp
                       {group.submittedAt && (
-                        <span className="block text-[9px] text-gray-400 mt-0.5 line-clamp-1" title={formatDateTime(group.submittedAt)}>
-                          {formatDateTime(group.submittedAt)}
+                        <span className="block text-[9px] text-gray-400 mt-0.5 line-clamp-1" title={formatDate(group.submittedAt)}>
+                          {formatDate(group.submittedAt)}
                         </span>
                       )}
                     </p>
@@ -398,7 +393,7 @@ export default function CheckpointDetailForm({ checkpoint, isOpen, onClose, onSa
               <h2 className="text-lg sm:text-xl font-black text-gray-900 truncate">{checkpoint.title}</h2>
               <div className="flex items-center gap-2 mt-1 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                 <Calendar size={12} />
-                Hạn: {formatDateTime(checkpoint.deadline)} · Tối đa {maxScore} điểm
+                Hạn: {formatDate(checkpoint.deadline)} · Tối đa {maxScore} điểm
               </div>
             </div>
             <button

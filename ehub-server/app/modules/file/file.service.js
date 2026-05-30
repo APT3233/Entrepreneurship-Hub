@@ -1,8 +1,9 @@
 import { BadRequest, Forbidden, NotFound } from "app/core/errors/errorFactory.js";
+import { getFileProxyUrl } from "app/core/utils/file.js";
 
 const STORAGE_BUCKET = process.env.MINIO_BUCKET || "ehub";
 
-export const createFileService = ({ fileRepository, storageService }) => {
+export const createFileService = ({ fileRepository, storageService, tokenService }) => {
   const userRoles = (user) => (user?.roles || []).map((r) => String(r).toLowerCase());
   const hasRole = (user, ...roles) => userRoles(user).some((role) => roles.includes(role));
   const isAdminOrDept = (user) => hasRole(user, "admin", "department_head");
@@ -73,13 +74,25 @@ export const createFileService = ({ fileRepository, storageService }) => {
   };
 
   const canReadOwnedPendingAttachment = (filePath, user) => {
-    if (!isAdminOrDept(user) && !isLecturer(user)) return false;
-    return filePath.startsWith(`assignments/attachments/${Number(user.id)}/`);
+    // Allow lecturers/admin to read their own assignment attachments
+    if ((isAdminOrDept(user) || isLecturer(user)) && filePath.startsWith(`assignments/attachments/${Number(user.id)}/`)) {
+      return true;
+    }
+    // Allow any authenticated user to read files in general uploads (avatars, general)
+    if (filePath.startsWith("uploads/avatars/") || filePath.startsWith("uploads/general/")) {
+      return true;
+    }
+    return false;
   };
 
   const assertCanDownload = async (rawPath, user) => {
     if (!user?.id || !user?.roles?.length) throw Forbidden("File access denied");
     const filePath = normalizeFilePath(rawPath);
+
+    // General upload paths (avatars, general) — accessible by any authenticated user
+    if (filePath.startsWith("uploads/avatars/") || filePath.startsWith("uploads/general/")) {
+      return filePath;
+    }
 
     const [
       assignmentAttachments,
@@ -126,8 +139,80 @@ export const createFileService = ({ fileRepository, storageService }) => {
     };
   };
 
+  /**
+   * General-purpose file upload (avatar, general attachments)
+   * Supports purpose: 'avatar' | 'general'
+   */
+  const initiateUpload = async (file, user, purpose = "general") => {
+    if (!user?.id) throw Forbidden("User not authorized");
+    const maxSizeBytes = purpose === "avatar" ? 5 * 1024 * 1024 : 25 * 1024 * 1024;
+    if (Number(file.size) > maxSizeBytes) {
+      throw BadRequest(`Dung lượng file vượt quá giới hạn (${purpose === "avatar" ? "5MB" : "25MB"}).`);
+    }
+
+    const safeName = String(file.name || "file")
+      .replace(/[\\/]/g, "_")
+      .replace(/\s+/g, "_");
+
+    let objectKey;
+    if (purpose === "avatar") {
+      objectKey = `uploads/avatars/${user.id}/${Date.now()}_${safeName}`;
+    } else {
+      objectKey = `uploads/general/${user.id}/${Date.now()}_${safeName}`;
+    }
+
+    const presignedUrl = await storageService.generatePresignedPutUrl(objectKey, 900);
+    const uploadToken = tokenService.signPayload({
+      p: "file_upload",
+      purpose,
+      u: Number(user.id),
+      k: objectKey,
+      n: safeName,
+      t: file.type || "application/octet-stream",
+      s: Number(file.size),
+    }, "15m");
+
+    return {
+      uploadToken,
+      fileName: safeName,
+      objectKey,
+      uploadUrl: presignedUrl,
+    };
+  };
+
+  const confirmUpload = async (uploadToken, user) => {
+    if (!user?.id) throw Forbidden("User not authorized");
+
+    let payload = null;
+    try {
+      payload = tokenService.verifyPayload(uploadToken);
+    } catch {
+      throw BadRequest("Upload token không hợp lệ");
+    }
+
+    if (payload?.p !== "file_upload") throw BadRequest("Token không dùng cho upload file chung");
+    if (Number(payload?.u) !== Number(user.id)) throw Forbidden("Upload token không thuộc về bạn");
+    if (!payload?.k) throw BadRequest("Upload token thiếu object key");
+
+    const stat = await storageService.statObject(payload.k);
+    if (!stat) throw BadRequest("Không tìm thấy file đã upload. Vui lòng thử lại.");
+
+    const url = getFileProxyUrl(payload.k, payload.n);
+
+    return {
+      url,
+      objectKey: payload.k,
+      fileName: payload.n,
+      contentType: payload.t,
+      size: payload.s,
+      etag: stat.etag || null,
+    };
+  };
+
   return {
     assertCanDownload,
     getDownloadStream,
+    initiateUpload,
+    confirmUpload,
   };
 };

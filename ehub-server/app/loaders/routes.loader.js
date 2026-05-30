@@ -12,6 +12,8 @@ import { AssignmentModule } from "app/modules/assignment/index.js";
 import { MailModule } from "app/modules/mail/index.js";
 import { CheckpointModule } from "app/modules/checkpoint/index.js";
 import { FileModule } from "app/modules/file/index.js";
+import { EvaluationModule } from "app/modules/evaluation/index.js";
+import { AdminModule } from "app/modules/admin/index.js";
 
 const MODULES = [
   AuditModule,
@@ -26,6 +28,8 @@ const MODULES = [
   AssignmentModule,
   CheckpointModule,
   FileModule,
+  EvaluationModule,
+  AdminModule,
 ];
 
 /** Đăng ký DI của toàn bộ module (repositories, services). Dùng chung API + worker fork (mailOutbox.entry). */

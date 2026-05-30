@@ -9,22 +9,28 @@ const GroupsPage = React.lazy(() => import("@/pages/lecture/groups"));
 const GroupDetailPage = React.lazy(() => import("@/pages/lecture/groups/GroupDetailPage"));
 const AssignmentsPage = React.lazy(() => import("@/pages/lecture/assignments"));
 const GradingPage = React.lazy(() => import("@/pages/lecture/grading"));
+const GradingSubmissionListPage = React.lazy(() => import("@/pages/lecture/grading/SubmissionListPage"));
+const GradingFormPage = React.lazy(() => import("@/pages/lecture/grading/GradingFormPage"));
 const SchedulePage = React.lazy(() => import("@/pages/lecture/schedule"));
 const ProfilePage = React.lazy(() => import("@/pages/common/ProfilePage"));
 
 export default function init(routes) {
   const route = {
     path: "/lecturer",
-    roles: [Roles.LECTURER, Roles.ADMIN],
+    roles: [Roles.LECTURER, Roles.ADMIN, Roles.DEPARTMENT_HEAD],
     element: <LectureLayout />,
     children: [
       { path: "dashboard", element: <LectureDashboard /> },
       { path: "classes", element: <ClassesPage /> },
       { path: "classes/:id", element: <ClassDetailPage /> },
+      { path: "classes/:classId/checkpoints/:checkpointId/submissions", element: <GradingSubmissionListPage sourceType="checkpoint" /> },
+      { path: "classes/:classId/assignments/:assignmentId/submissions", element: <GradingSubmissionListPage sourceType="assignment" /> },
       { path: "groups", element: <GroupsPage /> },
       { path: "groups/:id", element: <GroupDetailPage /> },
       { path: "assignments", element: <AssignmentsPage /> },
       { path: "grading", element: <GradingPage /> },
+      { path: "grading/checkpoint-submissions/:submissionId", element: <GradingFormPage sourceType="checkpoint" /> },
+      { path: "grading/assignment-submissions/:submissionId", element: <GradingFormPage sourceType="assignment" /> },
       { path: "schedule", element: <SchedulePage /> },
       { path: "profile", element: <ProfilePage /> },
     ],

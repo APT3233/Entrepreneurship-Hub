@@ -2,7 +2,8 @@ import React from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { selectAuth } from "@/store/slices/authSlice";
-import { getDefaultRouteForUser, hasAnyRole } from "@/utils/role";
+import { hasAnyRole } from "@/utils/role";
+import PageForbidden from "@/components/PageForbidden";
 
 const GuardRoute = ({ children, allowedRoles }) => {
   const { user, isAuthenticated, isLoading } = useSelector(selectAuth);
@@ -23,7 +24,7 @@ const GuardRoute = ({ children, allowedRoles }) => {
 
   // Check roles if specified
   if (allowedRoles && allowedRoles.length > 0) {
-    if (!hasAnyRole(user, allowedRoles)) return <Navigate to={getDefaultRouteForUser(user)} replace />;
+    if (!hasAnyRole(user, allowedRoles)) return <PageForbidden />;
   }
 
   return <>{children}</>;

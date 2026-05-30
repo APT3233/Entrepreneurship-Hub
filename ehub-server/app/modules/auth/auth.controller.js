@@ -76,6 +76,7 @@ export const createAuthController = ({ authService }) => {
     const deviceInfo = getDeviceInfo(req);
     const result = await authService.login(req.body, deviceInfo);
     setTokenCookies(res, result.tokens, req);
+    req.userId = result.user?.id;
     return sendSuccess(res, {
       data: { user: result.user },
       message: "Login successful",
@@ -86,6 +87,7 @@ export const createAuthController = ({ authService }) => {
     const deviceInfo = getDeviceInfo(req);
     const result = await authService.register(req.body, deviceInfo);
     setTokenCookies(res, result.tokens, req);
+    req.userId = result.user?.id;
     return sendCreated(res, {
       data: { user: result.user },
       message: "User registered successfully",
@@ -167,6 +169,7 @@ export const createAuthController = ({ authService }) => {
       }
 
       setTokenCookies(res, result.tokens, req);
+      req.userId = result.user?.id;
       return res.redirect(302, `${base}/auth/login?google_login=success`);
     } catch (err) {
       const apiCode = err?.errorCode;

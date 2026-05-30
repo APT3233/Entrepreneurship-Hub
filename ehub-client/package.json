@@ -12,10 +12,12 @@
   "dependencies": {
     "@reduxjs/toolkit": "^2.11.2",
     "axios": "^1.13.5",
+    "i18next": "^26.3.0",
     "lucide-react": "^0.577.0",
     "p-limit": "^5.0.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-i18next": "^17.0.8",
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.13.1",
     "xlsx": "^0.18.5"

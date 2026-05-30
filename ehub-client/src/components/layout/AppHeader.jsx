@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Users, LogOut } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useTranslation } from "@/context/TranslationContext";
+import LanguageSwitcher from "@/components/layout/LanguageSwitcher";
 
 function displayNameFromUser(user) {
   if (!user) return "";
@@ -35,6 +37,7 @@ function UserAvatar({ user }) {
 }
 
 export default function AppHeader({ user = null, onLogout }) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const name = displayNameFromUser(user) || "—";
@@ -55,6 +58,8 @@ export default function AppHeader({ user = null, onLogout }) {
   return (
     <header className="shrink-0 w-full bg-white border-b border-gray-200 shadow-sm">
       <div className="flex items-center justify-end gap-3 sm:gap-6 px-4 sm:px-6 py-2 sm:py-3">
+        <LanguageSwitcher />
+        <div className="h-6 sm:h-8 w-px bg-gray-200 shrink-0" />
         <div 
           onClick={handleProfileClick}
           className="flex items-center gap-1.5 sm:gap-2 min-w-0 cursor-pointer group/header"
@@ -69,14 +74,6 @@ export default function AppHeader({ user = null, onLogout }) {
                 {major}
               </p>
             ) : null}
-            {/* {email ? (
-              <p
-                className={`text-[11px] sm:text-xs truncate ${major ? "text-gray-400 mt-0.5" : "text-gray-500"}`}
-                title={email}
-              >
-                {email}
-              </p>
-            ) : null} */}
             {!major && !email && department ? (
               <p className="text-[11px] sm:text-xs text-gray-500 truncate">{department}</p>
             ) : null}
@@ -92,7 +89,7 @@ export default function AppHeader({ user = null, onLogout }) {
           className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-semibold text-gray-700 hover:text-indigo-600 transition-colors duration-200 group shrink-0 cursor-pointer"
         >
           <LogOut className="w-4 h-4 sm:w-[18px] sm:h-[18px] group-hover:translate-x-0.5 transition-transform" />
-          Log out
+          {t("header.logoutButton")}
         </button>
       </div>
     </header>

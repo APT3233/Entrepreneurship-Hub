@@ -7,9 +7,10 @@ import ConfirmModal from "@/components/modal/ConfirmModal";
 import { authApi } from "@/api/auth";
 import { useDispatch, useSelector } from "react-redux";
 import { logout, selectAuthUser } from "@/store/slices/authSlice";
-import { LogOut } from "lucide-react";
+import { useTranslation } from "@/context/TranslationContext";
 
 const LectureLayout = () => {
+  const { t } = useTranslation();
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
   const location = useLocation();
   const dispatch = useDispatch();
@@ -48,13 +49,13 @@ const LectureLayout = () => {
 
       <ConfirmModal
         isOpen={logoutModalOpen}
-        title="Đăng xuất tài khoản"
-        subtitle="Bạn có chắc chắn muốn đăng xuất?"
+        title={t("lecturer.logoutTitle")}
+        subtitle={t("lecturer.logoutSubtitle")}
+        variant="logout"
         color="indigo"
-        yesLabel="Đăng xuất"
-        noLabel="Huỷ"
+        yesLabel={t("lecturer.logoutYes")}
+        noLabel={t("lecturer.logoutNo")}
         onYes={handleLogout}
-        yesIcon={<LogOut />}
         onClose={() => setLogoutModalOpen(false)}
         onNo={() => setLogoutModalOpen(false)}
       />

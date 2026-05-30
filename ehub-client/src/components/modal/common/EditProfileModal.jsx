@@ -73,7 +73,7 @@ const EditProfileModal = memo(({ isOpen, user, onClose, onSave }) => {
       let finalAvatarUrl = formData.avatar_url;
 
       if (selectedFile) {
-        const uploadRes = await fileApi.upload(selectedFile);
+        const uploadRes = await fileApi.upload(selectedFile, "avatar");
         finalAvatarUrl = uploadRes.url;
       }
 

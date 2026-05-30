@@ -1,5 +1,6 @@
 import { Info, Pencil, CheckCircle2, AlertCircle, Calendar, FileText, BarChart3, User, BookOpen } from "lucide-react";
 import { LastNameAvatar } from "@/components/icons/ui";
+import { formatDate } from "@/utils/dateTimeDisplay";
 
 /**
  * Component hiển thị một trường thông tin với nhãn, giá trị và nút Request đổi.
@@ -28,12 +29,6 @@ function InfoField({ label, value, onRequestChange, isLongText = false }) {
 
 export default function StudentGroupOverviewSection({ group }) {
   if (!group) return null;
-
-  const formatDate = (dateString) => {
-    if (!dateString) return "—";
-    const date = new Date(dateString);
-    return date.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
-  };
 
   const members = Array.isArray(group.members) ? group.members : [];
   const activeMembers = Number(group.active_members) || 0;

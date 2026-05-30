@@ -10,6 +10,8 @@ import CreateClassForm from "@/components/form/lecturer/CreateClassForm";
 import SemesterApi from "@/api/semester";
 import ClassApi from "@/api/class";
 import { useToast } from "@/components/ui/Toast";
+import { useTranslation } from "@/context/TranslationContext";
+import { formatSemesterLabel, useSemesterYearOptions } from "@/hooks/useLectureFilterOptions";
 
 /** Khớp với BE: semester 1/2/3 → SP/SU/FA + năm → semester_code */
 const semesterTypeToCode = (semesterType, year) => {
@@ -18,6 +20,7 @@ const semesterTypeToCode = (semesterType, year) => {
 };
 
 export default function ClassesPage() {
+  const { t } = useTranslation();
   const toast = useToast();
   const navigate = useNavigate();
   const [createFormOpen, setCreateFormOpen] = useState(false);
@@ -66,13 +69,7 @@ export default function ClassesPage() {
     fetchSemesters();
   }, []);
 
-  const yearOptions = useMemo(
-    () =>
-      [...new Set(semesterList.map((s) => s.year))]
-        .sort((a, b) => b - a)
-        .map((year) => ({ value: year, label: `${year}` })),
-    [semesterList]
-  );
+  const yearOptions = useSemesterYearOptions(semesterList);
 
   const semestersInYear = useMemo(
     () => semesterList.filter((s) => s.year === filterYear),
@@ -89,12 +86,9 @@ export default function ClassesPage() {
     if (!filterYear) return [];
     return semestersInYear.map((s) => ({
       value: s.id,
-      label:
-        s.status === "ongoing"
-          ? `${s.semester_name.replace(/\s?\d{4}$/, "")} (Hiện tại)`
-          : s.semester_name.replace(/\s?\d{4}$/, ""),
+      label: formatSemesterLabel(s, t),
     }));
-  }, [filterYear, semestersInYear]);
+  }, [filterYear, semestersInYear, t]);
 
   const handleYearChange = (year) => {
     setFilterYear(year);
@@ -311,13 +305,13 @@ export default function ClassesPage() {
         <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-4">
           <div className="grid grid-cols-3 items-center gap-2 sm:gap-4 w-full md:w-auto md:flex">
             <Dropdown
-              label="Năm"
+              label={t("lecturer.filterYear")}
               options={yearOptions}
               value={filterYear}
               onChange={handleYearChange}
             />
             <Dropdown
-              label="Kỳ"
+              label={t("lecturer.filterSemester")}
               options={semesterOptions}
               value={filterSemesterId}
               onChange={handleSemesterChange}

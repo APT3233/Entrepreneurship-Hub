@@ -1,15 +1,5 @@
 import { Calendar, FileText, Target, CheckCircle2 } from "lucide-react";
-
-const formatDate = (dateString) => {
-  if (!dateString) return "—";
-  const date = new Date(dateString);
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = date.getFullYear();
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  return `${day}/${month}/${year} | ${hours}:${minutes}`;
-};
+import { formatDate } from "@/utils/dateTimeDisplay";
 
 export default function CheckpointCard({ checkpoint, onDetail }) {
   const { 
@@ -24,7 +14,6 @@ export default function CheckpointCard({ checkpoint, onDetail }) {
     feedback
   } = checkpoint;
 
-  const formattedDeadline = formatDate(deadline);
   const isSubmitted = submission_status === "submitted" || submission_status === "graded" || submission_status === "resubmitted";
   const isGraded = submission_status === "graded";
   const isOverdue = !isSubmitted && deadline && new Date() > new Date(deadline);
@@ -66,7 +55,7 @@ export default function CheckpointCard({ checkpoint, onDetail }) {
             <span className="text-[10px] font-bold uppercase tracking-wider">Hạn nộp</span>
           </div>
           <p className={`text-xs font-bold ${isOverdue ? "text-rose-500" : "text-gray-700"}`}>
-            {formattedDeadline}
+            {formatDate(deadline)}
           </p>
         </div>
         <div className="space-y-1">

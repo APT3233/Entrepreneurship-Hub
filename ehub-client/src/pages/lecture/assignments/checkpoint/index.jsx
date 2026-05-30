@@ -8,10 +8,13 @@ import CheckpointApi from "@/api/checkpoint";
 import { useToast } from "@/components/ui/Toast";
 import CheckpointCard from "./components/CheckpointCard";
 import EditCheckpointForm from "@/components/form/lecturer/EditCheckpointForm";
+import { useTranslation } from "@/context/TranslationContext";
+import { formatSemesterLabel, useSemesterOptions, useSemesterYearOptions } from "@/hooks/useLectureFilterOptions";
 
 const VALUE_ALL_SEMESTERS = "all";
 
 export default function CheckpointManagement() {
+  const { t } = useTranslation();
   const toast = useToast();
   const navigate = useNavigate();
   
@@ -53,19 +56,11 @@ export default function CheckpointManagement() {
   }, []);
 
   // Compute Options
-  const yearOptions = useMemo(
-    () => [...new Set(semesterList.map((s) => s.year))].sort((a, b) => b - a).map(y => ({ value: y, label: `${y}` })),
-    [semesterList]
-  );
-
-  const semesterOptions = useMemo(() => {
-    if (!filterYear) return [];
-    const inYear = semesterList.filter((s) => s.year === filterYear);
-    return [
-      { value: VALUE_ALL_SEMESTERS, label: "Tất cả" },
-      ...inYear.map((s) => ({ value: s.id, label: s.semester_name.replace(/\s?\d{4}$/, "") })),
-    ];
-  }, [filterYear, semesterList]);
+  const yearOptions = useSemesterYearOptions(semesterList);
+  const semesterOptions = useSemesterOptions(semesterList, filterYear, {
+    prependAll: true,
+    allValue: VALUE_ALL_SEMESTERS,
+  });
 
   // Fetch Classes
   useEffect(() => {
@@ -199,10 +194,10 @@ export default function CheckpointManagement() {
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-3 mb-8">
-        <Dropdown label="Năm" options={yearOptions} value={filterYear} onChange={setFilterYear} />
-        <Dropdown label="Kỳ" options={semesterOptions} value={filterSemesterId} onChange={setFilterSemesterId} disabled={!filterYear} />
+        <Dropdown label={t("lecturer.filterYear")} options={yearOptions} value={filterYear} onChange={setFilterYear} />
+        <Dropdown label={t("lecturer.filterSemester")} options={semesterOptions} value={filterSemesterId} onChange={setFilterSemesterId} disabled={!filterYear} />
         <div className="h-10 w-[1px] bg-gray-100 mx-1 hidden sm:block" />
-        <Dropdown label="Lớp học" options={classOptions} value={filterClassId} onChange={setFilterClassId} disabled={!filterSemesterId} />
+        <Dropdown label={t("lecturer.filterClass")} options={classOptions} value={filterClassId} onChange={setFilterClassId} disabled={!filterSemesterId} />
       </div>
 
       {/* Content */}
