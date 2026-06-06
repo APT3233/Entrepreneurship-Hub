@@ -3,6 +3,7 @@ import { createBrowserRouter, Navigate } from "react-router-dom";
 import authRouter from "@/routes/authRouter";
 import studentRouter from "@/routes/studentRoute";
 import lectureRouter from "@/routes/lectureRoute";
+import mentorRouter from "@/routes/mentorRoute";
 import adminRouter from "@/routes/adminRoute";
 import GuardRoute from "@/routes/guradRoute";
 import RootLayout from "@/routes/RootLayout";
@@ -16,6 +17,7 @@ const initRoutes = () => {
   const protectedRoutes = [];
   studentRouter(protectedRoutes);
   lectureRouter(protectedRoutes);
+  mentorRouter(protectedRoutes);
   adminRouter(protectedRoutes);
 
   return [

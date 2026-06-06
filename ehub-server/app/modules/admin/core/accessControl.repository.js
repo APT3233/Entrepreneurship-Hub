@@ -31,6 +31,7 @@ export const createAdminAccessControlRepository = ({ db }) => {
           u.id, u.username, u.email, u.full_name, u.phone, u.campus, u.avatar_url,
           u.auth_provider, u.status, u.last_login_at, u.created_at, u.updated_at,
           EXISTS(SELECT 1 FROM students s WHERE s.user_id = u.id) AS is_student_goc,
+          EXISTS(SELECT 1 FROM lecturer_profiles lp WHERE lp.user_id = u.id) AS is_lecturer_goc,
           GROUP_CONCAT(DISTINCT r.role_code ORDER BY r.role_code) AS role_codes,
           GROUP_CONCAT(DISTINCT r.role_name ORDER BY r.role_code) AS role_names
         FROM users u
@@ -55,6 +56,7 @@ export const createAdminAccessControlRepository = ({ db }) => {
       rows: rows.map((row) => ({
         ...row,
         is_student_goc: row.is_student_goc === 1 || row.is_student_goc === true,
+        is_lecturer_goc: row.is_lecturer_goc === 1 || row.is_lecturer_goc === true,
         roles: parseCsv(row.role_codes),
         roleNames: parseCsv(row.role_names),
       })),
@@ -69,6 +71,7 @@ export const createAdminAccessControlRepository = ({ db }) => {
           u.id, u.username, u.email, u.full_name, u.phone, u.campus, u.avatar_url,
           u.auth_provider, u.status, u.last_login_at, u.created_at, u.updated_at,
           EXISTS(SELECT 1 FROM students s WHERE s.user_id = u.id) AS is_student_goc,
+          EXISTS(SELECT 1 FROM lecturer_profiles lp WHERE lp.user_id = u.id) AS is_lecturer_goc,
           up.display_name, up.bio, up.date_of_birth, up.gender, up.address, up.locale, up.timezone,
           GROUP_CONCAT(DISTINCT r.role_code ORDER BY r.role_code) AS role_codes,
           GROUP_CONCAT(DISTINCT p.permission_code ORDER BY p.permission_code) AS permission_codes
@@ -89,6 +92,7 @@ export const createAdminAccessControlRepository = ({ db }) => {
     return {
       ...user,
       is_student_goc: user.is_student_goc === 1 || user.is_student_goc === true,
+      is_lecturer_goc: user.is_lecturer_goc === 1 || user.is_lecturer_goc === true,
       roles: parseCsv(user.role_codes),
       permissions: parseCsv(user.permission_codes),
     };

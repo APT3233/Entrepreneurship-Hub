@@ -3,7 +3,7 @@ import { loggerConfig } from "app/config/logger.js";
 import fs from "fs";
 import path from "path";
 import { AsyncLocalStorage } from "node:async_hooks";
-import { getLocalDateString } from "app/core/utils/time.js";
+import { getLocalDateString, getLocalTimestamp } from "app/core/utils/time.js";
 import { sanitizeLogMeta, serializeError } from "./redact.js";
 
 export const loggerContext = new AsyncLocalStorage();
@@ -70,7 +70,7 @@ const baseFormat = format.combine(
 
 const prodFormat = format.combine(
   addContextFormat(),
-  format.timestamp(),
+  format.timestamp({ format: getLocalTimestamp }),
   format.errors({ stack: true }),
   normalizeJsonFormat(),
   format.json(),

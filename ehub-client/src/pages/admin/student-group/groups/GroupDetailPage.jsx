@@ -74,7 +74,7 @@ export default function AdminGroupDetail() {
 
   const title = useMemo(() => {
     if (!group) return t("common.confirm") === "Xác nhận" ? "Chi tiết nhóm" : "Group details";
-    return `${group.group_code} - ${group.group_name}`;
+    return group.group_name || "—";
   }, [group, t]);
   useDocumentTitle(group ? title : null, 1);
 

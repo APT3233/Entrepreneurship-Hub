@@ -26,3 +26,26 @@ export const buildClassLabel = (cls) =>
 
 export const buildStudentLabel = (student) =>
   `${student.student_code} - ${student.full_name}${student.email ? ` (${student.email})` : ""}`;
+
+export const getShortClassCode = (classCode, semesterCode) => {
+  if (classCode && semesterCode && classCode.endsWith(`-${semesterCode}`)) {
+    return classCode.slice(0, -(semesterCode.length + 1));
+  }
+  return classCode;
+};
+
+export const CAMPUS_OPTIONS = [
+  { value: "Hà Nội", label: "Hà Nội" },
+  { value: "Hồ Chí Minh", label: "Hồ Chí Minh" },
+  { value: "Đà Nẵng", label: "Đà Nẵng" },
+  { value: "Quy Nhơn", label: "Quy Nhơn" },
+  { value: "Cần Thơ", label: "Cần Thơ" },
+];
+
+export const MAJOR_OPTIONS = [
+  { value: "Kỹ thuật phần mềm", label: "Kỹ thuật phần mềm (Software Engineering)" },
+  { value: "Thiết kế mỹ thuật số", label: "Thiết kế mỹ thuật số (Digital Art Design)" },
+  { value: "An toàn thông tin", label: "An toàn thông tin (Information Assurance)" },
+  { value: "Quản trị kinh doanh", label: "Quản trị kinh doanh (Business Administration)" },
+  { value: "Truyền thông đa phương tiện", label: "Truyền thông đa phương tiện (Multimedia)" },
+];

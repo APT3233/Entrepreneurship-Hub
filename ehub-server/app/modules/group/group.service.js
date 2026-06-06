@@ -96,6 +96,10 @@ export const createGroupService = ({
     const cls = await groupRepository.findClassWithSemesterStatus(classId);
     if (!cls) throw NotFound("Class");
 
+    if (cls.subject_status === "inactive") {
+      throw BadRequest(`Học phần "${cls.subject_name}" của lớp học này đang ở trạng thái không hoạt động (Inactive). Không thể tạo nhóm.`);
+    }
+
     if (cls.semester_status !== "ongoing") {
       throw BadRequest("Chỉ được tạo nhóm khi học kỳ đang diễn ra (ongoing). Học kỳ hiện tại không ở trạng thái ongoing.");
     }

@@ -99,6 +99,22 @@ services:
     networks:
       - ehub-network
 
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ehub-ollama
+    restart: unless-stopped
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - TZ=${TZ:-Asia/Ho_Chi_Minh}
+    networks:
+      - ehub-network
+
   ehub-server:
     build:
       context: ./ehub-server
@@ -129,6 +145,11 @@ services:
       MINIO_PUBLIC_USE_SSL: ${MINIO_PUBLIC_USE_SSL:-false}
       LOG_FORMAT: json
       LOG_SERVICE: ehub-server
+      AI_WORKER_ENABLED: ${AI_WORKER_ENABLED:-true}
+      AI_WORKER_POLL_MS: ${AI_WORKER_POLL_MS:-3000}
+      AI_WORKER_MAX_ATTEMPTS: ${AI_WORKER_MAX_ATTEMPTS:-3}
+      AI_WORKER_STALE_PROCESSING_MINUTES: ${AI_WORKER_STALE_PROCESSING_MINUTES:-15}
+      AI_MAX_CONCURRENT_JOBS: ${AI_MAX_CONCURRENT_JOBS:-1}
     depends_on:
       mysql:
         condition: service_healthy
@@ -158,6 +179,8 @@ volumes:
   mysql_data:
     driver: local
   redis_data:
+    driver: local
+  ollama_data:
     driver: local
 
 networks:

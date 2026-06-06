@@ -5,6 +5,57 @@ import { logger } from "app/core/logger/index.js";
  * Records security-sensitive and high-value domain events for compliance.
  */
 export const createAuditService = ({ db, auditRepository }) => {
+  let supportsTitleColumn = null;
+
+  const hasTitleColumn = async () => {
+    if (supportsTitleColumn !== null) return supportsTitleColumn;
+    try {
+      const [rows] = await db.execute("SHOW COLUMNS FROM audit_logs LIKE 'title'");
+      supportsTitleColumn = rows.length > 0;
+    } catch {
+      supportsTitleColumn = false;
+    }
+    return supportsTitleColumn;
+  };
+
+  const insertAuditLog = async ({ userId, action, tableName, recordId, title, oldValues, newValues, ipAddress, userAgent }) => {
+    const commonValues = [
+      userId || null,
+      action,
+      tableName,
+      recordId || null,
+    ];
+    const detailValues = [
+      oldValues ? JSON.stringify(oldValues) : null,
+      newValues ? JSON.stringify(newValues) : null,
+      ipAddress || null,
+      userAgent || null,
+    ];
+
+    if (await hasTitleColumn()) {
+      await db.execute(
+        `
+          INSERT INTO audit_logs (
+            user_id, action, table_name, record_id, title,
+            old_values, new_values, ip_address, user_agent, created_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+        `,
+        [...commonValues, title || null, ...detailValues],
+      );
+      return;
+    }
+
+    await db.execute(
+      `
+        INSERT INTO audit_logs (
+          user_id, action, table_name, record_id,
+          old_values, new_values, ip_address, user_agent, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
+      `,
+      [...commonValues, ...detailValues],
+    );
+  };
+
   /**
    * Log an audit event to database
    * @param {Object} params - Audit parameters
@@ -21,24 +72,7 @@ export const createAuditService = ({ db, auditRepository }) => {
     userAgent = null,
   }) => {
     try {
-      const sql = `
-        INSERT INTO audit_logs (
-          user_id, action, table_name, record_id, title,
-          old_values, new_values, ip_address, user_agent, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
-      `;
-
-      await db.execute(sql, [
-        userId || null,
-        action,
-        tableName,
-        recordId || null,
-        title || null,
-        oldValues ? JSON.stringify(oldValues) : null,
-        newValues ? JSON.stringify(newValues) : null,
-        ipAddress || null,
-        userAgent || null,
-      ]);
+      await insertAuditLog({ userId, action, tableName, recordId, title, oldValues, newValues, ipAddress, userAgent });
 
       logger.info(`[AUDIT] ${action} on ${tableName} (${title}) by user ${userId}`);
     } catch (err) {

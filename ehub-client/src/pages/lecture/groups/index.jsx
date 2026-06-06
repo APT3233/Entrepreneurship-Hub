@@ -192,28 +192,28 @@ export default function GroupsPage() {
     <>
       <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <StatCard
-          title="Lớp học"
+          title={t("lecturer.groupsPage.stats.classes")}
           value={stats.classCount}
           icon={<BookOpenIcon size={22} />}
           iconBg="bg-blue-100"
           iconColor="text-blue-500"
         />
         <StatCard
-          title="Nhóm sinh viên"
+          title={t("lecturer.groupsPage.stats.groups")}
           value={stats.groupCount}
           icon={<StatIconGroups />}
           iconBg="bg-amber-100"
           iconColor="text-amber-600"
         />
         <StatCard
-          title="Bài tập"
+          title={t("lecturer.groupsPage.stats.assignments")}
           value={stats.assignmentCount}
           icon={<StatIconAssignment />}
           iconBg="bg-purple-100"
           iconColor="text-violet-600"
         />
         <StatCard
-          title="Cần chấm"
+          title={t("lecturer.groupsPage.stats.needGrading")}
           value={stats.needGradingCount}
           icon={<StatIconGrading />}
           iconBg="bg-green-100"
@@ -230,7 +230,7 @@ export default function GroupsPage() {
             />
             <input
               type="search"
-              placeholder="Tìm kiếm nhóm..."
+              placeholder={t("lecturer.groupsPage.searchPlaceholder")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
@@ -270,11 +270,11 @@ export default function GroupsPage() {
       <section className="mt-4 sm:mt-6">
         {loading ? (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
-            <p className="text-sm text-gray-500">Đang tải...</p>
+            <p className="text-sm text-gray-500">{t("lecturer.groupsPage.loading")}</p>
           </div>
         ) : filteredGroups.length === 0 ? (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
-            <p className="text-sm text-gray-500">Không có nhóm nào phù hợp.</p>
+            <p className="text-sm text-gray-500">{t("lecturer.groupsPage.noResults")}</p>
           </div>
         ) : (
           <div className="flex flex-col gap-4">

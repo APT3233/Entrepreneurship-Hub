@@ -131,16 +131,19 @@ export const createAssignmentRepository = ({ db }) => {
     const sql = `
       SELECT a.id, a.title, a.description, a.deadline, a.max_score, a.status, a.class_id, c.class_code, c.class_name,
              a.required_file_types, a.max_file_size_mb, a.max_files, a.attachment_url,
+             rb.rubric_id, r.name AS rubric_name,
              COUNT(DISTINCT g.id) AS total_groups,
              COUNT(DISTINCT CASE WHEN s.id IS NOT NULL AND s.status IN ('submitted', 'graded', 'resubmitted') THEN g.id END) AS submitted_groups
       FROM assignments a
       JOIN classes c ON c.id = a.class_id
       LEFT JOIN \`groups\` g ON g.class_id = a.class_id AND g.deleted_at IS NULL
       LEFT JOIN assignment_submissions s ON s.assignment_id = a.id AND s.group_id = g.id
+      LEFT JOIN rubric_bindings rb ON rb.target_type = 'assignment' AND rb.target_id = a.id
+      LEFT JOIN rubrics r ON r.id = rb.rubric_id AND r.deleted_at IS NULL
       WHERE a.id = :id
         AND a.deleted_at IS NULL
         AND c.deleted_at IS NULL
-      GROUP BY a.id, c.class_code, c.class_name
+      GROUP BY a.id, c.class_code, c.class_name, rb.rubric_id, r.name
       LIMIT 1
     `;
     const [rows] = await db.execute(sql, { id: Number(id) });

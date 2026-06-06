@@ -19,10 +19,10 @@ export default function AdminEvaluationExports() {
   }, []);
 
   const options = useMemo(() => ({
-    subjects: toSelectOptions(lookups.subjects, (item) => item.id, (item) => `${item.subject_code} - ${item.subject_name}`, "Tất cả môn"),
-    semesters: toSelectOptions(lookups.semesters, (item) => item.id, (item) => item.semester_code, "Tất cả kỳ"),
-    classes: toSelectOptions(lookups.classes, (item) => item.id, buildClassLabel, "Tất cả lớp"),
-    lecturers: toSelectOptions(lookups.graders, (item) => item.id, (item) => item.full_name || item.email, "Tất cả giảng viên"),
+    subjects: toSelectOptions(lookups.subjects, (item) => item.id, (item) => `${item.subject_code} - ${item.subject_name}`, t("lookupAll.subjects")),
+    semesters: toSelectOptions(lookups.semesters, (item) => item.id, (item) => item.semester_code, t("lookupAll.semesters")),
+    classes: toSelectOptions(lookups.classes, (item) => item.id, buildClassLabel, t("lookupAll.classes")),
+    lecturers: toSelectOptions(lookups.graders, (item) => item.id, (item) => item.full_name || item.email, t("lookupAll.lecturers")),
     types: getSourceTypeOptions(t),
   }), [lookups, t]);
 
@@ -33,24 +33,22 @@ export default function AdminEvaluationExports() {
       <FilterBar
         right={(
           <button type="button" onClick={() => setExportOpen(true)} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700">
-            <Download size={16} /> Export
+            <Download size={16} /> {t("common.export")}
           </button>
         )}
       >
-        <FilterSelect label="Semester" value={filters.semester_id} onChange={(value) => setFilter("semester_id", value)} options={options.semesters} />
-        <FilterSelect label="Subject" value={filters.subject_id} onChange={(value) => setFilter("subject_id", value)} options={options.subjects} />
-        <FilterSelect label="Class" value={filters.class_id} onChange={(value) => setFilter("class_id", value)} options={options.classes} />
-        <FilterSelect label="Lecturer" value={filters.lecturer_id} onChange={(value) => setFilter("lecturer_id", value)} options={options.lecturers} />
-        <FilterSelect label="Type" value={filters.target_type} onChange={(value) => setFilter("target_type", value)} options={options.types} />
+        <FilterSelect label={t("filterLabels.semester")} value={filters.semester_id} onChange={(value) => setFilter("semester_id", value)} options={options.semesters} />
+        <FilterSelect label={t("filterLabels.subject")} value={filters.subject_id} onChange={(value) => setFilter("subject_id", value)} options={options.subjects} />
+        <FilterSelect label={t("filterLabels.class")} value={filters.class_id} onChange={(value) => setFilter("class_id", value)} options={options.classes} />
+        <FilterSelect label={t("admin.fields.lecturer")} value={filters.lecturer_id} onChange={(value) => setFilter("lecturer_id", value)} options={options.lecturers} />
+        <FilterSelect label={t("filterLabels.type")} value={filters.target_type} onChange={(value) => setFilter("target_type", value)} options={options.types} />
       </FilterBar>
 
       <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 className="text-xl font-black text-gray-900">Export Scores</h2>
-            <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-500">
-              Xuất điểm theo lớp, checkpoint, assignment, nhóm, rubric criteria, feedback và grading progress. Dữ liệu export dùng đúng bộ lọc đang chọn.
-            </p>
+            <h2 className="text-xl font-black text-gray-900">{t("admin.evaluationOps.exports.title")}</h2>
+            <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-500">{t("admin.evaluationOps.exports.description")}</p>
           </div>
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
             <FileSpreadsheet size={26} />

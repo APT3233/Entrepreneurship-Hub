@@ -4,6 +4,35 @@ import { parsePagination } from "app/core/utils/pagination.js";
 
 const normalizeCode = (value) => String(value || "").trim().toLowerCase();
 
+const STUDENT_ROLE = "student";
+const STAFF_ROLES = new Set(["lecturer", "admin"]);
+
+const assertRoleAssignmentAllowed = (roleCodes, user = null) => {
+  const codes = (roleCodes || []).map(normalizeCode).filter(Boolean);
+  const hasStudent = codes.includes(STUDENT_ROLE);
+  const hasStaff = codes.some((code) => STAFF_ROLES.has(code));
+
+  if (hasStudent && hasStaff) {
+    throw BadRequest("Một người dùng không thể vừa là Sinh viên vừa là Giảng viên hoặc Quản trị viên.");
+  }
+
+  if (user) {
+    const userRoles = Array.isArray(user.roles) ? user.roles.map(normalizeCode) : [];
+    const isStudentAccount =
+      user.is_student_goc === true || userRoles.includes(STUDENT_ROLE);
+    const isStaffAccount =
+      user.is_lecturer_goc === true ||
+      userRoles.some((code) => STAFF_ROLES.has(code));
+
+    if (isStudentAccount && hasStaff) {
+      throw BadRequest("Tài khoản Sinh viên không thể được gán vai trò Giảng viên hoặc Quản trị viên.");
+    }
+    if (isStaffAccount && hasStudent) {
+      throw BadRequest("Tài khoản Giảng viên hoặc Quản trị viên không thể được gán vai trò Sinh viên.");
+    }
+  }
+};
+
 export const createAdminAccessControlService = ({ adminAccessControlRepository, transaction, auditService, tokenService }) => {
   const pageArgs = (query) => parsePagination({
     page: query.page,
@@ -33,9 +62,7 @@ export const createAdminAccessControlService = ({ adminAccessControlRepository, 
     if (await adminAccessControlRepository.findUserByUsername(data.username)) throw AlreadyExists("Username đã tồn tại");
     const password = await bcrypt.hash(data.password, 12);
     const roleCodes = (data.roles || []).map(normalizeCode).filter(Boolean);
-    if (roleCodes.includes("student") && (roleCodes.includes("lecturer") || roleCodes.includes("admin"))) {
-      throw BadRequest("Một người dùng không thể vừa là Sinh viên vừa là Giảng viên hoặc Quản trị viên.");
-    }
+    assertRoleAssignmentAllowed(roleCodes);
 
     const id = await transaction.run(async (conn) => {
       const userId = await adminAccessControlRepository.createUser({
@@ -113,12 +140,7 @@ export const createAdminAccessControlService = ({ adminAccessControlRepository, 
   const assignUserRoles = async (id, roles, actor) => {
     const user = await getUser(id);
     const roleCodes = (roles || []).map(normalizeCode).filter(Boolean);
-    if (roleCodes.includes("student") && (roleCodes.includes("lecturer") || roleCodes.includes("admin"))) {
-      throw BadRequest("Một người dùng không thể vừa là Sinh viên vừa là Giảng viên hoặc Quản trị viên.");
-    }
-    if (user.is_student_goc && (roleCodes.includes("lecturer") || roleCodes.includes("admin"))) {
-      throw BadRequest("Tài khoản này là Sinh viên, không thể nâng cấp lên Giảng viên hoặc Quản trị viên.");
-    }
+    assertRoleAssignmentAllowed(roleCodes, user);
     await adminAccessControlRepository.replaceUserRoles(id, roleCodes, actor?.id);
     await auditService.log({
       userId: actor?.id || null,

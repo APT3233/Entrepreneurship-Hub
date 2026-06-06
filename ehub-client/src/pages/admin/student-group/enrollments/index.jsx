@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { Eye, Plus, Send, UserMinus, UsersRound } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Eye, Plus, Send, UserMinus, UsersRound, BookOpen, ShieldCheck, GraduationCap, Info, Search, Check } from "lucide-react";
 import { useSelector } from "react-redux";
 import { enrollmentService, studentGroupLookupService } from "@/api/adminStudentGroup";
 import { useToast } from "@/components/ui/Toast";
@@ -10,7 +10,7 @@ import AdminTable from "@/pages/admin/components/AdminTable";
 import FilterBar, { FilterSelect } from "@/pages/admin/components/FilterBar";
 import SearchInput from "@/pages/admin/components/SearchInput";
 import StatusBadge from "@/pages/admin/components/StatusBadge";
-import FormModal, { Field, inputClass } from "@/pages/admin/components/FormModal";
+import FormModal, { Field } from "@/pages/admin/components/FormModal";
 import ConfirmDialog from "@/pages/admin/components/ConfirmDialog";
 import ActionButton from "@/pages/admin/academic/components/ActionButton";
 import WarningNote from "@/pages/admin/student-group/components/WarningNote";
@@ -21,6 +21,7 @@ import {
   buildStudentLabel,
   formatDate,
   getEnrollmentStatusOptions,
+  getShortClassCode,
   pageLimit,
   toSelectOptions,
 } from "@/pages/admin/student-group/shared";
@@ -28,7 +29,7 @@ import {
 const emptyForm = { class_id: "", student_id: "", status: "enrolled" };
 
 export default function AdminEnrollments() {
-  const { t, language } = useTranslation();
+  const { t } = useTranslation();
   const toast = useToast();
   const authUser = useSelector(selectAuthUser);
   const canWrite = checkPermission(authUser, "admin.enrollments.update");
@@ -41,17 +42,31 @@ export default function AdminEnrollments() {
   const [withoutGroup, setWithoutGroup] = useState({ class_id: "", rows: [], loading: false });
   const [saving, setSaving] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null);
+  const [bulkSearch, setBulkSearch] = useState("");
+
+  const refreshLookups = useCallback(async () => {
+    const res = await studentGroupLookupService.getAll().catch(() => ({ data: { classes: [], subjects: [], semesters: [], students: [] } }));
+    setLookups(res?.data || { classes: [], subjects: [], semesters: [], students: [] });
+  }, []);
 
   useEffect(() => {
-    studentGroupLookupService.getAll()
-      .then((res) => setLookups(res?.data || { classes: [], subjects: [], semesters: [], students: [] }))
-      .catch(() => setLookups({ classes: [], subjects: [], semesters: [], students: [] }));
-  }, []);
+    refreshLookups();
+  }, [refreshLookups]);
 
   const enrollmentStatusOptions = useMemo(() => getEnrollmentStatusOptions(t), [t]);
   const classOptions = useMemo(() => toSelectOptions(lookups.classes, (item) => item.id, buildClassLabel, t("lookupAll.classes")), [lookups.classes, t]);
   const subjectOptions = useMemo(() => toSelectOptions(lookups.subjects, (item) => item.id, (item) => `${item.subject_code} - ${item.subject_name}`, t("lookupAll.subjects")), [lookups.subjects, t]);
   const semesterOptions = useMemo(() => toSelectOptions(lookups.semesters, (item) => item.id, (item) => `${item.semester_code} - ${item.semester_name}`, t("lookupAll.semesters")), [lookups.semesters, t]);
+
+  const filteredBulkStudents = useMemo(() => {
+    if (!bulkSearch.trim()) return lookups.students || [];
+    const searchLower = bulkSearch.toLowerCase();
+    return (lookups.students || []).filter((s) =>
+      (s.student_code || "").toLowerCase().includes(searchLower) ||
+      (s.full_name || "").toLowerCase().includes(searchLower) ||
+      (s.email || "").toLowerCase().includes(searchLower)
+    );
+  }, [lookups.students, bulkSearch]);
 
   const formClassOptions = useMemo(() => 
     (lookups.classes || []).map((item) => ({ value: String(item.id), label: buildClassLabel(item) })),
@@ -70,13 +85,14 @@ export default function AdminEnrollments() {
 
   const openBulk = () => {
     setBulkForm({ class_id: query.class_id || "", student_ids: [] });
+    setBulkSearch("");
     setModal({ type: "bulk" });
   };
 
   const saveEnrollment = async (event) => {
     event.preventDefault();
     if (!form.class_id || !form.student_id) {
-      toast.error(t("common.confirm") === "Xác nhận" ? "Vui lòng chọn lớp và sinh viên." : "Please select class and student.");
+      toast.error(t("admin.enrollment.selectClassAndStudent"));
       return;
     }
     setSaving(true);
@@ -90,6 +106,7 @@ export default function AdminEnrollments() {
       toast.success(warnings.length ? `${t("admin.toasts.createSuccess")}. ${warnings.join(" ")}` : t("admin.toasts.createSuccess"));
       setModal({ type: null });
       await refetch();
+      await refreshLookups();
     } catch (err) {
       toast.error(err.message || t("admin.toasts.actionFailed"));
     } finally {
@@ -100,7 +117,7 @@ export default function AdminEnrollments() {
   const saveBulk = async (event) => {
     event.preventDefault();
     if (!bulkForm.class_id || !bulkForm.student_ids.length) {
-      toast.error(t("common.confirm") === "Xác nhận" ? "Vui lòng chọn lớp và ít nhất một sinh viên." : "Please select class and at least one student.");
+      toast.error(t("admin.enrollment.selectClassAndStudents"));
       return;
     }
     setSaving(true);
@@ -111,9 +128,10 @@ export default function AdminEnrollments() {
       });
       const results = res?.data?.results || [];
       const successCount = results.filter((item) => item.success).length;
-      toast.success(t("common.confirm") === "Xác nhận" ? `Thêm hàng loạt hoàn tất: ${successCount}/${results.length} thành công` : `Bulk add completed: ${successCount}/${results.length} successfully`);
+      toast.success(t("admin.enrollment.bulkAddSuccess", { success: successCount, total: results.length }));
       setModal({ type: null });
       await refetch();
+      await refreshLookups();
     } catch (err) {
       toast.error(err.message || t("admin.toasts.actionFailed"));
     } finally {
@@ -139,7 +157,7 @@ export default function AdminEnrollments() {
 
   const loadWithoutGroup = async (classId) => {
     if (!classId) {
-      toast.error(t("common.confirm") === "Xác nhận" ? "Vui lòng chọn lớp." : "Please select class.");
+      toast.error(t("admin.enrollment.selectClass"));
       return;
     }
     setWithoutGroup({ class_id: classId, rows: [], loading: true });
@@ -169,11 +187,7 @@ export default function AdminEnrollments() {
     setSendingInviteId(row.id);
     try {
       const res = await enrollmentService.sendInvite(row.id);
-      toast.success(
-        t("common.confirm") === "Xác nhận"
-          ? `Đã xếp hàng gửi invite tới ${res?.data?.email || row.email}.`
-          : `Invite queued for ${res?.data?.email || row.email}.`,
-      );
+      toast.success(t("admin.enrollment.inviteQueued", { email: res?.data?.email || row.email }));
     } catch (err) {
       toast.error(err.message || t("admin.toasts.actionFailed"));
     } finally {
@@ -182,32 +196,32 @@ export default function AdminEnrollments() {
   };
 
   const columns = useMemo(() => [
-    { key: "class_code", label: t("admin.fields.classCode", { defaultValue: "Class" }) === "Mã lớp" ? "Lớp" : "Class", render: (row) => <span className="font-mono text-xs font-bold text-indigo-700">{row.class_code}</span> },
-    { key: "semester", label: t("admin.fields.semester"), render: (row) => `${row.semester_code} (${row.year})` },
-    { key: "subject", label: t("nav.subjects"), render: (row) => `${row.subject_code} - ${row.subject_name}` },
+    { key: "class_code", label: t("admin.columns.class"), render: (row) => <span className="font-mono text-xs font-bold text-indigo-700">{getShortClassCode(row.class_code, row.semester_code)}</span> },
+    { key: "semester", label: t("admin.columns.semester"), render: (row) => `${row.semester_code} (${row.year})` },
+    { key: "subject", label: t("admin.columns.subject"), render: (row) => `${row.subject_code} - ${row.subject_name}` },
     { key: "student_code", label: t("admin.fields.studentCode"), render: (row) => <span className="font-mono text-xs font-bold text-gray-700">{row.student_code}</span> },
-    { key: "student_name", label: t("admin.fields.fullName", { defaultValue: "Student" }) === "Họ và tên" ? "Sinh viên" : "Student", render: (row) => <span className="font-semibold text-gray-900">{row.student_name}</span> },
+    { key: "student_name", label: t("admin.columns.student"), render: (row) => <span className="font-semibold text-gray-900">{row.student_name}</span> },
     { key: "email", label: t("admin.fields.email") },
-    { key: "status", label: t("admin.fields.enrolledCount", { defaultValue: "Enrollment" }) === "Đăng ký" ? "Đăng ký" : "Enrollment", render: (row) => <StatusBadge value={row.status} /> },
-    { key: "enrolled_at", label: t("common.confirm") === "Xác nhận" ? "Ngày đăng ký" : "Enrolled", render: (row) => formatDate(row.enrolled_at) },
-    { key: "group", label: t("admin.fields.group"), render: (row) => row.group_name || <span className="text-gray-400">{t("common.confirm") === "Xác nhận" ? "Chưa có nhóm" : "No group"}</span> },
+    { key: "status", label: t("admin.fields.status"), render: (row) => <StatusBadge value={row.status} /> },
+    { key: "enrolled_at", label: t("admin.columns.enrolledAt"), render: (row) => formatDate(row.enrolled_at) },
+    { key: "group", label: t("admin.fields.group"), render: (row) => row.group_name || <span className="text-gray-400">{t("admin.columns.noGroup")}</span> },
     {
       key: "actions",
       label: "",
       render: (row) => (
         <div className="flex justify-end gap-1">
-          <ActionButton onClick={() => loadWithoutGroup(row.class_id)} title={t("common.confirm") === "Xác nhận" ? "Sinh viên chưa có nhóm" : "Students without group"}><Eye size={16} /></ActionButton>
+          <ActionButton onClick={() => loadWithoutGroup(row.class_id)} title={t("admin.enrollment.studentsWithoutGroup")}><Eye size={16} /></ActionButton>
           {canWrite && !row.user_id && row.status !== "dropped" ? (
             <ActionButton
               onClick={() => sendInvite(row)}
-              title={t("common.confirm") === "Xác nhận" ? "Gửi invite kích hoạt" : "Send activation invite"}
+              title={t("admin.enrollment.sendActivationInvite")}
               disabled={sendingInviteId === row.id}
             >
               <Send size={16} />
             </ActionButton>
           ) : null}
           {canWrite && row.status !== "dropped" ? (
-            <ActionButton onClick={() => setConfirmAction({ enrollment: row, status: "dropped" })} title="Drop student" tone="red"><UserMinus size={16} /></ActionButton>
+            <ActionButton onClick={() => setConfirmAction({ enrollment: row, status: "dropped" })} title={t("admin.enrollment.dropStudent")} tone="red"><UserMinus size={16} /></ActionButton>
           ) : null}
         </div>
       ),
@@ -220,10 +234,10 @@ export default function AdminEnrollments() {
         right={canWrite ? (
           <>
             <button type="button" onClick={() => loadWithoutGroup(query.class_id)} className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 cursor-pointer">
-              <UsersRound size={16} /> {t("common.confirm") === "Xác nhận" ? "Chưa có nhóm" : "Without group"}
+              <UsersRound size={16} /> {t("admin.enrollment.withoutGroupBtn")}
             </button>
             <button type="button" onClick={openBulk} className="inline-flex items-center gap-2 rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-2.5 text-sm font-semibold text-indigo-700 hover:bg-indigo-100 cursor-pointer">
-              <UsersRound size={16} /> {t("common.confirm") === "Xác nhận" ? "Thêm hàng loạt" : "Bulk add"}
+              <UsersRound size={16} /> {t("admin.enrollment.bulkAdd")}
             </button>
             <button type="button" onClick={openAdd} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 cursor-pointer">
               <Plus size={16} /> {t("admin.actions.create")}
@@ -231,103 +245,226 @@ export default function AdminEnrollments() {
           </>
         ) : null}
       >
-        <SearchInput value={query.search} onChange={(search) => setQuery((prev) => ({ ...prev, page: 1, search }))} placeholder={t("common.confirm") === "Xác nhận" ? "MSSV, tên, email, lớp..." : "Code, name, email, class..."} />
-        <FilterSelect label={t("admin.fields.classCode", { defaultValue: "Class" }) === "Mã lớp" ? "Lớp" : "Class"} value={query.class_id} onChange={(class_id) => setQuery((prev) => ({ ...prev, page: 1, class_id }))} options={classOptions} />
-        <FilterSelect label={t("admin.fields.semester")} value={query.semester_id} onChange={(semester_id) => setQuery((prev) => ({ ...prev, page: 1, semester_id }))} options={semesterOptions} />
-        <FilterSelect label={t("nav.subjects")} value={query.subject_id} onChange={(subject_id) => setQuery((prev) => ({ ...prev, page: 1, subject_id }))} options={subjectOptions} />
+        <SearchInput value={query.search} onChange={(search) => setQuery((prev) => ({ ...prev, page: 1, search }))} placeholder={t("admin.enrollment.searchPlaceholder")} />
+        <FilterSelect label={t("admin.columns.class")} value={query.class_id} onChange={(class_id) => setQuery((prev) => ({ ...prev, page: 1, class_id }))} options={classOptions} />
+        <FilterSelect label={t("admin.columns.semester")} value={query.semester_id} onChange={(semester_id) => setQuery((prev) => ({ ...prev, page: 1, semester_id }))} options={semesterOptions} />
+        <FilterSelect label={t("admin.columns.subject")} value={query.subject_id} onChange={(subject_id) => setQuery((prev) => ({ ...prev, page: 1, subject_id }))} options={subjectOptions} />
         <FilterSelect label={t("admin.fields.status")} value={query.status} onChange={(status) => setQuery((prev) => ({ ...prev, page: 1, status }))} options={enrollmentStatusOptions} />
       </FilterBar>
 
       <AdminTable columns={columns} rows={rows} loading={loading} error={error} meta={meta} onPageChange={(page) => setQuery((prev) => ({ ...prev, page }))} emptyText={t("common.noData")} />
 
-      <FormModal open={modal.type === "add"} title={t("common.confirm") === "Xác nhận" ? "Thêm sinh viên vào lớp" : "Add student to class"} onClose={() => setModal({ type: null })} onSubmit={saveEnrollment} saving={saving}>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label={t("admin.fields.classCode", { defaultValue: "Class" }) === "Mã lớp" ? "Lớp" : "Class"}>
-            <Dropdown
-              label={t("common.confirm") === "Xác nhận" ? "Chọn lớp" : "Select class"}
-              value={form.class_id}
-              onChange={(value) => setForm({ ...form, class_id: value })}
-              options={formClassOptions}
-            />
-          </Field>
-          <Field label={t("admin.fields.fullName", { defaultValue: "Sinh viên" }) === "Họ và tên" ? "Sinh viên" : "Student"}>
-            <Dropdown
-              label={t("common.confirm") === "Xác nhận" ? "Chọn sinh viên" : "Select student"}
-              value={form.student_id}
-              onChange={(value) => setForm({ ...form, student_id: value })}
-              options={formStudentOptions}
-            />
-          </Field>
-          <Field label={t("admin.fields.status")}>
-            <Dropdown
-              label="Status"
-              value={form.status}
-              onChange={(value) => setForm({ ...form, status: value })}
-              options={[
-                { value: "enrolled", label: "Enrolled" },
-                { value: "completed", label: "Completed" },
-              ]}
-            />
-          </Field>
-          <div className="sm:col-span-2">
+      <FormModal open={modal.type === "add"} title={t("admin.enrollment.addStudentTitle")} onClose={() => setModal({ type: null })} onSubmit={saveEnrollment} saving={saving}>
+        <div className="space-y-6">
+          {/* Section 1: Academic Info */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+                <BookOpen size={16} />
+              </span>
+              <h4 className="text-sm font-bold text-gray-800">
+                {t("admin.enrollment.academicInfo")}
+              </h4>
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field label={t("admin.columns.class")}>
+                <Dropdown
+                  label={t("admin.enrollment.selectClassLabel")}
+                  value={form.class_id}
+                  onChange={(value) => setForm({ ...form, class_id: value })}
+                  options={formClassOptions}
+                />
+              </Field>
+              <Field label={t("admin.columns.student")}>
+                <Dropdown
+                  label={t("admin.enrollment.selectStudentLabel")}
+                  value={form.student_id}
+                  onChange={(value) => setForm({ ...form, student_id: value })}
+                  options={formStudentOptions}
+                />
+              </Field>
+            </div>
+          </div>
+
+          {/* Section 2: Status */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                <ShieldCheck size={16} />
+              </span>
+              <h4 className="text-sm font-bold text-gray-800">
+                {t("admin.enrollment.enrollmentStatus")}
+              </h4>
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field label={t("admin.fields.status")}>
+                <Dropdown
+                  label={t("admin.fields.status")}
+                  value={form.status}
+                  onChange={(value) => setForm({ ...form, status: value })}
+                  direction="up"
+                  options={[
+                    { value: "enrolled", label: t("status.enrolled") },
+                    { value: "completed", label: t("status.completed") },
+                  ]}
+                />
+              </Field>
+            </div>
+          </div>
+
+          <div className="mt-2">
             <WarningNote>
-              {t("common.confirm") === "Xác nhận"
-                ? "Hệ thống tự động chặn trùng lớp và cảnh báo nếu sinh viên đã học cùng subject trong học kỳ."
-                : "System prevents duplicate entries and warns if the student has taken the same subject in the semester."}
+              {t("admin.enrollment.duplicateWarning")}
             </WarningNote>
           </div>
         </div>
       </FormModal>
 
-      <FormModal open={modal.type === "bulk"} title={t("common.confirm") === "Xác nhận" ? "Thêm hàng loạt sinh viên" : "Bulk add students"} onClose={() => setModal({ type: null })} onSubmit={saveBulk} saving={saving}>
-        <div className="space-y-4">
-          <Field label={t("admin.fields.classCode", { defaultValue: "Class" }) === "Mã lớp" ? "Lớp" : "Class"}>
-            <Dropdown
-              label={t("common.confirm") === "Xác nhận" ? "Chọn lớp" : "Select class"}
-              value={bulkForm.class_id}
-              onChange={(value) => setBulkForm({ ...bulkForm, class_id: value })}
-              options={formClassOptions}
-            />
-          </Field>
-          <div className="max-h-72 overflow-y-auto rounded-xl border border-gray-100 p-2">
-            {(lookups.students || []).map((student) => (
-              <label key={student.id} className="flex items-center gap-3 rounded-lg px-2 py-2 text-sm hover:bg-gray-50 cursor-pointer">
-                <input type="checkbox" checked={bulkForm.student_ids.includes(student.id)} onChange={() => toggleBulkStudent(student.id)} />
-                <span className="font-semibold text-gray-800">{buildStudentLabel(student)}</span>
-              </label>
-            ))}
+      <FormModal open={modal.type === "bulk"} title={t("admin.enrollment.bulkAddTitle")} onClose={() => setModal({ type: null })} onSubmit={saveBulk} saving={saving}>
+        <div className="space-y-6">
+          {/* Section 1: Target Class */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+                <BookOpen size={16} />
+              </span>
+              <h4 className="text-sm font-bold text-gray-800">
+                {t("admin.enrollment.classAssignment")}
+              </h4>
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field label={t("admin.columns.class")}>
+                <Dropdown
+                  label={t("admin.enrollment.selectClassLabel")}
+                  value={bulkForm.class_id}
+                  onChange={(value) => setBulkForm({ ...bulkForm, class_id: value })}
+                  options={formClassOptions}
+                />
+              </Field>
+            </div>
+          </div>
+
+          {/* Section 2: Student List */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-2">
+              <div className="flex items-center gap-2">
+                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                  <UsersRound size={16} />
+                </span>
+                <h4 className="text-sm font-bold text-gray-800">
+                  {t("admin.enrollment.studentList")}
+                </h4>
+              </div>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-bold text-indigo-700">
+                {t("admin.enrollment.selectedCount", { count: bulkForm.student_ids.length })}
+              </span>
+            </div>
+
+            {/* Smart Search Bar */}
+            <div className="relative">
+              <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                className="w-full pl-9 pr-4 py-2 rounded-xl bg-gray-50 border border-gray-200 focus:bg-white focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50 outline-none transition-all text-xs font-medium"
+                placeholder={t("admin.enrollment.searchStudentPlaceholder")}
+                value={bulkSearch}
+                onChange={(e) => setBulkSearch(e.target.value)}
+              />
+            </div>
+
+            {/* Premium scroll list */}
+            <div className="max-h-64 overflow-y-auto rounded-2xl border border-gray-100 p-2 space-y-1 custom-scrollbar">
+              {filteredBulkStudents.length ? (
+                filteredBulkStudents.map((student) => {
+                  const isChecked = bulkForm.student_ids.includes(student.id);
+                  return (
+                    <label
+                      key={student.id}
+                      className={`
+                        flex items-center justify-between gap-3 rounded-xl border px-3 py-2.5 text-xs font-medium cursor-pointer transition-all duration-150
+                        ${isChecked
+                          ? "bg-indigo-50/40 border-indigo-200 text-indigo-950 font-bold"
+                          : "border-transparent text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                        }
+                      `}
+                    >
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 h-3.5 w-3.5"
+                          checked={isChecked}
+                          onChange={() => toggleBulkStudent(student.id)}
+                        />
+                        <span>{buildStudentLabel(student)}</span>
+                      </div>
+                      {isChecked && <Check size={14} className="text-indigo-600 shrink-0" />}
+                    </label>
+                  );
+                })
+              ) : (
+                <div className="py-6 text-center text-xs text-gray-400 bg-gray-50/50 rounded-xl">
+                  {t("admin.enrollment.noStudentsFound")}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </FormModal>
 
       <FormModal
         open={modal.type === "without-group"}
-        title={t("common.confirm") === "Xác nhận" ? "Sinh viên chưa có nhóm" : "Students without group"}
+        title={t("admin.enrollment.withoutGroupModalTitle")}
         onClose={() => setModal({ type: null })}
         onSubmit={(event) => { event.preventDefault(); setModal({ type: null }); }}
         submitLabel={t("admin.actions.close")}
       >
         {withoutGroup.loading ? (
-          <div className="rounded-xl bg-gray-50 p-6 text-center text-sm text-gray-400">{t("common.loading")}</div>
+          <div className="rounded-xl bg-gray-50/50 py-10 text-center text-sm text-gray-400 flex items-center justify-center gap-2">
+            <div className="h-4 w-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+            {t("common.loading")}
+          </div>
         ) : (
-          <div className="space-y-2">
-            {withoutGroup.rows.length ? withoutGroup.rows.map((student) => (
-              <div key={student.id} className="rounded-xl border border-gray-100 p-3 text-sm">
-                <div className="font-bold text-gray-900">{student.student_code} - {student.full_name}</div>
-                <div className="mt-1 text-gray-500">{student.email} · {student.major || "—"} · {formatDate(student.enrolled_at)}</div>
+          <div className="space-y-2 max-h-96 overflow-y-auto custom-scrollbar pr-1">
+            {withoutGroup.rows.length ? (
+              withoutGroup.rows.map((student) => (
+                <div key={student.id} className="flex gap-4 rounded-2xl border border-gray-100 bg-white p-4 transition-all hover:border-indigo-100 hover:shadow-md hover:shadow-indigo-50/20">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-xs font-extrabold text-indigo-700">
+                    {(student.full_name || "?").slice(0, 2).toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="font-bold text-gray-900 text-sm truncate">{student.full_name}</div>
+                      <span className="shrink-0 rounded-lg bg-slate-50 border border-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600 tracking-wide font-mono">
+                        {student.student_code}
+                      </span>
+                    </div>
+                    <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-500">
+                      <span>{student.email}</span>
+                      <span className="text-gray-300">•</span>
+                      <span className="font-medium text-indigo-600">{student.major || "—"}</span>
+                      <span className="text-gray-300">•</span>
+                      <span className="font-medium">{formatDate(student.enrolled_at)}</span>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="rounded-2xl bg-gray-50/60 p-10 text-center text-sm text-gray-400">
+                <Info size={28} className="mx-auto text-gray-300 mb-2" />
+                {t("admin.enrollment.noStudentsWithoutGroup")}
               </div>
-            )) : <div className="rounded-xl bg-gray-50 p-6 text-center text-sm text-gray-400">{t("common.confirm") === "Xác nhận" ? "Lớp học không có sinh viên chưa có nhóm." : "No students in this class are without group."}</div>}
+            )}
           </div>
         )}
       </FormModal>
 
       <ConfirmDialog
         isOpen={!!confirmAction}
-        title={confirmAction?.forceRequired ? (t("common.confirm") === "Xác nhận" ? "Drop sinh viên khỏi lớp và nhóm?" : "Drop student from class and group?") : (t("common.confirm") === "Xác nhận" ? "Drop sinh viên khỏi lớp" : "Drop student from class")}
-        subtitle={confirmAction?.forceRequired ? confirmAction.message : (t("common.confirm") === "Xác nhận" ? "Nếu sinh viên đang thuộc nhóm, hệ thống yêu cầu force drop để gỡ khỏi nhóm trước." : "If the student belongs to a group, backend requires force drop validation.")}
+        title={confirmAction?.forceRequired ? t("admin.enrollment.dropFromClassAndGroup") : t("admin.enrollment.dropFromClass")}
+        subtitle={confirmAction?.forceRequired ? confirmAction.message : t("admin.enrollment.dropSubtitle")}
         variant="remove"
         color="red"
-        yesLabel={confirmAction?.forceRequired ? "Force drop" : "Drop"}
+        yesLabel={confirmAction?.forceRequired ? t("admin.enrollment.forceDrop") : t("admin.enrollment.dropStudent")}
         onYes={() => updateStatus(!!confirmAction?.forceRequired)}
         onClose={() => setConfirmAction(null)}
       />

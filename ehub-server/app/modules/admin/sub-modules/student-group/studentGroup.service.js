@@ -143,6 +143,8 @@ export const createAdminStudentGroupService = ({
     if (!student) throw NotFound("Student");
     const existing = await adminStudentGroupRepository.findEnrollmentByClassStudent(cls.id, student.id);
     if (existing) throw AlreadyExists("Sinh viên đã tồn tại trong lớp");
+    const existingClass = await adminStudentGroupRepository.findAnyEnrollmentByStudent(student.id);
+    if (existingClass) throw BadRequest(`Sinh viên đã có lớp ${existingClass.class_code}`);
 
     const warnings = [];
     const sameSubject = await adminStudentGroupRepository.findSameSubjectSemesterEnrollment(

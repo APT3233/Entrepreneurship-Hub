@@ -9,6 +9,7 @@ import {
   CalendarDays,
   ClipboardCheck,
   ClipboardList,
+  Bot,
   ChevronRight,
   Cloud,
   Files,
@@ -27,6 +28,7 @@ import {
   User,
   UserPlus,
   Search,
+  Send,
   Settings,
   ShieldCheck,
   TriangleAlert,
@@ -61,6 +63,35 @@ const navItems = [
     ],
   },
   {
+    titleKey: "nav.lecturerManagement",
+    icon: User,
+    items: [
+      { labelKey: "nav.lecturers", path: "/admin/lecturers", icon: User },
+      { labelKey: "nav.lecturerWorkload", path: "/admin/lecturers/workload", icon: BarChart3 },
+    ],
+  },
+  {
+    titleKey: "nav.mentorManagement",
+    icon: UserPlus,
+    items: [
+      { labelKey: "nav.mentors", path: "/admin/mentors", icon: UserPlus },
+      { labelKey: "nav.pendingMentors", path: "/admin/mentors/pending", icon: TriangleAlert },
+      { labelKey: "nav.expertiseAreas", path: "/admin/mentors/expertise", icon: Layers3 },
+      { labelKey: "nav.mentorDocuments", path: "/admin/mentors/documents", icon: Files },
+      { labelKey: "nav.mentorAssignments", path: "/admin/mentor-assignments", icon: ClipboardList },
+      { labelKey: "nav.mentoringSessions", path: "/admin/mentoring/sessions", icon: ClipboardCheck },
+      { labelKey: "nav.mentoringFeedbacks", path: "/admin/mentoring/feedbacks", icon: BarChart3 },
+      { labelKey: "nav.mentoringActionItems", path: "/admin/mentoring/action-items", icon: FolderKanban },
+      { labelKey: "nav.mentorMatching", path: "/admin/mentor-matching", icon: Bot },
+      { labelKey: "nav.mentorAnalytics", path: "/admin/mentor-analytics", icon: BarChart3 },
+      { labelKey: "nav.mentorWorkload", path: "/admin/mentor-analytics/workload", icon: ClipboardList },
+      { labelKey: "nav.mentorEffectiveness", path: "/admin/mentor-analytics/effectiveness", icon: ClipboardCheck },
+      { labelKey: "nav.mentorMatchingAnalytics", path: "/admin/mentor-analytics/matching", icon: Bot },
+      { labelKey: "nav.mentorExpertiseHeatmap", path: "/admin/mentor-analytics/expertise", icon: Layers3 },
+      { labelKey: "nav.mentorGroupSupport", path: "/admin/mentor-analytics/group-support", icon: UsersRound },
+    ],
+  },
+  {
     titleKey: "nav.studentGroupManagement",
     icon: UsersRound,
     items: [
@@ -84,6 +115,15 @@ const navItems = [
     ],
   },
   {
+    titleKey: "nav.rubricManagement",
+    icon: Layers3,
+    items: [
+      { labelKey: "nav.rubrics", path: "/admin/evaluation/rubrics", icon: ClipboardCheck },
+      { labelKey: "nav.gradingConfig", path: "/admin/evaluation/grading-config", icon: Settings },
+      { labelKey: "nav.rubricUsage", path: "/admin/evaluation/rubric-usage", icon: Layers3 },
+    ],
+  },
+  {
     titleKey: "nav.evaluationManagement",
     icon: BarChart3,
     items: [
@@ -91,9 +131,23 @@ const navItems = [
       { labelKey: "nav.evaluationSessions", path: "/admin/evaluation/sessions", icon: ClipboardCheck },
       { labelKey: "nav.evaluationResults", path: "/admin/evaluation/results", icon: ClipboardList },
       { labelKey: "nav.gradingProgress", path: "/admin/evaluation/progress", icon: ClipboardList },
-      { labelKey: "nav.rubricUsage", path: "/admin/evaluation/rubric-usage", icon: Layers3 },
       { labelKey: "nav.gradeAudit", path: "/admin/evaluation/grade-audit", icon: History },
       { labelKey: "nav.exportScores", path: "/admin/evaluation/exports", icon: FileUp },
+      { labelKey: "nav.evaluationAnalytics", path: "/admin/evaluation/analytics", icon: BarChart3 },
+      { labelKey: "nav.aiSuggestions", path: "/admin/evaluation/ai-suggestions", icon: Bot },
+      { labelKey: "nav.importExport", path: "/admin/import-export", icon: FileUp },
+      { labelKey: "nav.invitations", path: "/admin/invitations", icon: Send },
+    ],
+  },
+  {
+    titleKey: "nav.analytics",
+    icon: BarChart3,
+    items: [
+      { labelKey: "nav.analyticsOverview", path: "/admin/analytics", icon: BarChart3 },
+      { labelKey: "nav.academicQuality", path: "/admin/analytics/academic-quality", icon: GraduationCap },
+      { labelKey: "nav.gradingAnalytics", path: "/admin/analytics/grading", icon: ClipboardCheck },
+      { labelKey: "nav.rubricAnalytics", path: "/admin/analytics/rubric", icon: Layers3 },
+      { labelKey: "nav.projectAnalytics", path: "/admin/analytics/projects", icon: FolderKanban },
     ],
   },
   {
@@ -112,6 +166,7 @@ const navItems = [
       { labelKey: "nav.roles", path: "/admin/roles", icon: ShieldCheck },
       { labelKey: "nav.permissions", path: "/admin/permissions", icon: KeyRound },
       { labelKey: "nav.settings", path: "/admin/settings", icon: Settings },
+      { labelKey: "nav.aiSettings", path: "/admin/settings/ai", icon: Bot },
     ],
   },
 ];
@@ -123,9 +178,29 @@ const titleMap = {
   "/admin/roles": "nav.roles",
   "/admin/permissions": "nav.permissions",
   "/admin/settings": "nav.settings",
+  "/admin/settings/ai": "nav.aiSettings",
   "/admin/academic/subjects": "nav.subjects",
   "/admin/academic/semesters": "nav.semesters",
   "/admin/academic/classes": "nav.classes",
+  "/admin/lecturers": "nav.lecturers",
+  "/admin/lecturers/create": "nav.createLecturer",
+  "/admin/lecturers/workload": "nav.lecturerWorkload",
+  "/admin/mentors": "nav.mentors",
+  "/admin/mentors/create": "nav.createMentor",
+  "/admin/mentors/expertise": "nav.expertiseAreas",
+  "/admin/mentors/pending": "nav.pendingMentors",
+  "/admin/mentors/documents": "nav.mentorDocuments",
+  "/admin/mentor-assignments": "nav.mentorAssignments",
+  "/admin/mentoring/sessions": "nav.mentoringSessions",
+  "/admin/mentoring/feedbacks": "nav.mentoringFeedbacks",
+  "/admin/mentoring/action-items": "nav.mentoringActionItems",
+  "/admin/mentor-matching": "nav.mentorMatching",
+  "/admin/mentor-analytics": "nav.mentorAnalytics",
+  "/admin/mentor-analytics/workload": "nav.mentorWorkload",
+  "/admin/mentor-analytics/effectiveness": "nav.mentorEffectiveness",
+  "/admin/mentor-analytics/matching": "nav.mentorMatchingAnalytics",
+  "/admin/mentor-analytics/expertise": "nav.mentorExpertiseHeatmap",
+  "/admin/mentor-analytics/group-support": "nav.mentorGroupSupport",
   "/admin/students": "nav.students",
   "/admin/enrollments": "nav.enrollments",
   "/admin/groups": "nav.groups",
@@ -147,25 +222,44 @@ const titleMap = {
   "/admin/evaluation/grade-audit": "nav.gradeAudit",
   "/admin/evaluation/exports": "nav.exportScores",
   "/admin/evaluation/analytics": "nav.evaluationAnalytics",
+  "/admin/evaluation/ai-suggestions": "nav.aiSuggestions",
   "/admin/import-export": "nav.importExport",
   "/admin/invitations": "nav.invitations",
   "/admin/logs/audit": "nav.auditLogs",
   "/admin/logs/api-access": "nav.apiAccessLogs",
   "/admin/logs/import": "nav.importLogs",
+  "/admin/analytics": "nav.analyticsOverview",
+  "/admin/analytics/academic-quality": "nav.academicQuality",
+  "/admin/analytics/grading": "nav.gradingAnalytics",
+  "/admin/analytics/rubric": "nav.rubricAnalytics",
+  "/admin/analytics/projects": "nav.projectAnalytics",
 };
 
 const getPageTitle = (pathname, t) => {
   if (titleMap[pathname]) return t(titleMap[pathname]);
   if (pathname.startsWith("/admin/academic/classes/")) return t("header.detailClass");
+  if (pathname.startsWith("/admin/mentor-matching/")) return t("nav.mentorMatchingDetail");
+  if (pathname.startsWith("/admin/mentor-assignments/")) return t("nav.mentorAssignmentDetail");
+  if (/^\/admin\/groups\/\d+\/mentors/.test(pathname)) return t("nav.groupMentors");
   if (pathname.startsWith("/admin/groups/")) return t("header.detailGroup");
   if (pathname.startsWith("/admin/checkpoints/")) return t("header.detailCheckpoint");
   if (pathname.startsWith("/admin/assignments/")) return t("header.detailAssignment");
   if (pathname.startsWith("/admin/evaluation/rubrics/")) return t("header.detailRubric");
+  if (pathname.startsWith("/admin/lecturers/")) return t("header.detailLecturer");
+  if (pathname.startsWith("/admin/mentors/")) return t("nav.mentorDetail");
   return t("header.adminTitle");
 };
 
 const getBreadcrumbRoot = (pathname, t) => {
   if (pathname.startsWith("/admin/academic")) return t("nav.academicManagement");
+  if (pathname.startsWith("/admin/lecturers")) return t("nav.lecturerManagement");
+  if (
+    pathname.startsWith("/admin/mentors") ||
+    pathname.startsWith("/admin/mentor-assignments") ||
+    pathname.startsWith("/admin/mentor-matching") ||
+    pathname.startsWith("/admin/mentor-analytics") ||
+    pathname.startsWith("/admin/mentoring")
+  ) return t("nav.mentorManagement");
   if (
     pathname.startsWith("/admin/students") ||
     pathname.startsWith("/admin/enrollments") ||
@@ -185,6 +279,13 @@ const getBreadcrumbRoot = (pathname, t) => {
     return t("nav.projectSubmissionManagement");
   }
   if (
+    pathname.startsWith("/admin/evaluation/rubrics") ||
+    pathname.startsWith("/admin/evaluation/grading-config") ||
+    pathname.startsWith("/admin/evaluation/rubric-usage")
+  ) {
+    return t("nav.rubricManagement");
+  }
+  if (
     pathname.startsWith("/admin/evaluation") ||
     pathname.startsWith("/admin/import-export") ||
     pathname.startsWith("/admin/invitations")
@@ -193,6 +294,9 @@ const getBreadcrumbRoot = (pathname, t) => {
   }
   if (pathname.startsWith("/admin/logs")) {
     return t("nav.audit");
+  }
+  if (pathname.startsWith("/admin/analytics")) {
+    return t("nav.analytics");
   }
   if (
     pathname.startsWith("/admin/roles") ||
@@ -206,6 +310,15 @@ const getBreadcrumbRoot = (pathname, t) => {
 
 const isPathActive = (pathname, path) => {
   if (path === "/admin/evaluation") return pathname === path;
+  if (path === "/admin/analytics") return pathname === path;
+  if (path === "/admin/mentor-analytics") return pathname === path;
+  if (path === "/admin/settings") return pathname === path;
+  if (path === "/admin/lecturers") {
+    return pathname === path || (pathname.startsWith("/admin/lecturers/") && !pathname.startsWith("/admin/lecturers/workload"));
+  }
+  if (path === "/admin/mentors") {
+    return pathname === path || pathname === "/admin/mentors/create" || /^\/admin\/mentors\/\d+/.test(pathname);
+  }
   return pathname === path || pathname.startsWith(`${path}/`);
 };
 
@@ -269,10 +382,9 @@ function LanguageSwitcher() {
   );
 }
 
-function AdminSidebar({ open, onClose, user }) {
+function AdminSidebar({ open, onClose }) {
   const { t } = useTranslation();
   const location = useLocation();
-  const name = user?.full_name || user?.username || user?.email || "Admin";
   const [hovered, setHovered] = useState(false);
   const [pinned, setPinned] = useState(() => localStorage.getItem("admin_sidebar_pinned") === "true");
   const [expandedSections, setExpandedSections] = useState(() => new Set(getActiveSectionKeys(location.pathname)));
@@ -318,8 +430,8 @@ function AdminSidebar({ open, onClose, user }) {
       >
         <div className={`flex h-[78px] items-center justify-between overflow-hidden border-b border-slate-100 transition-[padding] duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)] will-change-[padding] ${isExpanded ? "px-4" : "px-[14px]"}`}>
           <div className={`flex items-center overflow-hidden transition-[gap,justify-content] duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)] ${isExpanded ? "gap-3" : "w-full justify-center gap-0"}`}>
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#4f16f8] text-sm font-black text-white shadow-[0_8px_18px_rgba(79,22,248,0.32)]">
-              A
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#4f16f8] to-[#3b82f6] text-sm font-black text-white shadow-[0_8px_18px_rgba(79,22,248,0.24)] shrink-0">
+              E
             </div>
             <div
               style={{
@@ -329,8 +441,10 @@ function AdminSidebar({ open, onClose, user }) {
               }}
               className="overflow-hidden whitespace-nowrap transition-[opacity,transform,max-width] duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)] will-change-[opacity,transform,max-width]"
             >
-              <p className="text-sm font-extrabold leading-4 text-slate-900">Adminator</p>
-              <p className="mt-0.5 text-[9px] font-semibold tracking-[0.28em] text-slate-300">v{pkg.version} · <span className="text-[7.5px] font-bold tracking-normal uppercase">APT3233</span></p>
+              <p className="text-sm font-black tracking-wider bg-gradient-to-r from-[#4f16f8] to-[#3b82f6] bg-clip-text text-transparent uppercase leading-none">
+                E-HUB
+              </p>
+              <p className="mt-1 text-[9px] font-semibold tracking-[0.24em] text-slate-400">v{pkg.version} · <span className="text-[7.5px] font-bold tracking-normal uppercase text-slate-300">APT3233</span></p>
             </div>
           </div>
           <button className="md:hidden p-2 text-gray-400" onClick={onClose} aria-label="Đóng">
@@ -384,6 +498,7 @@ function AdminSidebar({ open, onClose, user }) {
                   <NavLink
                     key={item.path}
                     to={item.path}
+                    end
                     onClick={onClose}
                     className={({ isActive }) => {
                       const activeItem = isActive || isPathActive(location.pathname, item.path);
@@ -479,11 +594,19 @@ function AdminHeader({ user, onMenu, onLogout, onSearchClick }) {
             <button
               type="button"
               onClick={() => setOpen(!open)}
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-[#6d16f8] text-xs font-bold text-white shadow-sm cursor-pointer hover:scale-105 transition-transform"
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-[#6d16f8] text-xs font-bold text-white shadow-sm cursor-pointer hover:scale-105 transition-transform overflow-hidden"
               title={name}
               aria-label="Tài khoản admin"
             >
-              {getInitials(name)}
+              {user?.avatar_url ? (
+                <img
+                  src={user.avatar_url}
+                  alt={name}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                getInitials(name)
+              )}
             </button>
             {open && (
               <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-100 rounded-xl shadow-lg py-1.5 z-50 animate-in fade-in slide-in-from-top-1 duration-100">
@@ -501,7 +624,7 @@ function AdminHeader({ user, onMenu, onLogout, onSearchClick }) {
                   className="w-full text-left px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:text-indigo-600 transition-colors flex items-center gap-2 cursor-pointer"
                 >
                   <User size={14} className="text-slate-400" />
-                  <span>{t("common.confirm") === "Xác nhận" ? "Thông tin cá nhân" : "Profile"}</span>
+                  <span>{t("profile.accountInfo")}</span>
                 </button>
                 <button
                   type="button"

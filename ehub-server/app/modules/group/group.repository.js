@@ -102,9 +102,10 @@ export const createGroupRepository = ({ db }) => {
   /** Lấy thông tin lớp kèm trạng thái học kỳ (để kiểm tra điều kiện tạo nhóm: chỉ khi ongoing) */
   const findClassWithSemesterStatus = async (classId) => {
     const sql = `
-      SELECT c.id, c.lecturer_id, c.class_code, sem.status AS semester_status
+      SELECT c.id, c.lecturer_id, c.class_code, sem.status AS semester_status, sub.status AS subject_status, sub.subject_name
       FROM \`classes\` c
       JOIN semesters sem ON sem.id = c.semester_id
+      JOIN subjects sub ON sub.id = c.subject_id
       WHERE c.id = :classId AND c.deleted_at IS NULL
       LIMIT 1
     `;

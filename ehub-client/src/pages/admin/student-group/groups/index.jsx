@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Archive, Eye, Plus, SquarePen } from "lucide-react";
+import { Archive, Eye, Plus, SquarePen, Info, Briefcase, UserCog } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { groupService, studentGroupLookupService } from "@/api/adminStudentGroup";
@@ -20,6 +20,7 @@ import Dropdown from "@/components/ui/filter/DropDown";
 import {
   buildClassLabel,
   getGroupStatusOptions,
+  getShortClassCode,
   pageLimit,
   toSelectOptions,
 } from "@/pages/admin/student-group/shared";
@@ -153,9 +154,8 @@ export default function AdminGroups() {
   };
 
   const columns = useMemo(() => [
-    { key: "group_code", label: t("admin.fields.studentCode", { defaultValue: "Mã nhóm" }) === "Mã sinh viên" ? "Mã nhóm" : "Group code", render: (row) => <span className="font-mono text-xs font-bold text-indigo-700">{row.group_code}</span> },
     { key: "group_name", label: t("admin.fields.groupName"), render: (row) => <span className="font-semibold text-gray-900">{row.group_name}</span> },
-    { key: "class_code", label: t("admin.fields.classCode"), render: (row) => row.class_code },
+    { key: "class_code", label: t("admin.fields.classCode"), render: (row) => getShortClassCode(row.class_code, row.semester_code) },
     { key: "subject", label: t("nav.subjects"), render: (row) => `${row.subject_code} - ${row.subject_name}` },
     { key: "semester", label: t("admin.fields.semester"), render: (row) => row.semester_code },
     { key: "topic", label: "Topic", render: (row) => row.topic || "—" },
@@ -196,47 +196,92 @@ export default function AdminGroups() {
       <AdminTable columns={columns} rows={rows} loading={loading} error={error} meta={meta} onPageChange={(page) => setQuery((prev) => ({ ...prev, page }))} emptyText={t("common.noData")} />
 
       <FormModal open={["create", "edit"].includes(modal.type)} title={modal.type === "create" ? t("admin.actions.create") + " Group" : t("admin.actions.edit") + " Group"} onClose={() => setModal({ type: null, group: null })} onSubmit={save} saving={saving}>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label={t("admin.fields.classCode")}>
-            <Dropdown
-              label={t("common.confirm", { defaultValue: "Xác nhận" }) === "Xác nhận" ? "Chọn lớp" : "Select class"}
-              value={form.class_id}
-              onChange={(value) => setForm({ ...form, class_id: value })}
-              options={formClassOptions}
-            />
-          </Field>
-          <Field label={t("admin.fields.studentCode", { defaultValue: "Mã nhóm" }) === "Mã sinh viên" ? "Mã nhóm" : "Group code"}><input className={inputClass} value={form.group_code} onChange={(e) => setForm({ ...form, group_code: e.target.value.toUpperCase() })} required /></Field>
-          <Field label={t("admin.fields.groupName")}><input className={inputClass} value={form.group_name} onChange={(e) => setForm({ ...form, group_name: e.target.value })} required /></Field>
-          <Field label="Category"><input className={inputClass} value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} /></Field>
-          <Field label="Topic"><input className={inputClass} value={form.topic} onChange={(e) => setForm({ ...form, topic: e.target.value })} /></Field>
-          <Field label="Zalo link"><input className={inputClass} value={form.zalo_link} onChange={(e) => setForm({ ...form, zalo_link: e.target.value })} /></Field>
-          <Field label={t("admin.fields.lecturer", { defaultValue: "Mentor" }) === "Giảng viên" ? "Mentor" : "Mentor"}><input className={inputClass} value={form.mentor_name} onChange={(e) => setForm({ ...form, mentor_name: e.target.value })} /></Field>
-          <Field label="Mentor dept"><input className={inputClass} value={form.mentor_dept} onChange={(e) => setForm({ ...form, mentor_dept: e.target.value })} /></Field>
-          <Field label="Max members"><input type="number" min="1" max="20" className={inputClass} value={form.max_members} onChange={(e) => setForm({ ...form, max_members: e.target.value })} required /></Field>
-          <Field label={t("admin.fields.status")}>
-            <Dropdown
-              label="Status"
-              value={form.status}
-              onChange={(value) => setForm({ ...form, status: value })}
-              options={[
-                { value: "forming", label: "Forming" },
-                { value: "active", label: "Active" },
-                { value: "inactive", label: "Inactive" },
-                { value: "completed", label: "Completed" },
-                { value: "dissolved", label: "Dissolved" },
-              ]}
-            />
-          </Field>
-          <div className="sm:col-span-2">
-            <Field label={t("admin.fields.description")}><textarea className={inputClass} rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></Field>
+        <div className="space-y-6">
+          {/* Section 1: Basic Information */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+                <Info size={16} />
+              </span>
+              <h4 className="text-sm font-bold text-gray-800">
+                {t("common.confirm", { defaultValue: "Xác nhận" }) === "Xác nhận" ? "Thông tin cơ bản" : "Basic Information"}
+              </h4>
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field label={t("admin.fields.classCode")}>
+                <Dropdown
+                  label={t("common.confirm", { defaultValue: "Xác nhận" }) === "Xác nhận" ? "Chọn lớp" : "Select class"}
+                  value={form.class_id}
+                  onChange={(value) => setForm({ ...form, class_id: value })}
+                  options={formClassOptions}
+                />
+              </Field>
+              <Field label={t("admin.fields.studentCode", { defaultValue: "Mã nhóm" }) === "Mã sinh viên" ? "Mã nhóm" : "Group code"}><input className={inputClass} value={form.group_code} onChange={(e) => setForm({ ...form, group_code: e.target.value.toUpperCase() })} required /></Field>
+              <Field label={t("admin.fields.groupName")}><input className={inputClass} value={form.group_name} onChange={(e) => setForm({ ...form, group_name: e.target.value })} required /></Field>
+              <Field label="Max members"><input type="number" min="1" max="20" className={inputClass} value={form.max_members} onChange={(e) => setForm({ ...form, max_members: e.target.value })} required /></Field>
+              <Field label={t("admin.fields.status")}>
+                <Dropdown
+                  label="Status"
+                  value={form.status}
+                  onChange={(value) => setForm({ ...form, status: value })}
+                  direction="up"
+                  options={[
+                    { value: "forming", label: t("status.forming") },
+                    { value: "active", label: t("status.active") },
+                    { value: "inactive", label: t("status.inactive") },
+                    { value: "completed", label: t("status.completed") },
+                    { value: "dissolved", label: t("status.dissolved") },
+                  ]}
+                />
+              </Field>
+            </div>
           </div>
-          <div className="sm:col-span-2">
-            <Field label="Topic description"><textarea className={inputClass} rows={3} value={form.topic_desc} onChange={(e) => setForm({ ...form, topic_desc: e.target.value })} /></Field>
+
+          {/* Section 2: Project Details */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                <Briefcase size={16} />
+              </span>
+              <h4 className="text-sm font-bold text-gray-800">
+                {t("common.confirm", { defaultValue: "Xác nhận" }) === "Xác nhận" ? "Thông tin dự án" : "Project Details"}
+              </h4>
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field label="Category"><input className={inputClass} value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} /></Field>
+              <Field label="Topic"><input className={inputClass} value={form.topic} onChange={(e) => setForm({ ...form, topic: e.target.value })} /></Field>
+              <div className="sm:col-span-2">
+                <Field label={t("admin.fields.description")}><textarea className={inputClass} rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></Field>
+              </div>
+              <div className="sm:col-span-2">
+                <Field label="Topic description"><textarea className={inputClass} rows={3} value={form.topic_desc} onChange={(e) => setForm({ ...form, topic_desc: e.target.value })} /></Field>
+              </div>
+            </div>
           </div>
-          <div className="sm:col-span-2">
+
+          {/* Section 3: Mentor & Links */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
+                <UserCog size={16} />
+              </span>
+              <h4 className="text-sm font-bold text-gray-800">
+                {t("common.confirm", { defaultValue: "Xác nhận" }) === "Xác nhận" ? "Mentor & Liên kết" : "Mentor & Links"}
+              </h4>
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field label={t("admin.fields.lecturer", { defaultValue: "Mentor" }) === "Giảng viên" ? "Mentor" : "Mentor"}><input className={inputClass} value={form.mentor_name} onChange={(e) => setForm({ ...form, mentor_name: e.target.value })} /></Field>
+              <Field label="Mentor dept"><input className={inputClass} value={form.mentor_dept} onChange={(e) => setForm({ ...form, mentor_dept: e.target.value })} /></Field>
+              <div className="sm:col-span-2">
+                <Field label="Zalo link"><input className={inputClass} value={form.zalo_link} onChange={(e) => setForm({ ...form, zalo_link: e.target.value })} /></Field>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-2">
             <WarningNote>
               {t("common.confirm", { defaultValue: "Xác nhận" }) === "Xác nhận"
-                ? "Backend sẽ kiểm tra unique group_code theo class, rule số thành viên của lớp và yêu cầu topic khi chuyển active."
+                ? "Backend sẽ kiểm tra duy nhất mã nhóm (unique group_code) theo lớp, ràng buộc số thành viên tối đa và yêu cầu đề tài khi chuyển sang hoạt động."
                 : "Backend will check unique group_code per class, class member limits, and required topic when transitioning to active."}
             </WarningNote>
           </div>
@@ -246,7 +291,7 @@ export default function AdminGroups() {
       <ConfirmDialog
         isOpen={!!confirmGroup}
         title="Dissolve nhóm"
-        subtitle={confirmGroup ? `${confirmGroup.group_code} - ${confirmGroup.group_name}. ${t("common.confirm", { defaultValue: "Xác nhận" }) === "Xác nhận" ? "Hành động này chỉ xoá mềm/archive nhóm." : "This action will soft-delete/archive the group."}` : ""}
+        subtitle={confirmGroup ? `${confirmGroup.group_name}. ${t("admin.groups.deleteArchiveHint")}` : ""}
         variant="archive"
         color="red"
         yesLabel="Dissolve"

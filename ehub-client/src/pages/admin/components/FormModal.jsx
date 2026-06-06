@@ -7,7 +7,7 @@ export default function FormModal({ open, title, children, onClose, onSubmit, su
 
   const finalSubmitLabel = submitLabel === "Lưu" ? t("common.save") : submitLabel;
   const finalCancelLabel = t("common.cancel");
-  const finalSavingLabel = t("common.confirm") === "Xác nhận" ? "Đang lưu..." : "Saving...";
+  const finalSavingLabel = t("common.saving");
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 backdrop-blur-[2px]">

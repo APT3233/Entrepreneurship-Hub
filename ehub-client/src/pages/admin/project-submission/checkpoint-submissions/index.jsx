@@ -77,7 +77,7 @@ export default function AdminCheckpointSubmissions() {
   const columns = [
     { key: "checkpoint_title", label: "Checkpoint", render: (row) => <span className="font-semibold text-gray-900">{row.checkpoint_title}</span> },
     { key: "class_code", label: "Class" },
-    { key: "group", label: "Group", render: (row) => `${row.group_code} - ${row.group_name}` },
+    { key: "group", label: "Group", render: (row) => row.group_name || "—" },
     { key: "display_status", label: "Status", render: (row) => <StatusBadge value={row.display_status} /> },
     { key: "submitted_at", label: "Submitted", render: (row) => formatDate(row.submitted_at) },
     { key: "is_late", label: "Late", render: (row) => Number(row.is_late || 0) ? <StatusBadge value="late" /> : "—" },

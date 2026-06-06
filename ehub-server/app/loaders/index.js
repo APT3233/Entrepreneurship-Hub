@@ -11,6 +11,7 @@ import { appConfig } from "app/config/app.js";
 import { startOutboxMailWorker } from "app/core/workers/outboxMail.worker.js";
 import { forkMailOutboxWorker } from "app/workers/forkMailOutboxWorker.js";
 import { startUploadCleanupWorker } from "../core/workers/uploadCleanup.worker.js";
+import { startAiEvaluationWorker } from "app/workers/aiEvaluation.worker.js";
 import dns from "node:dns";
 
 export const bootstrap = async () => {
@@ -47,11 +48,12 @@ export const bootstrap = async () => {
 
   // Start upload cleanup worker
   const stopUploadCleanupWorker = startUploadCleanupWorker({ db, minio, container });
+  const stopAiEvaluationWorker = startAiEvaluationWorker({ db, redis, container });
 
   // Error handlers
   loadErrorHandlers(app);
 
   logger.info("[Bootstrap] App oke");
 
-  return { app, db, redis, minio, container, stopOutboxMailWorker, stopUploadCleanupWorker };
+  return { app, db, redis, minio, container, stopOutboxMailWorker, stopUploadCleanupWorker, stopAiEvaluationWorker };
 };

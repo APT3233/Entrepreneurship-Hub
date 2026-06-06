@@ -52,3 +52,14 @@ export function getDateOnlyParts(value, language = "vi") {
     timeLine: null,
   };
 }
+
+/** Plain string for labels, DetailGrid, template literals. */
+export function formatDateOnlyText(value, language = "vi") {
+  return getDateOnlyParts(value, language)?.dateLine ?? "—";
+}
+
+export function formatDateTimeText(value, language = "vi") {
+  const parts = getDateTimeParts(value, language);
+  if (!parts) return "—";
+  return `${parts.dateLine} ${parts.timeLine}`;
+}

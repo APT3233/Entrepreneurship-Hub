@@ -8,7 +8,7 @@ export const createEvaluationController = ({ evaluationService }) => {
   });
 
   const listRubrics = catchAsync(async (req, res) => {
-    const result = await evaluationService.listRubrics(req.query);
+    const result = await evaluationService.listRubrics(req.query, req.user);
     return sendPaginated(res, {
       data: result.data,
       page: result.page,
@@ -19,7 +19,7 @@ export const createEvaluationController = ({ evaluationService }) => {
   });
 
   const getRubric = catchAsync(async (req, res) => {
-    const data = await evaluationService.getRubric(req.params.id);
+    const data = await evaluationService.getRubric(req.params.id, req.user);
     return sendSuccess(res, {
       data,
       message: "Rubric retrieved successfully",

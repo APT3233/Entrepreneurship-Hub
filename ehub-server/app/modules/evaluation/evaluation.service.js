@@ -20,6 +20,7 @@ export const createEvaluationService = ({ evaluationRepository, transaction, aud
   const isAdminOrDept = (user) => hasRole(user, "admin", "department_head");
   const isLecturer = (user) => hasRole(user, "lecturer");
   const pageArgs = (query) => parsePagination({ page: query.page, limit: query.limit });
+  const canManageAllRubrics = (user) => isAdminOrDept(user);
 
   const assertCanGrade = (context, user) => {
     if (isAdminOrDept(user)) return;
@@ -57,14 +58,26 @@ export const createEvaluationService = ({ evaluationRepository, transaction, aud
     return rubric;
   };
 
+  const assertRubricReadable = async (id, actor) => {
+    const rubric = await assertRubricExists(id);
+    if (canManageAllRubrics(actor)) return rubric;
+    if (isLecturer(actor) && (Number(rubric.created_by) === Number(actor.id) || rubric.status === "active")) {
+      return rubric;
+    }
+    throw Forbidden("Bạn không có quyền truy cập rubric này.");
+  };
+
   const assertCriterionBelongsToRubric = async (rubricId, criterionId) => {
     const criterion = await evaluationRepository.findCriterionById(criterionId);
     if (!criterion || Number(criterion.rubric_id) !== Number(rubricId)) throw NotFound("Rubric criterion");
     return criterion;
   };
 
-  const assertRubricEditable = async (id) => {
-    const rubric = await assertRubricExists(id);
+  const assertRubricEditable = async (id, actor) => {
+    const rubric = await assertRubricReadable(id, actor);
+    if (isLecturer(actor) && !canManageAllRubrics(actor) && Number(rubric.created_by) !== Number(actor.id)) {
+      throw Forbidden("Bạn không có quyền sửa rubric này.");
+    }
     const usageCount = await evaluationRepository.countRubricEvaluations(id);
     if (usageCount > 0) {
       throw BadRequest("Rubric đã được dùng để chấm. Hãy clone rubric để tạo version mới thay vì sửa trực tiếp.");
@@ -99,19 +112,21 @@ export const createEvaluationService = ({ evaluationRepository, transaction, aud
       : Boolean(current?.is_required_feedback),
   });
 
-  const listRubrics = async (query) => {
+  const listRubrics = async (query, actor) => {
     const pagination = pageArgs(query);
     const result = await evaluationRepository.listRubrics({
       search: query.search?.trim() || null,
       subjectId: query.subject_id || null,
       status: query.status || null,
+      creatorId: lecturerScope(actor),
       limit: pagination.limit,
       offset: pagination.offset,
     });
     return { data: result.rows, ...pagination, total: result.total };
   };
 
-  const getRubric = async (id) => {
+  const getRubric = async (id, actor = null) => {
+    if (actor) await assertRubricReadable(id, actor);
     const rubric = await evaluationRepository.findRubricDetailById(id);
     if (!rubric) throw NotFound("Rubric");
     return rubric;
@@ -134,7 +149,7 @@ export const createEvaluationService = ({ evaluationRepository, transaction, aud
   };
 
   const updateRubric = async (id, data, actor) => {
-    const current = await assertRubricEditable(id);
+    const current = await assertRubricEditable(id, actor);
     const payload = normalizeRubricPayload(data, actor, current);
     delete payload.created_by;
     if (!payload.name) throw BadRequest("Tên rubric là bắt buộc.");
@@ -149,11 +164,11 @@ export const createEvaluationService = ({ evaluationRepository, transaction, aud
       oldValues: current,
       newValues: payload,
     });
-    return getRubric(id);
+    return getRubric(id, actor);
   };
 
   const deleteRubric = async (id, actor) => {
-    const current = await assertRubricEditable(id);
+    const current = await assertRubricEditable(id, actor);
     await evaluationRepository.softDeleteRubric(id);
     await auditService.log({
       userId: actor?.id || null,
@@ -176,6 +191,7 @@ export const createEvaluationService = ({ evaluationRepository, transaction, aud
   const cloneRubric = async (id, data = {}, actor) => {
     const source = await evaluationRepository.findRubricDetailById(id);
     if (!source) throw NotFound("Rubric");
+    await assertRubricReadable(id, actor);
     const rootId = Number(source.parent_rubric_id || source.id);
     const nextVersion = await evaluationRepository.findNextRubricVersion(rootId);
     const payload = normalizeRubricPayload({
@@ -213,11 +229,11 @@ export const createEvaluationService = ({ evaluationRepository, transaction, aud
       oldValues: { source_rubric_id: Number(id), version: Number(source.version) },
       newValues: payload,
     });
-    return getRubric(cloneId);
+    return getRubric(cloneId, actor);
   };
 
   const createCriterion = async (rubricId, data, actor) => {
-    await assertRubricEditable(rubricId);
+    await assertRubricEditable(rubricId, actor);
     const payload = normalizeCriterionPayload(rubricId, data);
     if (!payload.name) throw BadRequest("Tên tiêu chí là bắt buộc.");
     if (!Number.isFinite(payload.max_score) || payload.max_score <= 0) throw BadRequest("max_score phải lớn hơn 0.");
@@ -231,12 +247,12 @@ export const createEvaluationService = ({ evaluationRepository, transaction, aud
       title: payload.name,
       newValues: payload,
     });
-    return getRubric(rubricId);
+    return getRubric(rubricId, actor);
   };
 
   const updateCriterion = async (rubricId, criterionId, data, actor) => {
     const current = await assertCriterionBelongsToRubric(rubricId, criterionId);
-    await assertRubricEditable(rubricId);
+    await assertRubricEditable(rubricId, actor);
     const payload = normalizeCriterionPayload(rubricId, data, current);
     if (!payload.name) throw BadRequest("Tên tiêu chí là bắt buộc.");
     if (!Number.isFinite(payload.max_score) || payload.max_score <= 0) throw BadRequest("max_score phải lớn hơn 0.");
@@ -252,12 +268,12 @@ export const createEvaluationService = ({ evaluationRepository, transaction, aud
       oldValues: current,
       newValues: payload,
     });
-    return getRubric(rubricId);
+    return getRubric(rubricId, actor);
   };
 
   const deleteCriterion = async (rubricId, criterionId, actor) => {
     const current = await assertCriterionBelongsToRubric(rubricId, criterionId);
-    await assertRubricEditable(rubricId);
+    await assertRubricEditable(rubricId, actor);
     const usedCount = await evaluationRepository.countCriterionScores(criterionId);
     if (usedCount > 0) throw BadRequest("Tiêu chí đã được dùng để chấm, không thể xóa.");
     await evaluationRepository.deleteCriterion(criterionId);
@@ -269,14 +285,17 @@ export const createEvaluationService = ({ evaluationRepository, transaction, aud
       title: current.name,
       oldValues: current,
     });
-    return getRubric(rubricId);
+    return getRubric(rubricId, actor);
   };
 
   const bindRubric = async (rubricId, data, actor) => {
-    const rubric = await assertRubricExists(rubricId);
+    const rubric = await assertRubricReadable(rubricId, actor);
     if (rubric.status !== "active") throw BadRequest("Chỉ rubric active mới được bind vào checkpoint/assignment.");
     const target = await evaluationRepository.findTarget(data.target_type, data.target_id);
     if (!target) throw NotFound(data.target_type === "checkpoint" ? "Checkpoint" : "Assignment");
+    if (!canManageAllRubrics(actor) && (!isLecturer(actor) || Number(target.lecturer_id) !== Number(actor.id))) {
+      throw Forbidden("Bạn chỉ được gắn rubric vào checkpoint/assignment của lớp mình phụ trách.");
+    }
     const existing = await evaluationRepository.findBindingByTarget(data.target_type, data.target_id);
     if (existing && Number(existing.rubric_id) !== Number(rubricId)) {
       throw BadRequest("Target này đã được bind với rubric khác. Hãy clone/version rubric và bind vào target mới.");
@@ -297,7 +316,7 @@ export const createEvaluationService = ({ evaluationRepository, transaction, aud
       oldValues: existing || null,
       newValues: payload,
     });
-    return getRubric(rubricId);
+    return getRubric(rubricId, actor);
   };
 
   const getGradingForm = async (targetType, targetId, user) => {

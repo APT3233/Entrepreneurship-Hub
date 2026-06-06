@@ -50,8 +50,10 @@ export default function AppHeader({ user = null, onLogout }) {
   const handleProfileClick = () => {
     const isLecturer = location.pathname.startsWith("/lecturer");
     const isStudent = location.pathname.startsWith("/student");
+    const isMentor = location.pathname.startsWith("/mentor");
     if (isLecturer) navigate("/lecturer/profile");
     else if (isStudent) navigate("/student/profile");
+    else if (isMentor) navigate("/mentor/profile");
     else navigate("/profile");
   };
 

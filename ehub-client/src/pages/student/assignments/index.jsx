@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { ListChecks, CheckSquare, BookOpen, Inbox } from "lucide-react";
+import { ListChecks, CheckSquare, BookOpen, Inbox, ChevronLeft, ChevronRight } from "lucide-react";
 import Dropdown from "@/components/ui/filter/DropDown";
 import CheckpointApi from "@/api/checkpoint";
 import AssignmentApi from "@/api/assignment";
@@ -45,6 +45,69 @@ export default function StudentAssignmentsPage() {
   const [isLoadingCheckpoints, setIsLoadingCheckpoints] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  // Reset page when filters or tabs change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterYear, filterSemesterId, filterClass, activeTab]);
+
+  const paginatedAssignments = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return assignments.slice(start, start + itemsPerPage);
+  }, [assignments, currentPage]);
+
+
+  const renderPagination = (totalItems) => {
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    if (totalPages <= 1) return null;
+    
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
+    
+    return (
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 pt-6 border-t border-slate-100 animate-in fade-in duration-200">
+        <span className="text-sm font-bold text-slate-500">
+          Hiển thị <span className="text-slate-800 font-black">{startIndex + 1}-{endIndex}</span> trong số <span className="text-slate-800 font-black">{totalItems}</span> mục
+        </span>
+        
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className="inline-flex items-center justify-center p-2.5 rounded-xl border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-95 cursor-pointer shadow-sm"
+          >
+            <ChevronLeft size={16} />
+          </button>
+
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+            <button
+              key={page}
+              onClick={() => setCurrentPage(page)}
+              className={`inline-flex items-center justify-center w-10 h-10 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                currentPage === page
+                  ? "bg-slate-800 text-white shadow-md"
+                  : "border border-slate-200 text-slate-600 bg-white hover:bg-slate-50"
+              }`}
+            >
+              {page}
+            </button>
+          ))}
+
+          <button
+            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages}
+            className="inline-flex items-center justify-center p-2.5 rounded-xl border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-95 cursor-pointer shadow-sm"
+          >
+            <ChevronRight size={16} />
+          </button>
+        </div>
+      </div>
+    );
+  };
 
   // Fetch Semesters
   useEffect(() => {
@@ -186,6 +249,11 @@ export default function StudentAssignmentsPage() {
     return list;
   }, [checkpoints, filterClass]);
 
+  const paginatedCheckpoints = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredCheckpoints.slice(start, start + itemsPerPage);
+  }, [filteredCheckpoints, currentPage]);
+
   return (
     <div className="min-h-screen w-full pb-10">
       <div className="w-full">
@@ -230,7 +298,7 @@ export default function StudentAssignmentsPage() {
         {/* Content Area */}
         <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
           {activeTab === "assignments" ? (
-            <div className="flex flex-col gap-3">
+            <div className="w-full">
               {isLoadingAssignments ? (
                 <div className="flex flex-col items-center justify-center py-20 text-gray-400">
                   <div className="w-8 h-8 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin mb-4" />
@@ -241,20 +309,25 @@ export default function StudentAssignmentsPage() {
                   <p className="text-gray-400 text-sm font-medium">Không có bài tập nào được tìm thấy.</p>
                 </div>
               ) : (
-                assignments.map(item => (
-                  <AssignmentCard
-                    key={item.id}
-                    assignment={item}
-                    onClick={() => {
-                      setSelectedItem(item);
-                      setIsModalOpen(true);
-                    }}
-                  />
-                ))
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {paginatedAssignments.map(item => (
+                      <AssignmentCard
+                        key={item.id}
+                        assignment={item}
+                        onClick={() => {
+                          setSelectedItem(item);
+                          setIsModalOpen(true);
+                        }}
+                      />
+                    ))}
+                  </div>
+                  {renderPagination(assignments.length)}
+                </>
               )}
             </div>
           ) : (
-            <div className="flex flex-col gap-3">
+            <div className="w-full">
               {isLoadingCheckpoints ? (
                 <div className="flex flex-col items-center justify-center py-20 text-gray-400">
                   <div className="w-8 h-8 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin mb-4" />
@@ -268,16 +341,21 @@ export default function StudentAssignmentsPage() {
                   <p className="text-gray-500 text-sm font-bold">Không có checkpoint nào được tìm thấy.</p>
                 </div>
               ) : (
-                filteredCheckpoints.map(item => (
-                  <CheckpointCard
-                    key={item.id}
-                    checkpoint={item}
-                    onDetail={() => {
-                      setSelectedItem(item);
-                      setIsModalOpen(true);
-                    }}
-                  />
-                ))
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {paginatedCheckpoints.map(item => (
+                      <CheckpointCard
+                        key={item.id}
+                        checkpoint={item}
+                        onDetail={() => {
+                          setSelectedItem(item);
+                          setIsModalOpen(true);
+                        }}
+                      />
+                    ))}
+                  </div>
+                  {renderPagination(filteredCheckpoints.length)}
+                </>
               )}
             </div>
           )}

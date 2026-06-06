@@ -113,8 +113,7 @@ export default function AdminAssignmentDetail() {
   if (!assignment) return <div className="rounded-2xl border border-gray-100 bg-white p-8 text-center text-sm text-gray-400 shadow-sm">Không tìm thấy assignment.</div>;
 
   const columns = [
-    { key: "group_code", label: "Group code", render: (row) => <span className="font-mono text-xs font-bold text-gray-700">{row.group_code}</span> },
-    { key: "group_name", label: "Group", render: (row) => <span className="font-semibold text-gray-900">{row.group_name}</span> },
+    { key: "group_name", label: "Group", render: (row) => <span className="font-semibold text-gray-900">{row.group_name || "—"}</span> },
     { key: "status", label: "Status", render: (row) => <StatusBadge value={row.status} /> },
     { key: "submitted_by", label: "Submitted by", render: (row) => row.submitted_by_name || row.submitted_by || "—" },
     { key: "submitted_at", label: "Submitted", render: (row) => formatDate(row.submitted_at) },

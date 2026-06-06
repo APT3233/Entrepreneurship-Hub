@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { ChevronDown } from "lucide-react";
 
 // ── Dropdown dùng chung (Sử dụng Portal để tránh lỗi overflow) ────────────────
-function Dropdown({ label, options, value, onChange, disabled = false }) {
+function Dropdown({ label, options, value, onChange, disabled = false, direction = "down" }) {
   const [open, setOpen] = useState(false);
   const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
   const ref = useRef(null);
@@ -11,8 +11,9 @@ function Dropdown({ label, options, value, onChange, disabled = false }) {
   const updateCoords = () => {
     if (ref.current) {
       const rect = ref.current.getBoundingClientRect();
+      const isUp = direction === "up";
       setCoords({
-        top: rect.bottom + window.scrollY,
+        top: (isUp ? rect.top : rect.bottom) + window.scrollY,
         left: rect.left + window.scrollX,
         width: rect.width,
       });
@@ -29,7 +30,7 @@ function Dropdown({ label, options, value, onChange, disabled = false }) {
       window.removeEventListener("resize", updateCoords);
       window.removeEventListener("scroll", updateCoords, true);
     };
-  }, [open]);
+  }, [open, direction]);
 
   useEffect(() => {
     const handler = (e) => {
@@ -73,7 +74,7 @@ function Dropdown({ label, options, value, onChange, disabled = false }) {
         </span>
         <ChevronDown
           size={15}
-          className={`shrink-0 text-gray-400 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+          className={`shrink-0 text-gray-400 transition-transform duration-200 ${open ? (direction === "up" ? "-rotate-180" : "rotate-180") : ""}`}
         />
       </button>
 
@@ -82,9 +83,10 @@ function Dropdown({ label, options, value, onChange, disabled = false }) {
         <div 
           className="portal-dropdown fixed z-[9999] bg-white border border-gray-100 rounded-xl shadow-lg overflow-hidden animate-in fade-in duration-100"
           style={{
-            top: coords.top - window.scrollY + 6,
+            top: coords.top - window.scrollY,
             left: coords.left,
             width: coords.width,
+            transform: direction === "up" ? "translateY(-100%) translateY(-6px)" : "translateY(6px)",
           }}
         >
           {/* Header — hiện giá trị đang chọn */}
@@ -92,7 +94,7 @@ function Dropdown({ label, options, value, onChange, disabled = false }) {
             <span className="text-sm font-semibold text-gray-700">
               {selected ? selected.label : label}
             </span>
-            <ChevronDown size={14} className="text-gray-400 rotate-180" />
+            <ChevronDown size={14} className={`text-gray-400 ${direction === "up" ? "" : "rotate-180"}`} />
           </div>
 
           {/* Options */}

@@ -14,7 +14,7 @@ export default function SubmissionDetailModal({ open, submission, title, onClose
       {submission ? (
         <div className="space-y-4">
           <DetailGrid items={[
-            ["Group", `${submission.group_code || ""} - ${submission.group_name || ""}`],
+            ["Group", submission.group_name || "—"],
             ["Status", submission.status || submission.submission_status || submission.display_status],
             ["Submitted by", submission.submitted_by_name || submission.submitted_by || "—"],
             ["Submitted at", formatDate(submission.submitted_at)],

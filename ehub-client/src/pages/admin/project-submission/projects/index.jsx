@@ -90,7 +90,7 @@ export default function AdminProjects() {
 
   const columns = [
     { key: "topic", label: "Project/topic", render: (row) => <span className="font-semibold text-gray-900">{row.topic || "Chưa có topic"}</span> },
-    { key: "group_name", label: "Group", render: (row) => `${row.group_code} - ${row.group_name}` },
+    { key: "group_name", label: "Group", render: (row) => row.group_name || "—" },
     { key: "class_code", label: "Class" },
     { key: "subject", label: "Subject", render: (row) => `${row.subject_code} - ${row.subject_name}` },
     { key: "semester", label: "Semester", render: (row) => row.semester_code },
@@ -148,7 +148,7 @@ export default function AdminProjects() {
           <div className="space-y-4">
             <DetailGrid items={[
               ["Project/topic", modal.project.topic || "—"],
-              ["Group", `${modal.project.group_code} - ${modal.project.group_name}`],
+              ["Group", modal.project.group_name || "—"],
               ["Class", modal.project.class_code],
               ["Subject", `${modal.project.subject_code} - ${modal.project.subject_name}`],
               ["Semester", modal.project.semester_code],

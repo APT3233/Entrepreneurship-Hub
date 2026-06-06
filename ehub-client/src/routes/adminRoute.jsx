@@ -8,10 +8,35 @@ const AdminUsers = React.lazy(() => import("@/pages/admin/access-control/users")
 const AdminRoles = React.lazy(() => import("@/pages/admin/access-control/roles"));
 const AdminPermissions = React.lazy(() => import("@/pages/admin/access-control/permissions"));
 const AdminSettings = React.lazy(() => import("@/pages/admin/access-control/settings"));
+const AdminAiSettings = React.lazy(() => import("@/pages/admin/access-control/ai-settings"));
 const AdminSubjects = React.lazy(() => import("@/pages/admin/academic/subjects"));
 const AdminSemesters = React.lazy(() => import("@/pages/admin/academic/semesters"));
 const AdminClasses = React.lazy(() => import("@/pages/admin/academic/classes"));
 const AdminClassDetail = React.lazy(() => import("@/pages/admin/academic/classes/ClassDetailPage"));
+const AdminLecturers = React.lazy(() => import("@/pages/admin/lecturer-management"));
+const AdminCreateLecturer = React.lazy(() => import("@/pages/admin/lecturer-management/CreateLecturerPage"));
+const AdminLecturerDetail = React.lazy(() => import("@/pages/admin/lecturer-management/LecturerDetailPage"));
+const AdminLecturerWorkload = React.lazy(() => import("@/pages/admin/lecturer-management/WorkloadPage"));
+const AdminMentors = React.lazy(() => import("@/pages/admin/mentor-management"));
+const AdminCreateMentor = React.lazy(() => import("@/pages/admin/mentor-management/CreateMentorPage"));
+const AdminMentorDetail = React.lazy(() => import("@/pages/admin/mentor-management/MentorDetailPage"));
+const AdminMentorExpertise = React.lazy(() => import("@/pages/admin/mentor-management/ExpertiseAreasPage"));
+const AdminPendingMentors = React.lazy(() => import("@/pages/admin/mentor-management/PendingMentorsPage"));
+const AdminMentorDocuments = React.lazy(() => import("@/pages/admin/mentor-management/MentorDocumentsPage"));
+const AdminMentorAssignments = React.lazy(() => import("@/pages/admin/mentor-workflow/AssignmentsPage"));
+const AdminMentorAssignmentDetail = React.lazy(() => import("@/pages/admin/mentor-workflow/AssignmentDetailPage"));
+const AdminGroupMentors = React.lazy(() => import("@/pages/admin/mentor-workflow/GroupMentorsPage"));
+const AdminMentoringSessions = React.lazy(() => import("@/pages/admin/mentor-workflow/MentoringSessionsPage"));
+const AdminMentoringFeedbacks = React.lazy(() => import("@/pages/admin/mentor-workflow/MentoringFeedbacksPage"));
+const AdminMentoringActionItems = React.lazy(() => import("@/pages/admin/mentor-workflow/MentoringActionItemsPage"));
+const AdminMentorMatching = React.lazy(() => import("@/pages/admin/mentor-matching/MatchingRequestsPage"));
+const AdminMentorMatchingDetail = React.lazy(() => import("@/pages/admin/mentor-matching/MatchingDetailPage"));
+const AdminMentorAnalyticsOverview = React.lazy(() => import("@/pages/admin/mentor-analytics/OverviewPage"));
+const AdminMentorAnalyticsWorkload = React.lazy(() => import("@/pages/admin/mentor-analytics/WorkloadPage"));
+const AdminMentorAnalyticsEffectiveness = React.lazy(() => import("@/pages/admin/mentor-analytics/EffectivenessPage"));
+const AdminMentorAnalyticsMatching = React.lazy(() => import("@/pages/admin/mentor-analytics/MatchingPage"));
+const AdminMentorAnalyticsExpertise = React.lazy(() => import("@/pages/admin/mentor-analytics/ExpertiseHeatmapPage"));
+const AdminMentorAnalyticsGroupSupport = React.lazy(() => import("@/pages/admin/mentor-analytics/GroupSupportPage"));
 const AdminStudents = React.lazy(() => import("@/pages/admin/student-group/students"));
 const AdminEnrollments = React.lazy(() => import("@/pages/admin/student-group/enrollments"));
 const AdminGroups = React.lazy(() => import("@/pages/admin/student-group/groups"));
@@ -37,11 +62,17 @@ const AdminRubricUsage = React.lazy(() => import("@/pages/admin/evaluation-ops/r
 const AdminGradeAudit = React.lazy(() => import("@/pages/admin/evaluation-ops/grade-audit"));
 const AdminEvaluationExports = React.lazy(() => import("@/pages/admin/evaluation-ops/exports"));
 const AdminEvaluationAnalytics = React.lazy(() => import("@/pages/admin/evaluation-ops/analytics"));
+const AdminAiSuggestions = React.lazy(() => import("@/pages/admin/evaluation-ops/ai-suggestions"));
 const AdminImportExport = React.lazy(() => import("@/pages/admin/evaluation-ops/import-export"));
 const AdminInvitations = React.lazy(() => import("@/pages/admin/evaluation-ops/invitations"));
 const AdminAuditLogs = React.lazy(() => import("@/pages/admin/evaluation-ops/logs/AuditLogsPage"));
 const AdminApiAccessLogs = React.lazy(() => import("@/pages/admin/evaluation-ops/logs/ApiAccessLogsPage"));
 const AdminImportLogs = React.lazy(() => import("@/pages/admin/evaluation-ops/logs/ImportLogsPage"));
+const AdminAnalyticsOverview = React.lazy(() => import("@/pages/admin/analytics"));
+const AdminAcademicQualityAnalytics = React.lazy(() => import("@/pages/admin/analytics/AcademicQualityPage"));
+const AdminGradingAnalytics = React.lazy(() => import("@/pages/admin/analytics/GradingAnalyticsPage"));
+const AdminRubricAnalytics = React.lazy(() => import("@/pages/admin/analytics/RubricAnalyticsPage"));
+const AdminProjectAnalytics = React.lazy(() => import("@/pages/admin/analytics/ProjectAnalyticsPage"));
 const AdminProfile = React.lazy(() => import("@/pages/admin/profile"));
 
 export default function init(routes) {
@@ -57,10 +88,49 @@ export default function init(routes) {
       { path: "roles", element: <AdminRoles /> },
       { path: "permissions", element: <AdminPermissions /> },
       { path: "settings", element: <AdminSettings /> },
+      { path: "settings/ai", element: <AdminAiSettings /> },
       { path: "academic/subjects", element: <AdminSubjects /> },
       { path: "academic/semesters", element: <AdminSemesters /> },
       { path: "academic/classes", element: <AdminClasses /> },
       { path: "academic/classes/:id", element: <AdminClassDetail /> },
+      { path: "lecturers", element: <AdminLecturers /> },
+      { path: "lecturers/create", element: <AdminCreateLecturer /> },
+      { path: "lecturers/workload", element: <AdminLecturerWorkload /> },
+      { path: "lecturers/:id", element: <AdminLecturerDetail /> },
+      { path: "lecturers/:id/profile", element: <AdminLecturerDetail /> },
+      { path: "lecturers/:id/classes", element: <AdminLecturerDetail /> },
+      { path: "lecturers/:id/grading", element: <AdminLecturerDetail /> },
+      { path: "lecturers/:id/created-content", element: <AdminLecturerDetail /> },
+      { path: "lecturers/:id/activity", element: <AdminLecturerDetail /> },
+      { path: "lecturers/:id/permissions", element: <AdminLecturerDetail /> },
+      { path: "lecturers/:id/password", element: <AdminLecturerDetail /> },
+      { path: "mentors", element: <AdminMentors /> },
+      { path: "mentors/create", element: <AdminCreateMentor /> },
+      { path: "mentors/expertise", element: <AdminMentorExpertise /> },
+      { path: "mentors/pending", element: <AdminPendingMentors /> },
+      { path: "mentors/documents", element: <AdminMentorDocuments /> },
+      { path: "mentors/:id", element: <AdminMentorDetail /> },
+      { path: "mentors/:id/profile", element: <AdminMentorDetail /> },
+      { path: "mentors/:id/expertise", element: <AdminMentorDetail /> },
+      { path: "mentors/:id/availability", element: <AdminMentorDetail /> },
+      { path: "mentors/:id/documents", element: <AdminMentorDetail /> },
+      { path: "mentors/:id/assignments", element: <AdminMentorDetail /> },
+      { path: "mentors/:id/sessions", element: <AdminMentorDetail /> },
+      { path: "mentors/:id/activity", element: <AdminMentorDetail /> },
+      { path: "mentor-assignments", element: <AdminMentorAssignments /> },
+      { path: "mentor-assignments/:id", element: <AdminMentorAssignmentDetail /> },
+      { path: "groups/:groupId/mentors", element: <AdminGroupMentors /> },
+      { path: "mentoring/sessions", element: <AdminMentoringSessions /> },
+      { path: "mentoring/feedbacks", element: <AdminMentoringFeedbacks /> },
+      { path: "mentoring/action-items", element: <AdminMentoringActionItems /> },
+      { path: "mentor-matching", element: <AdminMentorMatching /> },
+      { path: "mentor-matching/:requestId", element: <AdminMentorMatchingDetail /> },
+      { path: "mentor-analytics", element: <AdminMentorAnalyticsOverview /> },
+      { path: "mentor-analytics/workload", element: <AdminMentorAnalyticsWorkload /> },
+      { path: "mentor-analytics/effectiveness", element: <AdminMentorAnalyticsEffectiveness /> },
+      { path: "mentor-analytics/matching", element: <AdminMentorAnalyticsMatching /> },
+      { path: "mentor-analytics/expertise", element: <AdminMentorAnalyticsExpertise /> },
+      { path: "mentor-analytics/group-support", element: <AdminMentorAnalyticsGroupSupport /> },
       { path: "students", element: <AdminStudents /> },
       { path: "enrollments", element: <AdminEnrollments /> },
       { path: "groups", element: <AdminGroups /> },
@@ -86,11 +156,17 @@ export default function init(routes) {
       { path: "evaluation/grade-audit", element: <AdminGradeAudit /> },
       { path: "evaluation/exports", element: <AdminEvaluationExports /> },
       { path: "evaluation/analytics", element: <AdminEvaluationAnalytics /> },
+      { path: "evaluation/ai-suggestions", element: <AdminAiSuggestions /> },
       { path: "import-export", element: <AdminImportExport /> },
       { path: "invitations", element: <AdminInvitations /> },
       { path: "logs/audit", element: <AdminAuditLogs /> },
       { path: "logs/api-access", element: <AdminApiAccessLogs /> },
       { path: "logs/import", element: <AdminImportLogs /> },
+      { path: "analytics", element: <AdminAnalyticsOverview /> },
+      { path: "analytics/academic-quality", element: <AdminAcademicQualityAnalytics /> },
+      { path: "analytics/grading", element: <AdminGradingAnalytics /> },
+      { path: "analytics/rubric", element: <AdminRubricAnalytics /> },
+      { path: "analytics/projects", element: <AdminProjectAnalytics /> },
     ],
   });
 }

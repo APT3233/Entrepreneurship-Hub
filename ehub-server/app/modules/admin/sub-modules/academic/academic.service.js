@@ -164,9 +164,6 @@ export const createAdminAcademicService = ({ adminAcademicRepository, transactio
       status: data.status || "upcoming",
       created_by: actor?.id || null,
     });
-    if (data.status === "ongoing") {
-      await adminAcademicRepository.setSemesterCurrent(id, actor?.id || null);
-    }
     await auditService.log({
       userId: actor?.id || null,
       action: "admin_create_semester",
@@ -178,8 +175,15 @@ export const createAdminAcademicService = ({ adminAcademicRepository, transactio
     return getSemester(id);
   };
 
+  const assertSemesterEditable = (semester) => {
+    if (semester.status === "completed") {
+      throw BadRequest("Học kỳ đã kết thúc, không thể chỉnh sửa.");
+    }
+  };
+
   const updateSemester = async (id, data, actor) => {
     const semester = await getSemester(id);
+    assertSemesterEditable(semester);
     const updates = {};
     if (data.semester_code !== undefined) {
       const semesterCode = normalizeCode(data.semester_code);
@@ -194,13 +198,7 @@ export const createAdminAcademicService = ({ adminAcademicRepository, transactio
     if (data.end_date !== undefined) updates.end_date = data.end_date;
     if (data.status !== undefined) updates.status = data.status;
     assertSemesterDates(updates.start_date || semester.start_date, updates.end_date || semester.end_date);
-    if (updates.status === "ongoing") {
-      const { status: _status, ...rest } = updates;
-      await adminAcademicRepository.updateSemester(id, rest);
-      await adminAcademicRepository.setSemesterCurrent(id, actor?.id || null);
-    } else {
-      await adminAcademicRepository.updateSemester(id, updates);
-    }
+    await adminAcademicRepository.updateSemester(id, updates);
     await auditService.log({
       userId: actor?.id || null,
       action: "admin_update_semester",
@@ -214,20 +212,6 @@ export const createAdminAcademicService = ({ adminAcademicRepository, transactio
   };
 
   const updateSemesterStatus = async (id, status, actor) => updateSemester(id, { status }, actor);
-
-  const setCurrentSemester = async (id, actor) => {
-    const semester = await getSemester(id);
-    await transaction.run((conn) => adminAcademicRepository.setSemesterCurrent(id, actor?.id || null, conn));
-    await auditService.log({
-      userId: actor?.id || null,
-      action: "admin_set_current_semester",
-      tableName: "system_settings",
-      recordId: id,
-      title: semester.semester_code,
-      newValues: { current_semester_id: Number(id) },
-    });
-    return getSemester(id);
-  };
 
   const listClasses = async (query) => {
     const pagination = pageArgs(query);
@@ -251,11 +235,20 @@ export const createAdminAcademicService = ({ adminAcademicRepository, transactio
   };
 
   const assertClassRefs = async ({ subject_id, semester_id, lecturer_id }) => {
-    if (subject_id && !await adminAcademicRepository.findLookupSubject(subject_id)) {
-      throw BadRequest("Học phần không tồn tại hoặc đã bị xoá");
+    if (subject_id) {
+      const subject = await adminAcademicRepository.findLookupSubject(subject_id);
+      if (!subject) {
+        throw BadRequest("Học phần không tồn tại hoặc đã bị xoá");
+      }
+      if (subject.status === "inactive") {
+        throw BadRequest(`Học phần "${subject.subject_name}" (${subject.subject_code}) đang ở trạng thái không hoạt động. Không thể tạo hoặc cập nhật lớp học.`);
+      }
     }
-    if (semester_id && !await adminAcademicRepository.findLookupSemester(semester_id)) {
-      throw BadRequest("Học kỳ không tồn tại hoặc đã bị xoá");
+    if (semester_id) {
+      const semester = await adminAcademicRepository.findLookupSemester(semester_id);
+      if (!semester) {
+        throw BadRequest("Học kỳ không tồn tại hoặc đã bị xoá");
+      }
     }
     if (lecturer_id && !await adminAcademicRepository.findLecturerUser(lecturer_id)) {
       throw BadRequest("Giảng viên không tồn tại hoặc không có role lecturer");
@@ -280,9 +273,21 @@ export const createAdminAcademicService = ({ adminAcademicRepository, transactio
     status: data.status || "draft",
   });
 
+  const assertSemesterAllowsNewClass = async (semesterId) => {
+    const semester = await adminAcademicRepository.findLookupSemester(semesterId);
+    if (!semester) {
+      throw BadRequest("Học kỳ không tồn tại hoặc đã bị xoá");
+    }
+    if (semester.status === "completed") {
+      const label = semester.semester_name || semester.semester_code;
+      throw BadRequest(`Học kỳ "${label}" đã kết thúc. Không thể tạo lớp học.`);
+    }
+  };
+
   const createClass = async (data, actor) => {
     const payload = normalizeClassPayload(data);
     await assertClassRefs(payload);
+    await assertSemesterAllowsNewClass(payload.semester_id);
     await assertClassCodeAvailable(payload.class_code, payload.semester_id);
     const id = await adminAcademicRepository.createClass({
       ...payload,
@@ -381,7 +386,6 @@ export const createAdminAcademicService = ({ adminAcademicRepository, transactio
     createSemester,
     updateSemester,
     updateSemesterStatus,
-    setCurrentSemester,
     listClasses,
     getClass,
     createClass,

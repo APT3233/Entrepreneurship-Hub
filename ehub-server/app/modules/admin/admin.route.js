@@ -7,6 +7,10 @@ import { createAdminDashboardRouter } from "./sub-modules/dashboard/dashboard.ro
 import { createAdminStudentGroupRouter } from "./sub-modules/student-group/studentGroup.route.js";
 import { createAdminProjectSubmissionRouter } from "./sub-modules/project-submission/projectSubmission.route.js";
 import { createAdminEvaluationOpsRouter } from "./sub-modules/evaluation-ops/evaluationOps.route.js";
+import { createAdminLecturerRouter } from "./sub-modules/lecturer/lecturer.route.js";
+import { createAdminAiEvaluationRouter } from "../aiEvaluation/aiEvaluation.route.js";
+import { createMentorAdminRouter } from "../mentors/sub-modules/profile/mentorAdmin.route.js";
+import { createMentorWorkflowAdminRouter } from "../mentors/sub-modules/workflow/mentorWorkflowAdmin.route.js";
 
 export const createAdminRouter = (container) => {
   const router = Router();
@@ -14,8 +18,12 @@ export const createAdminRouter = (container) => {
 
   router.use(authenticate, adminRoles);
   router.use("/", createAdminDashboardRouter(container));
+  router.use("/", createAdminAiEvaluationRouter(container));
   router.use("/", createAdminAccessControlRouter(container));
   router.use("/", createAdminStudentGroupRouter(container));
+  router.use("/", createAdminLecturerRouter(container));
+  router.use("/", createMentorAdminRouter(container));
+  router.use("/", createMentorWorkflowAdminRouter(container));
   router.use("/", createAdminProjectSubmissionRouter(container));
   router.use("/", createAdminEvaluationOpsRouter(container));
   router.use("/academic", createAdminAcademicRouter(container));

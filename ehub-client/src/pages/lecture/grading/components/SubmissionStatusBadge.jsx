@@ -1,3 +1,5 @@
+import { useTranslation } from "@/context/TranslationContext";
+
 const styles = {
   submitted: "border-blue-100 bg-blue-50 text-blue-700",
   resubmitted: "border-amber-100 bg-amber-50 text-amber-700",
@@ -5,18 +7,12 @@ const styles = {
   not_submitted: "border-slate-200 bg-slate-50 text-slate-600",
 };
 
-const labels = {
-  submitted: "Đã nộp",
-  resubmitted: "Nộp lại",
-  graded: "Đã chấm",
-  not_submitted: "Chưa nộp",
-};
-
 export default function SubmissionStatusBadge({ value }) {
+  const { t } = useTranslation();
   const key = value || "not_submitted";
   return (
     <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold ${styles[key] || styles.not_submitted}`}>
-      {labels[key] || key}
+      {t(`status.${key}`, { defaultValue: key })}
     </span>
   );
 }

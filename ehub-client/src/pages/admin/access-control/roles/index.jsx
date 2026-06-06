@@ -149,8 +149,12 @@ export default function AdminRoles() {
     { key: "role_code", label: t("admin.fields.roleCode"), render: (row) => <span className="font-mono text-xs font-bold text-indigo-700">{row.role_code}</span> },
     { key: "role_name", label: t("admin.fields.roleName") },
     { key: "description", label: t("admin.fields.description"), render: (row) => row.description || "—" },
-    { key: "is_system", label: t("admin.fields.provider"), render: (row) => <StatusBadge value={Boolean(row.is_system)} /> },
-    { key: "total_users", label: t("admin.fields.enrolledCount", { defaultValue: "Users" }) === "Đăng ký" ? "Người dùng" : "Users", render: (row) => Number(row.total_users || 0) },
+    {
+      key: "is_system",
+      label: t("admin.fields.systemRole"),
+      render: (row) => (row.is_system ? t("filters.yes") : t("filters.no")),
+    },
+    { key: "total_users", label: t("admin.rolesPage.usersCount"), render: (row) => Number(row.total_users || 0) },
     { key: "total_permissions", label: t("admin.fields.permissions"), render: (row) => Number(row.total_permissions || 0) },
     {
       key: "actions",
@@ -174,9 +178,7 @@ export default function AdminRoles() {
         ) : null}
       >
         <p className="text-sm text-gray-500">
-          {t("common.confirm") === "Xác nhận"
-            ? "Quản lý vai trò (role) và gán quyền hạn (permissions) tương ứng cho hệ thống RBAC."
-            : "Manage role mapping and assign corresponding permissions for RBAC system."}
+          {t("admin.rolesPage.description")}
         </p>
       </FilterBar>
 

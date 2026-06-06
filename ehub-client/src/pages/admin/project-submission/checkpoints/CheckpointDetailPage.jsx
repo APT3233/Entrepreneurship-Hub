@@ -126,8 +126,7 @@ export default function AdminCheckpointDetail() {
   if (!checkpoint) return <div className="rounded-2xl border border-gray-100 bg-white p-8 text-center text-sm text-gray-400 shadow-sm">Không tìm thấy checkpoint.</div>;
 
   const submissionColumns = [
-    { key: "group_code", label: "Group code", render: (row) => <span className="font-mono text-xs font-bold text-gray-700">{row.group_code}</span> },
-    { key: "group_name", label: "Group", render: (row) => <span className="font-semibold text-gray-900">{row.group_name}</span> },
+    { key: "group_name", label: "Group", render: (row) => <span className="font-semibold text-gray-900">{row.group_name || "—"}</span> },
     { key: "display_status", label: "Display", render: (row) => <StatusBadge value={row.display_status} /> },
     { key: "submission_status", label: "Submission", render: (row) => <StatusBadge value={row.submission_status} /> },
     { key: "submitted_at", label: "Submitted", render: (row) => formatDate(row.submitted_at) },
@@ -154,7 +153,7 @@ export default function AdminCheckpointDetail() {
     { key: "file_type", label: "Type", render: (row) => row.file_type || "—" },
     { key: "mime_type", label: "MIME", render: (row) => row.mime_type || "—" },
     { key: "file_size", label: "Size", render: (row) => formatBytes(row.file_size) },
-    { key: "group", label: "Group", render: (row) => `${row.group_code} - ${row.group_name}` },
+    { key: "group", label: "Group", render: (row) => row.group_name || "—" },
     { key: "uploaded_by", label: "Uploaded by", render: (row) => row.uploaded_by_name || row.uploaded_by || "—" },
     { key: "uploaded_at", label: "Uploaded", render: (row) => formatDate(row.uploaded_at) },
     { key: "is_deleted", label: "Deleted", render: (row) => Number(row.is_deleted || 0) ? <StatusBadge value="deleted" /> : "—" },

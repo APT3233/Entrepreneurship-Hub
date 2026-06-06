@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Plus, ListChecks, CheckSquare } from "lucide-react";
+import { Plus, ListChecks, CheckSquare, ChevronLeft, ChevronRight } from "lucide-react";
 import ConfirmModal from "@/components/modal/ConfirmModal";
 import Dropdown from "@/components/ui/filter/DropDown";
 import AssignmentCard from "./components/AssignmentCard";
@@ -53,6 +53,7 @@ export default function AssignmentManagement() {
   // Assignment states
   const [selectedId, setSelectedId] = useState(null);
   const [viewedAssignment, setViewedAssignment] = useState(null);
+
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditAssignmentOpen, setIsEditAssignmentOpen] = useState(false);
   const [editingAssignment, setEditingAssignment] = useState(null);
@@ -69,6 +70,73 @@ export default function AssignmentManagement() {
   const [checkpointToDelete, setCheckpointToDelete] = useState(null);
   const [isDeleteAssignmentOpen, setIsDeleteAssignmentOpen] = useState(false);
   const [assignmentToDelete, setAssignmentToDelete] = useState(null);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  // Reset page when filters or tabs change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterYear, filterSemesterId, filterClass, activeTab]);
+
+  const paginatedAssignments = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return assignments.slice(start, start + itemsPerPage);
+  }, [assignments, currentPage]);
+
+  const paginatedCheckpoints = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return checkpoints.slice(start, start + itemsPerPage);
+  }, [checkpoints, currentPage]);
+
+  const renderPagination = (totalItems) => {
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    if (totalPages <= 1) return null;
+    
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
+    
+    return (
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 pt-6 border-t border-slate-100 animate-in fade-in duration-200">
+        <span className="text-sm font-bold text-slate-500">
+          Hiển thị <span className="text-slate-800 font-black">{startIndex + 1}-{endIndex}</span> trong số <span className="text-slate-800 font-black">{totalItems}</span> mục
+        </span>
+        
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className="inline-flex items-center justify-center p-2.5 rounded-xl border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-95 cursor-pointer shadow-sm"
+          >
+            <ChevronLeft size={16} />
+          </button>
+
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+            <button
+              key={page}
+              onClick={() => setCurrentPage(page)}
+              className={`inline-flex items-center justify-center w-10 h-10 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                currentPage === page
+                  ? "bg-slate-800 text-white shadow-md"
+                  : "border border-slate-200 text-slate-600 bg-white hover:bg-slate-50"
+              }`}
+            >
+              {page}
+            </button>
+          ))}
+
+          <button
+            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages}
+            className="inline-flex items-center justify-center p-2.5 rounded-xl border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-95 cursor-pointer shadow-sm"
+          >
+            <ChevronRight size={16} />
+          </button>
+        </div>
+      </div>
+    );
+  };
 
   // Fetch Semesters (Shared)
   useEffect(() => {
@@ -348,7 +416,7 @@ export default function AssignmentManagement() {
         {/* Content Area */}
         <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
           {activeTab === "assignments" ? (
-            <div className="flex flex-col gap-3">
+            <div className="w-full">
               {isLoadingAssignments ? (
                 <div className="flex flex-col items-center justify-center py-20 text-gray-400">
                   <div className="w-8 h-8 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin mb-4" />
@@ -359,30 +427,35 @@ export default function AssignmentManagement() {
                   <p className="text-gray-400 text-sm font-medium">Không có bài tập nào được tìm thấy.</p>
                 </div>
               ) : (
-                assignments.map(item => (
-                  <AssignmentCard
-                    key={item.id}
-                    assignment={item}
-                    isSelected={selectedId === item.id}
-                    onEdit={(item) => {
-                      setEditingAssignment(item);
-                      setIsEditAssignmentOpen(true);
-                    }}
-                    onDelete={() => handleDeleteAssignment(item)}
-                    onClick={() => {
-                      setSelectedId(item.id);
-                      setViewedAssignment(item);
-                      Promise.all([
-                        AssignmentApi.getById(item.id),
-                        AssignmentApi.getSubmissions(item.id).catch(() => ({ data: [] })),
-                      ]).then(([detailRes, subRes]) => {
-                        const a = detailRes?.data;
-                        if (!a) return;
-                        setViewedAssignment({ ...a, groupSubmissions: subRes?.data || [] });
-                      });
-                    }}
-                  />
-                ))
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {paginatedAssignments.map(item => (
+                      <AssignmentCard
+                        key={item.id}
+                        assignment={item}
+                        isSelected={selectedId === item.id}
+                        onEdit={(item) => {
+                          setEditingAssignment(item);
+                          setIsEditAssignmentOpen(true);
+                        }}
+                        onDelete={() => handleDeleteAssignment(item)}
+                        onClick={() => {
+                          setSelectedId(item.id);
+                          setViewedAssignment(item);
+                          Promise.all([
+                            AssignmentApi.getById(item.id),
+                            AssignmentApi.getSubmissions(item.id).catch(() => ({ data: [] })),
+                          ]).then(([detailRes, subRes]) => {
+                            const a = detailRes?.data;
+                            if (!a) return;
+                            setViewedAssignment({ ...a, groupSubmissions: subRes?.data || [] });
+                          });
+                        }}
+                      />
+                    ))}
+                  </div>
+                  {renderPagination(assignments.length)}
+                </>
               )}
             </div>
           ) : (
@@ -397,17 +470,20 @@ export default function AssignmentManagement() {
                   <p className="text-gray-400 text-sm font-medium">Chưa có checkpoint nào cho lớp này.</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {checkpoints.map(cp => (
-                    <CheckpointCard 
-                      key={cp.id} 
-                      checkpoint={cp} 
-                      onEdit={() => { setSelectedCheckpoint(cp); setIsEditCheckpointOpen(true); }} 
-                      onDetail={() => { setSelectedCheckpoint(cp); setIsCheckpointDetailOpen(true); }}
-                      onDelete={() => { setCheckpointToDelete(cp); setIsDeleteConfirmOpen(true); }}
-                    />
-                  ))}
-                </div>
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {paginatedCheckpoints.map(cp => (
+                      <CheckpointCard 
+                        key={cp.id} 
+                        checkpoint={cp} 
+                        onEdit={() => { setSelectedCheckpoint(cp); setIsEditCheckpointOpen(true); }} 
+                        onDetail={() => { setSelectedCheckpoint(cp); setIsCheckpointDetailOpen(true); }}
+                        onDelete={() => { setCheckpointToDelete(cp); setIsDeleteConfirmOpen(true); }}
+                      />
+                    ))}
+                  </div>
+                  {renderPagination(checkpoints.length)}
+                </>
               )}
             </div>
           )}

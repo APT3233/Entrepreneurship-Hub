@@ -1,4 +1,8 @@
+import { useTranslation } from "@/context/TranslationContext";
+
 export default function RubricCriteriaScoringForm({ criteria = [], scores = {}, onChange, disabled = false, submitMode = false }) {
+  const { t } = useTranslation();
+
   const getScoreState = (criterion) => {
     const value = scores[criterion.id]?.score;
     if (value === "" || value === undefined || value === null) return submitMode ? "missing" : "ok";
@@ -21,14 +25,14 @@ export default function RubricCriteriaScoringForm({ criteria = [], scores = {}, 
                   <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50 text-xs font-bold text-indigo-600">{index + 1}</span>
                   <h3 className="text-base font-bold text-gray-900">{criterion.name}</h3>
                   {criterion.is_required_feedback ? (
-                    <span className="rounded-full border border-red-100 bg-red-50 px-2 py-0.5 text-xs font-semibold text-red-600">Feedback bắt buộc</span>
+                    <span className="rounded-full border border-red-100 bg-red-50 px-2 py-0.5 text-xs font-semibold text-red-600">{t("lecturer.gradingPage.scoring.requiredFeedback")}</span>
                   ) : null}
                 </div>
                 {criterion.description ? <p className="mt-2 text-sm leading-6 text-gray-500">{criterion.description}</p> : null}
-                <p className="mt-2 text-xs font-medium text-gray-400">Max score: {Number(criterion.max_score)}</p>
+                <p className="mt-2 text-xs font-medium text-gray-400">{t("lecturer.gradingPage.scoring.maxScore", { max: Number(criterion.max_score) })}</p>
               </div>
               <label className="w-full lg:w-36">
-                <span className="mb-1 block text-xs font-semibold text-gray-500">Score</span>
+                <span className="mb-1 block text-xs font-semibold text-gray-500">{t("lecturer.gradingPage.scoring.score")}</span>
                 <input
                   type="number"
                   min="0"
@@ -43,13 +47,13 @@ export default function RubricCriteriaScoringForm({ criteria = [], scores = {}, 
                       : "border-gray-200 focus:border-indigo-300 focus:ring-indigo-100"
                   }`}
                 />
-                {scoreState === "invalid" ? <span className="mt-1 block text-xs text-red-600">Điểm phải từ 0 đến {Number(criterion.max_score)}.</span> : null}
-                {scoreState === "missing" ? <span className="mt-1 block text-xs text-red-600">Chưa nhập điểm.</span> : null}
+                {scoreState === "invalid" ? <span className="mt-1 block text-xs text-red-600">{t("lecturer.gradingPage.scoring.scoreRangeInvalid", { max: Number(criterion.max_score) })}</span> : null}
+                {scoreState === "missing" ? <span className="mt-1 block text-xs text-red-600">{t("lecturer.gradingPage.scoring.scoreMissing")}</span> : null}
               </label>
             </div>
 
             <label className="mt-4 block">
-              <span className="mb-1 block text-xs font-semibold text-gray-500">Feedback tiêu chí</span>
+              <span className="mb-1 block text-xs font-semibold text-gray-500">{t("lecturer.gradingPage.scoring.criterionFeedback")}</span>
               <textarea
                 rows={3}
                 value={item.feedback}
@@ -61,7 +65,7 @@ export default function RubricCriteriaScoringForm({ criteria = [], scores = {}, 
                     : "border-gray-200 focus:border-indigo-300 focus:ring-indigo-100"
                 }`}
               />
-              {feedbackMissing ? <span className="mt-1 block text-xs text-red-600">Feedback là bắt buộc cho tiêu chí này.</span> : null}
+              {feedbackMissing ? <span className="mt-1 block text-xs text-red-600">{t("lecturer.gradingPage.scoring.feedbackRequired")}</span> : null}
             </label>
           </div>
         );

@@ -142,6 +142,23 @@ CREATE TABLE users_profile (
     UNIQUE KEY uk_profile_user (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- -------------------------------------------
+-- BẢNG 5c: lecturer_profiles — Hồ sơ nghiệp vụ giảng viên
+-- -------------------------------------------
+CREATE TABLE IF NOT EXISTS lecturer_profiles (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT UNSIGNED NOT NULL,
+    department VARCHAR(150) NULL,
+    academic_title VARCHAR(100) NULL,
+    specialization VARCHAR(255) NULL,
+    office_location VARCHAR(255) NULL,
+    contact_note TEXT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,
+    UNIQUE KEY uk_lecturer_profile_user (user_id),
+    CONSTRAINT fk_lecturer_profile_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 
 -- -------------------------------------------
 -- BẢNG 6: subjects — Học phần 
@@ -511,6 +528,7 @@ CREATE TABLE audit_logs (
 
     table_name  VARCHAR(64)  NOT NULL,
     record_id   BIGINT UNSIGNED  NULL,
+    title       VARCHAR(200) NULL,
 
     old_values  JSON         NULL COMMENT 'Giá trị trước thay đổi',
     new_values  JSON         NULL COMMENT 'Giá trị sau thay đổi',
@@ -752,6 +770,16 @@ INSERT INTO permissions (permission_code, permission_name, module) VALUES
 ('core.group.delete',     'Xoá nhóm',            'core'),
 -- Export
 ('core.export',           'Xuất dữ liệu',        'core');
+
+INSERT INTO permissions (permission_code, permission_name, module, description) VALUES
+('core.lecturer.read', 'View lecturers', 'core', 'View lecturer management data'),
+('core.lecturer.create', 'Create lecturers', 'core', 'Create lecturer accounts'),
+('core.lecturer.update', 'Update lecturers', 'core', 'Update lecturer account and profile data'),
+('core.lecturer.assign_class', 'Assign lecturer to class', 'core', 'Assign or change primary lecturer of a class'),
+('core.lecturer.view_workload', 'View lecturer workload', 'core', 'View lecturer workload and grading progress'),
+('core.lecturer.view_activity', 'View lecturer activity', 'core', 'View lecturer audit and API activity'),
+('core.lecturer.export', 'Export lecturers', 'core', 'Export lecturer management data'),
+('core.lecturer.delete', 'Delete lecturers', 'core', 'Delete lecturer accounts that are not assigned to any class');
 
 -- Gán quyền cho vai trò Lecture (full CRUD)
 INSERT INTO role_permissions (role_id, permission_id)
@@ -1342,3 +1370,644 @@ ALTER TABLE checkpoint_submission_files
 
 ALTER TABLE checkpoint_submission_files
     ADD CONSTRAINT fk_subfile_session FOREIGN KEY (session_id) REFERENCES upload_sessions(id) ON DELETE SET NULL;
+
+-- =============================================
+-- MODULE 3 PHASE 5: AI EVALUATION ASSISTANT
+-- =============================================
+
+CREATE TABLE IF NOT EXISTS ai_analysis_jobs (
+    id             BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    target_type    ENUM('checkpoint_submission','assignment_submission') NOT NULL,
+    target_id      BIGINT UNSIGNED NOT NULL,
+    requested_by   BIGINT UNSIGNED NOT NULL,
+    provider_key   VARCHAR(50) NULL,
+    model_name     VARCHAR(200) NULL,
+    status         ENUM('pending','processing','completed','failed') DEFAULT 'pending' NOT NULL,
+    error_message  VARCHAR(1000) NULL,
+    attempts       SMALLINT UNSIGNED DEFAULT 0 NOT NULL,
+    next_retry_at  DATETIME NULL,
+    started_at     DATETIME NULL,
+    created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,
+    completed_at   DATETIME NULL,
+    INDEX idx_ai_jobs_target (target_type, target_id),
+    INDEX idx_ai_jobs_status (status, next_retry_at),
+    INDEX idx_ai_jobs_provider (provider_key, model_name),
+    INDEX idx_ai_jobs_requested_by (requested_by),
+    CONSTRAINT fk_ai_jobs_requested_by FOREIGN KEY (requested_by) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT='Background jobs for AI evaluation analysis';
+
+CREATE TABLE IF NOT EXISTS ai_evaluation_suggestions (
+    id                                      BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    job_id                                  BIGINT UNSIGNED NOT NULL,
+    target_type                             ENUM('checkpoint_submission','assignment_submission') NOT NULL,
+    target_id                               BIGINT UNSIGNED NOT NULL,
+    rubric_id                               BIGINT UNSIGNED NOT NULL,
+    summary                                 TEXT NOT NULL,
+    strengths                               JSON NULL,
+    weaknesses                              JSON NULL,
+    missing_requirements                    JSON NULL,
+    suggested_overall_feedback              TEXT NULL,
+    suggested_total_score                   DECIMAL(6,2) NULL,
+    confidence_score                        DECIMAL(5,4) NULL,
+    project_potential_level                 VARCHAR(30) NULL,
+    project_potential_reasons               JSON NULL,
+    project_potential_next_steps            JSON NULL,
+    project_potential_confidence_score      DECIMAL(5,4) NULL,
+    model_name                              VARCHAR(200) NULL,
+    provider_key                            VARCHAR(50) NULL,
+    raw_response                            MEDIUMTEXT NULL,
+    created_at                              TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    INDEX idx_ai_suggestions_target (target_type, target_id, created_at),
+    INDEX idx_ai_suggestions_job (job_id),
+    INDEX idx_ai_suggestions_provider (provider_key, model_name),
+    INDEX idx_ai_suggestions_rubric (rubric_id),
+    CONSTRAINT fk_ai_suggestions_job FOREIGN KEY (job_id) REFERENCES ai_analysis_jobs(id) ON DELETE CASCADE,
+    CONSTRAINT fk_ai_suggestions_rubric FOREIGN KEY (rubric_id) REFERENCES rubrics(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT='AI suggestions for rubric-based grading; never official scores';
+
+CREATE TABLE IF NOT EXISTS ai_criterion_suggestions (
+    id                 BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    ai_suggestion_id   BIGINT UNSIGNED NOT NULL,
+    criterion_id        BIGINT UNSIGNED NOT NULL,
+    suggested_score     DECIMAL(6,2) NULL,
+    suggested_feedback  TEXT NULL,
+    evidence_text       TEXT NULL,
+    confidence_score    DECIMAL(5,4) NULL,
+    created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    INDEX idx_ai_criterion_suggestion (ai_suggestion_id),
+    INDEX idx_ai_criterion (criterion_id),
+    CONSTRAINT fk_ai_criterion_suggestion FOREIGN KEY (ai_suggestion_id) REFERENCES ai_evaluation_suggestions(id) ON DELETE CASCADE,
+    CONSTRAINT fk_ai_criterion FOREIGN KEY (criterion_id) REFERENCES rubric_criteria(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT='AI suggestions per rubric criterion';
+
+CREATE TABLE IF NOT EXISTS ai_suggestion_actions (
+    id                 BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    ai_suggestion_id   BIGINT UNSIGNED NOT NULL,
+    user_id            BIGINT UNSIGNED NOT NULL,
+    action             ENUM('accepted','edited','ignored','copied') NOT NULL,
+    field_name         VARCHAR(100) NULL,
+    created_at         TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    INDEX idx_ai_action_suggestion (ai_suggestion_id),
+    INDEX idx_ai_action_user (user_id),
+    CONSTRAINT fk_ai_action_suggestion FOREIGN KEY (ai_suggestion_id) REFERENCES ai_evaluation_suggestions(id) ON DELETE CASCADE,
+    CONSTRAINT fk_ai_action_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT='Audit trail of user interactions with AI suggestions';
+
+INSERT IGNORE INTO permissions (permission_code, permission_name, module) VALUES
+('ai.evaluation.analyze', 'Yêu cầu AI phân tích bài nộp', 'ai'),
+('ai.evaluation.read', 'Xem gợi ý AI evaluation', 'ai'),
+('ai.evaluation.action', 'Ghi nhận thao tác với gợi ý AI', 'ai'),
+('ai.evaluation.admin_read', 'Quản trị xem toàn bộ gợi ý AI', 'ai'),
+('ai.settings.read', 'Xem cấu hình AI', 'ai'),
+('ai.settings.update', 'Cập nhật cấu hình AI', 'ai'),
+('ai.settings.test_provider', 'Kiểm tra kết nối AI provider', 'ai'),
+('ai.settings.switch_provider', 'Chuyển AI provider đang sử dụng', 'ai');
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p ON p.permission_code IN (
+  'ai.evaluation.analyze', 'ai.evaluation.read', 'ai.evaluation.action'
+) WHERE r.role_code = 'lecturer';
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p ON p.module = 'ai'
+WHERE r.role_code IN ('admin', 'department_head');
+
+INSERT IGNORE INTO system_settings (setting_key, setting_value, data_type, module, description) VALUES
+('ai_active_provider', 'local-gemma', 'string', 'ai', 'AI provider đang sử dụng'),
+('allow_ai_score_suggestion', 'true', 'boolean', 'ai', 'Cho phép AI gợi ý điểm tham khảo'),
+('allow_ai_feedback_suggestion', 'true', 'boolean', 'ai', 'Cho phép AI gợi ý feedback'),
+('allow_student_view_ai_feedback', 'false', 'boolean', 'ai', 'Không cho sinh viên xem AI suggestion mặc định'),
+('data_retention_days', '180', 'integer', 'ai', 'Số ngày giữ dữ liệu AI suggestion'),
+('provider_cmd_api_enabled', 'true', 'boolean', 'ai', 'Bật provider CMD API'),
+('provider_cmd_api_base_url', 'http://localhost:20128/v1', 'string', 'ai', 'CMD API base URL'),
+('provider_cmd_api_model', 'cmc/MiniMaxAI/MiniMax-M2.5', 'string', 'ai', 'CMD API model'),
+('provider_cmd_api_stream', 'true', 'boolean', 'ai', 'CMD API stream mode'),
+('provider_local_gemma_enabled', 'true', 'boolean', 'ai', 'Bật provider Local Ollama'),
+('provider_local_gemma_base_url', 'http://ollama:11434/v1', 'string', 'ai', 'Local Ollama base URL'),
+('provider_local_gemma_model', 'qwen2.5:7b', 'string', 'ai', 'Local Ollama model'),
+('provider_local_gemma_stream', 'true', 'boolean', 'ai', 'Local Ollama stream mode'),
+('provider_local_gemma_api_key_required', 'false', 'boolean', 'ai', 'Local Ollama có bắt buộc API key không');
+
+-- =============================================
+-- MODULE 4 PHASE 1: MENTOR FOUNDATION
+-- =============================================
+
+CREATE TABLE IF NOT EXISTS mentor_profiles (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT UNSIGNED NULL,
+    full_name VARCHAR(150) NOT NULL,
+    email VARCHAR(150) NOT NULL,
+    phone VARCHAR(20) NULL,
+    avatar_url VARCHAR(500) NULL,
+    mentor_type ENUM('business','technical','internal_lecturer','external_expert') NOT NULL,
+    organization VARCHAR(255) NULL,
+    position_title VARCHAR(150) NULL,
+    bio TEXT NULL,
+    years_of_experience INT UNSIGNED NULL,
+    linkedin_url VARCHAR(500) NULL,
+    portfolio_url VARCHAR(500) NULL,
+    cv_file_url VARCHAR(500) NULL,
+    status ENUM('pending','active','inactive','rejected','archived') NOT NULL DEFAULT 'pending',
+    visibility ENUM('private','internal','public') NOT NULL DEFAULT 'internal',
+    created_by BIGINT UNSIGNED NULL,
+    reviewed_by BIGINT UNSIGNED NULL,
+    reviewed_at DATETIME NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,
+    deleted_at TIMESTAMP NULL,
+    active_email_key VARCHAR(150) GENERATED ALWAYS AS (
+      CASE WHEN deleted_at IS NULL AND status = 'active' THEN LOWER(TRIM(email)) ELSE NULL END
+    ) STORED,
+    mentor_user_key BIGINT UNSIGNED GENERATED ALWAYS AS (
+      CASE WHEN deleted_at IS NULL AND user_id IS NOT NULL THEN user_id ELSE NULL END
+    ) STORED,
+    UNIQUE KEY uk_mentor_active_email (active_email_key),
+    UNIQUE KEY uk_mentor_active_user (mentor_user_key),
+    INDEX idx_mentor_user (user_id),
+    INDEX idx_mentor_type_status (mentor_type, status),
+    INDEX idx_mentor_visibility (visibility),
+    INDEX idx_mentor_created_by (created_by),
+    INDEX idx_mentor_reviewed_by (reviewed_by),
+    CONSTRAINT fk_mentor_profile_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_mentor_profile_creator FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+    CONSTRAINT fk_mentor_profile_reviewer FOREIGN KEY (reviewed_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS mentor_expertise_areas (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    code VARCHAR(80) NOT NULL,
+    name VARCHAR(150) NOT NULL,
+    description TEXT NULL,
+    category ENUM('business','technical','product','marketing','finance','legal','ai','data','other') NOT NULL DEFAULT 'other',
+    status ENUM('active','inactive') NOT NULL DEFAULT 'active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,
+    UNIQUE KEY uk_mentor_expertise_code (code),
+    INDEX idx_mentor_expertise_category (category),
+    INDEX idx_mentor_expertise_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS mentor_expertise_map (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    mentor_id BIGINT UNSIGNED NOT NULL,
+    expertise_id BIGINT UNSIGNED NOT NULL,
+    level ENUM('beginner','intermediate','advanced','expert') NOT NULL DEFAULT 'intermediate',
+    years_experience INT UNSIGNED NULL,
+    note TEXT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,
+    UNIQUE KEY uk_mentor_expertise_map (mentor_id, expertise_id),
+    INDEX idx_mentor_expertise_map_expertise (expertise_id),
+    CONSTRAINT fk_mentor_expertise_map_mentor FOREIGN KEY (mentor_id) REFERENCES mentor_profiles(id) ON DELETE CASCADE,
+    CONSTRAINT fk_mentor_expertise_map_expertise FOREIGN KEY (expertise_id) REFERENCES mentor_expertise_areas(id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS mentor_availability (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    mentor_id BIGINT UNSIGNED NOT NULL,
+    day_of_week TINYINT UNSIGNED NULL,
+    start_time TIME NULL,
+    end_time TIME NULL,
+    timezone VARCHAR(50) NOT NULL DEFAULT 'Asia/Ho_Chi_Minh',
+    available_from DATE NULL,
+    available_to DATE NULL,
+    max_sessions_per_week INT UNSIGNED NULL,
+    note TEXT NULL,
+    status ENUM('active','inactive') NOT NULL DEFAULT 'active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,
+    INDEX idx_mentor_availability_mentor (mentor_id),
+    INDEX idx_mentor_availability_day_status (day_of_week, status),
+    CONSTRAINT fk_mentor_availability_mentor FOREIGN KEY (mentor_id) REFERENCES mentor_profiles(id) ON DELETE CASCADE,
+    CONSTRAINT chk_mentor_availability_day CHECK (day_of_week IS NULL OR day_of_week BETWEEN 1 AND 7),
+    CONSTRAINT chk_mentor_availability_time CHECK (start_time IS NULL OR end_time IS NULL OR start_time < end_time)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS mentor_documents (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    mentor_id BIGINT UNSIGNED NOT NULL,
+    document_type ENUM('cv','resume','portfolio','certificate','other') NOT NULL DEFAULT 'other',
+    file_name VARCHAR(255) NOT NULL,
+    file_url VARCHAR(500) NOT NULL,
+    file_path VARCHAR(500) NULL,
+    mime_type VARCHAR(100) NULL,
+    file_size BIGINT UNSIGNED NULL,
+    uploaded_by BIGINT UNSIGNED NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    deleted_at TIMESTAMP NULL,
+    INDEX idx_mentor_documents_mentor (mentor_id),
+    INDEX idx_mentor_documents_type (document_type),
+    INDEX idx_mentor_documents_uploader (uploaded_by),
+    INDEX idx_mentor_documents_file_path (file_path),
+    CONSTRAINT fk_mentor_documents_mentor FOREIGN KEY (mentor_id) REFERENCES mentor_profiles(id) ON DELETE CASCADE,
+    CONSTRAINT fk_mentor_documents_uploader FOREIGN KEY (uploaded_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT IGNORE INTO roles (role_code, role_name, description, is_system) VALUES
+('mentor', 'Mentor', 'Cố vấn/chuyên gia hỗ trợ nhóm dự án', 1);
+
+INSERT IGNORE INTO permissions (permission_code, permission_name, module, description) VALUES
+('mentor.profile.read', 'View mentor profiles', 'mentor', 'View mentor profile data'),
+('mentor.profile.create', 'Create mentor profiles', 'mentor', 'Create mentor profiles'),
+('mentor.profile.update', 'Update mentor profiles', 'mentor', 'Update mentor profile data'),
+('mentor.profile.delete', 'Delete mentor profiles', 'mentor', 'Soft delete mentor profiles'),
+('mentor.profile.review', 'Review mentor profiles', 'mentor', 'Approve or reject mentor profiles'),
+('mentor.expertise.manage', 'Manage mentor expertise', 'mentor', 'Manage mentor expertise areas and mapping'),
+('mentor.availability.manage', 'Manage mentor availability', 'mentor', 'Manage mentor availability'),
+('mentor.document.manage', 'Manage mentor documents', 'mentor', 'Manage private mentor documents'),
+('mentor.admin_read', 'Admin read mentor data', 'mentor', 'Read mentor data across the system');
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p ON p.module = 'mentor'
+WHERE r.role_code = 'admin';
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p ON p.permission_code IN (
+  'mentor.profile.read', 'mentor.profile.review', 'mentor.admin_read'
+) WHERE r.role_code = 'department_head';
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p ON p.permission_code IN (
+  'mentor.profile.read', 'mentor.profile.update', 'mentor.expertise.manage',
+  'mentor.availability.manage', 'mentor.document.manage'
+) WHERE r.role_code = 'mentor';
+
+INSERT IGNORE INTO mentor_expertise_areas (code, name, category, status) VALUES
+('business_model', 'Business Model', 'business', 'active'),
+('market_validation', 'Market Validation', 'business', 'active'),
+('pitching', 'Pitching', 'business', 'active'),
+('product_management', 'Product Management', 'product', 'active'),
+('software_architecture', 'Software Architecture', 'technical', 'active'),
+('mobile_development', 'Mobile Development', 'technical', 'active'),
+('web_development', 'Web Development', 'technical', 'active'),
+('ai_ml', 'AI / Machine Learning', 'ai', 'active'),
+('data_analytics', 'Data Analytics', 'data', 'active'),
+('cloud_devops', 'Cloud / DevOps', 'technical', 'active'),
+('ui_ux', 'UI / UX', 'product', 'active'),
+('finance', 'Finance', 'finance', 'active'),
+('legal', 'Legal', 'legal', 'active');
+
+-- =============================================
+-- MODULE 4 PHASES 3-4: MENTOR ASSIGNMENTS & SESSIONS
+-- =============================================
+
+CREATE TABLE IF NOT EXISTS mentor_assignments (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    mentor_id BIGINT UNSIGNED NOT NULL,
+    group_id BIGINT UNSIGNED NOT NULL,
+    class_id INT UNSIGNED NOT NULL,
+    semester_id INT UNSIGNED NOT NULL,
+    subject_id INT UNSIGNED NOT NULL,
+    assigned_by BIGINT UNSIGNED NULL,
+    approved_by BIGINT UNSIGNED NULL,
+    assignment_type ENUM('primary','supporting','business','technical') NOT NULL DEFAULT 'primary',
+    status ENUM('proposed','pending_mentor','active','rejected','cancelled','completed') NOT NULL DEFAULT 'pending_mentor',
+    start_date DATE NULL,
+    end_date DATE NULL,
+    expected_sessions INT UNSIGNED NULL,
+    note TEXT NULL,
+    rejection_reason TEXT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,
+    deleted_at TIMESTAMP NULL,
+    active_primary_group_key BIGINT UNSIGNED GENERATED ALWAYS AS (
+      CASE WHEN deleted_at IS NULL AND status = 'active' AND assignment_type = 'primary' THEN group_id ELSE NULL END
+    ) STORED,
+    open_mentor_group_key VARCHAR(80) GENERATED ALWAYS AS (
+      CASE WHEN deleted_at IS NULL AND status IN ('proposed','pending_mentor','active') THEN CONCAT(group_id, ':', mentor_id) ELSE NULL END
+    ) STORED,
+    UNIQUE KEY uk_mentor_assignment_active_primary (active_primary_group_key),
+    UNIQUE KEY uk_mentor_assignment_open_pair (open_mentor_group_key),
+    INDEX idx_mentor_assignment_mentor (mentor_id),
+    INDEX idx_mentor_assignment_group (group_id),
+    INDEX idx_mentor_assignment_class (class_id),
+    INDEX idx_mentor_assignment_semester (semester_id),
+    INDEX idx_mentor_assignment_subject (subject_id),
+    INDEX idx_mentor_assignment_status (status),
+    INDEX idx_mentor_assignment_type (assignment_type),
+    CONSTRAINT fk_mentor_assignment_mentor FOREIGN KEY (mentor_id) REFERENCES mentor_profiles(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_mentor_assignment_group FOREIGN KEY (group_id) REFERENCES `groups`(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_mentor_assignment_class FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_mentor_assignment_semester FOREIGN KEY (semester_id) REFERENCES semesters(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_mentor_assignment_subject FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_mentor_assignment_assigned_by FOREIGN KEY (assigned_by) REFERENCES users(id) ON DELETE SET NULL,
+    CONSTRAINT fk_mentor_assignment_approved_by FOREIGN KEY (approved_by) REFERENCES users(id) ON DELETE SET NULL,
+    CONSTRAINT chk_mentor_assignment_dates CHECK (start_date IS NULL OR end_date IS NULL OR start_date <= end_date)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS mentor_assignment_requests (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    group_id BIGINT UNSIGNED NOT NULL,
+    requested_by BIGINT UNSIGNED NULL,
+    requested_role ENUM('business','technical','any') NOT NULL DEFAULT 'any',
+    requested_expertise JSON NULL,
+    problem_statement TEXT NULL,
+    support_needed TEXT NOT NULL,
+    priority ENUM('low','normal','high','urgent') NOT NULL DEFAULT 'normal',
+    status ENUM('open','matched','closed','cancelled') NOT NULL DEFAULT 'open',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,
+    closed_at TIMESTAMP NULL,
+    INDEX idx_mentor_request_group (group_id),
+    INDEX idx_mentor_request_status_priority (status, priority),
+    INDEX idx_mentor_request_requested_by (requested_by),
+    CONSTRAINT fk_mentor_request_group FOREIGN KEY (group_id) REFERENCES `groups`(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_mentor_request_requested_by FOREIGN KEY (requested_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS mentor_assignment_history (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    assignment_id BIGINT UNSIGNED NOT NULL,
+    action ENUM('proposed','approved','rejected','activated','cancelled','completed','changed') NOT NULL,
+    old_values JSON NULL,
+    new_values JSON NULL,
+    actor_id BIGINT UNSIGNED NULL,
+    note TEXT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    INDEX idx_mentor_history_assignment (assignment_id),
+    INDEX idx_mentor_history_actor (actor_id),
+    CONSTRAINT fk_mentor_history_assignment FOREIGN KEY (assignment_id) REFERENCES mentor_assignments(id) ON DELETE CASCADE,
+    CONSTRAINT fk_mentor_history_actor FOREIGN KEY (actor_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS mentoring_sessions (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    assignment_id BIGINT UNSIGNED NOT NULL,
+    mentor_id BIGINT UNSIGNED NOT NULL,
+    group_id BIGINT UNSIGNED NOT NULL,
+    class_id INT UNSIGNED NOT NULL,
+    semester_id INT UNSIGNED NOT NULL,
+    title VARCHAR(200) NOT NULL,
+    description TEXT NULL,
+    session_type ENUM('online','offline','hybrid') NOT NULL DEFAULT 'online',
+    meeting_link VARCHAR(500) NULL,
+    location VARCHAR(255) NULL,
+    scheduled_start_at DATETIME NOT NULL,
+    scheduled_end_at DATETIME NOT NULL,
+    actual_start_at DATETIME NULL,
+    actual_end_at DATETIME NULL,
+    duration_minutes INT UNSIGNED NULL,
+    status ENUM('scheduled','completed','cancelled','no_show','rescheduled') NOT NULL DEFAULT 'scheduled',
+    created_by BIGINT UNSIGNED NULL,
+    cancelled_by BIGINT UNSIGNED NULL,
+    cancellation_reason TEXT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,
+    deleted_at TIMESTAMP NULL,
+    INDEX idx_mentoring_session_assignment (assignment_id),
+    INDEX idx_mentoring_session_mentor (mentor_id),
+    INDEX idx_mentoring_session_group (group_id),
+    INDEX idx_mentoring_session_class (class_id),
+    INDEX idx_mentoring_session_status_time (status, scheduled_start_at),
+    CONSTRAINT fk_mentoring_session_assignment FOREIGN KEY (assignment_id) REFERENCES mentor_assignments(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_mentoring_session_mentor FOREIGN KEY (mentor_id) REFERENCES mentor_profiles(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_mentoring_session_group FOREIGN KEY (group_id) REFERENCES `groups`(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_mentoring_session_class FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_mentoring_session_semester FOREIGN KEY (semester_id) REFERENCES semesters(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_mentoring_session_creator FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+    CONSTRAINT fk_mentoring_session_cancelled_by FOREIGN KEY (cancelled_by) REFERENCES users(id) ON DELETE SET NULL,
+    CONSTRAINT chk_mentoring_session_scheduled_time CHECK (scheduled_start_at < scheduled_end_at),
+    CONSTRAINT chk_mentoring_session_actual_time CHECK (actual_start_at IS NULL OR actual_end_at IS NULL OR actual_start_at <= actual_end_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS mentoring_session_attendees (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    session_id BIGINT UNSIGNED NOT NULL,
+    user_id BIGINT UNSIGNED NULL,
+    student_id BIGINT UNSIGNED NULL,
+    mentor_id BIGINT UNSIGNED NULL,
+    attendee_type ENUM('mentor','student','lecturer','guest') NOT NULL,
+    attendance_status ENUM('invited','attended','absent','late') NOT NULL DEFAULT 'invited',
+    note TEXT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,
+    INDEX idx_session_attendee_session (session_id),
+    INDEX idx_session_attendee_user (user_id),
+    INDEX idx_session_attendee_student (student_id),
+    INDEX idx_session_attendee_mentor (mentor_id),
+    CONSTRAINT fk_session_attendee_session FOREIGN KEY (session_id) REFERENCES mentoring_sessions(id) ON DELETE CASCADE,
+    CONSTRAINT fk_session_attendee_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+    CONSTRAINT fk_session_attendee_student FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE SET NULL,
+    CONSTRAINT fk_session_attendee_mentor FOREIGN KEY (mentor_id) REFERENCES mentor_profiles(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS mentoring_session_notes (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    session_id BIGINT UNSIGNED NOT NULL,
+    author_id BIGINT UNSIGNED NULL,
+    note_type ENUM('mentor_note','student_note','lecturer_note','private_admin_note') NOT NULL DEFAULT 'mentor_note',
+    content TEXT NOT NULL,
+    visibility ENUM('private_to_author','internal','shared_with_group','shared_with_mentor') NOT NULL DEFAULT 'internal',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,
+    deleted_at TIMESTAMP NULL,
+    INDEX idx_session_note_session (session_id),
+    INDEX idx_session_note_author (author_id),
+    CONSTRAINT fk_session_note_session FOREIGN KEY (session_id) REFERENCES mentoring_sessions(id) ON DELETE CASCADE,
+    CONSTRAINT fk_session_note_author FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS mentoring_feedbacks (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    session_id BIGINT UNSIGNED NOT NULL,
+    assignment_id BIGINT UNSIGNED NOT NULL,
+    from_user_id BIGINT UNSIGNED NULL,
+    from_role ENUM('mentor','student','lecturer','admin') NOT NULL,
+    target_type ENUM('mentor','group','session') NOT NULL,
+    target_id BIGINT UNSIGNED NOT NULL,
+    rating TINYINT UNSIGNED NULL,
+    feedback TEXT NULL,
+    strengths TEXT NULL,
+    improvements TEXT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,
+    UNIQUE KEY uk_mentoring_feedback_once (session_id, from_user_id, target_type, target_id),
+    INDEX idx_mentoring_feedback_session (session_id),
+    INDEX idx_mentoring_feedback_assignment (assignment_id),
+    INDEX idx_mentoring_feedback_from_user (from_user_id),
+    CONSTRAINT fk_mentoring_feedback_session FOREIGN KEY (session_id) REFERENCES mentoring_sessions(id) ON DELETE CASCADE,
+    CONSTRAINT fk_mentoring_feedback_assignment FOREIGN KEY (assignment_id) REFERENCES mentor_assignments(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_mentoring_feedback_from_user FOREIGN KEY (from_user_id) REFERENCES users(id) ON DELETE SET NULL,
+    CONSTRAINT chk_mentoring_feedback_rating CHECK (rating IS NULL OR rating BETWEEN 1 AND 5)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS mentoring_action_items (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    session_id BIGINT UNSIGNED NOT NULL,
+    group_id BIGINT UNSIGNED NOT NULL,
+    assigned_to_user_id BIGINT UNSIGNED NULL,
+    title VARCHAR(200) NOT NULL,
+    description TEXT NULL,
+    due_date DATE NULL,
+    status ENUM('open','in_progress','done','cancelled') NOT NULL DEFAULT 'open',
+    created_by BIGINT UNSIGNED NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,
+    INDEX idx_action_item_session (session_id),
+    INDEX idx_action_item_group (group_id),
+    INDEX idx_action_item_status (status),
+    CONSTRAINT fk_action_item_session FOREIGN KEY (session_id) REFERENCES mentoring_sessions(id) ON DELETE CASCADE,
+    CONSTRAINT fk_action_item_group FOREIGN KEY (group_id) REFERENCES `groups`(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_action_item_assignee FOREIGN KEY (assigned_to_user_id) REFERENCES users(id) ON DELETE SET NULL,
+    CONSTRAINT fk_action_item_creator FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT IGNORE INTO permissions (permission_code, permission_name, module, description) VALUES
+('mentor.assignment.read', 'Read mentor assignments', 'mentor', 'Read mentor assignment workflow data'),
+('mentor.assignment.create', 'Create mentor assignments', 'mentor', 'Assign mentors manually to groups'),
+('mentor.assignment.update', 'Update mentor assignments', 'mentor', 'Update mentor assignment metadata'),
+('mentor.assignment.approve', 'Approve mentor assignments', 'mentor', 'Approve or activate mentor assignments'),
+('mentor.assignment.cancel', 'Cancel mentor assignments', 'mentor', 'Cancel mentor assignments'),
+('mentor.assignment.complete', 'Complete mentor assignments', 'mentor', 'Complete mentor assignments'),
+('mentor.assignment.request', 'Request mentor assignment', 'mentor', 'Request mentor support for a group'),
+('mentor.assignment.respond', 'Respond to assignment', 'mentor', 'Mentor accepts or declines assignments'),
+('mentor.session.read', 'Read mentoring sessions', 'mentor', 'Read mentoring sessions'),
+('mentor.session.create', 'Create mentoring sessions', 'mentor', 'Create mentoring sessions'),
+('mentor.session.update', 'Update mentoring sessions', 'mentor', 'Update mentoring sessions'),
+('mentor.session.status', 'Change mentoring session status', 'mentor', 'Change mentoring session status'),
+('mentor.feedback.manage', 'Manage mentoring feedback', 'mentor', 'Create and read mentoring feedback'),
+('mentor.action_item.manage', 'Manage mentoring action items', 'mentor', 'Create and update mentoring action items');
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p ON p.module = 'mentor'
+WHERE r.role_code = 'admin';
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p ON p.permission_code IN (
+  'mentor.assignment.read', 'mentor.assignment.create', 'mentor.assignment.update',
+  'mentor.assignment.approve', 'mentor.assignment.cancel', 'mentor.assignment.complete',
+  'mentor.assignment.request', 'mentor.session.read', 'mentor.feedback.manage',
+  'mentor.action_item.manage'
+) WHERE r.role_code = 'department_head';
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p ON p.permission_code IN (
+  'mentor.assignment.read', 'mentor.assignment.request', 'mentor.session.read',
+  'mentor.feedback.manage', 'mentor.action_item.manage'
+) WHERE r.role_code = 'lecturer';
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p ON p.permission_code IN (
+  'mentor.assignment.read', 'mentor.assignment.respond', 'mentor.session.read',
+  'mentor.session.create', 'mentor.session.update', 'mentor.session.status',
+  'mentor.feedback.manage', 'mentor.action_item.manage'
+) WHERE r.role_code = 'mentor';
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p ON p.permission_code IN (
+  'mentor.session.read', 'mentor.feedback.manage', 'mentor.action_item.manage'
+) WHERE r.role_code = 'student';
+
+CREATE TABLE IF NOT EXISTS mentor_matching_requests (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    group_id BIGINT UNSIGNED NOT NULL,
+    class_id INT UNSIGNED NOT NULL,
+    semester_id INT UNSIGNED NOT NULL,
+    requested_by BIGINT UNSIGNED NULL,
+    support_needed TEXT NOT NULL,
+    preferred_mentor_type ENUM('business','technical','any') NOT NULL DEFAULT 'any',
+    required_expertise JSON NULL,
+    priority ENUM('low','normal','high','urgent') NOT NULL DEFAULT 'normal',
+    status ENUM('pending','generated','approved','rejected','converted_to_assignment','cancelled') NOT NULL DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,
+    INDEX idx_matching_request_group (group_id),
+    INDEX idx_matching_request_class (class_id),
+    INDEX idx_matching_request_semester (semester_id),
+    INDEX idx_matching_request_status (status),
+    INDEX idx_matching_request_requested_by (requested_by),
+    CONSTRAINT fk_matching_request_group FOREIGN KEY (group_id) REFERENCES `groups`(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_matching_request_class FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_matching_request_semester FOREIGN KEY (semester_id) REFERENCES semesters(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_matching_request_user FOREIGN KEY (requested_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS mentor_matching_suggestions (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    request_id BIGINT UNSIGNED NOT NULL,
+    mentor_id BIGINT UNSIGNED NOT NULL,
+    score DECIMAL(5,2) NOT NULL DEFAULT 0,
+    match_level ENUM('low','medium','high','excellent') NOT NULL DEFAULT 'low',
+    reason TEXT NOT NULL,
+    strengths JSON NULL,
+    risks JSON NULL,
+    matching_method ENUM('rule_based','ai','hybrid') NOT NULL DEFAULT 'rule_based',
+    recommended_assignment_type ENUM('primary','supporting','business','technical') NULL,
+    model_name VARCHAR(150) NULL,
+    provider_key VARCHAR(80) NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    UNIQUE KEY uk_matching_request_mentor (request_id, mentor_id),
+    INDEX idx_matching_suggestion_request_score (request_id, score),
+    INDEX idx_matching_suggestion_mentor (mentor_id),
+    INDEX idx_matching_suggestion_method (matching_method),
+    CONSTRAINT fk_matching_suggestion_request FOREIGN KEY (request_id) REFERENCES mentor_matching_requests(id) ON DELETE CASCADE,
+    CONSTRAINT fk_matching_suggestion_mentor FOREIGN KEY (mentor_id) REFERENCES mentor_profiles(id) ON DELETE RESTRICT,
+    CONSTRAINT chk_matching_suggestion_score CHECK (score BETWEEN 0 AND 100)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS mentor_matching_score_breakdown (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    suggestion_id BIGINT UNSIGNED NOT NULL,
+    factor_code VARCHAR(80) NOT NULL,
+    factor_name VARCHAR(150) NOT NULL,
+    score DECIMAL(5,2) NOT NULL DEFAULT 0,
+    weight DECIMAL(5,2) NOT NULL DEFAULT 0,
+    reason TEXT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    INDEX idx_matching_breakdown_suggestion (suggestion_id),
+    CONSTRAINT fk_matching_breakdown_suggestion FOREIGN KEY (suggestion_id) REFERENCES mentor_matching_suggestions(id) ON DELETE CASCADE,
+    CONSTRAINT chk_matching_breakdown_score CHECK (score BETWEEN 0 AND 100),
+    CONSTRAINT chk_matching_breakdown_weight CHECK (weight BETWEEN 0 AND 100)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS mentor_matching_actions (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    suggestion_id BIGINT UNSIGNED NOT NULL,
+    user_id BIGINT UNSIGNED NULL,
+    action ENUM('viewed','shortlisted','approved','rejected','converted_to_assignment','ignored') NOT NULL,
+    note TEXT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    INDEX idx_matching_action_suggestion (suggestion_id),
+    INDEX idx_matching_action_user (user_id),
+    INDEX idx_matching_action_action (action),
+    CONSTRAINT fk_matching_action_suggestion FOREIGN KEY (suggestion_id) REFERENCES mentor_matching_suggestions(id) ON DELETE CASCADE,
+    CONSTRAINT fk_matching_action_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT IGNORE INTO permissions (permission_code, permission_name, module, description) VALUES
+('mentor.matching.read', 'Read mentor matching', 'mentor', 'Read mentor matching requests and suggestions'),
+('mentor.matching.create', 'Create mentor matching request', 'mentor', 'Create mentor matching requests for groups'),
+('mentor.matching.generate', 'Generate mentor matching', 'mentor', 'Generate rule-based and AI-assisted mentor suggestions'),
+('mentor.matching.action', 'Record mentor matching action', 'mentor', 'Record shortlist, approval, rejection, and ignore actions'),
+('mentor.matching.convert', 'Convert mentor matching', 'mentor', 'Convert a mentor matching suggestion to an assignment'),
+('mentor.analytics.read', 'Read mentor analytics', 'mentor', 'Read scoped mentor analytics'),
+('mentor.analytics.admin_read', 'Read all mentor analytics', 'mentor', 'Read all mentor analytics dashboards'),
+('mentor.analytics.export', 'Export mentor analytics', 'mentor', 'Export mentor analytics data'),
+('mentor.dashboard.read', 'Read mentor dashboard', 'mentor', 'Read mentor self dashboard');
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p ON p.module = 'mentor'
+WHERE r.role_code = 'admin';
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p ON p.permission_code IN (
+  'mentor.matching.read', 'mentor.matching.create', 'mentor.matching.generate',
+  'mentor.matching.action', 'mentor.matching.convert', 'mentor.analytics.read',
+  'mentor.analytics.admin_read', 'mentor.analytics.export'
+) WHERE r.role_code = 'department_head';
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p ON p.permission_code IN (
+  'mentor.matching.read', 'mentor.matching.create', 'mentor.matching.generate',
+  'mentor.matching.action', 'mentor.matching.convert', 'mentor.analytics.read'
+) WHERE r.role_code = 'lecturer';
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p ON p.permission_code IN (
+  'mentor.dashboard.read', 'mentor.analytics.read'
+) WHERE r.role_code = 'mentor';

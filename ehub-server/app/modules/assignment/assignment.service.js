@@ -4,7 +4,7 @@ import { BadRequest, Forbidden, NotFound } from "app/core/errors/errorFactory.js
 import { Events } from "app/core/constants/events.js";
 import { getFileProxyUrl } from "app/core/utils/file.js";
 
-export const createAssignmentService = ({ assignmentRepository, storageService, transaction, eventBus, tokenService, auditService }) => {
+export const createAssignmentService = ({ assignmentRepository, storageService, transaction, eventBus, tokenService, auditService, evaluationRepository }) => {
   const base = createBaseService(assignmentRepository, "Assignment");
   const ALLOWED_SORT = ["title", "deadline", "max_score", "status", "created_at"];
 
@@ -66,7 +66,53 @@ export const createAssignmentService = ({ assignmentRepository, storageService, 
       : null,
     submittedAt: row.submitted_at || null,
     submissionId: row.submission_id || null,
+    rubricId: row.rubric_id || null,
+    rubricName: row.rubric_name || null,
   });
+
+  const toStudentEvaluationDto = (evaluation) => {
+    if (!evaluation) return null;
+    return {
+      id: evaluation.id,
+      rubricId: evaluation.rubric_id,
+      rubricName: evaluation.rubric_name,
+      rubricVersion: Number(evaluation.rubric_version || 1),
+      totalScore: evaluation.total_score != null ? Number(evaluation.total_score) : null,
+      maxScore: evaluation.rubric_total_score != null ? Number(evaluation.rubric_total_score) : null,
+      overallFeedback: evaluation.overall_feedback || null,
+      status: evaluation.status,
+      evaluatedAt: evaluation.evaluated_at || null,
+      evaluatorName: evaluation.evaluator_name || null,
+      scores: (evaluation.scores || []).map((score) => ({
+        criterionId: score.criterion_id,
+        criterionName: score.criterion_name,
+        description: score.criterion_description || null,
+        maxScore: score.max_score != null ? Number(score.max_score) : null,
+        weight: score.weight != null ? Number(score.weight) : null,
+        orderIndex: score.order_index != null ? Number(score.order_index) : null,
+        requiredFeedback: Boolean(score.is_required_feedback),
+        score: score.score != null ? Number(score.score) : null,
+        feedback: score.feedback || null,
+      })),
+    };
+  };
+
+  const attachStudentEvaluation = async (dto, submissionId, submissionStatus) => {
+    if (
+      !submissionId ||
+      submissionStatus !== "graded" ||
+      !evaluationRepository?.findPublishedEvaluationDetailByTarget
+    ) {
+      dto.evaluation = null;
+      return dto;
+    }
+    const evaluation = await evaluationRepository.findPublishedEvaluationDetailByTarget(
+      "assignment_submission",
+      submissionId,
+    );
+    dto.evaluation = toStudentEvaluationDto(evaluation);
+    return dto;
+  };
 
   const checkOwnership = async (assignmentId, user) => {
     const row = await assignmentRepository.findByIdWithClass(assignmentId);
@@ -150,7 +196,7 @@ export const createAssignmentService = ({ assignmentRepository, storageService, 
           } else {
             dto.submissionFiles = [];
           }
-          return dto;
+          return attachStudentEvaluation(dto, row.submission_id, row.submission_status);
         })
       );
       return { data: cards, total: cards.length, page: 1, limit: 1000 };
@@ -188,7 +234,7 @@ export const createAssignmentService = ({ assignmentRepository, storageService, 
       } else {
         dto.submissionFiles = [];
       }
-      return dto;
+      return attachStudentEvaluation(dto, row.submission_id, row.submission_status);
     }
 
     await checkOwnership(id, user);

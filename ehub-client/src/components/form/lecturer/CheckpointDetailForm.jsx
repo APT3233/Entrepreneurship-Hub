@@ -10,8 +10,10 @@ import {
   AlertCircle,
   Target,
   Info,
+  Layers,
 } from "lucide-react";
 import CheckpointApi from "@/api/checkpoint";
+import { rubricService } from "@/api/adminEvaluationOps";
 import { useToast } from "@/components/ui/Toast";
 import { formatDate } from "@/utils/dateTimeDisplay";
 
@@ -120,13 +122,14 @@ function SubmissionInfoColumn({ group, maxScore }) {
   );
 }
 
-function GradingColumn({ checkpointId, maxScore, detail, onSaved }) {
+function GradingColumn({ checkpointId, maxScore, detail, onSaved, rubric }) {
   const toast = useToast();
   const [score, setScore] = useState(
     () => (detail?.score != null && detail?.score !== "" ? String(detail.score) : "")
   );
   const [feedback, setFeedback] = useState(() => detail?.feedback || "");
   const [saving, setSaving] = useState(false);
+  const [showRubricInfo, setShowRubricInfo] = useState(false);
 
   useEffect(() => {
     setScore(detail?.score != null && detail?.score !== "" ? String(detail.score) : "");
@@ -177,6 +180,34 @@ function GradingColumn({ checkpointId, maxScore, detail, onSaved }) {
         </p>
       )}
 
+      {rubric && (
+        <div className="mb-4">
+          <button
+            type="button"
+            onClick={() => setShowRubricInfo(!showRubricInfo)}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 bg-indigo-50/50 hover:bg-indigo-50 border border-indigo-100/50 px-3 py-2 rounded-xl transition-all"
+          >
+            <Layers size={13} />
+            {showRubricInfo ? "Ẩn tiêu chí chấm điểm" : "Xem tiêu chí chấm điểm (Rubric)"}
+          </button>
+          
+          {showRubricInfo && (
+            <div className="mt-2.5 p-3 rounded-xl border border-indigo-100 bg-white/90 space-y-2 max-h-[200px] overflow-y-auto pr-1 animate-in slide-in-from-top-1 duration-200">
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Tiêu chí chi tiết</p>
+              {rubric.criteria?.map((c) => (
+                <div key={c.id} className="text-xs pb-2 border-b border-gray-50 last:border-0 last:pb-0">
+                  <div className="flex justify-between font-semibold text-gray-800">
+                    <span>{c.name}</span>
+                    <span className="font-mono text-indigo-600">{c.max_score}đ {Number(c.weight) !== 1 && `(x${c.weight})`}</span>
+                  </div>
+                  {c.description && <p className="text-[11px] text-gray-400 mt-0.5 leading-relaxed">{c.description}</p>}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="space-y-4 flex-1 flex flex-col min-h-0">
         <label className="block shrink-0">
           <span className="text-xs font-semibold text-gray-600 mr-2">Điểm (0 – {maxScore})</span>
@@ -225,21 +256,62 @@ export default function CheckpointDetailForm({ checkpoint, isOpen, onClose, onSa
   const [groups, setGroups] = useState([]);
   const [selectedGroupId, setSelectedGroupId] = useState(groupId);
   const [detail, setDetail] = useState(null);
+  const [fullCheckpoint, setFullCheckpoint] = useState(null);
+  const [rubric, setRubric] = useState(null);
+  const [loadingRubric, setLoadingRubric] = useState(false);
   const [isLoadingGroups, setIsLoadingGroups] = useState(false);
   const [isLoadingSubmission, setIsLoadingSubmission] = useState(false);
   const [notSubmitted, setNotSubmitted] = useState(false);
   const [mouseDownTarget, setMouseDownTarget] = useState(null);
   const toast = useToast();
 
-  const maxScore = Number(checkpoint?.max_score) || 10;
+  useEffect(() => {
+    if (!isOpen || !checkpoint?.id) {
+      setFullCheckpoint(null);
+      return;
+    }
+    const fetchFullDetails = async () => {
+      try {
+        const res = await CheckpointApi.getById(checkpoint.id);
+        if (res?.data) {
+          setFullCheckpoint(res.data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch checkpoint details:", err);
+      }
+    };
+    fetchFullDetails();
+  }, [isOpen, checkpoint?.id]);
+
+  const activeCheckpoint = fullCheckpoint || checkpoint;
+  const maxScore = Number(activeCheckpoint?.max_score) || 10;
+
+  useEffect(() => {
+    if (!isOpen || !activeCheckpoint || !activeCheckpoint.rubricId) {
+      setRubric(null);
+      return;
+    }
+    const fetchRubric = async () => {
+      setLoadingRubric(true);
+      try {
+        const res = await rubricService.get(activeCheckpoint.rubricId);
+        setRubric(res?.data || null);
+      } catch (err) {
+        console.error("Failed to fetch rubric:", err);
+      } finally {
+        setLoadingRubric(false);
+      }
+    };
+    fetchRubric();
+  }, [isOpen, activeCheckpoint?.rubricId]);
 
   // Fetch group submissions list
   useEffect(() => {
     const fetchSubmissions = async () => {
-      if (isOpen && checkpoint && !groupId) {
+      if (isOpen && activeCheckpoint && !groupId) {
         setIsLoadingGroups(true);
         try {
-          const res = await CheckpointApi.getSubmissions(checkpoint.id);
+          const res = await CheckpointApi.getSubmissions(activeCheckpoint.id);
           const list = res?.data;
           const raw = Array.isArray(list) ? list : [];
           const mappedGroups = raw.map((g) => ({
@@ -266,7 +338,7 @@ export default function CheckpointDetailForm({ checkpoint, isOpen, onClose, onSa
       }
     };
     fetchSubmissions();
-  }, [isOpen, checkpoint?.id, groupId]);
+  }, [isOpen, activeCheckpoint?.id, groupId]);
 
   // Sync selectedGroupId with prop groupId
   useEffect(() => {
@@ -276,12 +348,12 @@ export default function CheckpointDetailForm({ checkpoint, isOpen, onClose, onSa
   // Load submission detail when group selection changes
   useEffect(() => {
     const fetchDetail = async () => {
-      if (!selectedGroupId || !checkpoint) return;
+      if (!selectedGroupId || !activeCheckpoint) return;
       setIsLoadingSubmission(true);
       setNotSubmitted(false);
       setDetail(null);
       try {
-        const res = await CheckpointApi.getSubmissionDetail(checkpoint.id, selectedGroupId);
+        const res = await CheckpointApi.getSubmissionDetail(activeCheckpoint.id, selectedGroupId);
         const data = res?.data;
         if (data) {
           setDetail(data);
@@ -295,9 +367,9 @@ export default function CheckpointDetailForm({ checkpoint, isOpen, onClose, onSa
       }
     };
     fetchDetail();
-  }, [selectedGroupId, checkpoint?.id]);
+  }, [selectedGroupId, activeCheckpoint?.id]);
 
-  if (!isOpen || !checkpoint) return null;
+  if (!isOpen || !activeCheckpoint) return null;
 
   const onGraded = async (updated) => {
     onSaveGrade?.({ groupId: selectedGroupId });
@@ -390,10 +462,10 @@ export default function CheckpointDetailForm({ checkpoint, isOpen, onClose, onSa
         <div className="flex-1 flex flex-col bg-white min-w-0">
           <div className="flex items-center justify-between px-6 sm:px-8 py-5 border-b border-gray-50 shrink-0">
             <div className="flex-1 min-w-0 pr-2">
-              <h2 className="text-lg sm:text-xl font-black text-gray-900 truncate">{checkpoint.title}</h2>
+              <h2 className="text-lg sm:text-xl font-black text-gray-900 truncate">{activeCheckpoint.title}</h2>
               <div className="flex items-center gap-2 mt-1 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                 <Calendar size={12} />
-                Hạn: {formatDate(checkpoint.deadline)} · Tối đa {maxScore} điểm
+                Hạn: {formatDate(activeCheckpoint.deadline)} · Tối đa {maxScore} điểm
               </div>
             </div>
             <button
@@ -412,9 +484,55 @@ export default function CheckpointDetailForm({ checkpoint, isOpen, onClose, onSa
                 <h3 className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest">Yêu cầu checkpoint</h3>
               </div>
               <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
-                {checkpoint.description || "Không có hướng dẫn chi tiết."}
+                {activeCheckpoint.description || "Không có hướng dẫn chi tiết."}
               </p>
             </div>
+
+            {/* Rubric display */}
+            {loadingRubric ? (
+              <div className="mb-6 p-4 rounded-2xl border border-indigo-50 bg-indigo-50/10 animate-pulse flex items-center justify-center gap-2">
+                <div className="w-4 h-4 border-2 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
+                <span className="text-xs text-gray-400">Đang tải rubric...</span>
+              </div>
+            ) : rubric ? (
+              <div className="mb-6 p-5 rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50/20 to-violet-50/20 shadow-sm text-left">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Layers className="text-indigo-500 shrink-0" size={16} />
+                    <span className="text-xs font-bold text-indigo-800 uppercase tracking-widest">Rubric đánh giá</span>
+                  </div>
+                  <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100/50">
+                    v{rubric.version || 1}
+                  </span>
+                </div>
+                <h4 className="text-sm font-black text-gray-900">{rubric.name}</h4>
+                {rubric.description && (
+                  <p className="mt-1 text-xs text-gray-500 leading-relaxed">{rubric.description}</p>
+                )}
+                
+                {/* Criteria List */}
+                {Array.isArray(rubric.criteria) && rubric.criteria.length > 0 && (
+                  <div className="mt-4 space-y-2.5">
+                    {rubric.criteria.map((c) => (
+                      <div key={c.id} className="flex items-start justify-between gap-3 text-xs bg-white/80 border border-gray-100 p-3 rounded-xl hover:shadow-sm transition-all">
+                        <div className="min-w-0">
+                          <p className="font-bold text-gray-800 flex items-center gap-1.5">
+                            {c.name}
+                            {c.is_required_feedback ? (
+                              <span className="text-[9px] font-medium text-amber-600 bg-amber-50 px-1.5 py-0.2 rounded border border-amber-100/60">Bắt buộc feedback</span>
+                            ) : null}
+                          </p>
+                          {c.description && <p className="text-[11px] text-gray-400 mt-1 leading-relaxed">{c.description}</p>}
+                        </div>
+                        <div className="shrink-0 text-right font-mono font-bold text-indigo-600 whitespace-nowrap bg-indigo-50/50 px-2.5 py-1 rounded-lg border border-indigo-50">
+                          {c.max_score}đ {Number(c.weight) !== 1 && `(x${c.weight})`}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : null}
 
             {!selectedGroupId ? (
               <div className="h-48 flex flex-col items-center justify-center text-gray-400">
@@ -453,10 +571,11 @@ export default function CheckpointDetailForm({ checkpoint, isOpen, onClose, onSa
                 </div>
                 <div className="min-h-0">
                   <GradingColumn
-                    checkpointId={checkpoint.id}
+                    checkpointId={activeCheckpoint.id}
                     maxScore={maxScore}
                     detail={detail}
                     onSaved={onGraded}
+                    rubric={rubric}
                   />
                 </div>
               </div>

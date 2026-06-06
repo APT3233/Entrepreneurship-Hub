@@ -3,8 +3,10 @@ import StudentLayout from "@/layouts/student";
 import StudentDashboard from "@/pages/student";
 import StudentGroupsPage from "@/pages/student/groups";
 import StudentAssignmentsPage from "@/pages/student/assignments";
-const ProfilePage = React.lazy(() => import("@/pages/common/ProfilePage"));
+import StudentMentoringPage from "@/pages/student/mentoring";
 import { Roles } from "@/constants/roles";
+const ProfilePage = React.lazy(() => import("@/pages/common/ProfilePage"));
+const SessionDetailPage = React.lazy(() => import("@/pages/mentoring/SessionDetailPage"));
 
 export default function init(routes) {
   const route = {
@@ -23,6 +25,14 @@ export default function init(routes) {
       {
         path: "assignments",
         element: <StudentAssignmentsPage />,
+      },
+      {
+        path: "mentoring",
+        element: <StudentMentoringPage />,
+      },
+      {
+        path: "mentoring/sessions/:id",
+        element: <SessionDetailPage />,
       },
       {
         path: "profile",

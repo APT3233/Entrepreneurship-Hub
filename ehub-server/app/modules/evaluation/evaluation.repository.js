@@ -172,7 +172,7 @@ export const createEvaluationRepository = ({ db }) => {
     return { whereSql: where.join(" AND "), params };
   };
 
-  const listRubrics = async ({ search, subjectId, status, limit, offset }) => {
+  const listRubrics = async ({ search, subjectId, status, creatorId, limit, offset }) => {
     const params = {};
     const where = ["r.deleted_at IS NULL"];
     addSearch(where, params, ["r.name", "r.description", "s.subject_code", "s.subject_name"], search);
@@ -183,6 +183,10 @@ export const createEvaluationRepository = ({ db }) => {
     if (status) {
       where.push("r.status = :status");
       params.status = status;
+    }
+    if (creatorId) {
+      where.push("r.created_by = :creatorId");
+      params.creatorId = Number(creatorId);
     }
     const whereSql = where.join(" AND ");
     const [rows] = await db.execute(
@@ -565,7 +569,7 @@ export const createEvaluationRepository = ({ db }) => {
         FROM evaluation_sessions es
         JOIN rubrics r ON r.id = es.rubric_id
         JOIN \`groups\` g ON g.id = es.group_id
-        JOIN users u ON u.id = es.evaluator_id
+        LEFT JOIN users u ON u.id = es.evaluator_id
         WHERE es.id = :id
         LIMIT 1
       `,
@@ -587,6 +591,42 @@ export const createEvaluationRepository = ({ db }) => {
         ORDER BY rc.order_index ASC, rc.id ASC
       `,
       { id: Number(id) },
+    );
+    return { ...session, scores };
+  };
+
+  const findPublishedEvaluationDetailByTarget = async (targetType, targetId) => {
+    const [sessions] = await db.execute(
+      `
+        SELECT es.*, r.name AS rubric_name, r.version AS rubric_version,
+               r.total_score AS rubric_total_score,
+               g.group_code, g.group_name, u.full_name AS evaluator_name
+        FROM evaluation_sessions es
+        JOIN rubrics r ON r.id = es.rubric_id
+        JOIN \`groups\` g ON g.id = es.group_id
+        JOIN users u ON u.id = es.evaluator_id
+        WHERE es.target_type = :targetType
+          AND es.target_id = :targetId
+          AND es.is_official = 1
+          AND es.status IN ('submitted', 'confirmed')
+        ORDER BY es.evaluated_at DESC, es.updated_at DESC, es.id DESC
+        LIMIT 1
+      `,
+      { targetType, targetId: Number(targetId) },
+    );
+    const session = sessions[0] || null;
+    if (!session) return null;
+
+    const [scores] = await db.execute(
+      `
+        SELECT es.*, rc.name AS criterion_name, rc.description AS criterion_description,
+               rc.max_score, rc.weight, rc.order_index, rc.is_required_feedback
+        FROM evaluation_scores es
+        JOIN rubric_criteria rc ON rc.id = es.criterion_id
+        WHERE es.evaluation_session_id = :id
+        ORDER BY rc.order_index ASC, rc.id ASC
+      `,
+      { id: Number(session.id) },
     );
     return { ...session, scores };
   };
@@ -739,6 +779,7 @@ export const createEvaluationRepository = ({ db }) => {
     findOpenEvaluationSession,
     findEvaluationSessionById,
     findEvaluationDetailById,
+    findPublishedEvaluationDetailByTarget,
     createEvaluationSession,
     updateEvaluationSession,
     replaceEvaluationScores,

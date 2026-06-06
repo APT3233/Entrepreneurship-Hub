@@ -73,6 +73,16 @@ export const createFileService = ({ fileRepository, storageService, tokenService
     return fileRepository.isStudentInGroup(user.id, row.group_id);
   };
 
+  const canReadMentorDocument = async (row, user) => {
+    if (Number(row.mentor_user_id) === Number(user?.id)) return true;
+    if (!isAdminOrDept(user)) return false;
+    const [canManageDocs, canAdminRead] = await Promise.all([
+      fileRepository.userHasPermission(user.id, "mentor.document.manage"),
+      fileRepository.userHasPermission(user.id, "mentor.admin_read"),
+    ]);
+    return canManageDocs || canAdminRead;
+  };
+
   const canReadOwnedPendingAttachment = (filePath, user) => {
     // Allow lecturers/admin to read their own assignment attachments
     if ((isAdminOrDept(user) || isLecturer(user)) && filePath.startsWith(`assignments/attachments/${Number(user.id)}/`)) {
@@ -99,11 +109,13 @@ export const createFileService = ({ fileRepository, storageService, tokenService
       checkpointAttachments,
       assignmentSubmissionFiles,
       checkpointSubmissionFiles,
+      mentorDocuments,
     ] = await Promise.all([
       fileRepository.findAssignmentAttachmentsByPath(filePath),
       fileRepository.findCheckpointAttachmentsByPath(filePath),
       fileRepository.findAssignmentSubmissionFilesByPath(filePath),
       fileRepository.findCheckpointSubmissionFilesByPath(filePath),
+      fileRepository.findMentorDocumentsByPath(filePath),
     ]);
 
     const classResources = [...assignmentAttachments, ...checkpointAttachments];
@@ -116,9 +128,14 @@ export const createFileService = ({ fileRepository, storageService, tokenService
       if (await canReadGroupSubmission(row, user)) return filePath;
     }
 
+    for (const row of mentorDocuments) {
+      if (await canReadMentorDocument(row, user)) return filePath;
+    }
+
     if (
       classResources.length === 0 &&
       groupSubmissions.length === 0 &&
+      mentorDocuments.length === 0 &&
       canReadOwnedPendingAttachment(filePath, user)
     ) {
       return filePath;

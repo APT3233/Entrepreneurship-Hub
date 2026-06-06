@@ -77,7 +77,7 @@ export default function AdminAssignmentSubmissions() {
   const columns = [
     { key: "assignment_title", label: "Assignment", render: (row) => <span className="font-semibold text-gray-900">{row.assignment_title}</span> },
     { key: "class_code", label: "Class" },
-    { key: "group", label: "Group", render: (row) => `${row.group_code} - ${row.group_name}` },
+    { key: "group", label: "Group", render: (row) => row.group_name || "—" },
     { key: "status", label: "Status", render: (row) => <StatusBadge value={row.status} /> },
     { key: "submitted_at", label: "Submitted", render: (row) => formatDate(row.submitted_at) },
     { key: "is_late", label: "Late", render: (row) => Number(row.is_late || 0) ? <StatusBadge value="late" /> : "—" },

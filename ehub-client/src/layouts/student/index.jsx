@@ -8,6 +8,7 @@ import {
   ClipboardList,
   Activity,
   Calendar,
+  Handshake,
 } from "lucide-react";
 import NavProgress from "@/components/ui/NavProgress";
 import ConfirmModal from "@/components/modal/ConfirmModal";
@@ -29,6 +30,7 @@ const StudentLayout = () => {
     { label: t("student.dashboard"), icon: Home, path: "/student/dashboard" },
     { label: t("student.groups"), icon: Users, path: "/student/groups" },
     { label: t("student.assignments"), icon: ClipboardList, path: "/student/assignments" },
+    { label: "Mentoring", icon: Handshake, path: "/student/mentoring" },
     { label: t("student.status"), icon: Activity, path: "/student/status", disabled: true },
     { label: t("student.schedule"), icon: Calendar, path: "/student/schedule", disabled: true },
   ], [t]);
@@ -98,4 +100,3 @@ const StudentLayout = () => {
 };
 
 export default StudentLayout;
-

@@ -35,7 +35,7 @@ export default function AdminGroupInvites() {
   };
 
   const columns = [
-    { key: "group", label: t("nav.studentGroups", { defaultValue: "Group" }) === "Nhóm sinh viên" ? "Nhóm" : "Group", render: (row) => <span className="font-semibold text-gray-900">{row.group_code} - {row.group_name}</span> },
+    { key: "group", label: t("admin.fields.group"), render: (row) => <span className="font-semibold text-gray-900">{row.group_name || "—"}</span> },
     { key: "student", label: t("admin.fields.fullName", { defaultValue: "Student" }) === "Họ và tên" ? "Sinh viên" : "Student", render: (row) => `${row.student_code} - ${row.student_name}` },
     { key: "intended_role", label: t("common.confirm") === "Xác nhận" ? "Vai trò" : "Role", render: (row) => <StatusBadge value={row.intended_role} /> },
     { key: "status", label: t("admin.fields.status"), render: (row) => <StatusBadge value={row.status} /> },
@@ -75,7 +75,7 @@ export default function AdminGroupInvites() {
       >
         {detail ? (
           <DetailGrid items={[
-            [t("nav.studentGroups", { defaultValue: "Group" }) === "Nhóm sinh viên" ? "Nhóm" : "Group", `${detail.group_code} - ${detail.group_name}`],
+            [t("admin.fields.group"), detail.group_name || "—"],
             [t("admin.fields.fullName", { defaultValue: "Student" }) === "Họ và tên" ? "Sinh viên" : "Student", `${detail.student_code} - ${detail.student_name}`],
             [t("admin.fields.email"), detail.email],
             [t("common.confirm") === "Xác nhận" ? "Vai trò" : "Role", detail.intended_role],

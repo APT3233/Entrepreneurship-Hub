@@ -5,6 +5,7 @@ import { createAdminDashboardRepository } from "./core/dashboard.repository.js";
 import { createAdminStudentGroupRepository } from "./core/studentGroup.repository.js";
 import { createAdminProjectSubmissionRepository } from "./core/projectSubmission.repository.js";
 import { createAdminEvaluationOpsRepository } from "./core/evaluationOps.repository.js";
+import { createAdminLecturerRepository } from "./core/lecturer.repository.js";
 import { createAdminRouter } from "./admin.route.js";
 import { createAdminAccessControlService } from "./sub-modules/access-control/accessControl.service.js";
 import { createAdminAccessControlController } from "./sub-modules/access-control/accessControl.controller.js";
@@ -18,6 +19,8 @@ import { createAdminProjectSubmissionService } from "./sub-modules/project-submi
 import { createAdminProjectSubmissionController } from "./sub-modules/project-submission/projectSubmission.controller.js";
 import { createAdminEvaluationOpsService } from "./sub-modules/evaluation-ops/evaluationOps.service.js";
 import { createAdminEvaluationOpsController } from "./sub-modules/evaluation-ops/evaluationOps.controller.js";
+import { createAdminLecturerService } from "./sub-modules/lecturer/lecturer.service.js";
+import { createAdminLecturerController } from "./sub-modules/lecturer/lecturer.controller.js";
 
 export const AdminModule = {
   name: "admin",
@@ -42,6 +45,9 @@ export const AdminModule = {
       adminEvaluationOpsRepository: asFunction(createAdminEvaluationOpsRepository).singleton(),
       adminEvaluationOpsService: asFunction(createAdminEvaluationOpsService).singleton(),
       adminEvaluationOpsController: asFunction(createAdminEvaluationOpsController).singleton(),
+      adminLecturerRepository: asFunction(createAdminLecturerRepository).singleton(),
+      adminLecturerService: asFunction(createAdminLecturerService).singleton(),
+      adminLecturerController: asFunction(createAdminLecturerController).singleton(),
     });
   },
   router: (container) => createAdminRouter(container),

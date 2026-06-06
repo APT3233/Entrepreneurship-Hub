@@ -1,9 +1,10 @@
+import "app/core/utils/timezone.js";
 import { bootstrap } from "app/loaders/index.js";
 import { appConfig } from "app/config/app.js";
 import { logger } from "app/core/logger/index.js";
 
 const start = async () => {
-  const { app, stopOutboxMailWorker } = await bootstrap();
+  const { app, stopOutboxMailWorker, stopAiEvaluationWorker } = await bootstrap();
 
   const server = app.listen(appConfig.port, appConfig.host, () => {
     logger.info(
@@ -18,6 +19,7 @@ const start = async () => {
 
     server.close(async () => {
       if (typeof stopOutboxMailWorker === "function") await stopOutboxMailWorker();
+      if (typeof stopAiEvaluationWorker === "function") await stopAiEvaluationWorker();
       const { destroyDatabase } = await import("app/loaders/database.loader.js");
       const { disconnectRedis } = await import("app/loaders/redis.loader.js");
 

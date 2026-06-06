@@ -11,6 +11,7 @@ export default function AssignmentCard({ assignment, onClick }) {
     classCode,
     submissionStatus,
     score,
+    evaluation,
   } = assignment;
 
   const isSubmitted = submissionStatus === "submitted" || submissionStatus === "graded" || submissionStatus === "resubmitted";
@@ -43,6 +44,11 @@ export default function AssignmentCard({ assignment, onClick }) {
               {isGraded ? "Đã chấm" : "Đã nộp"}
             </span>
           )}
+          {isGraded && evaluation?.scores?.length ? (
+            <span className="rounded-full bg-violet-50 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-violet-600 border border-violet-100">
+              Rubric
+            </span>
+          ) : null}
         </div>
 
         {/* Title & Description */}

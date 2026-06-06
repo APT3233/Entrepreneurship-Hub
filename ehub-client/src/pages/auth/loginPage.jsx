@@ -6,7 +6,7 @@ import { authApi } from "@/api/auth";
 import { selectAuth, setError, setUser } from "@/store/slices/authSlice";
 import { Roles } from "@/constants/roles";
 import { getDefaultRouteForUser, hasAnyRole } from "@/utils/role";
-import { UserIcon, LockIcon } from "@/components/icons/auth";
+import { UserIcon, LockIcon, EyeIcon, EyeOffIcon } from "@/components/icons/auth";
 import { GraduationCapIcon, LectureIcon } from "@/components/icons/education";
 import { AlertCircleIcon } from "@/components/icons/ui";
 import GoogleButton from "@/components/ui/Button/GoogleButton";
@@ -50,6 +50,7 @@ export default function LoginPage() {
   const [role, setRole] = useState(Roles.STUDENT);
   const [id, setId] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -178,6 +179,7 @@ export default function LoginPage() {
     setRole(newRole);
     setId("");
     setPassword("");
+    setShowPassword(false);
     setSuccessMsg("");
     setNotInRosterModalOpen(false);
     setGoogleAccessDeniedOpen(false);
@@ -390,7 +392,7 @@ export default function LoginPage() {
               <div className={`${inputWrapClass("password")} ${fieldErrors.password ? "field-error-shake" : ""}`}>
                 <LockIcon hasError={!!fieldErrors.password} />
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   value={password}
                   autoComplete="current-password"
                   onChange={(e) => {
@@ -403,6 +405,13 @@ export default function LoginPage() {
                   placeholder="••••••••"
                   className="flex-1 bg-transparent text-sm text-gray-700 outline-none placeholder-gray-400"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="focus:outline-none flex items-center justify-center cursor-pointer p-0.5"
+                >
+                  {showPassword ? <EyeOffIcon /> : <EyeIcon />}
+                </button>
               </div>
               <FieldError message={fieldErrors.password === "error" ? "" : fieldErrors.password} />
             </div>

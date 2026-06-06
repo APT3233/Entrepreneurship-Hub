@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { Archive, Eye, Plus, SquarePen } from "lucide-react";
+import { Archive, Eye, Plus, SquarePen, Info, BookOpen, Users } from "lucide-react";
+import Dropdown from "@/components/ui/filter/DropDown";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { academicLookupService, classService } from "@/api/adminAcademic";
@@ -21,6 +22,8 @@ import {
   pageLimit,
 } from "@/pages/admin/academic/shared";
 
+const isSemesterCompleted = (semester) => semester?.status === "completed";
+
 const emptyForm = {
   subject_id: "",
   semester_id: "",
@@ -34,7 +37,7 @@ const emptyForm = {
 };
 
 export default function AdminClasses() {
-  const { t, language } = useTranslation();
+  const { t } = useTranslation();
   const classStatusOptions = useMemo(() => getClassStatusOptions(t), [t]);
   const toast = useToast();
   const navigate = useNavigate();
@@ -72,15 +75,18 @@ export default function AdminClasses() {
   }, []);
 
   const subjectOptions = useMemo(() => [
-    { value: "", label: t("common.confirm") === "Xác nhận" ? "Tất cả học phần" : "All subjects" },
-    ...(lookups.subjects || []).map((subject) => ({
+    { value: "", label: t("lookupAll.subjects") },
+    ...(lookups.subjects || []).filter(s => {
+      const code = (s.subject_code || "").toUpperCase();
+      return code === "EXE101" || code === "EXE201";
+    }).map((subject) => ({
       value: String(subject.id),
       label: `${subject.subject_code} - ${subject.subject_name}`,
     })),
   ], [lookups.subjects, t]);
 
   const semesterOptions = useMemo(() => [
-    { value: "", label: t("common.confirm") === "Xác nhận" ? "Tất cả học kỳ" : "All semesters" },
+    { value: "", label: t("lookupAll.semesters") },
     ...(lookups.semesters || []).map((semester) => ({
       value: String(semester.id),
       label: `${semester.semester_code} - ${semester.semester_name}`,
@@ -88,14 +94,51 @@ export default function AdminClasses() {
   ], [lookups.semesters, t]);
 
   const lecturerOptions = useMemo(() => [
-    { value: "", label: t("common.confirm") === "Xác nhận" ? "Tất cả giảng viên" : "All lecturers" },
+    { value: "", label: t("lookupAll.lecturers") },
     ...(lookups.lecturers || []).map((lecturer) => ({
       value: String(lecturer.id),
       label: lecturer.full_name || lecturer.email,
     })),
   ], [lookups.lecturers, t]);
 
+  const formSubjectOptions = useMemo(() => (lookups.subjects || []).filter(s => {
+    const code = (s.subject_code || "").toUpperCase();
+    return code === "EXE101" || code === "EXE201";
+  }).map((subject) => ({
+    value: String(subject.id),
+    label: `${subject.subject_code} - ${subject.subject_name}`,
+  })), [lookups.subjects]);
+
+  const formSemesterOptions = useMemo(() => {
+    const semesters = lookups.semesters || [];
+    const list = modal.type === "create"
+      ? semesters.filter((semester) => !isSemesterCompleted(semester))
+      : semesters;
+    return list.map((semester) => ({
+      value: String(semester.id),
+      label: `${semester.semester_code} - ${semester.semester_name}`,
+    }));
+  }, [lookups.semesters, modal.type]);
+
+  const formLecturerOptions = useMemo(() => [
+    { value: "", label: t("admin.placeholders.notAssigned") },
+    ...(lookups.lecturers || []).map((lecturer) => ({
+      value: String(lecturer.id),
+      label: lecturer.full_name || lecturer.email,
+    })),
+  ], [lookups.lecturers, t]);
+
+  const formStatusOptions = useMemo(() => ["draft", "active", "completed", "archived"].map((val) => ({
+    value: val,
+    label: t(`status.${val}`),
+  })), [t]);
+
   const openCreate = () => {
+    const hasOpenSemester = (lookups.semesters || []).some((semester) => !isSemesterCompleted(semester));
+    if (!hasOpenSemester) {
+      toast.error(t("admin.errors.semesterCompletedNoClass"));
+      return;
+    }
     setForm(emptyForm);
     setModal({ type: "create", cls: null });
   };
@@ -125,6 +168,12 @@ export default function AdminClasses() {
     }
     if (Number(form.min_group_members) > Number(form.max_group_members)) {
       return isVi ? "min_group_members phải nhỏ hơn hoặc bằng max_group_members." : "min_group_members must be less than or equal to max_group_members.";
+    }
+    if (modal.type === "create") {
+      const semester = (lookups.semesters || []).find((item) => String(item.id) === String(form.semester_id));
+      if (isSemesterCompleted(semester)) {
+        return t("admin.errors.semesterCompletedNoClass");
+      }
     }
     return "";
   };
@@ -209,7 +258,7 @@ export default function AdminClasses() {
           </button>
         ) : null}
       >
-        <SearchInput value={query.search} onChange={(search) => setQuery((prev) => ({ ...prev, page: 1, search }))} placeholder={t("common.confirm") === "Xác nhận" ? "Mã lớp, giảng viên..." : "Class code, lecturer..."} />
+        <SearchInput value={query.search} onChange={(search) => setQuery((prev) => ({ ...prev, page: 1, search }))} placeholder={t("admin.placeholders.classSearch")} />
         <FilterSelect label={t("nav.subjects")} value={query.subject_id} onChange={(subject_id) => setQuery((prev) => ({ ...prev, page: 1, subject_id }))} options={subjectOptions} />
         <FilterSelect label={t("admin.fields.semester")} value={query.semester_id} onChange={(semester_id) => setQuery((prev) => ({ ...prev, page: 1, semester_id }))} options={semesterOptions} />
         <FilterSelect label={t("admin.fields.lecturer")} value={query.lecturer_id} onChange={(lecturer_id) => setQuery((prev) => ({ ...prev, page: 1, lecturer_id }))} options={lecturerOptions} />
@@ -219,48 +268,96 @@ export default function AdminClasses() {
       <AdminTable columns={columns} rows={rows} loading={loading} error={error} meta={meta} onPageChange={(page) => setQuery((prev) => ({ ...prev, page }))} emptyText={t("common.noData")} />
 
       <FormModal open={["create", "edit"].includes(modal.type)} title={modal.type === "create" ? t("admin.actions.create") + " Class" : t("admin.actions.edit") + " Class"} onClose={() => setModal({ type: null, cls: null })} onSubmit={save} saving={saving}>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label={t("admin.fields.classCode")}>
-            <input className={inputClass} value={form.class_code} onChange={(e) => setForm({ ...form, class_code: e.target.value.toUpperCase() })} required />
-          </Field>
-          <Field label={t("admin.fields.fullName", { defaultValue: "Tên lớp" }) === "Họ và tên" ? "Tên lớp" : "Class name"}>
-            <input className={inputClass} value={form.class_name} onChange={(e) => setForm({ ...form, class_name: e.target.value })} />
-          </Field>
-          <Field label={t("nav.subjects")}>
-            <select className={inputClass} value={form.subject_id} onChange={(e) => setForm({ ...form, subject_id: e.target.value })} required>
-              <option value="">{t("common.confirm") === "Xác nhận" ? "Chọn học phần" : "Select subject"}</option>
-              {(lookups.subjects || []).map((subject) => <option key={subject.id} value={subject.id}>{subject.subject_code} - {subject.subject_name}</option>)}
-            </select>
-          </Field>
-          <Field label={t("admin.fields.semester")}>
-            <select className={inputClass} value={form.semester_id} onChange={(e) => setForm({ ...form, semester_id: e.target.value })} required>
-              <option value="">{t("common.confirm") === "Xác nhận" ? "Chọn học kỳ" : "Select semester"}</option>
-              {(lookups.semesters || []).map((semester) => <option key={semester.id} value={semester.id}>{semester.semester_code} - {semester.semester_name}</option>)}
-            </select>
-          </Field>
-          <Field label={t("admin.fields.lecturer")}>
-            <select className={inputClass} value={form.lecturer_id} onChange={(e) => setForm({ ...form, lecturer_id: e.target.value })}>
-              <option value="">{t("common.confirm") === "Xác nhận" ? "Chưa gán" : "Not assigned"}</option>
-              {(lookups.lecturers || []).map((lecturer) => <option key={lecturer.id} value={lecturer.id}>{lecturer.full_name || lecturer.email}</option>)}
-            </select>
-          </Field>
-          <Field label={t("admin.fields.status")}>
-            <select className={inputClass} value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
-              <option value="draft">Draft</option>
-              <option value="active">Active</option>
-              <option value="completed">Completed</option>
-              <option value="archived">Archived</option>
-            </select>
-          </Field>
-          <Field label={t("admin.fields.maxStudents")}>
-            <input type="number" min="1" max="200" className={inputClass} value={form.max_students} onChange={(e) => setForm({ ...form, max_students: e.target.value })} required />
-          </Field>
-          <Field label="Min group members">
-            <input type="number" min="1" max="20" className={inputClass} value={form.min_group_members} onChange={(e) => setForm({ ...form, min_group_members: e.target.value })} required />
-          </Field>
-          <Field label="Max group members">
-            <input type="number" min="1" max="20" className={inputClass} value={form.max_group_members} onChange={(e) => setForm({ ...form, max_group_members: e.target.value })} required />
-          </Field>
+        <div className="space-y-6">
+          {/* Section 1: Class Information */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+                <Info size={16} />
+              </span>
+              <h4 className="text-sm font-bold text-gray-800">
+                {t("common.confirm") === "Xác nhận" ? "Thông tin lớp học" : "Class Information"}
+              </h4>
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field label={t("admin.fields.classCode")}>
+                <input className={inputClass} value={form.class_code} onChange={(e) => setForm({ ...form, class_code: e.target.value.toUpperCase() })} required />
+              </Field>
+              <Field label={t("admin.fields.fullName", { defaultValue: "Tên lớp" }) === "Họ và tên" ? "Tên lớp" : "Class name"}>
+                <input className={inputClass} value={form.class_name} onChange={(e) => setForm({ ...form, class_name: e.target.value })} />
+              </Field>
+              <Field label={t("admin.fields.lecturer")}>
+                <Dropdown
+                  label={t("common.confirm") === "Xác nhận" ? "Chọn giảng viên" : "Select lecturer"}
+                  value={form.lecturer_id}
+                  onChange={(value) => setForm({ ...form, lecturer_id: value })}
+                  options={formLecturerOptions}
+                />
+              </Field>
+              <Field label={t("admin.fields.status")}>
+                <Dropdown
+                  label="Status"
+                  value={form.status}
+                  onChange={(value) => setForm({ ...form, status: value })}
+                  direction="up"
+                  options={formStatusOptions}
+                />
+              </Field>
+            </div>
+          </div>
+
+          {/* Section 2: Academic Context */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                <BookOpen size={16} />
+              </span>
+              <h4 className="text-sm font-bold text-gray-800">
+                {t("common.confirm") === "Xác nhận" ? "Học phần & Học kỳ" : "Academic Context"}
+              </h4>
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field label={t("nav.subjects")}>
+                <Dropdown
+                  label={t("common.confirm") === "Xác nhận" ? "Chọn học phần" : "Select subject"}
+                  value={form.subject_id}
+                  onChange={(value) => setForm({ ...form, subject_id: value })}
+                  options={formSubjectOptions}
+                />
+              </Field>
+              <Field label={t("admin.fields.semester")}>
+                <Dropdown
+                  label={t("common.confirm") === "Xác nhận" ? "Chọn học kỳ" : "Select semester"}
+                  value={form.semester_id}
+                  onChange={(value) => setForm({ ...form, semester_id: value })}
+                  options={formSemesterOptions}
+                />
+              </Field>
+            </div>
+          </div>
+
+          {/* Section 3: Class Rules */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
+                <Users size={16} />
+              </span>
+              <h4 className="text-sm font-bold text-gray-800">
+                {t("common.confirm") === "Xác nhận" ? "Quy mô & Luật nhóm" : "Class Rules & Capacity"}
+              </h4>
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <Field label={t("admin.fields.maxStudents")}>
+                <input type="number" min="1" max="200" className={inputClass} value={form.max_students} onChange={(e) => setForm({ ...form, max_students: e.target.value })} required />
+              </Field>
+              <Field label={t("common.confirm") === "Xác nhận" ? "Thành viên tối thiểu" : "Min group members"}>
+                <input type="number" min="1" max="20" className={inputClass} value={form.min_group_members} onChange={(e) => setForm({ ...form, min_group_members: e.target.value })} required />
+              </Field>
+              <Field label={t("common.confirm") === "Xác nhận" ? "Thành viên tối đa" : "Max group members"}>
+                <input type="number" min="1" max="20" className={inputClass} value={form.max_group_members} onChange={(e) => setForm({ ...form, max_group_members: e.target.value })} required />
+              </Field>
+            </div>
+          </div>
         </div>
       </FormModal>
 

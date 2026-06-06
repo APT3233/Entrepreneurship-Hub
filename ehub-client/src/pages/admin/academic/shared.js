@@ -2,7 +2,7 @@ import { statusOptions } from "@/utils/i18nOptions";
 
 export { toSelectOptions } from "@/utils/i18nOptions";
 
-export { formatDate, formatDateOnly } from "@/utils/dateTimeDisplay";
+export { formatDate, formatDateOnly, formatDateOnlyText } from "@/utils/dateTimeDisplay";
 export const toDateInputValue = (value) => {
   if (!value) return "";
   const date = new Date(value);

@@ -66,11 +66,6 @@ export const createAdminAcademicController = ({ adminAcademicService }) => {
     return sendSuccess(res, { data, message: "Semester status updated successfully" });
   });
 
-  const setCurrentSemester = catchAsync(async (req, res) => {
-    const data = await adminAcademicService.setCurrentSemester(req.params.id, req.user);
-    return sendSuccess(res, { data, message: "Current semester updated successfully" });
-  });
-
   const listClasses = catchAsync(async (req, res) => {
     const result = await adminAcademicService.listClasses(req.query);
     return sendPaginated(res, { ...result, message: "Classes retrieved successfully" });
@@ -121,7 +116,6 @@ export const createAdminAcademicController = ({ adminAcademicService }) => {
     createSemester,
     updateSemester,
     updateSemesterStatus,
-    setCurrentSemester,
     listClasses,
     getClass,
     createClass,

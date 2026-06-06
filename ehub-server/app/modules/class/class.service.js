@@ -398,6 +398,11 @@ export const createClassService = ({
     const { subject: subjectCode, classSection, year, semester: semesterType, students, created_by } = data;
     const subject = await subjectRepository.findByCode(subjectCode);
     if (!subject) throw BadRequest(`Subject not found: ${subjectCode}`);
+    if (subject.status === "inactive") {
+      throw BadRequest(
+        `Học phần "${subject.subject_name}" (${subjectCode}) đang ở trạng thái không hoạt động (Inactive). Không thể tạo lớp học.`
+      );
+    }
     const semCode = `${SEMESTER_CODES[semesterType] || "SP"}${year}`;
     const semester = await ensureSemester(semCode, semesterType, year);
 
@@ -693,6 +698,11 @@ export const createClassService = ({
 
       const subject = await subjectRepository.findByCode(targetSubjectCode);
       if (!subject) throw BadRequest(`Subject not found: ${targetSubjectCode}`);
+      if (subject.status === "inactive") {
+        throw BadRequest(
+          `Học phần "${subject.subject_name}" (${targetSubjectCode}) đang ở trạng thái không hoạt động (Inactive). Không thể cập nhật lớp học.`
+        );
+      }
 
       const semCode = `${SEMESTER_CODES[targetSemesterType]}${targetYear}`;
       const semester = await ensureSemester(semCode, targetSemesterType, targetYear);

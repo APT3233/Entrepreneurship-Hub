@@ -1,5 +1,17 @@
 import Joi from "joi";
 
+const rolesBodySchema = Joi.array().items(Joi.string().max(30)).custom((value, helpers) => {
+  const codes = (value || []).map((item) => String(item).trim().toLowerCase());
+  const hasStudent = codes.includes("student");
+  const hasStaff = codes.some((code) => code === "lecturer" || code === "admin");
+  if (hasStudent && hasStaff) {
+    return helpers.error("any.custom", {
+      message: "Một người dùng không thể vừa là Sinh viên vừa là Giảng viên hoặc Quản trị viên.",
+    });
+  }
+  return value;
+});
+
 const idParam = {
   params: Joi.object({
     id: Joi.number().integer().positive().required(),
@@ -31,7 +43,7 @@ export const createUserSchema = {
     avatar_url: Joi.string().max(500).allow(null, ""),
     auth_provider: Joi.string().valid("local", "google").default("local"),
     status: Joi.string().valid("active", "inactive", "locked").default("active"),
-    roles: Joi.array().items(Joi.string().max(30)).default([]),
+    roles: rolesBodySchema.default([]),
   }),
 };
 
@@ -58,7 +70,7 @@ export const updateUserStatusSchema = {
 export const assignUserRolesSchema = {
   ...idParam,
   body: Joi.object({
-    roles: Joi.array().items(Joi.string().max(30)).required(),
+    roles: rolesBodySchema.required(),
   }),
 };
 

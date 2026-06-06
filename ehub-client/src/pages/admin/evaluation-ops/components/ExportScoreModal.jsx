@@ -1,17 +1,11 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import * as XLSX from "xlsx";
 import { evaluationExportService } from "@/api/adminEvaluationOps";
 import { useToast } from "@/components/ui/Toast";
+import { useTranslation } from "@/context/TranslationContext";
 import FormModal from "@/pages/admin/components/FormModal";
 
-const exportOptions = [
-  { value: "results", label: "Điểm tổng hợp" },
-  { value: "sessions", label: "Evaluation sessions" },
-  { value: "progress", label: "Grading progress" },
-  { value: "rubric_usage", label: "Rubric usage" },
-  { value: "grade_audit", label: "Grade audit" },
-  { value: "criteria_scores", label: "Criteria scores" },
-];
+const exportTypeKeys = ["results", "sessions", "progress", "rubric_usage", "grade_audit", "criteria_scores"];
 
 const getTimestamp = () => {
   const date = new Date();
@@ -40,9 +34,15 @@ const downloadCsv = (rows, fileName) => {
 };
 
 export default function ExportScoreModal({ open, onClose, filters = {}, defaultType = "results" }) {
+  const { t } = useTranslation();
   const toast = useToast();
   const [form, setForm] = useState({ export_type: defaultType, format: "csv" });
   const [saving, setSaving] = useState(false);
+
+  const exportOptions = useMemo(
+    () => exportTypeKeys.map((value) => ({ value, label: t(`admin.evaluationOps.exportTypes.${value}`) })),
+    [t],
+  );
 
   const submit = async (event) => {
     event.preventDefault();
@@ -60,20 +60,20 @@ export default function ExportScoreModal({ open, onClose, filters = {}, defaultT
       } else {
         downloadCsv(rows, `${baseName}.csv`);
       }
-      toast.success(`Đã export ${rows.length} dòng.`);
+      toast.success(t("admin.evaluationOps.export.success", { count: rows.length }));
       onClose?.();
     } catch (err) {
-      toast.error(err.message || "Không export được dữ liệu.");
+      toast.error(err.message || t("admin.evaluationOps.export.error"));
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <FormModal open={open} title="Export Scores" onClose={onClose} onSubmit={submit} saving={saving} submitLabel="Export">
+    <FormModal open={open} title={t("admin.evaluationOps.export.title")} onClose={onClose} onSubmit={submit} saving={saving} submitLabel={t("admin.evaluationOps.export.submit")}>
       <div className="grid gap-4">
         <label className="block">
-          <span className="mb-1 block text-sm font-semibold text-gray-600">Loại dữ liệu</span>
+          <span className="mb-1 block text-sm font-semibold text-gray-600">{t("admin.evaluationOps.export.dataType")}</span>
           <select
             value={form.export_type}
             onChange={(event) => setForm((prev) => ({ ...prev, export_type: event.target.value }))}
@@ -83,7 +83,7 @@ export default function ExportScoreModal({ open, onClose, filters = {}, defaultT
           </select>
         </label>
         <label className="block">
-          <span className="mb-1 block text-sm font-semibold text-gray-600">Định dạng</span>
+          <span className="mb-1 block text-sm font-semibold text-gray-600">{t("admin.evaluationOps.export.format")}</span>
           <select
             value={form.format}
             onChange={(event) => setForm((prev) => ({ ...prev, format: event.target.value }))}
@@ -94,7 +94,7 @@ export default function ExportScoreModal({ open, onClose, filters = {}, defaultT
           </select>
         </label>
         <p className="rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-xs font-medium text-blue-700">
-          Export dùng đúng filter hiện tại của màn hình.
+          {t("admin.evaluationOps.export.hint")}
         </p>
       </div>
     </FormModal>

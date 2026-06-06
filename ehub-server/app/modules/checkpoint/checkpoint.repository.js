@@ -58,12 +58,15 @@ export const createCheckpointRepository = ({ db }) => {
 
     const sql = `
       SELECT cp.*, c.class_code, c.class_name,
+        rb.rubric_id, r.name AS rubric_name,
         (SELECT COUNT(*) FROM checkpoint_submissions cs WHERE cs.checkpoint_id = cp.id AND cs.score IS NOT NULL) as graded_count,
         (SELECT COUNT(*) FROM checkpoint_submissions cs WHERE cs.checkpoint_id = cp.id AND cs.status IN ('submitted', 'resubmitted', 'graded')) as submitted_groups,
         (SELECT COUNT(*) FROM \`groups\` g WHERE g.class_id = cp.class_id AND g.deleted_at IS NULL) as total_groups
       FROM checkpoints cp
       JOIN classes c ON c.id = cp.class_id
       JOIN semesters sem ON sem.id = c.semester_id
+      LEFT JOIN rubric_bindings rb ON rb.target_type = 'checkpoint' AND rb.target_id = cp.id
+      LEFT JOIN rubrics r ON r.id = rb.rubric_id AND r.deleted_at IS NULL
       WHERE ${clauses.join(" AND ")}
       ORDER BY c.class_code ASC, cp.order_index ASC, cp.created_at ASC
     `;
@@ -573,11 +576,14 @@ export const createCheckpointRepository = ({ db }) => {
    */
   const findByIdWithSubjectAndClass = async (id) => {
     const sql = `
-      SELECT cp.*, s.subject_code, c.class_code, sem.semester_code
+      SELECT cp.*, s.subject_code, c.class_code, sem.semester_code,
+             rb.rubric_id, r.name AS rubric_name
       FROM checkpoints cp
       JOIN classes c ON c.id = cp.class_id
       JOIN subjects s ON s.id = c.subject_id
       JOIN semesters sem ON sem.id = c.semester_id
+      LEFT JOIN rubric_bindings rb ON rb.target_type = 'checkpoint' AND rb.target_id = cp.id
+      LEFT JOIN rubrics r ON r.id = rb.rubric_id AND r.deleted_at IS NULL
       WHERE cp.id = :id
         AND cp.deleted_at IS NULL
       LIMIT 1

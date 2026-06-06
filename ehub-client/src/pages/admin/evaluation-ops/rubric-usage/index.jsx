@@ -25,7 +25,7 @@ export default function AdminRubricUsage() {
   }, []);
 
   const options = useMemo(() => ({
-    subjects: toSelectOptions(lookups.subjects, (item) => item.id, (item) => `${item.subject_code} - ${item.subject_name}`, "Tất cả môn"),
+    subjects: toSelectOptions(lookups.subjects, (item) => item.id, (item) => `${item.subject_code} - ${item.subject_name}`, t("lookupAll.subjects")),
     statuses: getRubricStatusOptions(t),
     unused: getBooleanOptions(t),
   }), [lookups, t]);
@@ -35,10 +35,10 @@ export default function AdminRubricUsage() {
   const cloneRubric = async (row) => {
     try {
       await rubricService.clone(row.id, { name: `${row.rubric_name} v${Number(row.rubric_version || 1) + 1}` });
-      toast.success("Đã clone rubric.");
+      toast.success(t("admin.rubricUsagePage.cloneSuccess"));
       refetch(true);
     } catch (err) {
-      toast.error(err.message || "Không clone được rubric.");
+      toast.error(err.message || t("admin.rubricUsagePage.cloneError"));
     }
   };
 
@@ -47,14 +47,14 @@ export default function AdminRubricUsage() {
       <FilterBar
         right={(
           <button type="button" onClick={() => setExportOpen(true)} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700">
-            <FileDown size={16} /> Export
+            <FileDown size={16} /> {t("common.export")}
           </button>
         )}
       >
-        <SearchInput value={query.search} onChange={(value) => setFilter("search", value)} placeholder="Rubric, subject..." />
-        <FilterSelect label="Subject" value={query.subject_id} onChange={(value) => setFilter("subject_id", value)} options={options.subjects} />
-        <FilterSelect label="Status" value={query.status} onChange={(value) => setFilter("status", value)} options={options.statuses} />
-        <FilterSelect label="Unused" value={query.unused_only} onChange={(value) => setFilter("unused_only", value)} options={options.unused} />
+        <SearchInput value={query.search} onChange={(value) => setFilter("search", value)} placeholder={t("searchPlaceholders.rubricUsage")} />
+        <FilterSelect label={t("filterLabels.subject")} value={query.subject_id} onChange={(value) => setFilter("subject_id", value)} options={options.subjects} />
+        <FilterSelect label={t("filterLabels.status")} value={query.status} onChange={(value) => setFilter("status", value)} options={options.statuses} />
+        <FilterSelect label={t("filterLabels.unused")} value={query.unused_only} onChange={(value) => setFilter("unused_only", value)} options={options.unused} />
       </FilterBar>
 
       <RubricUsageTable

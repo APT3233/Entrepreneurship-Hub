@@ -231,6 +231,20 @@ export const createAdminStudentGroupRepository = ({ db }) => {
     return rows[0] || null;
   };
 
+  const findAnyEnrollmentByStudent = async (studentId) => {
+    const [rows] = await db.execute(
+      `
+        SELECT cs.*, COALESCE(c.class_code, CONCAT('ID ', cs.class_id)) AS class_code
+        FROM class_students cs
+        LEFT JOIN classes c ON c.id = cs.class_id
+        WHERE cs.student_id = :studentId
+        LIMIT 1
+      `,
+      { studentId: Number(studentId) },
+    );
+    return rows[0] || null;
+  };
+
   const findClassForEnrollment = async (classId) => {
     const [rows] = await db.execute(
       `
@@ -634,7 +648,18 @@ export const createAdminStudentGroupRepository = ({ db }) => {
       ),
       db.execute("SELECT id, subject_code, subject_name FROM subjects WHERE deleted_at IS NULL ORDER BY subject_code ASC"),
       db.execute("SELECT id, semester_code, semester_name, year FROM semesters WHERE deleted_at IS NULL ORDER BY year DESC, start_date DESC"),
-      db.execute("SELECT id, student_code, full_name, email FROM students WHERE deleted_at IS NULL ORDER BY student_code ASC LIMIT 500"),
+      db.execute(`
+        SELECT s.id, s.student_code, s.full_name, s.email
+        FROM students s
+        WHERE s.deleted_at IS NULL
+          AND NOT EXISTS (
+            SELECT 1
+            FROM class_students cs
+            WHERE cs.student_id = s.id
+          )
+        ORDER BY s.student_code ASC
+        LIMIT 500
+      `),
       db.execute("SELECT DISTINCT major FROM students WHERE deleted_at IS NULL AND major IS NOT NULL AND major <> '' ORDER BY major ASC"),
       db.execute("SELECT DISTINCT campus FROM students WHERE deleted_at IS NULL AND campus IS NOT NULL AND campus <> '' ORDER BY campus ASC"),
       db.execute("SELECT DISTINCT category FROM `groups` WHERE deleted_at IS NULL AND category IS NOT NULL AND category <> '' ORDER BY category ASC"),
@@ -661,6 +686,7 @@ export const createAdminStudentGroupRepository = ({ db }) => {
     listEnrollments,
     findEnrollmentById,
     findEnrollmentByClassStudent,
+    findAnyEnrollmentByStudent,
     findClassForEnrollment,
     findSameSubjectSemesterEnrollment,
     createEnrollment,

@@ -77,6 +77,37 @@ export const createFileRepository = ({ db }) => {
     return rows;
   };
 
+  const findMentorDocumentsByPath = async (filePath) => {
+    const sql = `
+      SELECT
+        md.id AS document_id,
+        md.mentor_id,
+        md.file_path,
+        mp.user_id AS mentor_user_id,
+        'mentor_document' AS source
+      FROM mentor_documents md
+      JOIN mentor_profiles mp ON mp.id = md.mentor_id
+      WHERE md.file_path = :filePath
+        AND md.deleted_at IS NULL
+        AND mp.deleted_at IS NULL
+    `;
+    const [rows] = await db.execute(sql, { filePath });
+    return rows;
+  };
+
+  const userHasPermission = async (userId, permissionCode) => {
+    const sql = `
+      SELECT 1
+      FROM user_roles ur
+      JOIN role_permissions rp ON rp.role_id = ur.role_id
+      JOIN permissions p ON p.id = rp.permission_id
+      WHERE ur.user_id = :userId AND p.permission_code = :permissionCode
+      LIMIT 1
+    `;
+    const [rows] = await db.execute(sql, { userId: Number(userId), permissionCode });
+    return rows.length > 0;
+  };
+
   const isStudentEnrolledInClass = async (userId, classId) => {
     const sql = `
       SELECT 1
@@ -116,6 +147,8 @@ export const createFileRepository = ({ db }) => {
     findCheckpointAttachmentsByPath,
     findAssignmentSubmissionFilesByPath,
     findCheckpointSubmissionFilesByPath,
+    findMentorDocumentsByPath,
+    userHasPermission,
     isStudentEnrolledInClass,
     isStudentInGroup,
   };

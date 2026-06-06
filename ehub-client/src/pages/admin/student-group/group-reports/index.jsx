@@ -34,7 +34,7 @@ export default function AdminGroupReports() {
   };
 
   const columns = [
-    { key: "group", label: t("nav.studentGroups", { defaultValue: "Group" }) === "Nhóm sinh viên" ? "Nhóm" : "Group", render: (row) => <span className="font-semibold text-gray-900">{row.group_code} - {row.group_name}</span> },
+    { key: "group", label: t("admin.fields.group"), render: (row) => <span className="font-semibold text-gray-900">{row.group_name || "—"}</span> },
     { key: "student", label: t("admin.fields.fullName", { defaultValue: "Student" }) === "Họ và tên" ? "Sinh viên" : "Student", render: (row) => `${row.student_code} - ${row.student_name}` },
     { key: "issue_type", label: t("common.confirm") === "Xác nhận" ? "Vấn đề" : "Issue", render: (row) => <StatusBadge value={row.issue_type} /> },
     { key: "description", label: t("admin.fields.description"), render: (row) => <span className="line-clamp-2">{row.description}</span> },
@@ -69,7 +69,7 @@ export default function AdminGroupReports() {
       >
         {detail ? (
           <DetailGrid items={[
-            [t("nav.studentGroups", { defaultValue: "Group" }) === "Nhóm sinh viên" ? "Nhóm" : "Group", `${detail.group_code} - ${detail.group_name}`],
+            [t("admin.fields.group"), detail.group_name || "—"],
             [t("admin.fields.fullName", { defaultValue: "Student" }) === "Họ và tên" ? "Sinh viên" : "Student", `${detail.student_code} - ${detail.student_name}`],
             [t("admin.fields.email"), detail.email],
             [t("common.confirm") === "Xác nhận" ? "Vấn đề" : "Issue", detail.issue_type],

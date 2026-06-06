@@ -12,6 +12,7 @@ import StatusBadge from "@/pages/admin/components/StatusBadge";
 import ActionButton from "@/pages/admin/academic/components/ActionButton";
 import JsonDiffViewer from "@/pages/admin/evaluation-ops/components/JsonDiffViewer";
 import { useTranslation } from "@/context/TranslationContext";
+import { useAdminColumns } from "@/utils/adminLabels";
 import {
   formatDate,
   getEmailDeliveryStatusOptions,
@@ -22,6 +23,7 @@ import {
 
 export default function AdminInvitations() {
   const { t } = useTranslation();
+  const c = useAdminColumns();
   const toast = useToast();
   const invitationTypeOptions = useMemo(() => getInvitationTypeOptions(t), [t]);
   const statusOptions = useMemo(() => getInvitationStatusOptions(t), [t]);
@@ -52,9 +54,9 @@ export default function AdminInvitations() {
     { key: "class", label: t("filterLabels.class"), render: (row) => row.group_name || row.class_code || row.public_id || "—" },
     { key: "status", label: t("filterLabels.status"), render: (row) => <StatusBadge value={row.status} /> },
     { key: "email_delivery_status", label: t("filterLabels.email"), render: (row) => <StatusBadge value={row.email_delivery_status || "pending"} /> },
-    { key: "attempts", label: "Attempts", render: (row) => Number(row.attempts || 0) },
-    { key: "last_error", label: "Last error", render: (row) => <span className="line-clamp-2 max-w-[260px]">{row.last_error || "—"}</span> },
-    { key: "expires_at", label: "Expires/retry", render: (row) => formatDate(row.expires_at) },
+    { key: "attempts", label: c.attempts, render: (row) => Number(row.attempts || 0) },
+    { key: "last_error", label: c.lastError, render: (row) => <span className="line-clamp-2 max-w-[260px]">{row.last_error || "—"}</span> },
+    { key: "expires_at", label: c.expiresRetry, render: (row) => formatDate(row.expires_at) },
     { key: "created_at", label: t("common.created"), render: (row) => formatDate(row.created_at) },
     {
       key: "actions",

@@ -26,10 +26,10 @@ export default function AdminEvaluationSessions() {
   }, []);
 
   const options = useMemo(() => ({
-    subjects: toSelectOptions(lookups.subjects, (item) => item.id, (item) => `${item.subject_code} - ${item.subject_name}`, "Tất cả môn"),
-    semesters: toSelectOptions(lookups.semesters, (item) => item.id, (item) => item.semester_code, "Tất cả kỳ"),
-    classes: toSelectOptions(lookups.classes, (item) => item.id, buildClassLabel, "Tất cả lớp"),
-    people: toSelectOptions(lookups.graders, (item) => item.id, (item) => item.full_name || item.email, "Tất cả người chấm"),
+    subjects: toSelectOptions(lookups.subjects, (item) => item.id, (item) => `${item.subject_code} - ${item.subject_name}`, t("lookupAll.subjects")),
+    semesters: toSelectOptions(lookups.semesters, (item) => item.id, (item) => item.semester_code, t("lookupAll.semesters")),
+    classes: toSelectOptions(lookups.classes, (item) => item.id, buildClassLabel, t("lookupAll.classes")),
+    people: toSelectOptions(lookups.graders, (item) => item.id, (item) => item.full_name || item.email, t("lookupAll.graders")),
     statuses: statusOptions(t, ["", "draft", "submitted", "confirmed"]),
     types: getSourceTypeOptions(t),
   }), [lookups, t]);
@@ -41,18 +41,18 @@ export default function AdminEvaluationSessions() {
       <FilterBar
         right={(
           <button type="button" onClick={() => setExportOpen(true)} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700">
-            <FileDown size={16} /> Export
+            <FileDown size={16} /> {t("common.export")}
           </button>
         )}
       >
-        <SearchInput value={query.search} onChange={(search) => setFilter("search", search)} placeholder="Group, class, evaluator, rubric..." />
-        <FilterSelect label="Semester" value={query.semester_id} onChange={(value) => setFilter("semester_id", value)} options={options.semesters} />
-        <FilterSelect label="Subject" value={query.subject_id} onChange={(value) => setFilter("subject_id", value)} options={options.subjects} />
-        <FilterSelect label="Class" value={query.class_id} onChange={(value) => setFilter("class_id", value)} options={options.classes} />
-        <FilterSelect label="Lecturer" value={query.lecturer_id} onChange={(value) => setFilter("lecturer_id", value)} options={options.people} />
-        <FilterSelect label="Evaluator" value={query.evaluator_id} onChange={(value) => setFilter("evaluator_id", value)} options={options.people} />
-        <FilterSelect label="Status" value={query.status} onChange={(value) => setFilter("status", value)} options={options.statuses} />
-        <FilterSelect label="Type" value={query.target_type} onChange={(value) => setFilter("target_type", value)} options={options.types} />
+        <SearchInput value={query.search} onChange={(search) => setFilter("search", search)} placeholder={t("searchPlaceholders.evaluationSessions")} />
+        <FilterSelect label={t("filterLabels.semester")} value={query.semester_id} onChange={(value) => setFilter("semester_id", value)} options={options.semesters} />
+        <FilterSelect label={t("filterLabels.subject")} value={query.subject_id} onChange={(value) => setFilter("subject_id", value)} options={options.subjects} />
+        <FilterSelect label={t("filterLabels.class")} value={query.class_id} onChange={(value) => setFilter("class_id", value)} options={options.classes} />
+        <FilterSelect label={t("admin.fields.lecturer")} value={query.lecturer_id} onChange={(value) => setFilter("lecturer_id", value)} options={options.people} />
+        <FilterSelect label={t("admin.columns.evaluator")} value={query.evaluator_id} onChange={(value) => setFilter("evaluator_id", value)} options={options.people} />
+        <FilterSelect label={t("filterLabels.status")} value={query.status} onChange={(value) => setFilter("status", value)} options={options.statuses} />
+        <FilterSelect label={t("filterLabels.type")} value={query.target_type} onChange={(value) => setFilter("target_type", value)} options={options.types} />
       </FilterBar>
 
       <EvaluationSessionTable

@@ -53,6 +53,7 @@ export const createUserRepository = ({ db }) => {
       LEFT JOIN roles r ON ur.role_id = r.id
       LEFT JOIN students s ON s.user_id = u.id AND s.deleted_at IS NULL
       WHERE LOWER(TRIM(u.username)) = LOWER(TRIM(:username))
+         OR LOWER(TRIM(u.email)) = LOWER(TRIM(:username))
       GROUP BY u.id
       LIMIT 1
     `;

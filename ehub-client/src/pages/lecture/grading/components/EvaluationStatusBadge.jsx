@@ -1,3 +1,5 @@
+import { useTranslation } from "@/context/TranslationContext";
+
 const styles = {
   not_started: "border-slate-200 bg-slate-50 text-slate-600",
   draft: "border-amber-100 bg-amber-50 text-amber-700",
@@ -5,18 +7,12 @@ const styles = {
   confirmed: "border-indigo-100 bg-indigo-50 text-indigo-700",
 };
 
-const labels = {
-  not_started: "Chưa chấm",
-  draft: "Draft",
-  submitted: "Đã submit",
-  confirmed: "Đã xác nhận",
-};
-
 export default function EvaluationStatusBadge({ value }) {
+  const { t } = useTranslation();
   const key = value || "not_started";
   return (
     <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold ${styles[key] || styles.not_started}`}>
-      {labels[key] || key}
+      {t(`status.${key}`, { defaultValue: key })}
     </span>
   );
 }

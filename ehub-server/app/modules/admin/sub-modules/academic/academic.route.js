@@ -36,7 +36,6 @@ export const createAdminAcademicRouter = (container) => {
   router.get("/semesters/:id", validateRequest(getAdminAcademicByIdSchema), adminAcademicController.getSemester);
   router.put("/semesters/:id", validateRequest(updateAdminSemesterSchema), adminAcademicController.updateSemester);
   router.patch("/semesters/:id/status", validateRequest(updateAdminSemesterStatusSchema), adminAcademicController.updateSemesterStatus);
-  router.post("/semesters/:id/set-current", validateRequest(adminAcademicIdParamSchema), adminAcademicController.setCurrentSemester);
 
   router.get("/classes", validateRequest(listAdminClassesSchema), adminAcademicController.listClasses);
   router.post("/classes", validateRequest(createAdminClassSchema), adminAcademicController.createClass);

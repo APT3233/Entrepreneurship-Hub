@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Eye, Plus, SquarePen, Trash2 } from "lucide-react";
+import { Eye, Plus, SquarePen, Trash2, User, GraduationCap, KeyRound } from "lucide-react";
 import { useSelector } from "react-redux";
 import { studentGroupLookupService, studentService } from "@/api/adminStudentGroup";
 import { useToast } from "@/components/ui/Toast";
@@ -21,6 +21,9 @@ import {
   formatDate,
   pageLimit,
   getStudentStatusOptions,
+  getShortClassCode,
+  CAMPUS_OPTIONS,
+  MAJOR_OPTIONS,
 } from "@/pages/admin/student-group/shared";
 
 const emptyForm = {
@@ -35,7 +38,7 @@ const emptyForm = {
 };
 
 export default function AdminStudents() {
-  const { t, language } = useTranslation();
+  const { t } = useTranslation();
   const studentStatusOptions = useMemo(() => getStudentStatusOptions(t), [t]);
   const toast = useToast();
   const authUser = useSelector(selectAuthUser);
@@ -99,6 +102,9 @@ export default function AdminStudents() {
     }
     if (!/^\S+@\S+\.\S+$/.test(form.email)) {
       return isVi ? "Email không đúng định dạng." : "Invalid email format.";
+    }
+    if (form.major === "other" || (form.major && typeof form.major === "string" && !form.major.trim())) {
+      return isVi ? "Vui lòng nhập tên ngành học khác." : "Please enter the custom major name.";
     }
     return "";
   };
@@ -187,28 +193,130 @@ export default function AdminStudents() {
       <AdminTable columns={columns} rows={rows} loading={loading} error={error} meta={meta} onPageChange={(page) => setQuery((prev) => ({ ...prev, page }))} emptyText={t("common.noData")} />
 
       <FormModal open={["create", "edit"].includes(modal.type)} title={modal.type === "create" ? t("admin.actions.create") + " Student" : t("admin.actions.edit") + " Student"} onClose={() => setModal({ type: null, student: null })} onSubmit={save} saving={saving}>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label={t("admin.fields.studentCode")}><input className={inputClass} value={form.student_code} onChange={(e) => setForm({ ...form, student_code: e.target.value.toUpperCase() })} required /></Field>
-          <Field label={t("admin.fields.fullName")}><input className={inputClass} value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} required /></Field>
-          <Field label={t("admin.fields.email")}><input type="email" className={inputClass} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required /></Field>
-          <Field label={t("admin.fields.phone")}><input className={inputClass} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></Field>
-          <Field label={t("admin.fields.major")}><input className={inputClass} value={form.major} onChange={(e) => setForm({ ...form, major: e.target.value })} /></Field>
-          <Field label={t("admin.fields.campus")}><input className={inputClass} value={form.campus} onChange={(e) => setForm({ ...form, campus: e.target.value })} /></Field>
-          <Field label={t("common.confirm") === "Xác nhận" ? "User ID liên kết" : "Linked user ID"}><input type="number" min="1" className={inputClass} value={form.user_id} onChange={(e) => setForm({ ...form, user_id: e.target.value })} placeholder={t("common.confirm") === "Xác nhận" ? "Nếu đã có user_id" : "If user_id exists"} /></Field>
-          <Field label={t("admin.fields.status")}>
-            <Dropdown
-              label="Status"
-              value={form.status}
-              onChange={(value) => setForm({ ...form, status: value })}
-              options={[
-                { value: "active", label: "Active" },
-                { value: "inactive", label: "Inactive" },
-                { value: "graduated", label: "Graduated" },
-                { value: "suspended", label: "Suspended" },
-                { value: "pending", label: "Pending" },
-              ]}
-            />
-          </Field>
+        <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-1">
+          {/* Section 1: Personal Info */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+                <User size={16} />
+              </span>
+              <h4 className="text-sm font-bold text-gray-800">
+                {t("common.confirm") === "Xác nhận" ? "Thông tin cá nhân" : "Personal Information"}
+              </h4>
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field label={t("admin.fields.fullName")}>
+                <input className={inputClass} value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} required placeholder="Nguyen Van A" />
+              </Field>
+              <Field label={t("admin.fields.studentCode")}>
+                <input className={inputClass} value={form.student_code} onChange={(e) => setForm({ ...form, student_code: e.target.value.toUpperCase() })} required placeholder="SE123456" />
+              </Field>
+              <Field label={t("admin.fields.email")}>
+                <input type="email" className={inputClass} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required placeholder="anv@fpt.edu.vn" />
+              </Field>
+              <Field label={t("admin.fields.phone")}>
+                <input className={inputClass} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="0987654321" />
+              </Field>
+            </div>
+          </div>
+
+          {/* Section 2: Academic Info */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                <GraduationCap size={16} />
+              </span>
+              <h4 className="text-sm font-bold text-gray-800">
+                {t("common.confirm") === "Xác nhận" ? "Thông tin học vụ" : "Academic Information"}
+              </h4>
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field label={t("admin.fields.major")}>
+                <div className="space-y-2">
+                  <Dropdown
+                    label={t("common.confirm") === "Xác nhận" ? "Chọn ngành học..." : "Select major..."}
+                    value={
+                      form.major
+                        ? (["Kỹ thuật phần mềm", "Thiết kế mỹ thuật số", "An toàn thông tin", "Quản trị kinh doanh", "Truyền thông đa phương tiện"].includes(form.major)
+                          ? form.major
+                          : "other")
+                        : ""
+                    }
+                    onChange={(value) => {
+                      if (value === "other") {
+                        setForm({ ...form, major: "other" });
+                      } else {
+                        setForm({ ...form, major: value });
+                      }
+                    }}
+                    options={[
+                      ...MAJOR_OPTIONS,
+                      { value: "other", label: t("common.confirm") === "Xác nhận" ? "Khác (Tự nhập)..." : "Other (Custom input)..." }
+                    ]}
+                  />
+                  {(form.major === "other" || (form.major && !["Kỹ thuật phần mềm", "Thiết kế mỹ thuật số", "An toàn thông tin", "Quản trị kinh doanh", "Truyền thông đa phương tiện"].includes(form.major))) && (
+                    <input
+                      type="text"
+                      className={`${inputClass} mt-2`}
+                      value={form.major === "other" ? "" : form.major}
+                      onChange={(e) => setForm({ ...form, major: e.target.value })}
+                      placeholder={t("common.confirm") === "Xác nhận" ? "Nhập tên ngành học khác..." : "Enter custom major name..."}
+                      required
+                    />
+                  )}
+                </div>
+              </Field>
+              <Field label={t("admin.fields.campus")}>
+                <Dropdown
+                  label={t("common.confirm") === "Xác nhận" ? "Chọn cơ sở..." : "Select campus..."}
+                  value={form.campus}
+                  onChange={(value) => setForm({ ...form, campus: value })}
+                  options={CAMPUS_OPTIONS}
+                />
+              </Field>
+            </div>
+          </div>
+
+          {/* Section 3: System Status & Links */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
+                <KeyRound size={16} />
+              </span>
+              <h4 className="text-sm font-bold text-gray-800">
+                {t("common.confirm") === "Xác nhận" ? "Trạng thái & Liên kết" : "Status & Account"}
+              </h4>
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field label={t("admin.fields.status")}>
+                <Dropdown
+                  label="Status"
+                  value={form.status}
+                  onChange={(value) => setForm({ ...form, status: value })}
+                  direction="up"
+                  options={[
+                    { value: "active", label: t("status.active") },
+                    { value: "inactive", label: t("status.inactive") },
+                    { value: "graduated", label: t("status.graduated") },
+                    { value: "suspended", label: t("status.suspended") },
+                    { value: "pending", label: t("status.pending") },
+                  ]}
+                />
+              </Field>
+              {modal.type === "edit" ? (
+                <Field label={t("common.confirm") === "Xác nhận" ? "User ID liên kết" : "Linked user ID"}>
+                  <input
+                    type="number"
+                    min="1"
+                    className={inputClass}
+                    value={form.user_id}
+                    onChange={(e) => setForm({ ...form, user_id: e.target.value })}
+                    placeholder={t("common.confirm") === "Xác nhận" ? "Nếu đã có user_id" : "If user_id exists"}
+                  />
+                </Field>
+              ) : null}
+            </div>
+          </div>
         </div>
       </FormModal>
 
@@ -236,7 +344,7 @@ export default function AdminStudents() {
               <div className="space-y-2">
                 {(modal.student.classes || []).length ? modal.student.classes.map((item) => (
                   <div key={item.enrollment_id} className="rounded-xl border border-gray-100 p-3 text-sm">
-                    <div className="font-bold text-gray-900">{item.class_code} · {item.subject_code}</div>
+                    <div className="font-bold text-gray-900">{getShortClassCode(item.class_code, item.semester_code)} · {item.subject_code}</div>
                     <div className="mt-1 text-gray-500">{item.semester_code} · {item.enrollment_status} · {item.group_name || (t("common.confirm") === "Xác nhận" ? "Chưa có nhóm" : "No group")}</div>
                   </div>
                 )) : <div className="rounded-xl bg-gray-50 p-3 text-sm text-gray-400">{t("common.confirm") === "Xác nhận" ? "Sinh viên chưa tham gia lớp nào." : "Student has not joined any class."}</div>}

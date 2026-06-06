@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { CalendarCheck, Eye, Plus, SquarePen } from "lucide-react";
+import { Eye, Plus, SquarePen, Info, Calendar } from "lucide-react";
+import Dropdown from "@/components/ui/filter/DropDown";
 import { useSelector } from "react-redux";
 import { academicLookupService, semesterService } from "@/api/adminAcademic";
 import { useToast } from "@/components/ui/Toast";
@@ -11,17 +12,25 @@ import FilterBar, { FilterSelect } from "@/pages/admin/components/FilterBar";
 import SearchInput from "@/pages/admin/components/SearchInput";
 import StatusBadge from "@/pages/admin/components/StatusBadge";
 import FormModal, { Field, inputClass } from "@/pages/admin/components/FormModal";
-import ConfirmDialog from "@/pages/admin/components/ConfirmDialog";
 import ActionButton from "@/pages/admin/academic/components/ActionButton";
 import DetailGrid from "@/pages/admin/academic/components/DetailGrid";
 import { useTranslation } from "@/context/TranslationContext";
 import {
   formatDate,
   formatDateOnly,
+  formatDateOnlyText,
   pageLimit,
   getSemesterStatusOptions,
   toDateInputValue,
 } from "@/pages/admin/academic/shared";
+
+const isSemesterCompleted = (semester) => semester?.status === "completed";
+
+const CurrentSemesterBadge = ({ t }) => (
+  <span className="inline-flex shrink-0 items-center rounded-full border border-indigo-100 bg-indigo-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-indigo-700">
+    {t("admin.fields.currentSemester")}
+  </span>
+);
 
 const emptyForm = {
   semester_code: "",
@@ -33,7 +42,7 @@ const emptyForm = {
 };
 
 export default function AdminSemesters() {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const semesterStatusOptions = useMemo(() => getSemesterStatusOptions(t), [t]);
   const toast = useToast();
   const authUser = useSelector(selectAuthUser);
@@ -45,7 +54,6 @@ export default function AdminSemesters() {
   const [modal, setModal] = useState({ type: null, semester: null });
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
-  const [confirm, setConfirm] = useState(null);
 
   useEffect(() => {
     academicLookupService.getAll()
@@ -64,6 +72,10 @@ export default function AdminSemesters() {
   };
 
   const openEdit = (semester) => {
+    if (isSemesterCompleted(semester)) {
+      toast.error(t("admin.errors.semesterCompleted"));
+      return;
+    }
     setForm({
       semester_code: semester.semester_code || "",
       semester_name: semester.semester_name || "",
@@ -87,7 +99,7 @@ export default function AdminSemesters() {
   const save = async (e) => {
     e.preventDefault();
     if (new Date(form.start_date).getTime() >= new Date(form.end_date).getTime()) {
-      toast.error(t("common.confirm", { defaultValue: "Xác nhận" }) === "Xác nhận" ? "Ngày bắt đầu phải nhỏ hơn ngày kết thúc" : "Start date must be before end date");
+      toast.error(t("admin.errors.startBeforeEnd"));
       return;
     }
     setSaving(true);
@@ -100,6 +112,9 @@ export default function AdminSemesters() {
       if (modal.type === "create") {
         await semesterService.create(payload);
         toast.success(t("admin.toasts.createSuccess"));
+      } else if (isSemesterCompleted(modal.semester)) {
+        toast.error(t("admin.errors.semesterCompleted"));
+        return;
       } else {
         await semesterService.update(modal.semester.id, payload);
         toast.success(t("admin.toasts.updateSuccess"));
@@ -113,24 +128,22 @@ export default function AdminSemesters() {
     }
   };
 
-  const setCurrent = async () => {
-    if (!confirm?.semester) return;
-    try {
-      await semesterService.setCurrent(confirm.semester.id);
-      toast.success(t("admin.toasts.statusSuccess"));
-      setConfirm(null);
-      await refetch();
-    } catch (err) {
-      toast.error(err.message || t("admin.toasts.actionFailed"));
-    }
-  };
-
   const columns = useMemo(() => [
-    { key: "semester_code", label: t("admin.fields.semester"), width: 120, render: (row) => <span className="font-mono text-xs font-bold text-indigo-700">{row.semester_code}</span> },
-    { key: "semester_name", label: t("admin.fields.semesterName") || "Semester Name", width: 250, render: (row) => <span className="font-semibold text-gray-900">{row.semester_name}</span> },
-    { key: "year", label: t("admin.fields.year") || "Year", width: 120 },
-    { key: "start_date", label: t("admin.fields.startDate") || "Start Date", width: 150, render: (row) => formatDateOnly(row.start_date) },
-    { key: "end_date", label: t("admin.fields.endDate") || "End Date", width: 150, render: (row) => formatDateOnly(row.end_date) },
+    {
+      key: "semester_code",
+      label: t("admin.fields.semesterCode"),
+      width: 160,
+      render: (row) => (
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="font-mono text-xs font-bold text-indigo-700">{row.semester_code}</span>
+          {row.is_current ? <CurrentSemesterBadge t={t} /> : null}
+        </div>
+      ),
+    },
+    { key: "semester_name", label: t("admin.fields.semesterName"), width: 250, render: (row) => <span className="font-semibold text-gray-900">{row.semester_name}</span> },
+    { key: "year", label: t("admin.fields.year"), width: 120 },
+    { key: "start_date", label: t("admin.fields.startDate"), width: 150, render: (row) => formatDateOnly(row.start_date) },
+    { key: "end_date", label: t("admin.fields.endDate"), width: 150, render: (row) => formatDateOnly(row.end_date) },
     { key: "status", label: t("admin.fields.status"), width: 120, render: (row) => <StatusBadge value={row.status} /> },
     { key: "total_classes", label: t("nav.classes"), width: 120, render: (row) => Number(row.total_classes || 0) },
     { key: "created_at", label: t("common.created"), width: 180, render: (row) => formatDate(row.created_at) },
@@ -141,8 +154,15 @@ export default function AdminSemesters() {
       render: (row) => (
         <div className="flex justify-end gap-1">
           <ActionButton onClick={() => openDetail(row)} title={t("admin.actions.detail")}><Eye size={16} /></ActionButton>
-          {canUpdate ? <ActionButton onClick={() => openEdit(row)} title={t("admin.actions.edit")}><SquarePen size={16} /></ActionButton> : null}
-          {canUpdate ? <ActionButton onClick={() => setConfirm({ semester: row })} title={t("admin.fields.setCurrent") || "Set current"} tone="green"><CalendarCheck size={16} /></ActionButton> : null}
+          {canUpdate ? (
+            <ActionButton
+              onClick={() => openEdit(row)}
+              title={isSemesterCompleted(row) ? t("admin.errors.semesterEnded") : t("admin.actions.edit")}
+              disabled={isSemesterCompleted(row)}
+            >
+              <SquarePen size={16} />
+            </ActionButton>
+          ) : null}
         </div>
       ),
     },
@@ -157,7 +177,7 @@ export default function AdminSemesters() {
           </button>
         ) : null}
       >
-        <SearchInput value={query.search} onChange={(search) => setQuery((prev) => ({ ...prev, page: 1, search }))} placeholder={`${t("admin.fields.semester")}...`} />
+        <SearchInput value={query.search} onChange={(search) => setQuery((prev) => ({ ...prev, page: 1, search }))} placeholder={t("searchPlaceholders.semesters")} />
         <FilterSelect label={t("filterLabels.year")} value={query.year} onChange={(year) => setQuery((prev) => ({ ...prev, page: 1, year }))} options={yearOptions} />
         <FilterSelect label={t("admin.fields.status")} value={query.status} onChange={(status) => setQuery((prev) => ({ ...prev, page: 1, status }))} options={semesterStatusOptions} />
       </FilterBar>
@@ -165,29 +185,56 @@ export default function AdminSemesters() {
       <AdminTable columns={columns} rows={rows} loading={loading} error={error} meta={meta} onPageChange={(page) => setQuery((prev) => ({ ...prev, page }))} emptyText={t("common.noData")} />
 
       <FormModal open={["create", "edit"].includes(modal.type)} title={modal.type === "create" ? t("admin.dialogs.createSemester") : t("admin.dialogs.editSemester")} onClose={() => setModal({ type: null, semester: null })} onSubmit={save} saving={saving}>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label={t("admin.fields.semester")}>
-            <input className={inputClass} value={form.semester_code} onChange={(e) => setForm({ ...form, semester_code: e.target.value.toUpperCase() })} required />
-          </Field>
-          <Field label={t("admin.fields.year") || "Year"}>
-            <input type="number" min="2020" max="2100" className={inputClass} value={form.year} onChange={(e) => setForm({ ...form, year: e.target.value })} required />
-          </Field>
-          <Field label={t("admin.fields.semesterName") || "Semester Name"}>
-            <input className={inputClass} value={form.semester_name} onChange={(e) => setForm({ ...form, semester_name: e.target.value })} required />
-          </Field>
-          <Field label={t("admin.fields.status")}>
-            <select className={inputClass} value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
-              <option value="upcoming">{t("status.upcoming")}</option>
-              <option value="ongoing">{t("status.ongoing")}</option>
-              <option value="completed">{t("status.completed")}</option>
-            </select>
-          </Field>
-          <Field label={t("common.confirm", { defaultValue: "Bắt đầu" }) === "Xác nhận" ? "Ngày bắt đầu" : "Start date"}>
-            <input type="date" className={inputClass} value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value })} required />
-          </Field>
-          <Field label={t("common.confirm", { defaultValue: "Kết thúc" }) === "Xác nhận" ? "Ngày kết thúc" : "End date"}>
-            <input type="date" className={inputClass} value={form.end_date} onChange={(e) => setForm({ ...form, end_date: e.target.value })} required />
-          </Field>
+        <div className="space-y-6">
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+                <Info size={16} />
+              </span>
+              <h4 className="text-sm font-bold text-gray-800">{t("admin.sections.basicInfo")}</h4>
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field label={t("admin.fields.semesterCode")}>
+                <input className={inputClass} value={form.semester_code} onChange={(e) => setForm({ ...form, semester_code: e.target.value.toUpperCase() })} required />
+              </Field>
+              <Field label={t("admin.fields.year")}>
+                <input type="number" min="2020" max="2100" className={inputClass} value={form.year} onChange={(e) => setForm({ ...form, year: e.target.value })} required />
+              </Field>
+              <Field label={t("admin.fields.semesterName")}>
+                <input className={inputClass} value={form.semester_name} onChange={(e) => setForm({ ...form, semester_name: e.target.value })} required />
+              </Field>
+              <Field label={t("admin.fields.status")}>
+                <Dropdown
+                  label={t("admin.fields.status")}
+                  value={form.status}
+                  onChange={(value) => setForm({ ...form, status: value })}
+                  direction="up"
+                  options={[
+                    { value: "upcoming", label: t("status.upcoming") },
+                    { value: "ongoing", label: t("status.ongoing") },
+                    { value: "completed", label: t("status.completed") },
+                  ]}
+                />
+              </Field>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                <Calendar size={16} />
+              </span>
+              <h4 className="text-sm font-bold text-gray-800">{t("admin.sections.semesterTimeline")}</h4>
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field label={t("admin.fields.startDate")}>
+                <input type="date" className={inputClass} value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value })} required />
+              </Field>
+              <Field label={t("admin.fields.endDate")}>
+                <input type="date" className={inputClass} value={form.end_date} onChange={(e) => setForm({ ...form, end_date: e.target.value })} required />
+              </Field>
+            </div>
+          </div>
         </div>
       </FormModal>
 
@@ -195,11 +242,19 @@ export default function AdminSemesters() {
         {modal.semester ? (
           <div className="space-y-4">
             <DetailGrid items={[
-              [t("admin.fields.semester"), modal.semester.semester_code],
-              [t("admin.fields.semester") + " Name", modal.semester.semester_name],
-              ["Year", modal.semester.year],
-              ["Date range", `${formatDateOnly(modal.semester.start_date)} - ${formatDateOnly(modal.semester.end_date)}`],
-              [t("admin.fields.status"), t(`status.${modal.semester.status}`)],
+              [t("admin.fields.semesterCode"), modal.semester.semester_code],
+              [t("admin.fields.semesterName"), modal.semester.semester_name],
+              [t("admin.fields.year"), modal.semester.year],
+              [
+                t("admin.fields.dateRange"),
+                `${formatDateOnlyText(modal.semester.start_date, language)} - ${formatDateOnlyText(modal.semester.end_date, language)}`,
+              ],
+              [
+                t("admin.fields.status"),
+                modal.semester.is_current
+                  ? `${t(`status.${modal.semester.status}`)} · ${t("admin.fields.currentSemester")}`
+                  : t(`status.${modal.semester.status}`),
+              ],
               [t("nav.classes"), Number(modal.semester.total_classes || 0)],
             ]} />
             <div>
@@ -218,16 +273,6 @@ export default function AdminSemesters() {
         ) : null}
       </FormModal>
 
-      <ConfirmDialog
-        isOpen={!!confirm}
-        title={t("admin.dialogs.statusConfirmTitle")}
-        subtitle={confirm?.semester ? `${confirm.semester.semester_code} - ${confirm.semester.semester_name}` : ""}
-        variant="confirm"
-        color="green"
-        yesLabel={t("common.confirm")}
-        onYes={setCurrent}
-        onClose={() => setConfirm(null)}
-      />
     </>
   );
 }

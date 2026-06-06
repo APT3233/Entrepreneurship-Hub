@@ -8,7 +8,7 @@ import { getFileProxyUrl } from "app/core/utils/file.js";
  * Checkpoint Service
  * Handles business logic for checkpoints
  */
-export const createCheckpointService = ({ checkpointRepository, eventBus, storageService, auditService }) => {
+export const createCheckpointService = ({ checkpointRepository, eventBus, storageService, auditService, evaluationRepository }) => {
   const base = createBaseService(checkpointRepository, "Checkpoint");
 
   const userRoles = (user) => (user?.roles || []).map((r) => String(r).toLowerCase());
@@ -38,11 +38,57 @@ export const createCheckpointService = ({ checkpointRepository, eventBus, storag
 
   const enrichCheckpointRow = (row) => {
     if (!row || typeof row !== "object") return row;
-    const { attachment_url, ...rowData } = row;
+    const { attachment_url, rubric_id, rubric_name, ...rowData } = row;
     return {
       ...rowData,
       attachmentUrls: parseLecturerAttachmentUrlsForDto(attachment_url),
+      rubricId: rubric_id || null,
+      rubricName: rubric_name || null,
     };
+  };
+
+  const toStudentEvaluationDto = (evaluation) => {
+    if (!evaluation) return null;
+    return {
+      id: evaluation.id,
+      rubricId: evaluation.rubric_id,
+      rubricName: evaluation.rubric_name,
+      rubricVersion: Number(evaluation.rubric_version || 1),
+      totalScore: evaluation.total_score != null ? Number(evaluation.total_score) : null,
+      maxScore: evaluation.rubric_total_score != null ? Number(evaluation.rubric_total_score) : null,
+      overallFeedback: evaluation.overall_feedback || null,
+      status: evaluation.status,
+      evaluatedAt: evaluation.evaluated_at || null,
+      evaluatorName: evaluation.evaluator_name || null,
+      scores: (evaluation.scores || []).map((score) => ({
+        criterionId: score.criterion_id,
+        criterionName: score.criterion_name,
+        description: score.criterion_description || null,
+        maxScore: score.max_score != null ? Number(score.max_score) : null,
+        weight: score.weight != null ? Number(score.weight) : null,
+        orderIndex: score.order_index != null ? Number(score.order_index) : null,
+        requiredFeedback: Boolean(score.is_required_feedback),
+        score: score.score != null ? Number(score.score) : null,
+        feedback: score.feedback || null,
+      })),
+    };
+  };
+
+  const attachStudentEvaluation = async (checkpoint) => {
+    if (
+      !checkpoint?.submission_id ||
+      checkpoint.submission_status !== "graded" ||
+      !evaluationRepository?.findPublishedEvaluationDetailByTarget
+    ) {
+      checkpoint.evaluation = null;
+      return checkpoint;
+    }
+    const evaluation = await evaluationRepository.findPublishedEvaluationDetailByTarget(
+      "checkpoint_submission",
+      checkpoint.submission_id,
+    );
+    checkpoint.evaluation = toStudentEvaluationDto(evaluation);
+    return checkpoint;
   };
 
   const enrichCheckpointSubmissionForLecturer = async (submission) => {
@@ -415,6 +461,7 @@ export const createCheckpointService = ({ checkpointRepository, eventBus, storag
       } else {
         cp.files = [];
       }
+      await attachStudentEvaluation(cp);
     }
 
     return { data: checkpoints };
@@ -631,7 +678,9 @@ export const createCheckpointService = ({ checkpointRepository, eventBus, storag
 
   const getById = async (id, user) => {
     await checkOwnership(id, user);
-    return enrichCheckpointRow(await base.getById(id));
+    const row = await checkpointRepository.findByIdWithSubjectAndClass(id);
+    if (!row) throw NotFound("Checkpoint");
+    return enrichCheckpointRow(row);
   };
 
   return {

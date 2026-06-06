@@ -1,13 +1,16 @@
+import { useTranslation } from "@/context/TranslationContext";
+
 const palette = ["bg-blue-500", "bg-emerald-500", "bg-amber-500", "bg-violet-500", "bg-rose-500", "bg-slate-500"];
 
 export default function SimpleChartWrapper({ title, rows = [], labelKey, valueKey, valueSuffix = "" }) {
+  const { t } = useTranslation();
   const maxValue = Math.max(...rows.map((row) => Number(row[valueKey] || 0)), 0);
 
   return (
     <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
       <div className="mb-4 flex items-center justify-between gap-3">
         <h2 className="text-base font-bold text-gray-900">{title}</h2>
-        <span className="text-xs font-semibold text-gray-400">{rows.length} mục</span>
+        <span className="text-xs font-semibold text-gray-400">{t("admin.evaluationOps.analytics.itemCount", { count: rows.length })}</span>
       </div>
       {rows.length ? (
         <div className="space-y-3">
@@ -28,7 +31,7 @@ export default function SimpleChartWrapper({ title, rows = [], labelKey, valueKe
           })}
         </div>
       ) : (
-        <div className="rounded-xl bg-gray-50 p-6 text-center text-sm text-gray-400">Chưa có dữ liệu biểu đồ.</div>
+        <div className="rounded-xl bg-gray-50 p-6 text-center text-sm text-gray-400">{t("admin.evaluationOps.analytics.chartEmpty")}</div>
       )}
     </div>
   );

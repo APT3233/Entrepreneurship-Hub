@@ -47,7 +47,7 @@ export default function AdminSubmissionFiles() {
     { key: "file_size", label: "Size", render: (row) => formatBytes(row.file_size) },
     { key: "source", label: "Source", render: (row) => <StatusBadge value={row.source} /> },
     { key: "submission", label: "Submission", render: (row) => `${row.source} #${row.submission_id}` },
-    { key: "group", label: "Group", render: (row) => `${row.group_code} - ${row.group_name}` },
+    { key: "group", label: "Group", render: (row) => row.group_name || "—" },
     { key: "parent", label: "Checkpoint/Assignment", render: (row) => row.parent_title },
     { key: "uploaded_by", label: "Uploaded by", render: (row) => row.uploaded_by_name || row.uploaded_by || "—" },
     { key: "uploaded_at", label: "Uploaded", render: (row) => formatDate(row.uploaded_at) },

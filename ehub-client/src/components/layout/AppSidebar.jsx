@@ -5,7 +5,9 @@ import {
   BookOpen,
   Users,
   ClipboardList,
+  ClipboardCheck,
   Star,
+  BarChart3,
   Calendar,
   PinIcon,
   PinOff,
@@ -22,6 +24,10 @@ export default function AppSidebar({ items, subtitle }) {
     { label: t("lecturer.groups"), icon: Users, path: "/lecturer/groups" },
     { label: t("lecturer.assignments"), icon: ClipboardList, path: "/lecturer/assignments" },
     { label: t("lecturer.grading"), icon: Star, path: "/lecturer/grading" },
+    { label: t("lecturer.evaluation"), icon: ClipboardCheck, path: "/lecturer/evaluation" },
+    { label: t("lecturer.analytics"), icon: BarChart3, path: "/lecturer/analytics" },
+    { label: t("lecturer.mentoring"), icon: ClipboardCheck, path: "/lecturer/mentoring/sessions" },
+    { label: t("lecturer.mentorAnalytics"), icon: BarChart3, path: "/lecturer/mentor-analytics" },
     { label: t("lecturer.schedule"), icon: Calendar, path: "/lecturer/schedule" },
   ], [t]);
 
@@ -236,4 +242,3 @@ export default function AppSidebar({ items, subtitle }) {
     </>
   );
 }
-

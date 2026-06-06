@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { Archive, Eye, Lock, Plus, SquarePen, Unlock } from "lucide-react";
+import { Archive, Eye, Lock, Plus, SquarePen, Unlock, Info, FileSpreadsheet, Settings } from "lucide-react";
+import Dropdown from "@/components/ui/filter/DropDown";
 import { useNavigate } from "react-router-dom";
 import { assignmentService, projectSubmissionLookupService } from "@/api/adminProjectSubmission";
 import { useToast } from "@/components/ui/Toast";
@@ -15,7 +16,6 @@ import DeadlineBadge from "@/pages/admin/project-submission/components/DeadlineB
 import { useTranslation } from "@/context/TranslationContext";
 import {
   buildClassLabel,
-  formatDate,
   getAssignmentStatusOptions,
   getDeadlineOptions,
   pageLimit,
@@ -59,6 +59,16 @@ export default function AdminAssignments() {
 
   const classOptions = useMemo(() => toSelectOptions(lookups.classes, (item) => item.id, buildClassLabel, t("lookupAll.classes")), [lookups.classes, t]);
   const semesterOptions = useMemo(() => toSelectOptions(lookups.semesters, (item) => item.id, (item) => `${item.semester_code} - ${item.semester_name}`, t("lookupAll.semesters")), [lookups.semesters, t]);
+
+  const formClassOptions = useMemo(() => (lookups.classes || []).map((item) => ({
+    value: String(item.id),
+    label: buildClassLabel(item),
+  })), [lookups.classes]);
+
+  const formStatusOptions = useMemo(() => ["open", "closed", "archived"].map((val) => ({
+    value: val,
+    label: t(`status.${val}`),
+  })), [t]);
 
   const openCreate = () => {
     setForm({ ...emptyForm, class_id: query.class_id || "" });
@@ -176,37 +186,85 @@ export default function AdminAssignments() {
 
       <AdminTable columns={columns} rows={rows} loading={loading} error={error} meta={meta} onPageChange={(page) => setQuery((prev) => ({ ...prev, page }))} emptyText="Chưa có assignment." />
 
-      <FormModal open={["create", "edit"].includes(modal.type)} title={modal.type === "create" ? "Create assignment" : "Edit assignment"} onClose={() => setModal({ type: null, assignment: null })} onSubmit={save} saving={saving}>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="Class">
-            <select className={inputClass} value={form.class_id} onChange={(e) => setForm({ ...form, class_id: e.target.value })} required>
-              <option value="">Chọn lớp</option>
-              {(lookups.classes || []).map((item) => <option key={item.id} value={item.id}>{buildClassLabel(item)}</option>)}
-            </select>
-          </Field>
-          <Field label="Title"><input className={inputClass} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required /></Field>
-          <Field label="Deadline"><input type="datetime-local" className={inputClass} value={form.deadline} onChange={(e) => setForm({ ...form, deadline: e.target.value })} required /></Field>
-          <Field label="Status">
-            <select className={inputClass} value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
-              <option value="open">Open</option>
-              <option value="closed">Closed</option>
-              <option value="archived">Archived</option>
-            </select>
-          </Field>
-          <Field label="Max score"><input type="number" min="0.01" step="0.01" className={inputClass} value={form.max_score} onChange={(e) => setForm({ ...form, max_score: e.target.value })} /></Field>
-          <Field label="Required file types"><input className={inputClass} value={form.required_file_types} onChange={(e) => setForm({ ...form, required_file_types: e.target.value })} placeholder="pdf,docx" /></Field>
-          <Field label="Max file size MB"><input type="number" min="1" className={inputClass} value={form.max_file_size_mb} onChange={(e) => setForm({ ...form, max_file_size_mb: e.target.value })} /></Field>
-          <Field label="Max files"><input type="number" min="1" className={inputClass} value={form.max_files} onChange={(e) => setForm({ ...form, max_files: e.target.value })} /></Field>
-          <div className="sm:col-span-2">
-            <Field label="Attachment URL"><input className={inputClass} value={form.attachment_url} onChange={(e) => setForm({ ...form, attachment_url: e.target.value })} /></Field>
+      <FormModal open={["create", "edit"].includes(modal.type)} title={modal.type === "create" ? (t("common.confirm") === "Xác nhận" ? "Tạo bài tập mới" : "Create assignment") : (t("common.confirm") === "Xác nhận" ? "Chỉnh sửa bài tập" : "Edit assignment")} onClose={() => setModal({ type: null, assignment: null })} onSubmit={save} saving={saving}>
+        <div className="space-y-6">
+          {/* Section 1: Basic Information */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+                <Info size={16} />
+              </span>
+              <h4 className="text-sm font-bold text-gray-800">
+                {t("common.confirm") === "Xác nhận" ? "Thông tin cơ bản" : "Basic Information"}
+              </h4>
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field label={t("common.confirm") === "Xác nhận" ? "Lớp học" : "Class"}>
+                <Dropdown
+                  label={t("common.confirm") === "Xác nhận" ? "Chọn lớp" : "Select class"}
+                  value={form.class_id}
+                  onChange={(value) => setForm({ ...form, class_id: value })}
+                  options={formClassOptions}
+                />
+              </Field>
+              <Field label={t("common.confirm") === "Xác nhận" ? "Tiêu đề" : "Title"}>
+                <input className={inputClass} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
+              </Field>
+              <Field label="Deadline">
+                <input type="datetime-local" className={inputClass} value={form.deadline} onChange={(e) => setForm({ ...form, deadline: e.target.value })} required />
+              </Field>
+              <Field label={t("admin.fields.status")}>
+                <Dropdown
+                  label="Status"
+                  value={form.status}
+                  onChange={(value) => setForm({ ...form, status: value })}
+                  direction="up"
+                  options={formStatusOptions}
+                />
+              </Field>
+              <Field label={t("common.confirm") === "Xác nhận" ? "Điểm tối đa" : "Max score"}>
+                <input type="number" min="0.01" step="0.01" className={inputClass} value={form.max_score} onChange={(e) => setForm({ ...form, max_score: e.target.value })} />
+              </Field>
+              <Field label={t("common.confirm") === "Xác nhận" ? "Đường dẫn đính kèm" : "Attachment URL"}>
+                <input className={inputClass} value={form.attachment_url} onChange={(e) => setForm({ ...form, attachment_url: e.target.value })} />
+              </Field>
+            </div>
           </div>
-          <div className="sm:col-span-2">
-            <Field label="Description"><textarea className={inputClass} rows={4} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></Field>
+
+          {/* Section 2: Submission Settings */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                <Settings size={16} />
+              </span>
+              <h4 className="text-sm font-bold text-gray-800">
+                {t("common.confirm") === "Xác nhận" ? "Cài đặt bài nộp" : "Submission Settings"}
+              </h4>
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <Field label={t("common.confirm") === "Xác nhận" ? "Loại tệp bắt buộc" : "Required file types"}>
+                <input className={inputClass} value={form.required_file_types} onChange={(e) => setForm({ ...form, required_file_types: e.target.value })} placeholder="pdf,docx" />
+              </Field>
+              <Field label={t("common.confirm") === "Xác nhận" ? "Kích thước tệp tối đa (MB)" : "Max file size MB"}>
+                <input type="number" min="1" className={inputClass} value={form.max_file_size_mb} onChange={(e) => setForm({ ...form, max_file_size_mb: e.target.value })} />
+              </Field>
+              <Field label={t("common.confirm") === "Xác nhận" ? "Số lượng tệp tối đa" : "Max files"}>
+                <input type="number" min="1" className={inputClass} value={form.max_files} onChange={(e) => setForm({ ...form, max_files: e.target.value })} />
+              </Field>
+            </div>
           </div>
+
+          {/* Section 3: Description */}
+          <div className="space-y-4">
+            <Field label={t("admin.fields.topicDesc", { defaultValue: "Mô tả" }) === "Mô tả đề tài" ? "Mô tả chi tiết" : "Description"}>
+              <textarea className={inputClass} rows={4} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+            </Field>
+          </div>
+
           {modal.type === "edit" ? (
             <label className="flex items-center gap-2 text-sm font-semibold text-amber-700 sm:col-span-2">
               <input type="checkbox" checked={form.force} onChange={(e) => setForm({ ...form, force: e.target.checked })} />
-              Force update max_score nếu đã có bài graded
+              {t("common.confirm") === "Xác nhận" ? "Bắt buộc cập nhật điểm tối đa ngay cả khi đã có bài được chấm" : "Force update max_score even if submissions are already graded"}
             </label>
           ) : null}
         </div>

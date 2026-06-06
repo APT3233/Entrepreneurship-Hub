@@ -13,6 +13,9 @@ import { MailModule } from "app/modules/mail/index.js";
 import { CheckpointModule } from "app/modules/checkpoint/index.js";
 import { FileModule } from "app/modules/file/index.js";
 import { EvaluationModule } from "app/modules/evaluation/index.js";
+import { AnalyticsModule } from "app/modules/analytics/index.js";
+import { AiEvaluationModule } from "app/modules/aiEvaluation/index.js";
+import { MentorModule } from "app/modules/mentors/index.js";
 import { AdminModule } from "app/modules/admin/index.js";
 
 const MODULES = [
@@ -29,6 +32,9 @@ const MODULES = [
   CheckpointModule,
   FileModule,
   EvaluationModule,
+  AnalyticsModule,
+  AiEvaluationModule,
+  MentorModule,
   AdminModule,
 ];
 

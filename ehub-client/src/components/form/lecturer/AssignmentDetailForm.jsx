@@ -9,19 +9,22 @@ import {
   Award,
   ChevronLeft,
   ChevronRight,
+  Layers,
 } from "lucide-react";
 import AssignmentApi from "@/api/assignment";
+import { rubricService } from "@/api/adminEvaluationOps";
 import { useToast } from "@/components/ui/Toast";
 import { formatDate } from "@/utils/dateTimeDisplay";
 
 /** Cột chấm điểm: điểm + nhận xét diện tích lớn */
-function GradingColumn({ assignmentId, maxScore, group, onSaved }) {
+function GradingColumn({ assignmentId, maxScore, group, onSaved, rubric }) {
   const toast = useToast();
   const [score, setScore] = useState(
     () => (group.score != null && group.score !== "" ? String(group.score) : "")
   );
   const [feedback, setFeedback] = useState(() => group.feedback || "");
   const [saving, setSaving] = useState(false);
+  const [showRubricInfo, setShowRubricInfo] = useState(false);
 
   useEffect(() => {
     setScore(group.score != null && group.score !== "" ? String(group.score) : "");
@@ -66,6 +69,34 @@ function GradingColumn({ assignmentId, maxScore, group, onSaved }) {
             </span>
           )}
         </p>
+      )}
+
+      {rubric && (
+        <div className="mb-4">
+          <button
+            type="button"
+            onClick={() => setShowRubricInfo(!showRubricInfo)}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 bg-indigo-50/50 hover:bg-indigo-50 border border-indigo-100/50 px-3 py-2 rounded-xl transition-all"
+          >
+            <Layers size={13} />
+            {showRubricInfo ? "Ẩn tiêu chí chấm điểm" : "Xem tiêu chí chấm điểm (Rubric)"}
+          </button>
+          
+          {showRubricInfo && (
+            <div className="mt-2.5 p-3 rounded-xl border border-indigo-100 bg-white/90 space-y-2 max-h-[220px] overflow-y-auto pr-1 animate-in slide-in-from-top-1 duration-200">
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Tiêu chí chi tiết</p>
+              {rubric.criteria?.map((c) => (
+                <div key={c.id} className="text-xs pb-2 border-b border-gray-50 last:border-0 last:pb-0">
+                  <div className="flex justify-between font-semibold text-gray-800">
+                    <span>{c.name}</span>
+                    <span className="font-mono text-indigo-600">{c.max_score}đ {Number(c.weight) !== 1 && `(x${c.weight})`}</span>
+                  </div>
+                  {c.description && <p className="text-[11px] text-gray-400 mt-0.5 leading-relaxed">{c.description}</p>}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       )}
 
       <div className="space-y-4 flex-1 flex flex-col min-h-0">
@@ -192,6 +223,27 @@ function SubmissionInfoColumn({ group, maxScore }) {
  */
 export default function AssignmentDetailForm({ assignment, onClose, onConfirm, onAfterGrade }) {
   const [selectedGroupId, setSelectedGroupId] = useState(null);
+  const [rubric, setRubric] = useState(null);
+  const [loadingRubric, setLoadingRubric] = useState(false);
+
+  useEffect(() => {
+    if (!assignment || !assignment.rubricId) {
+      setRubric(null);
+      return;
+    }
+    const fetchRubric = async () => {
+      setLoadingRubric(true);
+      try {
+        const res = await rubricService.get(assignment.rubricId);
+        setRubric(res?.data || null);
+      } catch (err) {
+        console.error("Failed to fetch rubric:", err);
+      } finally {
+        setLoadingRubric(false);
+      }
+    };
+    fetchRubric();
+  }, [assignment?.rubricId]);
 
   useEffect(() => {
     if (!assignment) return;
@@ -282,6 +334,7 @@ export default function AssignmentDetailForm({ assignment, onClose, onConfirm, o
                     maxScore={max}
                     group={selectedGroup}
                     onSaved={() => onAfterGrade?.(aId)}
+                    rubric={rubric}
                   />
                 </div>
               </div>
@@ -309,7 +362,7 @@ export default function AssignmentDetailForm({ assignment, onClose, onConfirm, o
         {!(selectedGroupId != null) && (
           /* —— Danh sách nhóm (thẻ bấm) —— */
           <>
-            <div className="px-6 sm:px-8 pt-7 pb-2 overflow-y-auto flex-1 min-h-0">
+            <div className="px-6 sm:px-8 pt-7 pb-2 overflow-y-auto flex-1 min-h-0 text-left">
               <h2 className="text-lg sm:text-xl font-bold text-gray-900 pr-8">{title}</h2>
               <p className="mt-1 text-sm text-gray-500 leading-relaxed line-clamp-3">{description}</p>
 
@@ -324,6 +377,52 @@ export default function AssignmentDetailForm({ assignment, onClose, onConfirm, o
                   Điểm tối đa <span className="font-medium">{maxScore}</span>
                 </div>
               </div>
+
+              {/* Rubric display */}
+              {loadingRubric ? (
+                <div className="mt-5 p-4 rounded-2xl border border-indigo-50 bg-indigo-50/10 animate-pulse flex items-center justify-center gap-2">
+                  <div className="w-4 h-4 border-2 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
+                  <span className="text-xs text-gray-400">Đang tải rubric...</span>
+                </div>
+              ) : rubric ? (
+                <div className="mt-5 p-4 rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50/20 to-violet-50/20 shadow-sm text-left">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <Layers className="text-indigo-500 shrink-0" size={16} />
+                      <span className="text-xs font-bold text-indigo-800 uppercase tracking-widest">Rubric đánh giá</span>
+                    </div>
+                    <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100/50">
+                      v{rubric.version || 1}
+                    </span>
+                  </div>
+                  <h4 className="text-sm font-black text-gray-900">{rubric.name}</h4>
+                  {rubric.description && (
+                    <p className="mt-1 text-xs text-gray-500 leading-relaxed">{rubric.description}</p>
+                  )}
+                  
+                  {/* Criteria List */}
+                  {Array.isArray(rubric.criteria) && rubric.criteria.length > 0 && (
+                    <div className="mt-4 space-y-2.5">
+                      {rubric.criteria.map((c) => (
+                        <div key={c.id} className="flex items-start justify-between gap-3 text-xs bg-white/80 border border-gray-100 p-3 rounded-xl hover:shadow-sm transition-all">
+                          <div className="min-w-0">
+                            <p className="font-bold text-gray-800 flex items-center gap-1.5">
+                              {c.name}
+                              {c.is_required_feedback ? (
+                                <span className="text-[9px] font-medium text-amber-600 bg-amber-50 px-1.5 py-0.2 rounded border border-amber-100/60">Bắt buộc feedback</span>
+                              ) : null}
+                            </p>
+                            {c.description && <p className="text-[11px] text-gray-400 mt-1 leading-relaxed">{c.description}</p>}
+                          </div>
+                          <div className="shrink-0 text-right font-mono font-bold text-indigo-600 whitespace-nowrap bg-indigo-50/50 px-2.5 py-1 rounded-lg border border-indigo-50">
+                            {c.max_score}đ {Number(c.weight) !== 1 && `(x${c.weight})`}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : null}
 
               <div className="my-5 border-t border-gray-100" />
 

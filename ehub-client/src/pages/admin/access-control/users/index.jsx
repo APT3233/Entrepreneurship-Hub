@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { Eye, Lock, Plus, RotateCcw, ShieldCheck, SquarePen } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Eye, Lock, Plus, RotateCcw, ShieldCheck, SquarePen, User, Settings, KeyRound, ShieldAlert, GraduationCap, CheckCircle2, Phone, MapPin } from "lucide-react";
 import { useSelector } from "react-redux";
 import AdminAccessControlApi from "@/api/adminAccessControl";
 import { useToast } from "@/components/ui/Toast";
@@ -13,8 +13,17 @@ import FormModal, { Field, inputClass } from "@/pages/admin/components/FormModal
 import ConfirmDialog from "@/pages/admin/components/ConfirmDialog";
 import { useTranslation } from "@/context/TranslationContext";
 import { formatDate } from "@/utils/dateTimeDisplay";
+import {
+  applyRoleToggle,
+  canAssignRoleToUser,
+  getRoleAssignmentError,
+  isStaffAccount,
+  isStaffRoleCode,
+  isStudentAccount,
+} from "@/utils/roleAssignment";
 
 import Dropdown from "@/components/ui/filter/DropDown";
+import { CAMPUS_OPTIONS } from "@/pages/admin/student-group/shared";
 
 const emptyForm = {
   username: "",
@@ -56,26 +65,55 @@ const getRoleBadgeStyle = (role) => {
   }
 };
 
-const getRoleLabel = (role, language) => {
-  const isVi = language === "vi";
-  switch (role) {
+const getRoleLabel = (role, t) => {
+  const key = `admin.userRoles.${role}`;
+  const label = t(key);
+  return label === key ? role : label;
+};
+
+const getRoleCardConfig = (roleCode, t) => {
+  switch (roleCode) {
     case "admin":
-      return isVi ? "Quản trị viên" : "Administrator";
-    case "department_head":
-      return isVi ? "Trưởng bộ môn" : "Department Head";
+      return {
+        icon: ShieldAlert,
+        colorClass: "rose",
+        title: t("admin.roleCards.admin.title"),
+        desc: t("admin.roleCards.admin.desc"),
+        activeBorder: "border-rose-500 ring-2 ring-rose-100 bg-rose-50/10",
+        iconBg: "bg-rose-50 text-rose-600",
+      };
     case "lecturer":
-      return isVi ? "Giảng viên" : "Lecturer";
+      return {
+        icon: GraduationCap,
+        colorClass: "indigo",
+        title: t("admin.roleCards.lecturer.title"),
+        desc: t("admin.roleCards.lecturer.desc"),
+        activeBorder: "border-indigo-500 ring-2 ring-indigo-100 bg-indigo-50/10",
+        iconBg: "bg-indigo-50 text-indigo-600",
+      };
     case "student":
-      return isVi ? "Sinh viên" : "Student";
-    case "guest":
-      return isVi ? "Khách" : "Guest";
+      return {
+        icon: User,
+        colorClass: "emerald",
+        title: t("admin.roleCards.student.title"),
+        desc: t("admin.roleCards.student.desc"),
+        activeBorder: "border-emerald-500 ring-2 ring-emerald-100 bg-emerald-50/10",
+        iconBg: "bg-emerald-50 text-emerald-600",
+      };
     default:
-      return role;
+      return {
+        icon: User,
+        colorClass: "slate",
+        title: getRoleLabel(roleCode, t),
+        desc: t("admin.roleCards.defaultDesc"),
+        activeBorder: "border-slate-500 ring-2 ring-slate-100 bg-slate-50/10",
+        iconBg: "bg-slate-50 text-slate-600",
+      };
   }
 };
 
 export default function AdminUsers() {
-  const { t, language } = useTranslation();
+  const { t } = useTranslation();
   const toast = useToast();
   const authUser = useSelector(selectAuthUser);
   const canWrite = checkPermission(authUser, "admin.users.update");
@@ -125,7 +163,7 @@ export default function AdminUsers() {
     setModal({ type: "create", user: null });
   };
 
-  const openEdit = (user) => {
+  const openEdit = useCallback((user) => {
     setForm({
       username: user.username || "",
       email: user.email || "",
@@ -138,24 +176,35 @@ export default function AdminUsers() {
       roles: user.roles || [],
     });
     setModal({ type: "edit", user });
-  };
+  }, []);
 
-  const openRoles = (user) => {
+  const openRoles = useCallback((user) => {
     setForm({ ...emptyForm, roles: user.roles || [] });
     setModal({ type: "roles", user });
-  };
+  }, []);
 
-  const openDetail = async (user) => {
+  const openDetail = useCallback(async (user) => {
     try {
       const res = await AdminAccessControlApi.getUser(user.id);
       setModal({ type: "detail", user: res?.data || user });
     } catch (err) {
       toast.error(err.message || t("admin.toasts.actionFailed"));
     }
-  };
+  }, [t, toast]);
 
   const saveUser = async (e) => {
     e.preventDefault();
+    if (modal.type === "create" || modal.type === "roles") {
+      const roleError = getRoleAssignmentError(
+        form.roles,
+        modal.type === "roles" ? modal.user : null,
+        t,
+      );
+      if (roleError) {
+        toast.error(roleError);
+        return;
+      }
+    }
     setSaving(true);
     try {
       if (modal.type === "create") {
@@ -180,19 +229,8 @@ export default function AdminUsers() {
   };
 
   const toggleRole = (roleCode) => {
-    setForm((prev) => {
-      let nextRoles = prev.roles.includes(roleCode)
-        ? prev.roles.filter((item) => item !== roleCode)
-        : [...prev.roles, roleCode];
-
-      if (roleCode === "student" && nextRoles.includes("student")) {
-        nextRoles = nextRoles.filter((item) => item !== "lecturer" && item !== "admin");
-      } else if (["lecturer", "admin"].includes(roleCode) && nextRoles.includes(roleCode)) {
-        nextRoles = nextRoles.filter((item) => item !== "student");
-      }
-
-      return { ...prev, roles: nextRoles };
-    });
+    if (modal.type === "roles" && !canAssignRoleToUser(modal.user, roleCode)) return;
+    setForm((prev) => ({ ...prev, roles: applyRoleToggle(prev.roles, roleCode) }));
   };
 
   const toggleLock = async () => {
@@ -223,13 +261,12 @@ export default function AdminUsers() {
               key={role}
               className={`rounded-lg px-2 py-0.5 text-xs font-semibold ${getRoleBadgeStyle(role)}`}
             >
-              {getRoleLabel(role, language)}
+              {getRoleLabel(role, t)}
             </span>
           ))}
         </div>
       ),
     },
-    { key: "auth_provider", label: t("admin.fields.provider"), render: (row) => <StatusBadge value={row.auth_provider} /> },
     { key: "status", label: t("admin.fields.status"), render: (row) => <StatusBadge value={row.status} /> },
     { key: "last_login_at", label: t("admin.fields.lastLogin"), render: (row) => formatDate(row.last_login_at) },
     { key: "created_at", label: t("common.created"), render: (row) => formatDate(row.created_at) },
@@ -245,7 +282,7 @@ export default function AdminUsers() {
         </div>
       ),
     },
-  ], [t, canWrite]);
+  ], [t, canWrite, openDetail, openEdit, openRoles, setConfirmUser]);
 
   const filterStatusOptions = useMemo(() => [
     { value: "", label: t("filters.all") },
@@ -281,76 +318,190 @@ export default function AdminUsers() {
 
       <FormModal
         open={["create", "edit", "roles"].includes(modal.type)}
-        title={modal.type === "create" ? t("admin.actions.create") + " User" : modal.type === "roles" ? t("admin.actions.assignRoles") : t("admin.actions.edit") + " User"}
+        title={
+          modal.type === "create"
+            ? t("admin.dialogs.createUser")
+            : modal.type === "roles"
+            ? t("admin.actions.assignRoles")
+            : t("admin.dialogs.editUser")
+        }
         onClose={() => setModal({ type: null, user: null })}
         onSubmit={saveUser}
         saving={saving}
       >
         {modal.type === "roles" ? (
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-            {roles.map((role) => {
-              const isDisabled = modal.user?.is_student_goc && ["lecturer", "admin"].includes(role.role_code);
-              return (
-                <label
-                  key={role.id}
-                  className={`flex items-center gap-3 rounded-xl border border-gray-100 p-3 ${
-                    isDisabled ? "opacity-55 cursor-not-allowed bg-gray-50/50" : "cursor-pointer"
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={form.roles.includes(role.role_code)}
-                    onChange={() => toggleRole(role.role_code)}
-                    disabled={isDisabled}
-                  />
-                  <div>
-                    <span className="text-sm font-semibold text-gray-800">{role.role_name}</span>
-                    {isDisabled && (
-                      <p className="text-[10px] text-red-500 font-medium mt-0.5">
-                        {language === "vi"
-                          ? "Tài khoản là Sinh viên gốc, không thể nâng cấp lên Giảng viên/Admin"
-                          : "Student user cannot be upgraded to Lecturer/Admin"}
-                      </p>
+          <div className="space-y-6">
+            <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+                <ShieldCheck size={16} />
+              </span>
+              <div>
+                <h4 className="text-sm font-bold text-gray-800">
+                  {t("admin.roles.sectionTitle")}
+                </h4>
+                <p className="text-[11px] text-gray-400 font-medium">
+                  {t("admin.roles.assignSubtitle", { name: modal.user?.full_name || "" })}
+                </p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {roles.map((role) => {
+                const isDisabled = !canAssignRoleToUser(modal.user, role.role_code);
+                const isChecked = form.roles.includes(role.role_code);
+                const config = getRoleCardConfig(role.role_code, t);
+                const RoleIcon = config.icon;
+                return (
+                  <div
+                    key={role.id}
+                    onClick={() => {
+                      if (!isDisabled) toggleRole(role.role_code);
+                    }}
+                    className={`relative flex items-start gap-4 rounded-2xl border p-5 transition-all duration-300 outline-none select-none ${
+                      isDisabled 
+                        ? "opacity-50 cursor-not-allowed bg-gray-50 border-gray-200" 
+                        : `cursor-pointer border-gray-200 hover:shadow-md ${isChecked ? `${config.activeBorder}` : "hover:border-gray-300 hover:bg-gray-50/30"}`
+                    }`}
+                  >
+                    {isChecked && !isDisabled && (
+                      <span className="absolute top-4 right-4 text-emerald-600">
+                        <CheckCircle2 size={18} strokeWidth={2.5} />
+                      </span>
                     )}
+                    <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-transform ${config.iconBg} ${isChecked ? "scale-105" : ""}`}>
+                      <RoleIcon size={20} strokeWidth={2} />
+                    </div>
+                    <div className="flex-1 space-y-1 pr-4">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-gray-800 leading-none">{config.title}</span>
+                      </div>
+                      <p className="text-[11px] text-gray-500 font-medium leading-relaxed">{config.desc}</p>
+                      {isDisabled && isStudentAccount(modal.user) && isStaffRoleCode(role.role_code) && (
+                        <p className="text-[10px] text-red-500 font-bold mt-1.5 leading-snug">
+                          {`⚠️ ${t("admin.errors.roleStudentCannotStaffHint")}`}
+                        </p>
+                      )}
+                      {isDisabled && isStaffAccount(modal.user) && role.role_code === "student" && (
+                        <p className="text-[10px] text-red-500 font-bold mt-1.5 leading-snug">
+                          {`⚠️ ${t("admin.errors.roleStaffCannotStudentHint")}`}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                </label>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label={t("admin.fields.fullName")}><input className={inputClass} value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} required /></Field>
-            <Field label={t("admin.fields.username")}><input className={inputClass} value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} required /></Field>
-            <Field label={t("admin.fields.email")}><input type="email" className={inputClass} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required /></Field>
-            {modal.type === "create" && <Field label="Password"><input type="password" className={inputClass} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder={t("common.confirm") === "Xác nhận" ? "Tối thiểu 8 ký tự" : "Minimum 8 characters"} required /></Field>}
-            <Field label={t("admin.fields.phone")}><input className={inputClass} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></Field>
-            <Field label={t("admin.fields.campus")}><input className={inputClass} value={form.campus} onChange={(e) => setForm({ ...form, campus: e.target.value })} /></Field>
-            <Field label="Avatar URL"><input className={inputClass} value={form.avatar_url} onChange={(e) => setForm({ ...form, avatar_url: e.target.value })} /></Field>
-            <Field label={t("admin.fields.status")}>
-              <Dropdown
-                label="Status"
-                value={form.status}
-                onChange={(value) => setForm({ ...form, status: value })}
-                options={[
-                  { value: "active", label: t("status.active") },
-                  { value: "inactive", label: t("status.inactive") },
-                  { value: "locked", label: t("status.locked") },
-                ]}
-              />
-            </Field>
-            {modal.type === "create" && (
-              <div className="sm:col-span-2">
-                <p className="mb-2 text-xs font-bold uppercase tracking-wide text-gray-500">{t("admin.fields.roles")}</p>
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                  {roles.map((role) => (
-                    <label key={role.id} className="flex items-center gap-3 rounded-xl border border-gray-100 p-3 cursor-pointer">
-                      <input type="checkbox" checked={form.roles.includes(role.role_code)} onChange={() => toggleRole(role.role_code)} />
-                      <span className="text-sm font-semibold text-gray-800">{role.role_name}</span>
-                    </label>
-                  ))}
+          <div className="space-y-6">
+            {/* Section 1: Account Information */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
+                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+                  <User size={16} />
+                </span>
+                <h4 className="text-sm font-bold text-gray-800">
+                  {t("admin.sections.accountInfo")}
+                </h4>
+              </div>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <Field label={t("admin.fields.fullName")}>
+                  <input className={inputClass} value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} required />
+                </Field>
+                <Field label={t("admin.fields.username")}>
+                  <input className={inputClass} value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} required />
+                </Field>
+                <Field label={t("admin.fields.email")}>
+                  <input type="email" className={inputClass} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required />
+                </Field>
+                {modal.type === "create" ? (
+                  <Field label={t("admin.fields.password")}>
+                    <input type="password" className={inputClass} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder={t("admin.placeholders.passwordMin")} required />
+                  </Field>
+                ) : null}
+              </div>
+            </div>
+
+            {/* Section 2: Additional details */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
+                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                  <Settings size={16} />
+                </span>
+                <h4 className="text-sm font-bold text-gray-800">
+                  {t("admin.sections.additionalDetails")}
+                </h4>
+              </div>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <Field label={t("admin.fields.phone")}>
+                  <input className={inputClass} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+                </Field>
+                <Field label={t("admin.fields.campus")}>
+                  <Dropdown
+                    label={t("admin.placeholders.selectCampus")}
+                    value={form.campus}
+                    onChange={(value) => setForm({ ...form, campus: value })}
+                    options={CAMPUS_OPTIONS}
+                  />
+                </Field>
+                <Field label={t("admin.fields.status")}>
+                  <Dropdown
+                    label="Status"
+                    value={form.status}
+                    onChange={(value) => setForm({ ...form, status: value })}
+                    options={[
+                      { value: "active", label: t("status.active") },
+                      { value: "inactive", label: t("status.inactive") },
+                      { value: "locked", label: t("status.locked") },
+                    ]}
+                  />
+                </Field>
+              </div>
+            </div>
+
+            {/* Section 3: Roles Selection (Create Mode Only) */}
+            {modal.type === "create" ? (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
+                    <KeyRound size={16} />
+                  </span>
+                  <h4 className="text-sm font-bold text-gray-800">
+                    {t("admin.fields.roles")}
+                  </h4>
+                </div>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  {roles.map((role) => {
+                    const isChecked = form.roles.includes(role.role_code);
+                    const config = getRoleCardConfig(role.role_code, t);
+                    const RoleIcon = config.icon;
+                    return (
+                      <div
+                        key={role.id}
+                        onClick={() => toggleRole(role.role_code)}
+                        className={`relative flex items-start gap-4 rounded-2xl border p-5 transition-all duration-300 outline-none select-none cursor-pointer border-gray-200 hover:shadow-md ${
+                          isChecked ? `${config.activeBorder}` : "hover:border-gray-300 hover:bg-gray-50/30"
+                        }`}
+                      >
+                        {isChecked && (
+                          <span className="absolute top-4 right-4 text-emerald-600">
+                            <CheckCircle2 size={18} strokeWidth={2.5} />
+                          </span>
+                        )}
+                        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-transform ${config.iconBg} ${isChecked ? "scale-105" : ""}`}>
+                          <RoleIcon size={20} strokeWidth={2} />
+                        </div>
+                        <div className="flex-1 space-y-1 pr-4">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-bold text-gray-800 leading-none">{config.title}</span>
+                          </div>
+                          <p className="text-[11px] text-gray-500 font-medium leading-relaxed">{config.desc}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
-            )}
+            ) : null}
           </div>
         )}
       </FormModal>
@@ -370,7 +521,6 @@ export default function AdminUsers() {
             [t("admin.fields.roles")]: (modal.user.roles || []).join(", "),
             Permissions: (modal.user.permissions || []).join(", ") || "—",
             [t("admin.fields.status")]: modal.user.status,
-            [t("admin.fields.provider")]: modal.user.auth_provider,
             [t("admin.fields.campus")]: modal.user.campus || "—",
           }).map(([label, value]) => (
             <div key={label} className="rounded-xl bg-gray-50 p-3">

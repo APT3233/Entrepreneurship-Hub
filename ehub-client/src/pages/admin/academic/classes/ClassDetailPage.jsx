@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Eye, Plus, Send, UserMinus, UsersRound } from "lucide-react";
+import { ArrowLeft, Eye, Plus, Send, UserMinus, UsersRound, Info, Briefcase, Calendar, Check, Search } from "lucide-react";
+import Dropdown from "@/components/ui/filter/DropDown";
 import { useNavigate, useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { classService } from "@/api/adminAcademic";
@@ -26,7 +27,7 @@ import ConfirmDialog from "@/pages/admin/components/ConfirmDialog";
 import DetailGrid from "@/pages/admin/academic/components/DetailGrid";
 import ActionButton from "@/pages/admin/academic/components/ActionButton";
 import { useTranslation } from "@/context/TranslationContext";
-import { formatDate, formatDateOnly } from "@/pages/admin/academic/shared";
+import { formatDate, formatDateOnly, formatDateOnlyText } from "@/pages/admin/academic/shared";
 import WarningNote from "@/pages/admin/student-group/components/WarningNote";
 import {
   buildStudentLabel,
@@ -49,8 +50,8 @@ const emptyGroupForm = {
   status: "forming",
 };
 
-function ClassStudentsTab({ classId, lookups, canWrite }) {
-  const { t, language } = useTranslation();
+function ClassStudentsTab({ classId, lookups, canWrite, onLookupsRefresh }) {
+  const { t } = useTranslation();
   const enrollmentStatusOptions = useMemo(() => getEnrollmentStatusOptions(t), [t]);
   const toast = useToast();
   const [query, setQuery] = useState({ page: 1, limit: pageLimit, search: "", status: "" });
@@ -64,6 +65,7 @@ function ClassStudentsTab({ classId, lookups, canWrite }) {
   const [saving, setSaving] = useState(false);
   const [confirmDrop, setConfirmDrop] = useState(null);
   const [bulkForm, setBulkForm] = useState({ student_ids: [] });
+  const [bulkSearch, setBulkSearch] = useState("");
   const [sendingInviteId, setSendingInviteId] = useState(null);
 
   const load = useCallback(async () => {
@@ -111,6 +113,7 @@ function ClassStudentsTab({ classId, lookups, canWrite }) {
       toast.success(t("admin.toasts.createSuccess"));
       setModal({ type: null });
       await load();
+      await onLookupsRefresh?.();
     } catch (err) {
       toast.error(err.message || t("admin.toasts.actionFailed"));
     } finally {
@@ -136,6 +139,7 @@ function ClassStudentsTab({ classId, lookups, canWrite }) {
 
   const openBulk = () => {
     setBulkForm({ student_ids: [] });
+    setBulkSearch("");
     setModal({ type: "bulk" });
   };
 
@@ -167,6 +171,7 @@ function ClassStudentsTab({ classId, lookups, canWrite }) {
       );
       setModal({ type: null });
       await load();
+      await onLookupsRefresh?.();
     } catch (err) {
       toast.error(err.message || t("admin.toasts.actionFailed"));
     } finally {
@@ -174,7 +179,7 @@ function ClassStudentsTab({ classId, lookups, canWrite }) {
     }
   };
 
-  const sendInvite = async (row) => {
+  const sendInvite = useCallback(async (row) => {
     if (!row?.id) return;
     setSendingInviteId(row.id);
     try {
@@ -189,7 +194,7 @@ function ClassStudentsTab({ classId, lookups, canWrite }) {
     } finally {
       setSendingInviteId(null);
     }
-  };
+  }, [t, toast]);
 
   const enrolledStudentIds = useMemo(
     () => new Set((rows || []).map((row) => Number(row.student_id)).filter(Boolean)),
@@ -200,6 +205,23 @@ function ClassStudentsTab({ classId, lookups, canWrite }) {
     () => (lookups.students || []).filter((student) => !enrolledStudentIds.has(Number(student.id))),
     [lookups.students, enrolledStudentIds],
   );
+
+  const filteredBulkCandidates = useMemo(() => {
+    const search = (bulkSearch || "").trim().toLowerCase();
+    if (!search) return bulkCandidates;
+    return bulkCandidates.filter((student) => {
+      return (
+        (student.student_code || "").toLowerCase().includes(search) ||
+        (student.full_name || "").toLowerCase().includes(search) ||
+        (student.email || "").toLowerCase().includes(search)
+      );
+    });
+  }, [bulkCandidates, bulkSearch]);
+
+  const formStudentOptions = useMemo(() => (lookups.students || []).map((student) => ({
+    value: String(student.id),
+    label: buildStudentLabel(student),
+  })), [lookups.students]);
 
   const normalColumns = useMemo(() => [
     { key: "student_code", label: t("admin.fields.studentCode"), render: (row) => <span className="font-mono text-xs font-bold text-gray-700">{row.student_code}</span> },
@@ -227,7 +249,7 @@ function ClassStudentsTab({ classId, lookups, canWrite }) {
         </div>
       ),
     },
-  ], [t, canWrite, sendingInviteId]);
+  ], [t, canWrite, sendingInviteId, sendInvite]);
 
   const withoutGroupColumns = useMemo(() => [
     { key: "student_code", label: t("admin.fields.studentCode"), render: (row) => <span className="font-mono text-xs font-bold text-gray-700">{row.student_code}</span> },
@@ -274,24 +296,48 @@ function ClassStudentsTab({ classId, lookups, canWrite }) {
       />
 
       <FormModal open={modal.type === "add"} title={t("common.confirm") === "Xác nhận" ? "Thêm sinh viên vào lớp" : "Add student to class"} onClose={() => setModal({ type: null })} onSubmit={saveEnrollment} saving={saving}>
-        <div className="space-y-4">
-          <Field label={t("admin.fields.fullName", { defaultValue: "Sinh viên" }) === "Họ và tên" ? "Sinh viên" : "Student"}>
-            <select className={inputClass} value={form.student_id} onChange={(e) => setForm({ ...form, student_id: e.target.value })} required>
-              <option value="">{t("common.confirm") === "Xác nhận" ? "Chọn sinh viên" : "Select student"}</option>
-              {(lookups.students || []).map((student) => <option key={student.id} value={student.id}>{buildStudentLabel(student)}</option>)}
-            </select>
-          </Field>
-          <Field label={t("admin.fields.status")}>
-            <select className={inputClass} value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
-              <option value="enrolled">{t("status.enrolled")}</option>
-              <option value="completed">{t("status.completed")}</option>
-            </select>
-          </Field>
-          <WarningNote>
-            {t("common.confirm") === "Xác nhận"
-              ? "Hệ thống tự động chặn trùng và không cho phép thêm vào lớp đã hoàn thành/lưu trữ."
-              : "System prevents duplicates and additions to completed/archived classes."}
-          </WarningNote>
+        <div className="space-y-6">
+          {/* Section 1: Student Information */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+                <Info size={16} />
+              </span>
+              <h4 className="text-sm font-bold text-gray-800">
+                {t("common.confirm") === "Xác nhận" ? "Thông tin học viên" : "Student Information"}
+              </h4>
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field label={t("admin.fields.fullName", { defaultValue: "Sinh viên" }) === "Họ và tên" ? "Sinh viên" : "Student"}>
+                <Dropdown
+                  label={t("common.confirm") === "Xác nhận" ? "Chọn sinh viên" : "Select student"}
+                  value={form.student_id}
+                  onChange={(value) => setForm({ ...form, student_id: value })}
+                  options={formStudentOptions}
+                />
+              </Field>
+              <Field label={t("admin.fields.status")}>
+                <Dropdown
+                  label="Status"
+                  value={form.status}
+                  onChange={(value) => setForm({ ...form, status: value })}
+                  direction="up"
+                  options={[
+                    { value: "enrolled", label: t("status.enrolled") },
+                    { value: "completed", label: t("status.completed") },
+                  ]}
+                />
+              </Field>
+            </div>
+          </div>
+
+          <div className="mt-2">
+            <WarningNote>
+              {t("common.confirm") === "Xác nhận"
+                ? "Hệ thống tự động chặn trùng và không cho phép thêm vào lớp đã hoàn thành/lưu trữ."
+                : "System prevents duplicates and additions to completed/archived classes."}
+            </WarningNote>
+          </div>
         </div>
       </FormModal>
 
@@ -302,17 +348,68 @@ function ClassStudentsTab({ classId, lookups, canWrite }) {
         onSubmit={saveBulk}
         saving={saving}
       >
-        <div className="max-h-72 overflow-y-auto rounded-xl border border-gray-100 p-2">
-          {bulkCandidates.length ? bulkCandidates.map((student) => (
-            <label key={student.id} className="flex items-center gap-3 rounded-lg px-2 py-2 text-sm hover:bg-gray-50 cursor-pointer">
-              <input type="checkbox" checked={bulkForm.student_ids.includes(student.id)} onChange={() => toggleBulkStudent(student.id)} />
-              <span className="font-semibold text-gray-800">{buildStudentLabel(student)}</span>
-            </label>
-          )) : (
-            <div className="rounded-xl bg-gray-50 p-6 text-center text-sm text-gray-400">
-              {t("common.confirm") === "Xác nhận" ? "Không còn sinh viên khả dụng để thêm." : "No students available to add."}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between border-b border-gray-100 pb-2">
+            <div className="flex items-center gap-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                <UsersRound size={16} />
+              </span>
+              <h4 className="text-sm font-bold text-gray-800">
+                {t("common.confirm") === "Xác nhận" ? "Danh sách sinh viên khả dụng" : "Available Students List"}
+              </h4>
             </div>
-          )}
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-bold text-indigo-700">
+              {t("common.confirm") === "Xác nhận" ? `Đã chọn: ${bulkForm.student_ids.length}` : `Selected: ${bulkForm.student_ids.length}`}
+            </span>
+          </div>
+
+          {/* Smart Search Bar */}
+          <div className="relative">
+            <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              className="w-full pl-9 pr-4 py-2 rounded-xl bg-gray-50 border border-gray-200 focus:bg-white focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50 outline-none transition-all text-xs font-medium"
+              placeholder={t("common.confirm") === "Xác nhận" ? "Tìm sinh viên theo tên, mã SV, email..." : "Search student by name, code, email..."}
+              value={bulkSearch}
+              onChange={(e) => setBulkSearch(e.target.value)}
+            />
+          </div>
+
+          {/* Premium scroll list */}
+          <div className="max-h-64 overflow-y-auto rounded-2xl border border-gray-100 p-2 space-y-1 custom-scrollbar">
+            {filteredBulkCandidates.length ? (
+              filteredBulkCandidates.map((student) => {
+                const isChecked = bulkForm.student_ids.includes(student.id);
+                return (
+                  <label
+                    key={student.id}
+                    className={`
+                      flex items-center justify-between gap-3 rounded-xl border px-3 py-2.5 text-xs font-medium cursor-pointer transition-all duration-150
+                      ${isChecked
+                        ? "bg-indigo-50/40 border-indigo-200 text-indigo-950 font-bold"
+                        : "border-transparent text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                      }
+                    `}
+                  >
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 h-3.5 w-3.5"
+                        checked={isChecked}
+                        onChange={() => toggleBulkStudent(student.id)}
+                      />
+                      <span>{buildStudentLabel(student)}</span>
+                    </div>
+                    {isChecked && <Check size={14} className="text-indigo-600 shrink-0" />}
+                  </label>
+                );
+              })
+            ) : (
+              <div className="py-6 text-center text-xs text-gray-400 bg-gray-50/50 rounded-xl">
+                {t("common.confirm") === "Xác nhận" ? "Không tìm thấy sinh viên nào khả dụng." : "No available students found."}
+              </div>
+            )}
+          </div>
         </div>
       </FormModal>
 
@@ -332,6 +429,7 @@ function ClassStudentsTab({ classId, lookups, canWrite }) {
 
 function ClassGroupsTab({ classId, cls, canWrite }) {
   const { t } = useTranslation();
+  const toast = useToast();
   const groupStatusOptions = useMemo(() => getGroupStatusOptions(t), [t]);
   const navigate = useNavigate();
   const [query, setQuery] = useState({ page: 1, limit: pageLimit, search: "", status: "" });
@@ -395,7 +493,6 @@ function ClassGroupsTab({ classId, cls, canWrite }) {
   };
 
   const columns = useMemo(() => [
-    { key: "group_code", label: t("admin.fields.groupCode"), render: (row) => <span className="font-mono text-xs font-bold text-indigo-700">{row.group_code}</span> },
     { key: "group_name", label: t("admin.fields.groupName"), render: (row) => <span className="font-semibold text-gray-900">{row.group_name}</span> },
     { key: "topic", label: t("admin.fields.topic"), render: (row) => row.topic || "—" },
     { key: "category", label: t("admin.fields.category"), render: (row) => row.category || "—" },
@@ -426,24 +523,58 @@ function ClassGroupsTab({ classId, cls, canWrite }) {
       <AdminTable columns={columns} rows={rows} loading={loading} error={error} meta={meta} onPageChange={(page) => setQuery((prev) => ({ ...prev, page }))} emptyText={t("common.noData")} />
 
       <FormModal open={modal.type === "create"} title={t("admin.actions.create") + " Group"} onClose={() => setModal({ type: null })} onSubmit={saveGroup} saving={saving}>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label={t("admin.fields.groupCode")}><input className={inputClass} value={form.group_code} onChange={(e) => setForm({ ...form, group_code: e.target.value.toUpperCase() })} required /></Field>
-          <Field label={t("admin.fields.groupName")}><input className={inputClass} value={form.group_name} onChange={(e) => setForm({ ...form, group_name: e.target.value })} required /></Field>
-          <Field label={t("admin.fields.category")}><input className={inputClass} value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} /></Field>
-          <Field label={t("admin.fields.topic")}><input className={inputClass} value={form.topic} onChange={(e) => setForm({ ...form, topic: e.target.value })} /></Field>
-          <Field label="Max members"><input type="number" min={cls.min_group_members || 1} max={cls.max_group_members || 20} className={inputClass} value={form.max_members} onChange={(e) => setForm({ ...form, max_members: e.target.value })} required /></Field>
-          <Field label={t("admin.fields.status")}>
-            <select className={inputClass} value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
-              <option value="forming">Forming</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-              <option value="completed">Completed</option>
-            </select>
-          </Field>
-          <div className="sm:col-span-2">
-            <Field label={t("admin.fields.topicDesc")}><textarea className={inputClass} rows={3} value={form.topic_desc} onChange={(e) => setForm({ ...form, topic_desc: e.target.value })} /></Field>
+        <div className="space-y-6">
+          {/* Section 1: Basic Information */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+                <Info size={16} />
+              </span>
+              <h4 className="text-sm font-bold text-gray-800">
+                {t("common.confirm") === "Xác nhận" ? "Thông tin cơ bản" : "Basic Information"}
+              </h4>
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field label={t("admin.fields.groupCode")}><input className={inputClass} value={form.group_code} onChange={(e) => setForm({ ...form, group_code: e.target.value.toUpperCase() })} required /></Field>
+              <Field label={t("admin.fields.groupName")}><input className={inputClass} value={form.group_name} onChange={(e) => setForm({ ...form, group_name: e.target.value })} required /></Field>
+              <Field label="Max members"><input type="number" min={cls.min_group_members || 1} max={cls.max_group_members || 20} className={inputClass} value={form.max_members} onChange={(e) => setForm({ ...form, max_members: e.target.value })} required /></Field>
+              <Field label={t("admin.fields.status")}>
+                <Dropdown
+                  label="Status"
+                  value={form.status}
+                  onChange={(value) => setForm({ ...form, status: value })}
+                  direction="up"
+                  options={[
+                    { value: "forming", label: t("status.forming") },
+                    { value: "active", label: t("status.active") },
+                    { value: "inactive", label: t("status.inactive") },
+                    { value: "completed", label: t("status.completed") },
+                  ]}
+                />
+              </Field>
+            </div>
           </div>
-          <div className="sm:col-span-2">
+
+          {/* Section 2: Project Details */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                <Briefcase size={16} />
+              </span>
+              <h4 className="text-sm font-bold text-gray-800">
+                {t("common.confirm") === "Xác nhận" ? "Thông tin dự án" : "Project Details"}
+              </h4>
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field label={t("admin.fields.category")}><input className={inputClass} value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} /></Field>
+              <Field label={t("admin.fields.topic")}><input className={inputClass} value={form.topic} onChange={(e) => setForm({ ...form, topic: e.target.value })} /></Field>
+              <div className="sm:col-span-2">
+                <Field label={t("admin.fields.topicDesc")}><textarea className={inputClass} rows={3} value={form.topic_desc} onChange={(e) => setForm({ ...form, topic_desc: e.target.value })} /></Field>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-2">
             <WarningNote>
               {t("common.confirm") === "Xác nhận"
                 ? `Nhóm được tạo từ trang lớp học này sẽ tự động gán mã lớp: ${cls.class_code}. Giới hạn thành viên: ${cls.min_group_members}-${cls.max_group_members}.`
@@ -465,6 +596,7 @@ function ClassCheckpointsTab({ classId }) {
 
   useEffect(() => {
     let mounted = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     checkpointService.list({ class_id: classId, limit: 100 })
       .then((res) => {
@@ -502,6 +634,7 @@ function ClassAssignmentsTab({ classId }) {
 
   useEffect(() => {
     let mounted = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     assignmentService.list({ class_id: classId, limit: 100 })
       .then((res) => {
@@ -536,6 +669,7 @@ function ClassSubmissionsTab({ classId }) {
 
   useEffect(() => {
     let mounted = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     Promise.all([
       checkpointSubmissionService.list({ class_id: classId, limit: 100 }),
@@ -568,7 +702,7 @@ function ClassSubmissionsTab({ classId }) {
   const columns = useMemo(() => [
     { key: "source", label: t("common.confirm") === "Xác nhận" ? "Loại" : "Type", render: (row) => <StatusBadge value={row.source} /> },
     { key: "title", label: t("admin.fields.topicDesc", { defaultValue: "Tiêu đề" }) === "Mô tả đề tài" ? "Tiêu đề" : "Title", render: (row) => <span className="font-semibold text-gray-900">{row.title}</span> },
-    { key: "group", label: t("admin.fields.group"), render: (row) => `${row.group_code} - ${row.group_name}` },
+    { key: "group", label: t("admin.fields.group"), render: (row) => row.group_name || "—" },
     { key: "status", label: t("admin.fields.status"), render: (row) => <StatusBadge value={row.display_status || row.status} /> },
     { key: "submitted_at", label: t("common.confirm") === "Xác nhận" ? "Ngày nộp" : "Submitted", render: (row) => formatDate(row.submitted_at) },
     { key: "is_late", label: t("common.confirm") === "Xác nhận" ? "Trễ hạn" : "Late", render: (row) => Number(row.is_late || 0) ? <StatusBadge value="late" /> : "—" },
@@ -579,7 +713,7 @@ function ClassSubmissionsTab({ classId }) {
 }
 
 export default function AdminClassDetail() {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
   const authUser = useSelector(selectAuthUser);
@@ -589,6 +723,11 @@ export default function AdminClassDetail() {
   const [activeTab, setActiveTab] = useState("overview");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const refreshLookups = useCallback(async () => {
+    const lookupRes = await studentGroupLookupService.getAll().catch(() => ({ data: { students: [] } }));
+    setLookups(lookupRes?.data || { students: [] });
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -692,7 +831,10 @@ export default function AdminClassDetail() {
                 [t("common.confirm") === "Xác nhận" ? "Số tín chỉ" : "Credits", Number(cls.credits || 0)],
                 [t("admin.fields.semester"), `${cls.semester_code} - ${cls.semester_name}`],
                 [t("common.confirm") === "Xác nhận" ? "Trạng thái học kỳ" : "Semester status", cls.semester_status],
-                [t("common.confirm") === "Xác nhận" ? "Thời gian" : "Date range", `${formatDateOnly(cls.start_date)} - ${formatDateOnly(cls.end_date)}`],
+                [
+                  t("admin.fields.dateRange"),
+                  `${formatDateOnlyText(cls.start_date, language)} - ${formatDateOnlyText(cls.end_date, language)}`,
+                ],
                 [t("admin.fields.lecturer"), cls.lecturer_name || "—"],
               ]} />
             </div>
@@ -711,7 +853,7 @@ export default function AdminClassDetail() {
         </div>
       ) : null}
 
-      {activeTab === "students" ? <ClassStudentsTab classId={id} lookups={lookups} canWrite={canWrite} /> : null}
+      {activeTab === "students" ? <ClassStudentsTab classId={id} lookups={lookups} canWrite={canWrite} onLookupsRefresh={refreshLookups} /> : null}
       {activeTab === "groups" ? <ClassGroupsTab classId={id} cls={cls} canWrite={canWrite} /> : null}
       {activeTab === "checkpoints" ? <ClassCheckpointsTab classId={id} /> : null}
       {activeTab === "assignments" ? <ClassAssignmentsTab classId={id} /> : null}

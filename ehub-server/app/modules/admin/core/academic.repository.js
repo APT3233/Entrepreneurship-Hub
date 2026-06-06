@@ -155,8 +155,25 @@ export const createAdminAcademicRepository = ({ db }) => {
       params,
     );
     const [totalRows] = await db.execute(`SELECT COUNT(*) AS total FROM semesters sem WHERE ${whereSql}`, params);
-    return { rows, total: Number(totalRows[0]?.total || 0) };
+    const currentId = await getCurrentSemesterId();
+    return {
+      rows: rows.map((row) => withSemesterIsCurrent(row, currentId)),
+      total: Number(totalRows[0]?.total || 0),
+    };
   };
+
+  const getCurrentSemesterId = async () => {
+    const [rows] = await db.execute(
+      "SELECT setting_value FROM system_settings WHERE setting_key = 'current_semester_id' LIMIT 1",
+    );
+    const id = Number(rows[0]?.setting_value);
+    return Number.isFinite(id) && id > 0 ? id : null;
+  };
+
+  const withSemesterIsCurrent = (semester, currentId) => ({
+    ...semester,
+    is_current: currentId != null && Number(semester.id) === currentId,
+  });
 
   const findSemesterById = async (id, { includeDeleted = false } = {}) => {
     const [rows] = await db.execute(
@@ -191,7 +208,8 @@ export const createAdminAcademicRepository = ({ db }) => {
       `,
       { id: Number(id) },
     );
-    return { ...semester, classes };
+    const currentId = await getCurrentSemesterId();
+    return withSemesterIsCurrent({ ...semester, classes }, currentId);
   };
 
   const findSemesterByCode = async (semesterCode, excludeId = null, includeDeleted = true) => {
@@ -227,36 +245,6 @@ export const createAdminAcademicRepository = ({ db }) => {
     await db.execute(
       `UPDATE semesters SET ${setSql}, updated_at = CURRENT_TIMESTAMP WHERE id = :id`,
       { ...data, id: Number(id) },
-    );
-  };
-
-  const setSemesterCurrent = async (id, actorId, conn = db) => {
-    await conn.execute(
-      `
-        UPDATE semesters
-        SET status = CASE
-          WHEN id = :id THEN 'ongoing'
-          WHEN CURDATE() > DATE(end_date) THEN 'completed'
-          ELSE 'upcoming'
-        END,
-        updated_at = CURRENT_TIMESTAMP
-        WHERE deleted_at IS NULL
-      `,
-      { id: Number(id) },
-    );
-    await conn.execute(
-      `
-        INSERT INTO system_settings
-          (setting_key, setting_value, data_type, module, description, updated_by)
-        VALUES
-          ('current_semester_id', :settingValue, 'integer', 'core', 'ID học kỳ hiện tại', :actorId)
-        ON DUPLICATE KEY UPDATE
-          setting_value = VALUES(setting_value),
-          data_type = VALUES(data_type),
-          updated_by = VALUES(updated_by),
-          updated_at = CURRENT_TIMESTAMP
-      `,
-      { settingValue: String(id), actorId: actorId || null },
     );
   };
 
@@ -413,7 +401,7 @@ export const createAdminAcademicRepository = ({ db }) => {
 
   const findLookupSubject = async (id) => {
     const [rows] = await db.execute(
-      "SELECT id FROM subjects WHERE id = :id AND deleted_at IS NULL LIMIT 1",
+      "SELECT id, subject_code, subject_name, status FROM subjects WHERE id = :id AND deleted_at IS NULL LIMIT 1",
       { id: Number(id) },
     );
     return rows[0] || null;
@@ -421,7 +409,12 @@ export const createAdminAcademicRepository = ({ db }) => {
 
   const findLookupSemester = async (id) => {
     const [rows] = await db.execute(
-      "SELECT id FROM semesters WHERE id = :id AND deleted_at IS NULL LIMIT 1",
+      `
+        SELECT id, semester_code, semester_name, status
+        FROM semesters
+        WHERE id = :id AND deleted_at IS NULL
+        LIMIT 1
+      `,
       { id: Number(id) },
     );
     return rows[0] || null;
@@ -505,7 +498,6 @@ export const createAdminAcademicRepository = ({ db }) => {
     findSemesterByCode,
     createSemester,
     updateSemester,
-    setSemesterCurrent,
     listClasses,
     findClassById,
     findClassByCodeSemester,

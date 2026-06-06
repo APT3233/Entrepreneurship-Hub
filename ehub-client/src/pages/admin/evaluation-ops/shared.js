@@ -4,7 +4,7 @@ export { toSelectOptions } from "@/utils/i18nOptions";
 
 export const pageLimit = 10;
 
-export { formatDate, formatDateOnly } from "@/utils/dateTimeDisplay";
+export { formatDate, formatDateOnly, formatDateTimeText } from "@/utils/dateTimeDisplay";
 export const formatPercent = (value) => value === null || value === undefined ? "—" : `${Number(value).toFixed(1)}%`;
 export const formatScore = (score, maxScore) => {
   if (score === null || score === undefined) return "—";
