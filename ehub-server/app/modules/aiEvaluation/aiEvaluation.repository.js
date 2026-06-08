@@ -25,8 +25,12 @@ const addOptionalFilters = (where, params, filters = {}) => {
     params.model = filters.model;
   }
   if (filters.providerKey) {
-    where.push("q.provider_key = :providerKey");
-    params.providerKey = filters.providerKey;
+    if (filters.providerKey === "third-party-api") {
+      where.push("q.provider_key IN ('third-party-api', 'cmd-api')");
+    } else {
+      where.push("q.provider_key = :providerKey");
+      params.providerKey = filters.providerKey;
+    }
   }
   if (filters.dateFrom) {
     where.push("q.created_at >= :dateFrom");
@@ -234,31 +238,39 @@ export const createAiEvaluationRepository = ({ db }) => {
     );
   };
 
-  const claimNextJob = async (maxAttempts) => {
+  const markJobProcessing = async (id, attempt, maxAttempts) => {
+    const [result] = await db.execute(
+      `
+        UPDATE ai_analysis_jobs
+        SET status = 'processing',
+            attempts = GREATEST(attempts, :attempt),
+            started_at = COALESCE(started_at, NOW()),
+            next_retry_at = NULL,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = :id
+          AND status IN ('pending','processing')
+          AND attempts < :maxAttempts
+      `,
+      { id: Number(id), attempt: Number(attempt), maxAttempts: Number(maxAttempts) },
+    );
+    if (!result.affectedRows) return null;
+    return findJobById(id);
+  };
+
+  const listPendingJobsForQueue = async (limit, maxAttempts) => {
     const [rows] = await db.execute(
       `
-        SELECT *
+        SELECT id
         FROM ai_analysis_jobs
         WHERE status = 'pending'
           AND attempts < :maxAttempts
           AND (next_retry_at IS NULL OR next_retry_at <= NOW())
         ORDER BY id ASC
-        LIMIT 1
+        LIMIT ${Number(limit)}
       `,
       { maxAttempts: Number(maxAttempts) },
     );
-    const job = rows[0] || null;
-    if (!job) return null;
-    const [result] = await db.execute(
-      `
-        UPDATE ai_analysis_jobs
-        SET status = 'processing', attempts = attempts + 1, started_at = COALESCE(started_at, NOW()), updated_at = CURRENT_TIMESTAMP
-        WHERE id = :id AND status = 'pending'
-      `,
-      { id: Number(job.id) },
-    );
-    if (!result.affectedRows) return null;
-    return findJobById(job.id);
+    return rows;
   };
 
   const markJobFailed = async (id, message, retry = false) => {
@@ -407,7 +419,8 @@ export const createAiEvaluationRepository = ({ db }) => {
     createJob,
     findJobById,
     resetStaleJobs,
-    claimNextJob,
+    markJobProcessing,
+    listPendingJobsForQueue,
     markJobFailed,
     createSuggestion,
     createCriterionSuggestion,

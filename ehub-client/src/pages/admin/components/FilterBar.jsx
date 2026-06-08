@@ -10,14 +10,17 @@ export default function FilterBar({ children, right }) {
 }
 
 export function FilterSelect({ label, value, onChange, options = [] }) {
+  const normalizedValue = value !== null && value !== undefined ? String(value) : "";
+  const normalizedOptions = options.map((opt) => ({ ...opt, value: String(opt.value) }));
+
   return (
     <div className="flex items-center gap-2 text-sm">
       <span className="text-gray-500 font-medium">{label}</span>
       <Dropdown
         label={label}
-        value={value}
+        value={normalizedValue}
         onChange={onChange}
-        options={options}
+        options={normalizedOptions}
       />
     </div>
   );

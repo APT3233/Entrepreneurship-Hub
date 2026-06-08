@@ -25,6 +25,7 @@ import {
   Menu,
   PinIcon,
   PinOff,
+  Rocket,
   User,
   UserPlus,
   Search,
@@ -89,6 +90,23 @@ const navItems = [
       { labelKey: "nav.mentorMatchingAnalytics", path: "/admin/mentor-analytics/matching", icon: Bot },
       { labelKey: "nav.mentorExpertiseHeatmap", path: "/admin/mentor-analytics/expertise", icon: Layers3 },
       { labelKey: "nav.mentorGroupSupport", path: "/admin/mentor-analytics/group-support", icon: UsersRound },
+    ],
+  },
+  {
+    titleKey: "nav.incubation",
+    icon: Rocket,
+    items: [
+      { labelKey: "nav.startupPool", path: "/admin/incubation/startups", icon: Rocket },
+      { labelKey: "nav.selectionReviews", path: "/admin/incubation/selection-reviews", icon: ClipboardCheck },
+      { labelKey: "nav.pipeline", path: "/admin/incubation/pipeline", icon: FolderKanban },
+      { labelKey: "nav.pipelineStages", path: "/admin/incubation/pipeline/stages", icon: Layers3 },
+      { labelKey: "nav.ecosystemEvents", path: "/admin/ecosystem/events", icon: CalendarDays },
+      { labelKey: "nav.ecosystemAlumni", path: "/admin/ecosystem/alumni", icon: GraduationCap },
+      { labelKey: "nav.ecosystemPartners", path: "/admin/ecosystem/partners", icon: UsersRound },
+      { labelKey: "nav.ecosystemOpportunities", path: "/admin/ecosystem/opportunities", icon: ClipboardList },
+      { labelKey: "nav.incubationAnalytics", path: "/admin/incubation/analytics", icon: BarChart3 },
+      { labelKey: "nav.ecosystemHealth", path: "/admin/incubation/analytics/ecosystem-health", icon: TriangleAlert },
+      { labelKey: "nav.incubationReports", path: "/admin/incubation/reports", icon: FileUp },
     ],
   },
   {
@@ -201,6 +219,23 @@ const titleMap = {
   "/admin/mentor-analytics/matching": "nav.mentorMatchingAnalytics",
   "/admin/mentor-analytics/expertise": "nav.mentorExpertiseHeatmap",
   "/admin/mentor-analytics/group-support": "nav.mentorGroupSupport",
+  "/admin/incubation": "nav.startupPool",
+  "/admin/incubation/startups": "nav.startupPool",
+  "/admin/incubation/startups/create": "nav.createStartup",
+  "/admin/incubation/selection-reviews": "nav.selectionReviews",
+  "/admin/incubation/pipeline": "nav.pipeline",
+  "/admin/incubation/pipeline/stages": "nav.pipelineStages",
+  "/admin/ecosystem/events": "nav.ecosystemEvents",
+  "/admin/ecosystem/events/create": "nav.createEcosystemEvent",
+  "/admin/ecosystem/alumni": "nav.ecosystemAlumni",
+  "/admin/ecosystem/partners": "nav.ecosystemPartners",
+  "/admin/ecosystem/opportunities": "nav.ecosystemOpportunities",
+  "/admin/incubation/analytics": "nav.incubationAnalytics",
+  "/admin/incubation/analytics/pipeline": "nav.pipelineAnalytics",
+  "/admin/incubation/analytics/progress": "nav.progressAnalytics",
+  "/admin/incubation/analytics/events": "nav.eventAnalytics",
+  "/admin/incubation/analytics/ecosystem-health": "nav.ecosystemHealth",
+  "/admin/incubation/reports": "nav.incubationReports",
   "/admin/students": "nav.students",
   "/admin/enrollments": "nav.enrollments",
   "/admin/groups": "nav.groups",
@@ -247,6 +282,11 @@ const getPageTitle = (pathname, t) => {
   if (pathname.startsWith("/admin/evaluation/rubrics/")) return t("header.detailRubric");
   if (pathname.startsWith("/admin/lecturers/")) return t("header.detailLecturer");
   if (pathname.startsWith("/admin/mentors/")) return t("nav.mentorDetail");
+  if (pathname.startsWith("/admin/incubation/startups/")) return t("nav.startupDetail");
+  if (pathname.startsWith("/admin/ecosystem/events/")) return t("nav.ecosystemEventDetail");
+  if (pathname.startsWith("/admin/ecosystem/alumni/")) return t("nav.ecosystemAlumniDetail");
+  if (pathname.startsWith("/admin/ecosystem/partners/")) return t("nav.ecosystemPartnerDetail");
+  if (pathname.startsWith("/admin/ecosystem/opportunities/")) return t("nav.ecosystemOpportunityDetail");
   return t("header.adminTitle");
 };
 
@@ -260,6 +300,7 @@ const getBreadcrumbRoot = (pathname, t) => {
     pathname.startsWith("/admin/mentor-analytics") ||
     pathname.startsWith("/admin/mentoring")
   ) return t("nav.mentorManagement");
+  if (pathname.startsWith("/admin/incubation") || pathname.startsWith("/admin/ecosystem")) return t("nav.incubation");
   if (
     pathname.startsWith("/admin/students") ||
     pathname.startsWith("/admin/enrollments") ||

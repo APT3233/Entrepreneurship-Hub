@@ -5,6 +5,7 @@ import { chatCompletion, listModels } from "app/core/ai/aiClient.js";
 import { normalizeAiSuggestionJson } from "app/core/ai/aiJsonExtractor.js";
 import { getProvider, getProviderPublicConfig, normalizeProviderKey, validateProvider } from "app/core/ai/aiProviderManager.js";
 import { logger } from "app/core/logger/index.js";
+import { enqueueAiEvaluationJob } from "app/core/queues/aiEvaluation.queue.js";
 import { canEncryptSecrets, decryptSecret, encryptSecret } from "app/core/security/secretCipher.js";
 import { parsePagination } from "app/core/utils/pagination.js";
 import { buildAiEvaluationPrompt } from "./aiEvaluation.prompt.js";
@@ -15,8 +16,8 @@ const AI_SETTING_DEFINITIONS = {
   ai_enabled: { data_type: "boolean", default_value: aiConfig.enabled, description: "Bật AI Evaluation Assistant" },
   ai_active_provider: { data_type: "string", default_value: aiConfig.activeProvider, description: "AI provider đang sử dụng" },
   ai_provider: { data_type: "string", default_value: aiConfig.activeProvider, description: "Legacy AI provider đang sử dụng" },
-  base_url: { data_type: "string", default_value: aiConfig.providers["cmd-api"].baseUrl, description: "Legacy CMD provider base URL" },
-  model_name: { data_type: "string", default_value: aiConfig.providers["cmd-api"].model, description: "Legacy CMD model dùng cho AI evaluation" },
+  base_url: { data_type: "string", default_value: aiConfig.providers["third-party-api"].baseUrl, description: "Legacy third-party provider base URL" },
+  model_name: { data_type: "string", default_value: aiConfig.providers["third-party-api"].model, description: "Legacy third-party model dùng cho AI evaluation" },
   max_tokens: { data_type: "integer", default_value: aiConfig.defaultMaxTokens, description: "Số token tối đa AI có thể trả về" },
   temperature: { data_type: "string", default_value: aiConfig.defaultTemperature, description: "Độ sáng tạo của model" },
   stream: { data_type: "boolean", default_value: aiConfig.defaultStream, description: "Gọi provider ở chế độ streaming mặc định" },
@@ -24,10 +25,15 @@ const AI_SETTING_DEFINITIONS = {
   allow_ai_feedback_suggestion: { data_type: "boolean", default_value: true, description: "Cho phép AI gợi ý feedback" },
   allow_student_view_ai_feedback: { data_type: "boolean", default_value: false, description: "Không cho sinh viên xem AI suggestion mặc định" },
   data_retention_days: { data_type: "integer", default_value: 180, description: "Số ngày giữ dữ liệu AI suggestion" },
-  provider_cmd_api_enabled: { data_type: "boolean", default_value: aiConfig.providers["cmd-api"].enabled, description: "Bật provider CMD API" },
-  provider_cmd_api_base_url: { data_type: "string", default_value: aiConfig.providers["cmd-api"].baseUrl, description: "CMD API base URL" },
-  provider_cmd_api_model: { data_type: "string", default_value: aiConfig.providers["cmd-api"].model, description: "CMD API model" },
-  provider_cmd_api_stream: { data_type: "boolean", default_value: aiConfig.providers["cmd-api"].stream, description: "CMD API stream mode" },
+  provider_third_party_api_enabled: { data_type: "boolean", default_value: aiConfig.providers["third-party-api"].enabled, description: "Bật provider API bên thứ ba" },
+  provider_third_party_api_base_url: { data_type: "string", default_value: aiConfig.providers["third-party-api"].baseUrl, description: "Third-party API base URL" },
+  provider_third_party_api_model: { data_type: "string", default_value: aiConfig.providers["third-party-api"].model, description: "Third-party API model" },
+  provider_third_party_api_stream: { data_type: "boolean", default_value: aiConfig.providers["third-party-api"].stream, description: "Third-party API stream mode" },
+  provider_third_party_api_api_key_required: { data_type: "boolean", default_value: aiConfig.providers["third-party-api"].apiKeyRequired, description: "Third-party API có bắt buộc API key không" },
+  provider_cmd_api_enabled: { data_type: "boolean", default_value: aiConfig.providers["third-party-api"].enabled, description: "Legacy CMD API enabled setting" },
+  provider_cmd_api_base_url: { data_type: "string", default_value: aiConfig.providers["third-party-api"].baseUrl, description: "Legacy CMD API base URL" },
+  provider_cmd_api_model: { data_type: "string", default_value: aiConfig.providers["third-party-api"].model, description: "Legacy CMD API model" },
+  provider_cmd_api_stream: { data_type: "boolean", default_value: aiConfig.providers["third-party-api"].stream, description: "Legacy CMD API stream mode" },
   provider_local_gemma_enabled: { data_type: "boolean", default_value: aiConfig.providers["local-gemma"].enabled, description: "Bật provider Local Gemma" },
   provider_local_gemma_base_url: { data_type: "string", default_value: aiConfig.providers["local-gemma"].baseUrl, description: "Local Gemma/Ollama base URL" },
   provider_local_gemma_model: { data_type: "string", default_value: aiConfig.providers["local-gemma"].model, description: "Local Gemma/Ollama model" },
@@ -35,9 +41,10 @@ const AI_SETTING_DEFINITIONS = {
   provider_local_gemma_api_key_required: { data_type: "boolean", default_value: aiConfig.providers["local-gemma"].apiKeyRequired, description: "Local Gemma có bắt buộc API key không" },
 };
 
-const AI_API_KEY_SETTING_KEY = "cmd_api_key_encrypted";
+const THIRD_PARTY_API_KEY_SETTING_KEY = "third_party_api_key_encrypted";
+const LEGACY_CMD_API_KEY_SETTING_KEY = "cmd_api_key_encrypted";
 const MASKED_API_KEY = "********";
-const PROVIDER_KEYS = Object.freeze(["cmd-api", "local-gemma"]);
+const PROVIDER_KEYS = Object.freeze(["third-party-api", "local-gemma"]);
 
 const parseBoolean = (value) => value === true || value === "true" || value === "1" || value === 1;
 const parseJson = (value, fallback = []) => {
@@ -82,13 +89,18 @@ const serializeSettingValue = (key, value) => {
   return String(value ?? "");
 };
 const providerSettingName = (providerKey, suffix) => `provider_${normalizeProviderKey(providerKey).replace(/-/g, "_")}_${suffix}`;
+const legacyCmdProviderSettingName = (suffix) => `provider_cmd_api_${suffix}`;
 const readSetting = (byKey, key, fallback) => (byKey.has(key) ? parseSettingValue(byKey.get(key)) : fallback);
 const resolveActiveProviderKey = (byKey) => normalizeProviderKey(
   readSetting(byKey, "ai_active_provider", readSetting(byKey, "ai_provider", aiConfig.activeProvider)),
 );
 const getApiKeyStatus = (byKey) => {
-  const encryptedValue = String(byKey.get(AI_API_KEY_SETTING_KEY)?.setting_value || "").trim();
-  const envConfigured = Boolean(aiConfig.providers["cmd-api"].apiKey);
+  const encryptedValue = String(
+    byKey.get(THIRD_PARTY_API_KEY_SETTING_KEY)?.setting_value ||
+    byKey.get(LEGACY_CMD_API_KEY_SETTING_KEY)?.setting_value ||
+    "",
+  ).trim();
+  const envConfigured = Boolean(aiConfig.providers["third-party-api"].apiKey);
   const databaseConfigured = Boolean(encryptedValue);
   const configured = envConfigured || databaseConfigured;
   return {
@@ -101,9 +113,13 @@ const getApiKeyStatus = (byKey) => {
   };
 };
 const resolveRuntimeApiKey = (byKey, status = getApiKeyStatus(byKey)) => {
-  if (aiConfig.providers["cmd-api"].apiKey) return aiConfig.providers["cmd-api"].apiKey;
+  if (aiConfig.providers["third-party-api"].apiKey) return aiConfig.providers["third-party-api"].apiKey;
 
-  const encryptedValue = String(byKey.get(AI_API_KEY_SETTING_KEY)?.setting_value || "").trim();
+  const encryptedValue = String(
+    byKey.get(THIRD_PARTY_API_KEY_SETTING_KEY)?.setting_value ||
+    byKey.get(LEGACY_CMD_API_KEY_SETTING_KEY)?.setting_value ||
+    "",
+  ).trim();
   if (!encryptedValue) return "";
   if (!status.storageReady) {
     throw createAiError(
@@ -204,19 +220,20 @@ export const createAiEvaluationService = ({ aiEvaluationRepository, storageServi
     const key = normalizeProviderKey(providerKey);
     const base = aiConfig.providers[key];
     if (!base) return null;
-    const isCmd = key === "cmd-api";
-    const apiKeyStatus = isCmd ? getApiKeyStatus(byKey) : {
+    const isThirdParty = key === "third-party-api";
+    const legacyProviderSetting = (suffix, fallback) => readSetting(byKey, legacyCmdProviderSettingName(suffix), fallback);
+    const apiKeyStatus = isThirdParty ? getApiKeyStatus(byKey) : {
       configured: Boolean(base.apiKey),
       source: base.apiKey ? "env" : "none",
     };
     const provider = {
       ...base,
-      enabled: readSetting(byKey, providerSettingName(key, "enabled"), base.enabled),
-      baseUrl: readSetting(byKey, providerSettingName(key, "base_url"), isCmd ? readSetting(byKey, "base_url", base.baseUrl) : base.baseUrl),
-      model: readSetting(byKey, providerSettingName(key, "model"), isCmd ? readSetting(byKey, "model_name", base.model) : base.model),
-      stream: readSetting(byKey, providerSettingName(key, "stream"), base.stream),
+      enabled: readSetting(byKey, providerSettingName(key, "enabled"), isThirdParty ? legacyProviderSetting("enabled", base.enabled) : base.enabled),
+      baseUrl: readSetting(byKey, providerSettingName(key, "base_url"), isThirdParty ? legacyProviderSetting("base_url", readSetting(byKey, "base_url", base.baseUrl)) : base.baseUrl),
+      model: readSetting(byKey, providerSettingName(key, "model"), isThirdParty ? legacyProviderSetting("model", readSetting(byKey, "model_name", base.model)) : base.model),
+      stream: readSetting(byKey, providerSettingName(key, "stream"), isThirdParty ? legacyProviderSetting("stream", base.stream) : base.stream),
       apiKeyRequired: readSetting(byKey, providerSettingName(key, "api_key_required"), base.apiKeyRequired),
-      apiKey: isCmd ? (skipApiKeyResolve ? "" : resolveRuntimeApiKey(byKey, apiKeyStatus)) : base.apiKey,
+      apiKey: isThirdParty ? (skipApiKeyResolve ? "" : resolveRuntimeApiKey(byKey, apiKeyStatus)) : base.apiKey,
       apiKeySource: apiKeyStatus.source,
       apiKeyStatus,
     };
@@ -363,6 +380,11 @@ export const createAiEvaluationService = ({ aiEvaluationRepository, storageServi
       model_name: provider.model,
     });
     const job = await aiEvaluationRepository.findJobById(jobId);
+    try {
+      await enqueueAiEvaluationJob(jobId);
+    } catch (err) {
+      logger.error("[AiEvaluation] failed to enqueue BullMQ job; pending DB job will be backfilled", { err, jobId });
+    }
     await auditService.log({
       userId: actor?.id || null,
       action: "ai_evaluation_analyze_requested",
@@ -496,9 +518,9 @@ export const createAiEvaluationService = ({ aiEvaluationRepository, storageServi
     return suggestionId;
   };
 
-  const handleJobFailure = async (job, err) => {
+  const handleJobFailure = async (job, err, options = {}) => {
     const maxAttempts = aiConfig.worker.maxAttempts;
-    const retry = isRetryableAiError(err) && Number(job.attempts || 0) < maxAttempts;
+    const retry = !options.finalAttempt && isRetryableAiError(err) && Number(job.attempts || 0) < maxAttempts;
     const publicError = publicAiError(err);
     await aiEvaluationRepository.markJobFailed(job.id, `${publicError.code}: ${publicError.message}`, retry);
     if (!retry) {
@@ -510,6 +532,7 @@ export const createAiEvaluationService = ({ aiEvaluationRepository, storageServi
         newValues: publicError,
       });
     }
+    return { retry };
   };
 
   const listAdminSuggestions = async (query) => {
@@ -519,7 +542,7 @@ export const createAiEvaluationService = ({ aiEvaluationRepository, storageServi
       lecturerId: query.lecturer_id || null,
       status: query.status || null,
       model: query.model || null,
-      providerKey: query.provider_key || null,
+      providerKey: query.provider_key ? normalizeProviderKey(query.provider_key) : null,
       dateFrom: query.date_from || null,
       dateTo: query.date_to || null,
       limit: pagination.limit,
@@ -531,7 +554,7 @@ export const createAiEvaluationService = ({ aiEvaluationRepository, storageServi
   const getAiSettings = async (actor) => {
     assertCanConfigureAi(actor);
     const config = await getRuntimeConfig({ skipApiKeyResolve: true });
-    const cmdStatus = config.providers["cmd-api"]?.apiKeyStatus || { configured: false, source: "none" };
+    const thirdPartyStatus = config.providers["third-party-api"]?.apiKeyStatus || { configured: false, source: "none" };
     return {
       enabled: Boolean(config.enabled),
       active_provider: config.activeProvider,
@@ -550,11 +573,16 @@ export const createAiEvaluationService = ({ aiEvaluationRepository, storageServi
         model_status: "unknown",
       })),
       secret_storage: {
-        cmd_api_key_configured: Boolean(cmdStatus.configured),
-        cmd_api_key_source: cmdStatus.source || "none",
-        cmd_api_key_masked: cmdStatus.configured ? MASKED_API_KEY : "",
-        cmd_api_key_env_configured: Boolean(cmdStatus.envConfigured),
-        cmd_api_key_database_configured: Boolean(cmdStatus.databaseConfigured),
+        third_party_api_key_configured: Boolean(thirdPartyStatus.configured),
+        third_party_api_key_source: thirdPartyStatus.source || "none",
+        third_party_api_key_masked: thirdPartyStatus.configured ? MASKED_API_KEY : "",
+        third_party_api_key_env_configured: Boolean(thirdPartyStatus.envConfigured),
+        third_party_api_key_database_configured: Boolean(thirdPartyStatus.databaseConfigured),
+        cmd_api_key_configured: Boolean(thirdPartyStatus.configured),
+        cmd_api_key_source: thirdPartyStatus.source || "none",
+        cmd_api_key_masked: thirdPartyStatus.configured ? MASKED_API_KEY : "",
+        cmd_api_key_env_configured: Boolean(thirdPartyStatus.envConfigured),
+        cmd_api_key_database_configured: Boolean(thirdPartyStatus.databaseConfigured),
         storage_ready: canEncryptSecrets(aiConfig.secretEncryptionKey),
       },
     };
@@ -719,7 +747,7 @@ export const createAiEvaluationService = ({ aiEvaluationRepository, storageServi
       Object.entries(body.providers).forEach(([key, payload]) => addProviderPayload({ ...(payload || {}), key }));
     }
     if (body.base_url !== undefined || body.model_name !== undefined || body.provider_stream !== undefined) {
-      addProviderPayload({ key: "cmd-api", base_url: body.base_url, model: body.model_name, stream: body.provider_stream });
+      addProviderPayload({ key: "third-party-api", base_url: body.base_url, model: body.model_name, stream: body.provider_stream });
     }
 
     for (const provider of providerPayloads) {
@@ -737,7 +765,7 @@ export const createAiEvaluationService = ({ aiEvaluationRepository, storageServi
         await saveSetting(providerSettingName(provider.key, "model"), provider.model_name);
       }
       if (provider.stream !== undefined) await saveSetting(providerSettingName(provider.key, "stream"), provider.stream);
-      if (provider.api_key_required !== undefined && provider.key === "local-gemma") {
+      if (provider.api_key_required !== undefined && ["third-party-api", "local-gemma"].includes(provider.key)) {
         await saveSetting(providerSettingName(provider.key, "api_key_required"), provider.api_key_required);
       }
     }
@@ -749,10 +777,10 @@ export const createAiEvaluationService = ({ aiEvaluationRepository, storageServi
     let apiKeyUpdated = false;
     if (nextApiKey) {
       await aiEvaluationRepository.upsertAiSetting({
-        setting_key: AI_API_KEY_SETTING_KEY,
+        setting_key: THIRD_PARTY_API_KEY_SETTING_KEY,
         setting_value: encryptSecret(nextApiKey, aiConfig.secretEncryptionKey),
         data_type: "string",
-        description: "Encrypted CMD local API key. Env CMD_API_KEY has priority.",
+        description: "Encrypted third-party API key. Env THIRD_PARTY_API_KEY has priority.",
         updated_by: actor?.id || null,
       });
       apiKeyUpdated = true;

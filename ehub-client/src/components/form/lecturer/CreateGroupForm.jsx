@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X, ChevronDown, Check, Crown } from "lucide-react";
 import { LastNameAvatar } from "@/components/icons/ui";
+import GroupApi from "@/api/group";
 
 /**
  * CreateGroupForm
@@ -8,12 +9,70 @@ import { LastNameAvatar } from "@/components/icons/ui";
  * Props:
  * - isOpen    : boolean
  * - onClose   : () => void
- * - onSubmit  : ({ name, mentor, category, topic, topic_desc, zalo_link, members, leaderId }) => void
+ * - onSubmit  : ({ name, mentor, mentorDept, category, topic, topic_desc, zalo_link, members, leaderId }) => void
  * - students  : Array<{ id, name, student_code?, major }>
  * - categories: string[]
  * - loading   : boolean  — đang gửi form
  * Trong modal chỉ hiển thị trạng thái thiếu/đủ thành viên; thông báo thành công/lỗi dùng toast bên ngoài.
  */
+
+function MentorSelectField({ value, onChange, options, placeholder, loading }) {
+  const [open, setOpen] = useState(false);
+  const selectedOption = options.find(opt => opt.id === value);
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-gray-100 text-sm text-gray-600 hover:bg-gray-150 transition-colors text-left"
+      >
+        <span className={selectedOption ? "text-gray-800" : "text-gray-400 truncate pr-2"}>
+          {selectedOption ? `${selectedOption.full_name} (${selectedOption.organization || "Không rõ bộ phận"})` : placeholder}
+        </span>
+        <ChevronDown size={16} className={`text-gray-400 transition-transform duration-200 shrink-0 ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <ul className="absolute top-[calc(100%+4px)] left-0 right-0 z-50 bg-white border border-gray-100 rounded-xl shadow-lg py-1 max-h-60 overflow-y-auto">
+            {loading ? (
+              <li className="px-4 py-2.5 text-sm text-gray-400">Đang tải danh sách...</li>
+            ) : options.length === 0 ? (
+              <li className="px-4 py-2.5 text-sm text-gray-400">Không có mentor khả dụng</li>
+            ) : (
+              <>
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => { onChange(""); setOpen(false); }}
+                    className={`w-full text-left px-4 py-2.5 text-sm transition-colors
+                      ${!value ? "bg-indigo-50 text-indigo-600 font-medium" : "text-gray-600 hover:bg-gray-50"}`}
+                  >
+                    Không phân công (None)
+                  </button>
+                </li>
+                {options.map(opt => (
+                  <li key={opt.id}>
+                    <button
+                      type="button"
+                      onClick={() => { onChange(opt.id); setOpen(false); }}
+                      className={`w-full text-left px-4 py-2.5 text-sm transition-colors
+                        ${opt.id === value ? "bg-indigo-50 text-indigo-600 font-medium" : "text-gray-600 hover:bg-gray-50"}`}
+                    >
+                      <div className="font-semibold text-gray-800">{opt.full_name}</div>
+                      <div className="text-xs text-gray-400 truncate">{opt.organization || opt.position_title || "Mentor"}</div>
+                    </button>
+                  </li>
+                ))}
+              </>
+            )}
+          </ul>
+        </>
+      )}
+    </div>
+  );
+}
 
 function SelectField({ value, onChange, options, placeholder }) {
   const [open, setOpen] = useState(false);
@@ -102,7 +161,9 @@ export default function CreateGroupForm({
   loading = false,
 }) {
   const [name, setName] = useState("");
-  const [mentor, setMentor] = useState("");
+  const [selectedMentorId, setSelectedMentorId] = useState("");
+  const [availableMentors, setAvailableMentors] = useState([]);
+  const [loadingMentors, setLoadingMentors] = useState(false);
   const [category, setCategory] = useState("");
   const [topic, setTopic] = useState("");
   const [topicDesc, setTopicDesc] = useState("");
@@ -112,6 +173,23 @@ export default function CreateGroupForm({
   const [nameError, setNameError] = useState("");
 
   const [mouseDownTarget, setMouseDownTarget] = useState(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      setLoadingMentors(true);
+      GroupApi.getAvailableMentors()
+        .then((res) => {
+          const data = res?.data ?? [];
+          setAvailableMentors(data);
+        })
+        .catch((err) => {
+          console.error("Failed to fetch available mentors:", err);
+        })
+        .finally(() => {
+          setLoadingMentors(false);
+        });
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -140,7 +218,18 @@ export default function CreateGroupForm({
     }
 
     setNameError("");
-    onSubmit?.({ name, mentor, category, topic, topic_desc: topicDesc, zalo_link: zaloLink, members, leaderId });
+    const selectedMentor = availableMentors.find(m => m.id === selectedMentorId);
+    onSubmit?.({
+      name,
+      mentor: selectedMentor ? selectedMentor.full_name : "",
+      mentorDept: selectedMentor ? (selectedMentor.organization || "Khoa Hệ thống Thông tin") : "",
+      category,
+      topic,
+      topic_desc: topicDesc,
+      zalo_link: zaloLink,
+      members,
+      leaderId
+    });
   };
 
   return (
@@ -203,11 +292,12 @@ export default function CreateGroupForm({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-bold text-gray-900">Mentor</label>
-              <input
-                value={mentor}
-                onChange={(e) => setMentor(e.target.value)}
-                placeholder="Ví dụ: Nguyễn Văn A"
-                className="w-full px-4 py-3 rounded-xl bg-gray-100 text-sm placeholder-gray-400 outline-none border border-transparent focus:border-indigo-300 transition-colors"
+              <MentorSelectField
+                value={selectedMentorId}
+                onChange={setSelectedMentorId}
+                options={availableMentors}
+                placeholder="Chọn Mentor"
+                loading={loadingMentors}
               />
             </div>
             <div className="flex flex-col gap-1.5">

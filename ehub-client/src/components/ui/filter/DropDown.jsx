@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { ChevronDown } from "lucide-react";
 
 // ── Dropdown dùng chung (Sử dụng Portal để tránh lỗi overflow) ────────────────
-function Dropdown({ label, options, value, onChange, disabled = false, direction = "down" }) {
+function Dropdown({ label, options, value, onChange, disabled = false, direction = "down", className }) {
   const [open, setOpen] = useState(false);
   const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
   const ref = useRef(null);
@@ -52,7 +52,7 @@ function Dropdown({ label, options, value, onChange, disabled = false, direction
   };
 
   return (
-    <div ref={ref} className="relative flex-1 min-w-0 md:flex-none md:w-auto md:min-w-[120px]">
+    <div ref={ref} className={className || "relative flex-1 min-w-0 md:flex-none md:w-auto md:min-w-[120px]"}>
       {/* Trigger */}
       <button
         type="button"

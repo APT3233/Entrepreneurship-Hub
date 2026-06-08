@@ -220,6 +220,25 @@ export const createGroupRepository = ({ db }) => {
     return rows;
   };
 
+  const getAvailableMentors = async () => {
+    const sql = `
+      SELECT mp.id, mp.full_name, mp.email, mp.mentor_type, mp.organization, mp.position_title
+      FROM mentor_profiles mp
+      WHERE mp.status = 'active'
+        AND mp.deleted_at IS NULL
+        AND NOT EXISTS (
+          SELECT 1
+          FROM mentor_assignments ma
+          WHERE ma.mentor_id = mp.id
+            AND ma.status = 'active'
+            AND ma.deleted_at IS NULL
+        )
+      ORDER BY mp.full_name ASC
+    `;
+    const [rows] = await db.execute(sql);
+    return rows;
+  };
+
   const update = async (id, data) => {
     const keys = Object.keys(data);
     if (!keys.length) return null;
@@ -249,5 +268,6 @@ export const createGroupRepository = ({ db }) => {
     getGroupStatsByLecturer,
     getMemberStatsByGroupId,
     findByStudent,
+    getAvailableMentors,
   };
 };

@@ -132,6 +132,9 @@ export const createMentorService = ({ mentorRepository, transaction, auditServic
       "cv_file_url", "status", "visibility",
     ];
     const payload = normalizeProfileInput(data, allowed);
+    for (const key of allowed) {
+      if (payload[key] === undefined) payload[key] = null;
+    }
     payload.status = payload.status || "pending";
     payload.visibility = payload.visibility || "internal";
     payload.created_by = actor?.id || null;

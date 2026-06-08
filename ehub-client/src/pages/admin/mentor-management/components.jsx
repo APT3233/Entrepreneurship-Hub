@@ -81,35 +81,58 @@ export function MentorForm({ form, setForm, showStatus = false }) {
   const { t } = useTranslation();
   const set = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
   const localizedTypeOptions = useMemo(() => mentorTypeOptions.map((opt) => ({ value: opt.value, label: t(`status.${opt.value}`) })), [t]);
-  const localizedVisibilityOptions = useMemo(() => visibilityOptions.map((v) => ({ value: v, label: t(`status.${v}`) })), [t]);
-  const localizedStatusOptions = useMemo(() => mentorStatusOptions.map((s) => ({ value: s, label: t(`status.${s}`) })), [t]);
+  const localizedVisibilityOptions = useMemo(() => visibilityOptions.map((v) => ({ value: v.value, label: t(`status.${v.value}`) })), [t]);
+  const localizedStatusOptions = useMemo(() => mentorStatusOptions.map((s) => ({ value: s.value, label: t(`status.${s.value}`) })), [t]);
 
   return (
-    <div className="space-y-5">
-      <div className="rounded-2xl border border-slate-100 bg-slate-50/60 p-5">
-        <div className="mb-4 flex items-center gap-2 border-b border-slate-100 pb-3">
-          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-teal-50 text-teal-700"><UserRound size={16} /></span>
-          <div>
-            <h3 className="text-sm font-bold text-slate-800">{t("admin.mentors.tabs.profile")}</h3>
-            <p className="text-xs text-slate-400">{t("admin.mentors.fields.profileSub") || "Mentor identity and public-facing information"}</p>
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 text-left">
+      {/* Left Column (2/3 width) - Profile & Contact */}
+      <div className="lg:col-span-2 space-y-6">
+        <div className="rounded-2xl border border-slate-100 bg-slate-50/40 p-5 space-y-4">
+          <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-teal-50 text-teal-700"><UserRound size={16} /></span>
+            <div>
+              <h3 className="text-sm font-bold text-slate-800">{t("admin.mentors.tabs.profile")}</h3>
+              <p className="text-xs text-slate-400">{t("admin.mentors.fields.profileSub")}</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Field label={t("admin.mentors.fields.fullName")}><input className={inputClass} value={form.full_name || ""} onChange={(e) => set("full_name", e.target.value)} required /></Field>
+            <Field label={t("admin.mentors.fields.email")}><input type="email" className={inputClass} value={form.email || ""} onChange={(e) => set("email", e.target.value)} required /></Field>
+            <Field label={t("admin.mentors.fields.phone")}><input className={inputClass} value={form.phone || ""} onChange={(e) => set("phone", e.target.value)} /></Field>
+            <Field label={t("admin.mentors.fields.organization")}><input className={inputClass} value={form.organization || ""} onChange={(e) => set("organization", e.target.value)} /></Field>
+            <Field label={t("admin.mentors.fields.position")}><input className={inputClass} value={form.position_title || ""} onChange={(e) => set("position_title", e.target.value)} /></Field>
+            <Field label={t("admin.mentors.fields.yearsOfExperience")}><input type="number" min="0" className={inputClass} value={form.years_of_experience ?? ""} onChange={(e) => set("years_of_experience", e.target.value === "" ? null : Number(e.target.value))} /></Field>
+          </div>
+          <div className="pt-2">
+            <Field label={t("admin.mentors.fields.bio")}><textarea className={inputClass} rows={5} value={form.bio || ""} onChange={(e) => set("bio", e.target.value)} /></Field>
           </div>
         </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          <Field label={t("admin.mentors.fields.fullName")}><input className={inputClass} value={form.full_name || ""} onChange={(e) => set("full_name", e.target.value)} required /></Field>
-          <Field label={t("admin.mentors.fields.email")}><input type="email" className={inputClass} value={form.email || ""} onChange={(e) => set("email", e.target.value)} required /></Field>
-          <Field label={t("admin.mentors.fields.phone")}><input className={inputClass} value={form.phone || ""} onChange={(e) => set("phone", e.target.value)} /></Field>
-          <Field label={t("admin.mentors.fields.mentorType")}><Select value={form.mentor_type || "business"} onChange={(value) => set("mentor_type", value)} options={localizedTypeOptions} /></Field>
-          <Field label={t("admin.mentors.fields.visibility")}><Select value={form.visibility || "internal"} onChange={(value) => set("visibility", value)} options={localizedVisibilityOptions} /></Field>
-          {showStatus ? <Field label={t("admin.mentors.fields.status")}><Select value={form.status || "pending"} onChange={(value) => set("status", value)} options={localizedStatusOptions} /></Field> : null}
-          <Field label={t("admin.mentors.fields.organization")}><input className={inputClass} value={form.organization || ""} onChange={(e) => set("organization", e.target.value)} /></Field>
-          <Field label={t("admin.mentors.fields.position")}><input className={inputClass} value={form.position_title || ""} onChange={(e) => set("position_title", e.target.value)} /></Field>
-          <Field label={t("admin.mentors.fields.yearsOfExperience")}><input type="number" min="0" className={inputClass} value={form.years_of_experience ?? ""} onChange={(e) => set("years_of_experience", e.target.value === "" ? null : Number(e.target.value))} /></Field>
-          <Field label={t("admin.mentors.fields.avatarUrl")}><input className={inputClass} value={form.avatar_url || ""} onChange={(e) => set("avatar_url", e.target.value)} /></Field>
-          <Field label={t("admin.mentors.fields.linkedinUrl")}><input className={inputClass} value={form.linkedin_url || ""} onChange={(e) => set("linkedin_url", e.target.value)} /></Field>
-          <Field label={t("admin.mentors.fields.portfolioUrl")}><input className={inputClass} value={form.portfolio_url || ""} onChange={(e) => set("portfolio_url", e.target.value)} /></Field>
+      </div>
+
+      {/* Right Column (1/3 width) - Settings & Social Profiles */}
+      <div className="space-y-6">
+        <div className="rounded-2xl border border-slate-100 bg-slate-50/40 p-5 space-y-4">
+          <div className="border-b border-slate-100 pb-3">
+            <h3 className="text-sm font-bold text-slate-800">{t("admin.mentors.fields.accountSettings") || "Settings & Portals"}</h3>
+            <p className="text-xs text-slate-400">{t("admin.mentors.fields.accountSettingsSub") || "Configure visibility and role"}</p>
+          </div>
+          <div className="space-y-4">
+            <Field label={t("admin.mentors.fields.mentorType")}><Select value={form.mentor_type || "business"} onChange={(value) => set("mentor_type", value)} options={localizedTypeOptions} /></Field>
+            <Field label={t("admin.mentors.fields.visibility")}><Select value={form.visibility || "internal"} onChange={(value) => set("visibility", value)} options={localizedVisibilityOptions} /></Field>
+            {showStatus && <Field label={t("admin.mentors.fields.status")}><Select value={form.status || "pending"} onChange={(value) => set("status", value)} options={localizedStatusOptions} /></Field>}
+          </div>
         </div>
-        <div className="mt-4">
-          <Field label={t("admin.mentors.fields.bio")}><textarea className={inputClass} rows={4} value={form.bio || ""} onChange={(e) => set("bio", e.target.value)} /></Field>
+
+        <div className="rounded-2xl border border-slate-100 bg-slate-50/40 p-5 space-y-4">
+          <div className="border-b border-slate-100 pb-3">
+            <h3 className="text-sm font-bold text-slate-800">{t("admin.mentors.fields.socialProfiles") || "Social Profiles"}</h3>
+            <p className="text-xs text-slate-400">{t("admin.mentors.fields.socialProfilesSub") || "Add external URLs"}</p>
+          </div>
+          <div className="space-y-4">
+            <Field label={t("admin.mentors.fields.linkedinUrl")}><input className={inputClass} value={form.linkedin_url || ""} onChange={(e) => set("linkedin_url", e.target.value)} placeholder="https://linkedin.com/..." /></Field>
+            <Field label={t("admin.mentors.fields.portfolioUrl")}><input className={inputClass} value={form.portfolio_url || ""} onChange={(e) => set("portfolio_url", e.target.value)} placeholder="https://portfolio.com/..." /></Field>
+          </div>
         </div>
       </div>
     </div>
@@ -141,12 +164,12 @@ export function ExpertiseEditor({ areas = [], items = [], setItems, disabled = f
   const addRow = () => setItems([...(items || []), { expertise_id: areaOptions[0]?.value || "", level: "intermediate", years_experience: null, note: "" }]);
   const update = (index, patch) => setItems(items.map((item, i) => (i === index ? { ...item, ...patch } : item)));
   const remove = (index) => setItems(items.filter((_, i) => i !== index));
-  const localizedLevelOptions = useMemo(() => expertiseLevelOptions.map((l) => ({ value: l, label: t(`status.${l}`) })), [t]);
+  const localizedLevelOptions = useMemo(() => expertiseLevelOptions.map((l) => ({ value: l.value, label: t(`status.${l.value}`) })), [t]);
 
   return (
     <div className="space-y-3">
       {(items || []).map((item, index) => (
-        <div key={`${item.expertise_id}-${index}`} className="grid gap-3 rounded-xl border border-slate-100 bg-white p-3 md:grid-cols-[1.5fr_1fr_1fr_1.4fr_auto]">
+        <div key={index} className="grid gap-3 rounded-xl border border-slate-100 bg-white p-3 md:grid-cols-[1.5fr_1fr_1fr_1.4fr_auto] items-center">
           <Select disabled={disabled} value={String(item.expertise_id || "")} onChange={(value) => update(index, { expertise_id: value })} options={areaOptions} />
           <Select disabled={disabled} value={item.level || "intermediate"} onChange={(value) => update(index, { level: value })} options={localizedLevelOptions} />
           <input disabled={disabled} type="number" min="0" className={inputClass} placeholder={t("admin.mentors.expertiseEditor.yearsPlaceholder") || "Years"} value={item.years_experience ?? ""} onChange={(e) => update(index, { years_experience: e.target.value === "" ? null : Number(e.target.value) })} />

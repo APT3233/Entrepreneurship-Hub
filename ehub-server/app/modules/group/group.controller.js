@@ -61,5 +61,13 @@ export const createGroupController = ({ groupService }) => {
     });
   });
 
-  return { list, getById, create, update, remove, getMyGroups };
+  const availableMentors = catchAsync(async (req, res) => {
+    const data = await groupService.getAvailableMentors();
+    return sendSuccess(res, {
+      data,
+      message: "Available mentors retrieved successfully",
+    });
+  });
+
+  return { list, getById, create, update, remove, getMyGroups, availableMentors };
 };

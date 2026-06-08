@@ -32,7 +32,7 @@ export default function AdminAiSuggestionsPage() {
 
   const providerOptions = useMemo(() => [
     { value: "", label: "All providers" },
-    { value: "cmd-api", label: "CMD API" },
+    { value: "third-party-api", label: "Third-party API" },
     { value: "local-gemma", label: "Local Gemma" },
   ], []);
 

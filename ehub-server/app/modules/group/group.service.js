@@ -331,6 +331,10 @@ export const createGroupService = ({
     return { data };
   };
 
+  const getAvailableMentors = async () => {
+    return groupRepository.getAvailableMentors();
+  };
+
   return {
     getById,
     getList,
@@ -338,5 +342,6 @@ export const createGroupService = ({
     update,
     remove,
     getByStudent,
+    getAvailableMentors,
   };
 };

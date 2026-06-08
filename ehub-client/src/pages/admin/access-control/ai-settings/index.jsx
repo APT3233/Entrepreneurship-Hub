@@ -6,8 +6,11 @@ import { useTranslation } from "@/context/TranslationContext";
 import Dropdown from "@/components/ui/filter/DropDown";
 
 const inputClass = "w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 disabled:bg-gray-50 disabled:text-gray-400";
+const THIRD_PARTY_PROVIDER_KEY = "third-party-api";
+const normalizeProviderKey = (key) => (["cmd-api", "cmd-local", "cmd-local-api"].includes(key) ? THIRD_PARTY_PROVIDER_KEY : key);
 const providerLabels = {
-  "cmd-api": "CMD API",
+  "third-party-api": "Third-party API",
+  "cmd-api": "Third-party API",
   "local-gemma": "Local Ollama",
 };
 
@@ -29,12 +32,12 @@ const emptySettings = {
 
 const defaultProviders = [
   {
-    key: "cmd-api",
-    name: "CMD API",
+    key: THIRD_PARTY_PROVIDER_KEY,
+    name: "Third-party API",
     type: "openai-compatible",
     enabled: true,
-    base_url: "http://localhost:20128/v1",
-    model: "cmc/MiniMaxAI/MiniMax-M2.5",
+    base_url: "https://api.openai.com/v1",
+    model: "gpt-4o-mini",
     stream: true,
     api_key_required: true,
     api_key_status: "not_configured",
@@ -46,7 +49,7 @@ const defaultProviders = [
     type: "openai-compatible",
     enabled: true,
     base_url: "http://ollama:11434/v1",
-    model: "qwen2.5:7b",
+    model: "gemma3:4b",
     stream: true,
     api_key_required: false,
     api_key_status: "not_required",
@@ -60,7 +63,7 @@ const normalizeSettings = (payload) => {
     return {
       ...emptySettings,
       enabled: Boolean(rows.ai_enabled),
-      active_provider: rows.ai_provider === "cmd-local" ? "cmd-api" : rows.ai_provider || "local-gemma",
+      active_provider: normalizeProviderKey(rows.ai_provider || "local-gemma"),
       global: {
         ...emptySettings.global,
         max_tokens: Number(rows.max_tokens || 4096),
@@ -72,8 +75,8 @@ const normalizeSettings = (payload) => {
       },
       providers: [
         {
-          key: "cmd-api",
-          name: "CMD API",
+          key: THIRD_PARTY_PROVIDER_KEY,
+          name: "Third-party API",
           type: "openai-compatible",
           enabled: true,
           base_url: rows.base_url || "http://localhost:20128/v1",
@@ -85,8 +88,8 @@ const normalizeSettings = (payload) => {
         },
       ],
       secret_storage: {
-        cmd_api_key_configured: Boolean(rows.api_key_configured),
-        cmd_api_key_source: rows.api_key_source || "none",
+        third_party_api_key_configured: Boolean(rows.api_key_configured),
+        third_party_api_key_source: rows.api_key_source || "none",
         storage_ready: Boolean(rows.api_key_storage_ready),
       },
     };
@@ -95,7 +98,7 @@ const normalizeSettings = (payload) => {
     ...emptySettings,
     ...(payload || {}),
     global: { ...emptySettings.global, ...(payload?.global || {}) },
-    providers: Array.isArray(payload?.providers) ? payload.providers : [],
+    providers: Array.isArray(payload?.providers) ? payload.providers.map((provider) => ({ ...provider, key: normalizeProviderKey(provider.key) })) : [],
     secret_storage: payload?.secret_storage || {},
   };
 };
@@ -121,9 +124,13 @@ export default function AdminAiSettingsPage() {
     () => form.providers.find((provider) => provider.key === configProviderKey) || form.providers[0] || null,
     [configProviderKey, form.providers],
   );
-  const cmdProvider = useMemo(() => form.providers.find((provider) => provider.key === "cmd-api") || null, [form.providers]);
+  const thirdPartyProvider = useMemo(() => form.providers.find((provider) => provider.key === THIRD_PARTY_PROVIDER_KEY) || null, [form.providers]);
   const storageReady = Boolean(form.secret_storage?.storage_ready);
-  const cmdKeyConfigured = Boolean(form.secret_storage?.cmd_api_key_configured || cmdProvider?.api_key_status === "configured");
+  const thirdPartyKeyConfigured = Boolean(
+    form.secret_storage?.third_party_api_key_configured ||
+    form.secret_storage?.cmd_api_key_configured ||
+    thirdPartyProvider?.api_key_status === "configured",
+  );
 
   const load = async () => {
     setLoading(true);
@@ -189,7 +196,7 @@ export default function AdminAiSettingsPage() {
       stream: Boolean(provider.stream),
       api_key_required: Boolean(provider.api_key_required),
     };
-    if ((provider.key || form.active_provider) === "cmd-api" && apiKeyInput.trim()) payload.api_key = apiKeyInput.trim();
+    if (normalizeProviderKey(provider.key || form.active_provider) === THIRD_PARTY_PROVIDER_KEY && apiKeyInput.trim()) payload.api_key = apiKeyInput.trim();
     return payload;
   };
 
@@ -293,7 +300,7 @@ export default function AdminAiSettingsPage() {
 
   const activeWarning = form.active_provider === "local-gemma"
     ? t("ai.settings.warningLocalOllama")
-    : t("ai.settings.warningCmdApi");
+    : t("ai.settings.warningThirdPartyApi");
 
   return (
     <div className="space-y-6">
@@ -314,8 +321,8 @@ export default function AdminAiSettingsPage() {
             {form.enabled ? t("ai.settings.aiEnabled") : t("ai.settings.aiDisabled")}
           </Badge>
           {form.active_provider !== "local-gemma" && (
-            <Badge tone={cmdKeyConfigured ? "green" : "red"}>
-              CMD API: {cmdKeyConfigured ? t("ai.settings.apiKeyConfigured") : t("ai.settings.apiKeyMissing")}
+            <Badge tone={thirdPartyKeyConfigured ? "green" : "red"}>
+              Third-party API: {thirdPartyKeyConfigured ? t("ai.settings.apiKeyConfigured") : t("ai.settings.apiKeyMissing")}
             </Badge>
           )}
         </div>
@@ -386,16 +393,16 @@ export default function AdminAiSettingsPage() {
                 />
               ) : null}
 
-              {selectedProvider?.key === "cmd-api" && cmdProvider && (
+              {selectedProvider?.key === THIRD_PARTY_PROVIDER_KEY && thirdPartyProvider && (
                 <div className="mt-4 pt-4 border-t border-gray-100 space-y-2">
                   <label className="block">
-                    <span className="mb-1 block text-sm font-semibold text-gray-700">CMD API Key</span>
+                    <span className="mb-1 block text-sm font-semibold text-gray-700">Third-party API Key</span>
                     <input
                       type="password"
                       className={inputClass}
                       value={apiKeyInput}
                       disabled={!storageReady}
-                      placeholder={cmdKeyConfigured ? t("ai.settings.apiKeyPlaceholderConfigured") : t("ai.settings.apiKeyPlaceholderMissing")}
+                      placeholder={thirdPartyKeyConfigured ? t("ai.settings.apiKeyPlaceholderConfigured") : t("ai.settings.apiKeyPlaceholderMissing")}
                       autoComplete="new-password"
                       onChange={(event) => setApiKeyInput(event.target.value)}
                     />

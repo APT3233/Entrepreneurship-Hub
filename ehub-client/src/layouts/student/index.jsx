@@ -9,6 +9,7 @@ import {
   Activity,
   Calendar,
   Handshake,
+  Rocket,
 } from "lucide-react";
 import NavProgress from "@/components/ui/NavProgress";
 import ConfirmModal from "@/components/modal/ConfirmModal";
@@ -31,6 +32,8 @@ const StudentLayout = () => {
     { label: t("student.groups"), icon: Users, path: "/student/groups" },
     { label: t("student.assignments"), icon: ClipboardList, path: "/student/assignments" },
     { label: "Mentoring", icon: Handshake, path: "/student/mentoring" },
+    { label: "Startup", icon: Rocket, path: "/student/startup-profile" },
+    { label: "Opportunities", icon: Handshake, path: "/student/ecosystem/opportunities" },
     { label: t("student.status"), icon: Activity, path: "/student/status", disabled: true },
     { label: t("student.schedule"), icon: Calendar, path: "/student/schedule", disabled: true },
   ], [t]);

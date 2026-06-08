@@ -11,6 +11,7 @@ import { createAdminLecturerRouter } from "./sub-modules/lecturer/lecturer.route
 import { createAdminAiEvaluationRouter } from "../aiEvaluation/aiEvaluation.route.js";
 import { createMentorAdminRouter } from "../mentors/sub-modules/profile/mentorAdmin.route.js";
 import { createMentorWorkflowAdminRouter } from "../mentors/sub-modules/workflow/mentorWorkflowAdmin.route.js";
+import { createIncubationAdminRouter } from "../incubation/incubation.route.js";
 
 export const createAdminRouter = (container) => {
   const router = Router();
@@ -24,6 +25,7 @@ export const createAdminRouter = (container) => {
   router.use("/", createAdminLecturerRouter(container));
   router.use("/", createMentorAdminRouter(container));
   router.use("/", createMentorWorkflowAdminRouter(container));
+  router.use("/", createIncubationAdminRouter(container));
   router.use("/", createAdminProjectSubmissionRouter(container));
   router.use("/", createAdminEvaluationOpsRouter(container));
   router.use("/academic", createAdminAcademicRouter(container));

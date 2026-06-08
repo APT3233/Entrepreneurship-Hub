@@ -37,6 +37,24 @@ const AdminMentorAnalyticsEffectiveness = React.lazy(() => import("@/pages/admin
 const AdminMentorAnalyticsMatching = React.lazy(() => import("@/pages/admin/mentor-analytics/MatchingPage"));
 const AdminMentorAnalyticsExpertise = React.lazy(() => import("@/pages/admin/mentor-analytics/ExpertiseHeatmapPage"));
 const AdminMentorAnalyticsGroupSupport = React.lazy(() => import("@/pages/admin/mentor-analytics/GroupSupportPage"));
+const AdminIncubationStartups = React.lazy(() => import("@/pages/admin/incubation"));
+const AdminIncubationCreateStartup = React.lazy(() => import("@/pages/admin/incubation/CreateStartupPage"));
+const AdminIncubationStartupDetail = React.lazy(() => import("@/pages/admin/incubation/StartupDetailPage"));
+const AdminIncubationSelectionReviews = React.lazy(() => import("@/pages/admin/incubation/SelectionReviewsPage"));
+const AdminIncubationPipeline = React.lazy(() => import("@/pages/admin/incubation/PipelinePage"));
+const AdminIncubationPipelineStages = React.lazy(() => import("@/pages/admin/incubation/PipelineStagesPage"));
+const AdminEcosystemEvents = React.lazy(() => import("@/pages/admin/incubation/EventsPage"));
+const AdminEcosystemCreateEvent = React.lazy(() => import("@/pages/admin/incubation/EventCreatePage"));
+const AdminEcosystemEventDetail = React.lazy(() => import("@/pages/admin/incubation/EventDetailPage"));
+const AdminEcosystemAlumni = React.lazy(() => import("@/pages/admin/incubation/AlumniPage"));
+const AdminEcosystemAlumniDetail = React.lazy(() => import("@/pages/admin/incubation/AlumniDetailPage"));
+const AdminEcosystemPartners = React.lazy(() => import("@/pages/admin/incubation/PartnersPage"));
+const AdminEcosystemPartnerDetail = React.lazy(() => import("@/pages/admin/incubation/PartnerDetailPage"));
+const AdminEcosystemOpportunities = React.lazy(() => import("@/pages/admin/incubation/OpportunitiesPage"));
+const AdminEcosystemOpportunityDetail = React.lazy(() => import("@/pages/admin/incubation/OpportunityDetailPage"));
+const AdminIncubationStartupEcosystem = React.lazy(() => import("@/pages/admin/incubation/StartupEcosystemPage"));
+const AdminIncubationAnalytics = React.lazy(() => import("@/pages/admin/incubation/AnalyticsPage"));
+const AdminIncubationReports = React.lazy(() => import("@/pages/admin/incubation/ReportsPage"));
 const AdminStudents = React.lazy(() => import("@/pages/admin/student-group/students"));
 const AdminEnrollments = React.lazy(() => import("@/pages/admin/student-group/enrollments"));
 const AdminGroups = React.lazy(() => import("@/pages/admin/student-group/groups"));
@@ -131,6 +149,36 @@ export default function init(routes) {
       { path: "mentor-analytics/matching", element: <AdminMentorAnalyticsMatching /> },
       { path: "mentor-analytics/expertise", element: <AdminMentorAnalyticsExpertise /> },
       { path: "mentor-analytics/group-support", element: <AdminMentorAnalyticsGroupSupport /> },
+      { path: "incubation", element: <AdminIncubationStartups /> },
+      { path: "incubation/startups", element: <AdminIncubationStartups /> },
+      { path: "incubation/startups/create", element: <AdminIncubationCreateStartup /> },
+      { path: "incubation/startups/:id", element: <AdminIncubationStartupDetail /> },
+      { path: "incubation/startups/:id/progress", element: <AdminIncubationStartupDetail /> },
+      { path: "incubation/startups/:id/metrics", element: <AdminIncubationStartupDetail /> },
+      { path: "incubation/startups/:id/support", element: <AdminIncubationStartupDetail /> },
+      { path: "incubation/startups/:id/ecosystem", element: <AdminIncubationStartupEcosystem /> },
+      { path: "incubation/selection-reviews", element: <AdminIncubationSelectionReviews /> },
+      { path: "incubation/pipeline", element: <AdminIncubationPipeline /> },
+      { path: "incubation/pipeline/stages", element: <AdminIncubationPipelineStages /> },
+      { path: "incubation/analytics", element: <AdminIncubationAnalytics /> },
+      { path: "incubation/analytics/pipeline", element: <AdminIncubationAnalytics /> },
+      { path: "incubation/analytics/progress", element: <AdminIncubationAnalytics /> },
+      { path: "incubation/analytics/events", element: <AdminIncubationAnalytics /> },
+      { path: "incubation/analytics/ecosystem-health", element: <AdminIncubationAnalytics /> },
+      { path: "incubation/reports", element: <AdminIncubationReports /> },
+      { path: "ecosystem/events", element: <AdminEcosystemEvents /> },
+      { path: "ecosystem/events/create", element: <AdminEcosystemCreateEvent /> },
+      { path: "ecosystem/events/:id", element: <AdminEcosystemEventDetail /> },
+      { path: "ecosystem/events/:id/startups", element: <AdminEcosystemEventDetail /> },
+      { path: "ecosystem/events/:id/judges", element: <AdminEcosystemEventDetail /> },
+      { path: "ecosystem/events/:id/feedback", element: <AdminEcosystemEventDetail /> },
+      { path: "ecosystem/events/:id/media", element: <AdminEcosystemEventDetail /> },
+      { path: "ecosystem/alumni", element: <AdminEcosystemAlumni /> },
+      { path: "ecosystem/alumni/:id", element: <AdminEcosystemAlumniDetail /> },
+      { path: "ecosystem/partners", element: <AdminEcosystemPartners /> },
+      { path: "ecosystem/partners/:id", element: <AdminEcosystemPartnerDetail /> },
+      { path: "ecosystem/opportunities", element: <AdminEcosystemOpportunities /> },
+      { path: "ecosystem/opportunities/:id", element: <AdminEcosystemOpportunityDetail /> },
       { path: "students", element: <AdminStudents /> },
       { path: "enrollments", element: <AdminEnrollments /> },
       { path: "groups", element: <AdminGroups /> },

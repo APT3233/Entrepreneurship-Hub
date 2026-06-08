@@ -83,6 +83,19 @@ export const createFileService = ({ fileRepository, storageService, tokenService
     return canManageDocs || canAdminRead;
   };
 
+  const canReadStartupDocument = async (row, user) => {
+    if (Number(row.founder_user_id) === Number(user?.id)) return true;
+    if (isLecturer(user) && Number(row.lecturer_id) === Number(user?.id)) {
+      return fileRepository.userHasPermission(user.id, "incubation.startup.read");
+    }
+    if (!isAdminOrDept(user)) return false;
+    const [canManageDocs, canReadStartup] = await Promise.all([
+      fileRepository.userHasPermission(user.id, "incubation.document.manage"),
+      fileRepository.userHasPermission(user.id, "incubation.startup.read"),
+    ]);
+    return canManageDocs || canReadStartup;
+  };
+
   const canReadOwnedPendingAttachment = (filePath, user) => {
     // Allow lecturers/admin to read their own assignment attachments
     if ((isAdminOrDept(user) || isLecturer(user)) && filePath.startsWith(`assignments/attachments/${Number(user.id)}/`)) {
@@ -110,12 +123,14 @@ export const createFileService = ({ fileRepository, storageService, tokenService
       assignmentSubmissionFiles,
       checkpointSubmissionFiles,
       mentorDocuments,
+      startupDocuments,
     ] = await Promise.all([
       fileRepository.findAssignmentAttachmentsByPath(filePath),
       fileRepository.findCheckpointAttachmentsByPath(filePath),
       fileRepository.findAssignmentSubmissionFilesByPath(filePath),
       fileRepository.findCheckpointSubmissionFilesByPath(filePath),
       fileRepository.findMentorDocumentsByPath(filePath),
+      fileRepository.findStartupDocumentsByPath(filePath),
     ]);
 
     const classResources = [...assignmentAttachments, ...checkpointAttachments];
@@ -132,10 +147,15 @@ export const createFileService = ({ fileRepository, storageService, tokenService
       if (await canReadMentorDocument(row, user)) return filePath;
     }
 
+    for (const row of startupDocuments) {
+      if (await canReadStartupDocument(row, user)) return filePath;
+    }
+
     if (
       classResources.length === 0 &&
       groupSubmissions.length === 0 &&
       mentorDocuments.length === 0 &&
+      startupDocuments.length === 0 &&
       canReadOwnedPendingAttachment(filePath, user)
     ) {
       return filePath;

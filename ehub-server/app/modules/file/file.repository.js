@@ -95,6 +95,29 @@ export const createFileRepository = ({ db }) => {
     return rows;
   };
 
+  const findStartupDocumentsByPath = async (filePath) => {
+    const sql = `
+      SELECT
+        sd.id AS document_id,
+        sd.startup_id,
+        sd.file_path,
+        sd.visibility,
+        sp.class_id,
+        c.lecturer_id,
+        sf.user_id AS founder_user_id,
+        'startup_document' AS source
+      FROM startup_documents sd
+      JOIN startup_profiles sp ON sp.id = sd.startup_id
+      LEFT JOIN classes c ON c.id = sp.class_id
+      LEFT JOIN startup_founders sf ON sf.startup_id = sp.id AND sf.status = 'active'
+      WHERE sd.file_path = :filePath
+        AND sd.deleted_at IS NULL
+        AND sp.deleted_at IS NULL
+    `;
+    const [rows] = await db.execute(sql, { filePath });
+    return rows;
+  };
+
   const userHasPermission = async (userId, permissionCode) => {
     const sql = `
       SELECT 1
@@ -148,6 +171,7 @@ export const createFileRepository = ({ db }) => {
     findAssignmentSubmissionFilesByPath,
     findCheckpointSubmissionFilesByPath,
     findMentorDocumentsByPath,
+    findStartupDocumentsByPath,
     userHasPermission,
     isStudentEnrolledInClass,
     isStudentInGroup,

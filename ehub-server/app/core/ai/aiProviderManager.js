@@ -3,8 +3,8 @@ import { AiErrorCodes, createAiError } from "./aiErrors.js";
 
 export const normalizeProviderKey = (value) => {
   const key = String(value || "").trim();
-  if (key === "cmd-local" || key === "cmd-local-api") return "cmd-api";
-  return key || "cmd-api";
+  if (["cmd-local", "cmd-local-api", "cmd-api", "external-api", "openai-compatible"].includes(key)) return "third-party-api";
+  return key || "third-party-api";
 };
 
 const mergeProvider = (providerKey, runtimeSettings = {}) => {

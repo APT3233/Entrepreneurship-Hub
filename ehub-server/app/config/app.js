@@ -47,7 +47,7 @@ export const appConfig = Object.freeze({
   },
   outbox: {
     workerEnabled: toBool(optional("OUTBOX_WORKER_ENABLED", "true"), true),
-    workerInApi: toBool(optional("OUTBOX_WORKER_IN_API", "true"), true),
+    workerInApi: toBool(optional("OUTBOX_WORKER_IN_API", "false"), false),
     pollMs: toInt(optional("OUTBOX_POLL_MS", "1000"), 1000),
     maxRowsPerTick: toInt(optional("OUTBOX_MAX_ROWS_PER_TICK", "5"), 5),
     staleProcessingMinutes: toInt(optional("OUTBOX_STALE_PROCESSING_MINUTES", "15"), 15),

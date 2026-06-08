@@ -52,6 +52,10 @@ const GroupApi = {
     const response = await instance.get("/groups/my-groups");
     return response;
   },
+  getAvailableMentors: async () => {
+    const response = await instance.get("/groups/available-mentors");
+    return response;
+  },
 };
 
 export default GroupApi;

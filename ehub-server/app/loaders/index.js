@@ -8,6 +8,8 @@ import { loadContainer } from "./container.loader.js";
 import { setAuthRedis, setAuthUserStatusLoader } from "app/core/middlewares/authMiddleware.js";
 import { logger } from "app/core/logger/index.js";
 import { appConfig } from "app/config/app.js";
+import { aiConfig } from "app/config/ai.js";
+import { closeAiEvaluationQueue } from "app/core/queues/aiEvaluation.queue.js";
 import { startOutboxMailWorker } from "app/core/workers/outboxMail.worker.js";
 import { forkMailOutboxWorker } from "app/workers/forkMailOutboxWorker.js";
 import { startUploadCleanupWorker } from "../core/workers/uploadCleanup.worker.js";
@@ -48,7 +50,13 @@ export const bootstrap = async () => {
 
   // Start upload cleanup worker
   const stopUploadCleanupWorker = startUploadCleanupWorker({ db, minio, container });
-  const stopAiEvaluationWorker = startAiEvaluationWorker({ db, redis, container });
+  let stopAiEvaluationWorker = closeAiEvaluationQueue;
+  if (aiConfig.worker.enabled) {
+    const stopWorker = startAiEvaluationWorker({ container });
+    stopAiEvaluationWorker = async () => {
+      await Promise.allSettled([stopWorker(), closeAiEvaluationQueue()]);
+    };
+  }
 
   // Error handlers
   loadErrorHandlers(app);

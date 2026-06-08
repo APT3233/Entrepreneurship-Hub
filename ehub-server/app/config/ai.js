@@ -7,33 +7,33 @@ const toNumber = (value, fallback) => {
 
 const normalizeSecret = (value) => {
   const text = String(value || "").trim();
-  if (!text || text === "your_api_key_here" || text === "your_cmd_api_key_here" || text === "change_me") return "";
+  if (!text || text === "your_api_key_here" || text === "your_cmd_api_key_here" || text === "your_third_party_api_key_here" || text === "change_me") return "";
   return text;
 };
 
 const normalizeProviderKey = (value) => {
   const key = String(value || "").trim();
-  if (key === "cmd-local" || key === "cmd-local-api") return "cmd-api";
-  return key || "cmd-api";
+  if (["cmd-local", "cmd-local-api", "cmd-api", "external-api", "openai-compatible"].includes(key)) return "third-party-api";
+  return key || "third-party-api";
 };
 
-const activeProvider = normalizeProviderKey(optional("AI_ACTIVE_PROVIDER", optional("AI_PROVIDER", "cmd-api")));
+const activeProvider = normalizeProviderKey(optional("AI_ACTIVE_PROVIDER", optional("AI_PROVIDER", "local-gemma")));
 const defaultStream = toBool(optional("AI_STREAM", "true"), true);
 const defaultMaxTokens = toInt(optional("AI_MAX_TOKENS", "4096"), 4096);
 const defaultTemperature = toNumber(optional("AI_TEMPERATURE", "0.2"), 0.2);
 
 const providers = Object.freeze({
-  "cmd-api": Object.freeze({
-    key: "cmd-api",
-    name: "CMD API",
+  "third-party-api": Object.freeze({
+    key: "third-party-api",
+    name: "Third-party API",
     type: "openai-compatible",
-    enabled: toBool(optional("CMD_AI_ENABLED", "true"), true),
-    baseUrl: optional("CMD_AI_BASE_URL", optional("AI_BASE_URL", "http://localhost:20128/v1")),
-    chatCompletionsPath: optional("CMD_AI_CHAT_COMPLETIONS_PATH", optional("AI_CHAT_COMPLETIONS_PATH", "/chat/completions")),
-    apiKey: normalizeSecret(process.env.CMD_API_KEY),
+    enabled: toBool(optional("THIRD_PARTY_AI_ENABLED", optional("CMD_AI_ENABLED", "true")), true),
+    baseUrl: optional("THIRD_PARTY_AI_BASE_URL", optional("CMD_AI_BASE_URL", optional("AI_BASE_URL", "https://api.openai.com/v1"))),
+    chatCompletionsPath: optional("THIRD_PARTY_AI_CHAT_COMPLETIONS_PATH", optional("CMD_AI_CHAT_COMPLETIONS_PATH", optional("AI_CHAT_COMPLETIONS_PATH", "/chat/completions"))),
+    apiKey: normalizeSecret(process.env.THIRD_PARTY_API_KEY || process.env.CMD_API_KEY),
     apiKeyRequired: true,
-    model: optional("CMD_AI_MODEL", optional("AI_MODEL", "cmc/MiniMaxAI/MiniMax-M2.5")),
-    stream: toBool(optional("CMD_AI_STREAM", optional("AI_STREAM", "true")), true),
+    model: optional("THIRD_PARTY_AI_MODEL", optional("CMD_AI_MODEL", optional("AI_MODEL", "gpt-4o-mini"))),
+    stream: toBool(optional("THIRD_PARTY_AI_STREAM", optional("CMD_AI_STREAM", optional("AI_STREAM", "true"))), true),
   }),
   "local-gemma": Object.freeze({
     key: "local-gemma",
@@ -41,11 +41,11 @@ const providers = Object.freeze({
     type: "openai-compatible",
     enabled: toBool(optional("LOCAL_GEMMA_ENABLED", "true"), true),
     baseUrl: optional("LOCAL_GEMMA_BASE_URL", "http://ollama:11434/v1"),
-    fallbackBaseUrls: [optional("LOCAL_GEMMA_HOST_BASE_URL", "http://localhost:11434/v1")],
+    fallbackBaseUrls: [optional("LOCAL_GEMMA_HOST_BASE_URL", "http://localhost:11435/v1")],
     chatCompletionsPath: optional("LOCAL_GEMMA_CHAT_COMPLETIONS_PATH", "/chat/completions"),
     apiKey: normalizeSecret(process.env.LOCAL_GEMMA_API_KEY),
     apiKeyRequired: toBool(optional("LOCAL_GEMMA_API_KEY_REQUIRED", "false"), false),
-    model: optional("LOCAL_GEMMA_MODEL", "qwen2.5:7b"),
+    model: optional("LOCAL_GEMMA_MODEL", "gemma3:4b"),
     stream: toBool(optional("LOCAL_GEMMA_STREAM", optional("AI_STREAM", "true")), true),
   }),
 });
@@ -60,11 +60,11 @@ export const aiConfig = Object.freeze({
   defaultStream,
   providers,
   // Backward-compatible aliases for older Phase 5 code paths.
-  baseUrl: providers["cmd-api"].baseUrl,
-  chatCompletionsPath: providers["cmd-api"].chatCompletionsPath,
-  apiKey: providers["cmd-api"].apiKey,
+  baseUrl: providers["third-party-api"].baseUrl,
+  chatCompletionsPath: providers["third-party-api"].chatCompletionsPath,
+  apiKey: providers["third-party-api"].apiKey,
   secretEncryptionKey: normalizeSecret(process.env.AI_SECRET_ENCRYPTION_KEY || process.env.APP_SECRET_ENCRYPTION_KEY),
-  model: providers["cmd-api"].model,
+  model: providers["third-party-api"].model,
   stream: defaultStream,
   maxTokens: defaultMaxTokens,
   temperature: defaultTemperature,
@@ -74,9 +74,11 @@ export const aiConfig = Object.freeze({
   analyzeCooldownSeconds: toInt(optional("AI_ANALYZE_COOLDOWN_SECONDS", "60"), 60),
   worker: {
     enabled: toBool(optional("AI_WORKER_ENABLED", "true"), true),
+    queueName: optional("AI_BULLMQ_QUEUE_NAME", "ai-evaluation"),
+    backfillMs: toInt(optional("AI_BULLMQ_BACKFILL_MS", "30000"), 30_000),
     pollMs: toInt(optional("AI_WORKER_POLL_MS", "3000"), 3_000),
-    maxRowsPerTick: Math.min(10, Math.max(1, toInt(optional("AI_WORKER_MAX_ROWS_PER_TICK", optional("AI_MAX_CONCURRENT_JOBS", "1")), 1))),
-    maxConcurrentJobs: Math.min(10, Math.max(1, toInt(optional("AI_MAX_CONCURRENT_JOBS", "1"), 1))),
+    maxRowsPerTick: Math.min(10, Math.max(1, toInt(optional("AI_WORKER_MAX_ROWS_PER_TICK", optional("AI_MAX_CONCURRENT_JOBS", "2")), 2))),
+    maxConcurrentJobs: Math.min(10, Math.max(1, toInt(optional("AI_MAX_CONCURRENT_JOBS", "2"), 2))),
     staleProcessingMinutes: toInt(optional("AI_WORKER_STALE_PROCESSING_MINUTES", "15"), 15),
     maxAttempts: toInt(optional("AI_WORKER_MAX_ATTEMPTS", "3"), 3),
     lockTtlSec: toInt(optional("AI_WORKER_LOCK_TTL_SEC", "120"), 120),

@@ -221,7 +221,7 @@ export default function ClassDetailPage() {
     if (value && Number(value) !== Number(id)) navigate(`/lecturer/classes/${value}`);
   };
 
-  const handleCreateGroupSubmit = async ({ name, topic, topic_desc, zalo_link, category, mentor, members, leaderId }) => {
+  const handleCreateGroupSubmit = async ({ name, topic, topic_desc, zalo_link, category, mentor, mentorDept, members, leaderId }) => {
     if (!detail?.id || !name?.trim()) return;
     setCreateGroupLoading(true);
     try {
@@ -235,8 +235,8 @@ export default function ClassDetailPage() {
         topic_desc: topic_desc,
         zalo_link: zalo_link,
         category: category,
-        mentor_name: mentor,
-        mentor_dept: "Khoa Hệ thống Thông tin", // Default as seen in image
+        mentor_name: mentor || null,
+        mentor_dept: mentorDept || null,
         max_members: 6,
         status: "forming",
       };

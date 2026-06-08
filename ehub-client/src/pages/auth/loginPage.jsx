@@ -220,7 +220,7 @@ export default function LoginPage() {
       const user = result?.data?.user ?? result?.data;
       if (!user) throw new Error("Không lấy được thông tin người dùng.");
       if (role === Roles.STUDENT && !hasAnyRole(user, [Roles.STUDENT])) throw new Error("Tài khoản này không phải sinh viên.");
-      if (role === Roles.LECTURER && !hasAnyRole(user, [Roles.LECTURER, Roles.ADMIN, Roles.DEPARTMENT_HEAD])) throw new Error("Tài khoản này không thuộc cổng giảng viên/quản trị.");
+      if (role === Roles.LECTURER && !hasAnyRole(user, [Roles.LECTURER, Roles.ADMIN, Roles.DEPARTMENT_HEAD, Roles.MENTOR])) throw new Error("Tài khoản này không thuộc cổng giảng viên/quản trị/mentor.");
       dispatch(setUser(user));
       const msg = `Chào mừng, ${user.full_name || user.username || "bạn"}! Đăng nhập thành công.`;
       setSuccessMsg(msg);
@@ -321,19 +321,19 @@ export default function LoginPage() {
             active={!isStudent}
             onClick={() => handleRoleChange(Roles.LECTURER)}
             icon={<LectureIcon />}
-            label="Lecturer"
+            label="Lecturer / Mentor"
           />
         </div>
 
         {/* Form Card */}
         <div className="rounded-2xl p-6 bg-white" style={{ border: "1px solid #EEEEEE" }}>
           <h2 className="text-base font-bold text-gray-900">
-            {isStudent ? "Đăng nhập sinh viên" : "Đăng nhập giảng viên"}
+            {isStudent ? "Đăng nhập sinh viên" : "Đăng nhập giảng viên / mentor"}
           </h2>
           <p className="text-xs text-gray-400 mt-0.5 mb-5">
             {isStudent
               ? "Nhập thông tin tài khoản sinh viên của bạn"
-              : "Nhập thông tin tài khoản giảng viên của bạn"}
+              : "Nhập thông tin tài khoản giảng viên / mentor của bạn"}
           </p>
 
           {/* ── General error banner (form + Google) ── */}

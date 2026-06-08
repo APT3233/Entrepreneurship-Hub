@@ -1483,13 +1483,14 @@ INSERT IGNORE INTO system_settings (setting_key, setting_value, data_type, modul
 ('allow_ai_feedback_suggestion', 'true', 'boolean', 'ai', 'Cho phép AI gợi ý feedback'),
 ('allow_student_view_ai_feedback', 'false', 'boolean', 'ai', 'Không cho sinh viên xem AI suggestion mặc định'),
 ('data_retention_days', '180', 'integer', 'ai', 'Số ngày giữ dữ liệu AI suggestion'),
-('provider_cmd_api_enabled', 'true', 'boolean', 'ai', 'Bật provider CMD API'),
-('provider_cmd_api_base_url', 'http://localhost:20128/v1', 'string', 'ai', 'CMD API base URL'),
-('provider_cmd_api_model', 'cmc/MiniMaxAI/MiniMax-M2.5', 'string', 'ai', 'CMD API model'),
-('provider_cmd_api_stream', 'true', 'boolean', 'ai', 'CMD API stream mode'),
+('provider_third_party_api_enabled', 'true', 'boolean', 'ai', 'Bật provider API bên thứ ba'),
+('provider_third_party_api_base_url', 'https://api.openai.com/v1', 'string', 'ai', 'Third-party API base URL'),
+('provider_third_party_api_model', 'gpt-4o-mini', 'string', 'ai', 'Third-party API model'),
+('provider_third_party_api_stream', 'true', 'boolean', 'ai', 'Third-party API stream mode'),
+('provider_third_party_api_api_key_required', 'true', 'boolean', 'ai', 'Third-party API có bắt buộc API key không'),
 ('provider_local_gemma_enabled', 'true', 'boolean', 'ai', 'Bật provider Local Ollama'),
 ('provider_local_gemma_base_url', 'http://ollama:11434/v1', 'string', 'ai', 'Local Ollama base URL'),
-('provider_local_gemma_model', 'qwen2.5:7b', 'string', 'ai', 'Local Ollama model'),
+('provider_local_gemma_model', 'gemma3:4b', 'string', 'ai', 'Local Ollama model'),
 ('provider_local_gemma_stream', 'true', 'boolean', 'ai', 'Local Ollama stream mode'),
 ('provider_local_gemma_api_key_required', 'false', 'boolean', 'ai', 'Local Ollama có bắt buộc API key không');
 
@@ -1636,6 +1637,279 @@ SELECT r.id, p.id FROM roles r JOIN permissions p ON p.permission_code IN (
   'mentor.profile.read', 'mentor.profile.update', 'mentor.expertise.manage',
   'mentor.availability.manage', 'mentor.document.manage'
 ) WHERE r.role_code = 'mentor';
+
+-- Module 5 Phases 1-2: Incubation startup pipeline foundation, RBAC, and seed data.
+
+CREATE TABLE IF NOT EXISTS startup_profiles (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    group_id BIGINT UNSIGNED NULL,
+    class_id INT UNSIGNED NULL,
+    semester_id INT UNSIGNED NULL,
+    subject_id INT UNSIGNED NULL,
+    startup_name VARCHAR(200) NOT NULL,
+    slug VARCHAR(220) NULL,
+    logo_url VARCHAR(500) NULL,
+    tagline VARCHAR(255) NULL,
+    short_description TEXT NULL,
+    full_description TEXT NULL,
+    problem_statement TEXT NULL,
+    solution_description TEXT NULL,
+    target_customers TEXT NULL,
+    business_model TEXT NULL,
+    product_stage ENUM('idea','prototype','mvp','beta','launched','revenue','company') NOT NULL DEFAULT 'idea',
+    startup_status ENUM('candidate','incubating','active','on_hold','graduated','archived','rejected') NOT NULL DEFAULT 'candidate',
+    category VARCHAR(100) NULL,
+    industry VARCHAR(150) NULL,
+    technology_tags JSON NULL,
+    website_url VARCHAR(500) NULL,
+    github_url VARCHAR(500) NULL,
+    demo_url VARCHAR(500) NULL,
+    pitch_deck_url VARCHAR(500) NULL,
+    video_url VARCHAR(500) NULL,
+    source ENUM('module3_selection','manual_nomination','showcase','alumni','other') NOT NULL DEFAULT 'manual_nomination',
+    selected_score DECIMAL(7,2) NULL,
+    selected_reason TEXT NULL,
+    selected_by BIGINT UNSIGNED NULL,
+    selected_at DATETIME NULL,
+    created_by BIGINT UNSIGNED NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,
+    deleted_at TIMESTAMP NULL,
+    active_group_key BIGINT UNSIGNED GENERATED ALWAYS AS (
+      CASE WHEN deleted_at IS NULL AND group_id IS NOT NULL AND startup_status NOT IN ('archived','rejected') THEN group_id ELSE NULL END
+    ) STORED,
+    UNIQUE KEY uk_startup_slug (slug),
+    UNIQUE KEY uk_startup_active_group (active_group_key),
+    INDEX idx_startup_group (group_id),
+    INDEX idx_startup_class (class_id),
+    INDEX idx_startup_semester (semester_id),
+    INDEX idx_startup_subject (subject_id),
+    INDEX idx_startup_status (startup_status),
+    INDEX idx_startup_product_stage (product_stage),
+    INDEX idx_startup_source (source),
+    INDEX idx_startup_selected_by (selected_by),
+    INDEX idx_startup_created_by (created_by),
+    CONSTRAINT fk_startup_profile_group FOREIGN KEY (group_id) REFERENCES `groups`(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_startup_profile_class FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE SET NULL,
+    CONSTRAINT fk_startup_profile_semester FOREIGN KEY (semester_id) REFERENCES semesters(id) ON DELETE SET NULL,
+    CONSTRAINT fk_startup_profile_subject FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE SET NULL,
+    CONSTRAINT fk_startup_profile_selected_by FOREIGN KEY (selected_by) REFERENCES users(id) ON DELETE SET NULL,
+    CONSTRAINT fk_startup_profile_created_by FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS startup_founders (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    startup_id BIGINT UNSIGNED NOT NULL,
+    student_id BIGINT UNSIGNED NULL,
+    user_id BIGINT UNSIGNED NULL,
+    full_name VARCHAR(150) NOT NULL,
+    email VARCHAR(150) NULL,
+    phone VARCHAR(20) NULL,
+    role_title VARCHAR(150) NULL,
+    founder_role ENUM('founder','co_founder','member','advisor','alumni_founder') NOT NULL DEFAULT 'member',
+    contribution TEXT NULL,
+    joined_at DATE NULL,
+    left_at DATE NULL,
+    status ENUM('active','inactive','left') NOT NULL DEFAULT 'active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,
+    INDEX idx_startup_founder_startup (startup_id),
+    INDEX idx_startup_founder_student (student_id),
+    INDEX idx_startup_founder_user (user_id),
+    INDEX idx_startup_founder_status (status),
+    CONSTRAINT fk_startup_founder_startup FOREIGN KEY (startup_id) REFERENCES startup_profiles(id) ON DELETE CASCADE,
+    CONSTRAINT fk_startup_founder_student FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE SET NULL,
+    CONSTRAINT fk_startup_founder_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+    CONSTRAINT chk_startup_founder_dates CHECK (joined_at IS NULL OR left_at IS NULL OR joined_at <= left_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS startup_pipeline_stages (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    code VARCHAR(80) NOT NULL,
+    name VARCHAR(150) NOT NULL,
+    description TEXT NULL,
+    order_index INT UNSIGNED NOT NULL DEFAULT 0,
+    is_final TINYINT(1) NOT NULL DEFAULT 0,
+    status ENUM('active','inactive') NOT NULL DEFAULT 'active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,
+    UNIQUE KEY uk_startup_stage_code (code),
+    INDEX idx_startup_stage_order (order_index),
+    INDEX idx_startup_stage_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS startup_pipeline_entries (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    startup_id BIGINT UNSIGNED NOT NULL,
+    current_stage_id BIGINT UNSIGNED NOT NULL,
+    previous_stage_id BIGINT UNSIGNED NULL,
+    status ENUM('active','on_hold','completed','archived') NOT NULL DEFAULT 'active',
+    entered_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    exited_at DATETIME NULL,
+    note TEXT NULL,
+    updated_by BIGINT UNSIGNED NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,
+    current_startup_key BIGINT UNSIGNED GENERATED ALWAYS AS (
+      CASE WHEN exited_at IS NULL AND status IN ('active','on_hold') THEN startup_id ELSE NULL END
+    ) STORED,
+    UNIQUE KEY uk_startup_current_pipeline_entry (current_startup_key),
+    INDEX idx_startup_entry_startup (startup_id),
+    INDEX idx_startup_entry_current_stage (current_stage_id),
+    INDEX idx_startup_entry_previous_stage (previous_stage_id),
+    INDEX idx_startup_entry_status (status),
+    INDEX idx_startup_entry_updated_by (updated_by),
+    CONSTRAINT fk_startup_entry_startup FOREIGN KEY (startup_id) REFERENCES startup_profiles(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_startup_entry_current_stage FOREIGN KEY (current_stage_id) REFERENCES startup_pipeline_stages(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_startup_entry_previous_stage FOREIGN KEY (previous_stage_id) REFERENCES startup_pipeline_stages(id) ON DELETE SET NULL,
+    CONSTRAINT fk_startup_entry_updated_by FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL,
+    CONSTRAINT chk_startup_entry_dates CHECK (exited_at IS NULL OR entered_at <= exited_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS startup_pipeline_history (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    startup_id BIGINT UNSIGNED NOT NULL,
+    from_stage_id BIGINT UNSIGNED NULL,
+    to_stage_id BIGINT UNSIGNED NOT NULL,
+    action ENUM('created','moved','on_hold','resumed','graduated','archived','rejected') NOT NULL,
+    reason TEXT NULL,
+    actor_id BIGINT UNSIGNED NULL,
+    old_values JSON NULL,
+    new_values JSON NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    INDEX idx_startup_history_startup (startup_id),
+    INDEX idx_startup_history_from_stage (from_stage_id),
+    INDEX idx_startup_history_to_stage (to_stage_id),
+    INDEX idx_startup_history_actor (actor_id),
+    CONSTRAINT fk_startup_history_startup FOREIGN KEY (startup_id) REFERENCES startup_profiles(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_startup_history_from_stage FOREIGN KEY (from_stage_id) REFERENCES startup_pipeline_stages(id) ON DELETE SET NULL,
+    CONSTRAINT fk_startup_history_to_stage FOREIGN KEY (to_stage_id) REFERENCES startup_pipeline_stages(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_startup_history_actor FOREIGN KEY (actor_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS startup_selection_reviews (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    group_id BIGINT UNSIGNED NULL,
+    startup_id BIGINT UNSIGNED NULL,
+    nominated_by BIGINT UNSIGNED NULL,
+    reviewed_by BIGINT UNSIGNED NULL,
+    source_type ENUM('evaluation_result','manual','showcase','mentor_recommendation','ai_suggestion') NOT NULL DEFAULT 'manual',
+    nomination_reason TEXT NOT NULL,
+    support_needed TEXT NULL,
+    proposed_stage_id BIGINT UNSIGNED NULL,
+    evaluation_summary TEXT NULL,
+    average_score DECIMAL(7,2) NULL,
+    potential_score DECIMAL(7,2) NULL,
+    review_status ENUM('pending','approved','rejected','needs_more_info') NOT NULL DEFAULT 'pending',
+    review_note TEXT NULL,
+    reviewed_at DATETIME NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,
+    INDEX idx_startup_review_group (group_id),
+    INDEX idx_startup_review_startup (startup_id),
+    INDEX idx_startup_review_status (review_status),
+    INDEX idx_startup_review_nominated_by (nominated_by),
+    INDEX idx_startup_review_reviewed_by (reviewed_by),
+    INDEX idx_startup_review_proposed_stage (proposed_stage_id),
+    CONSTRAINT fk_startup_review_group FOREIGN KEY (group_id) REFERENCES `groups`(id) ON DELETE SET NULL,
+    CONSTRAINT fk_startup_review_startup FOREIGN KEY (startup_id) REFERENCES startup_profiles(id) ON DELETE SET NULL,
+    CONSTRAINT fk_startup_review_nominated_by FOREIGN KEY (nominated_by) REFERENCES users(id) ON DELETE SET NULL,
+    CONSTRAINT fk_startup_review_reviewed_by FOREIGN KEY (reviewed_by) REFERENCES users(id) ON DELETE SET NULL,
+    CONSTRAINT fk_startup_review_proposed_stage FOREIGN KEY (proposed_stage_id) REFERENCES startup_pipeline_stages(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS startup_documents (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    startup_id BIGINT UNSIGNED NOT NULL,
+    document_type ENUM('pitch_deck','business_plan','demo_video','logo','certificate','report','other') NOT NULL DEFAULT 'other',
+    file_name VARCHAR(255) NOT NULL,
+    file_url VARCHAR(500) NOT NULL,
+    file_path VARCHAR(500) NULL,
+    mime_type VARCHAR(100) NULL,
+    file_size BIGINT UNSIGNED NULL,
+    uploaded_by BIGINT UNSIGNED NULL,
+    visibility ENUM('private','internal','public') NOT NULL DEFAULT 'internal',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    deleted_at TIMESTAMP NULL,
+    INDEX idx_startup_document_startup (startup_id),
+    INDEX idx_startup_document_type (document_type),
+    INDEX idx_startup_document_uploader (uploaded_by),
+    INDEX idx_startup_document_visibility (visibility),
+    INDEX idx_startup_document_file_path (file_path),
+    CONSTRAINT fk_startup_document_startup FOREIGN KEY (startup_id) REFERENCES startup_profiles(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_startup_document_uploader FOREIGN KEY (uploaded_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS startup_milestones (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    startup_id BIGINT UNSIGNED NOT NULL,
+    title VARCHAR(200) NOT NULL,
+    description TEXT NULL,
+    milestone_type ENUM('product','business','team','revenue','funding','award','partnership','legal','other') NOT NULL DEFAULT 'other',
+    milestone_date DATE NOT NULL,
+    evidence_url VARCHAR(500) NULL,
+    created_by BIGINT UNSIGNED NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,
+    deleted_at TIMESTAMP NULL,
+    INDEX idx_startup_milestone_startup (startup_id),
+    INDEX idx_startup_milestone_type (milestone_type),
+    INDEX idx_startup_milestone_date (milestone_date),
+    INDEX idx_startup_milestone_created_by (created_by),
+    CONSTRAINT fk_startup_milestone_startup FOREIGN KEY (startup_id) REFERENCES startup_profiles(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_startup_milestone_created_by FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT IGNORE INTO startup_pipeline_stages (code, name, description, order_index, is_final, status) VALUES
+('idea', 'Idea', 'Problem and solution are being framed.', 10, 0, 'active'),
+('prototype', 'Prototype', 'Early product prototype is available.', 20, 0, 'active'),
+('mvp', 'MVP', 'Minimum viable product is being validated.', 30, 0, 'active'),
+('market_validation', 'Market Validation', 'Customer discovery and market validation are in progress.', 40, 0, 'active'),
+('revenue', 'Revenue', 'Startup has early paying customers or revenue signals.', 50, 0, 'active'),
+('company_registered', 'Company Registered', 'Team has registered a company outside E-HUB tracking.', 60, 0, 'active'),
+('incubating', 'Incubating', 'Startup is receiving incubation support.', 70, 0, 'active'),
+('graduated', 'Graduated', 'Startup graduated from the incubation pipeline.', 80, 1, 'active'),
+('archived', 'Archived', 'Startup is archived for historical tracking.', 90, 1, 'active');
+
+INSERT IGNORE INTO permissions (permission_code, permission_name, module, description) VALUES
+('incubation.startup.read', 'Read startup profiles', 'incubation', 'Read incubation startup profiles'),
+('incubation.startup.create', 'Create startup profiles', 'incubation', 'Create incubation startup profiles'),
+('incubation.startup.update', 'Update startup profiles', 'incubation', 'Update incubation startup profiles'),
+('incubation.startup.delete', 'Delete startup profiles', 'incubation', 'Soft delete incubation startup profiles'),
+('incubation.startup.review', 'Review startup profiles', 'incubation', 'Review startup profile status and selection'),
+('incubation.pipeline.read', 'Read startup pipeline', 'incubation', 'Read startup pipeline data'),
+('incubation.pipeline.manage', 'Manage startup pipeline', 'incubation', 'Manage startup pipeline stages and movement'),
+('incubation.document.manage', 'Manage startup documents', 'incubation', 'Manage private startup documents'),
+('incubation.milestone.manage', 'Manage startup milestones', 'incubation', 'Manage startup milestones'),
+('incubation.selection.review', 'Review startup selection', 'incubation', 'Approve or reject startup selection reviews'),
+('incubation.analytics.read', 'Read incubation analytics', 'incubation', 'Read incubation analytics'),
+('incubation.showcase.manage', 'Manage incubation showcase', 'incubation', 'Manage incubation showcase records');
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p ON p.module = 'incubation'
+WHERE r.role_code = 'admin';
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p ON p.permission_code IN (
+  'incubation.startup.read', 'incubation.startup.review', 'incubation.pipeline.read',
+  'incubation.pipeline.manage', 'incubation.document.manage', 'incubation.milestone.manage',
+  'incubation.selection.review', 'incubation.analytics.read'
+) WHERE r.role_code = 'department_head';
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p ON p.permission_code IN (
+  'incubation.startup.read', 'incubation.startup.create', 'incubation.pipeline.read'
+) WHERE r.role_code = 'lecturer';
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p ON p.permission_code IN (
+  'incubation.startup.read'
+) WHERE r.role_code = 'mentor';
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p ON p.permission_code IN (
+  'incubation.startup.read', 'incubation.startup.update', 'incubation.document.manage', 'incubation.milestone.manage'
+) WHERE r.role_code = 'student';
 
 INSERT IGNORE INTO mentor_expertise_areas (code, name, category, status) VALUES
 ('business_model', 'Business Model', 'business', 'active'),
@@ -2011,3 +2285,465 @@ INSERT IGNORE INTO role_permissions (role_id, permission_id)
 SELECT r.id, p.id FROM roles r JOIN permissions p ON p.permission_code IN (
   'mentor.dashboard.read', 'mentor.analytics.read'
 ) WHERE r.role_code = 'mentor';
+
+-- Module 5 Phases 3-4: startup progress/support journey and ecosystem events.
+
+CREATE TABLE IF NOT EXISTS startup_progress_updates (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    startup_id BIGINT UNSIGNED NOT NULL,
+    update_title VARCHAR(200) NOT NULL,
+    update_content TEXT NOT NULL,
+    update_type ENUM('product','business','customer','revenue','team','mentor','market','legal','other') NOT NULL DEFAULT 'other',
+    progress_date DATE NOT NULL,
+    visibility ENUM('private','internal','public') NOT NULL DEFAULT 'internal',
+    created_by BIGINT UNSIGNED NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,
+    deleted_at TIMESTAMP NULL,
+    INDEX idx_startup_progress_startup (startup_id),
+    INDEX idx_startup_progress_type (update_type),
+    INDEX idx_startup_progress_date (progress_date),
+    INDEX idx_startup_progress_visibility (visibility),
+    INDEX idx_startup_progress_created_by (created_by),
+    CONSTRAINT fk_startup_progress_startup FOREIGN KEY (startup_id) REFERENCES startup_profiles(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_startup_progress_created_by FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS startup_metrics_snapshots (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    startup_id BIGINT UNSIGNED NOT NULL,
+    snapshot_date DATE NOT NULL,
+    product_stage ENUM('idea','prototype','mvp','beta','launched','revenue','company') NOT NULL DEFAULT 'idea',
+    users_count INT UNSIGNED NULL,
+    customers_count INT UNSIGNED NULL,
+    revenue_amount DECIMAL(15,2) NULL,
+    revenue_currency VARCHAR(10) NOT NULL DEFAULT 'VND',
+    team_size INT UNSIGNED NULL,
+    mvp_completed TINYINT(1) NOT NULL DEFAULT 0,
+    market_validated TINYINT(1) NOT NULL DEFAULT 0,
+    has_demo TINYINT(1) NOT NULL DEFAULT 0,
+    has_pitch_deck TINYINT(1) NOT NULL DEFAULT 0,
+    has_business_model TINYINT(1) NOT NULL DEFAULT 0,
+    note TEXT NULL,
+    created_by BIGINT UNSIGNED NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    INDEX idx_startup_metrics_startup (startup_id),
+    INDEX idx_startup_metrics_date (snapshot_date),
+    INDEX idx_startup_metrics_stage (product_stage),
+    INDEX idx_startup_metrics_created_by (created_by),
+    CONSTRAINT fk_startup_metrics_startup FOREIGN KEY (startup_id) REFERENCES startup_profiles(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_startup_metrics_created_by FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+    CONSTRAINT chk_startup_metrics_revenue CHECK (revenue_amount IS NULL OR revenue_amount >= 0)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS startup_support_needs (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    startup_id BIGINT UNSIGNED NOT NULL,
+    need_type ENUM('business','technical','mentor','funding_connection','legal_advice','marketing','product','other') NOT NULL DEFAULT 'other',
+    title VARCHAR(200) NOT NULL,
+    description TEXT NOT NULL,
+    priority ENUM('low','normal','high','urgent') NOT NULL DEFAULT 'normal',
+    status ENUM('open','in_progress','resolved','cancelled') NOT NULL DEFAULT 'open',
+    requested_by BIGINT UNSIGNED NULL,
+    assigned_to BIGINT UNSIGNED NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,
+    resolved_at DATETIME NULL,
+    INDEX idx_startup_support_startup (startup_id),
+    INDEX idx_startup_support_type (need_type),
+    INDEX idx_startup_support_status_priority (status, priority),
+    INDEX idx_startup_support_requested_by (requested_by),
+    INDEX idx_startup_support_assigned_to (assigned_to),
+    CONSTRAINT fk_startup_support_startup FOREIGN KEY (startup_id) REFERENCES startup_profiles(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_startup_support_requested_by FOREIGN KEY (requested_by) REFERENCES users(id) ON DELETE SET NULL,
+    CONSTRAINT fk_startup_support_assigned_to FOREIGN KEY (assigned_to) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS startup_support_activities (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    startup_id BIGINT UNSIGNED NOT NULL,
+    support_need_id BIGINT UNSIGNED NULL,
+    activity_type ENUM('mentor_session','workshop','partner_intro','investor_intro','review_meeting','demo_day','other') NOT NULL DEFAULT 'other',
+    title VARCHAR(200) NOT NULL,
+    description TEXT NULL,
+    activity_date DATE NOT NULL,
+    related_mentor_id BIGINT UNSIGNED NULL,
+    related_partner_id BIGINT UNSIGNED NULL,
+    created_by BIGINT UNSIGNED NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,
+    INDEX idx_startup_activity_startup (startup_id),
+    INDEX idx_startup_activity_need (support_need_id),
+    INDEX idx_startup_activity_type (activity_type),
+    INDEX idx_startup_activity_date (activity_date),
+    INDEX idx_startup_activity_mentor (related_mentor_id),
+    INDEX idx_startup_activity_partner (related_partner_id),
+    INDEX idx_startup_activity_created_by (created_by),
+    CONSTRAINT fk_startup_activity_startup FOREIGN KEY (startup_id) REFERENCES startup_profiles(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_startup_activity_need FOREIGN KEY (support_need_id) REFERENCES startup_support_needs(id) ON DELETE SET NULL,
+    CONSTRAINT fk_startup_activity_mentor FOREIGN KEY (related_mentor_id) REFERENCES mentor_profiles(id) ON DELETE SET NULL,
+    CONSTRAINT fk_startup_activity_created_by FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS startup_tags (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    startup_id BIGINT UNSIGNED NOT NULL,
+    tag VARCHAR(80) NOT NULL,
+    tag_type ENUM('industry','technology','business_model','impact','status','custom') NOT NULL DEFAULT 'custom',
+    created_by BIGINT UNSIGNED NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    UNIQUE KEY uk_startup_tag (startup_id, tag, tag_type),
+    INDEX idx_startup_tag_startup (startup_id),
+    INDEX idx_startup_tag_type (tag_type),
+    INDEX idx_startup_tag_created_by (created_by),
+    CONSTRAINT fk_startup_tag_startup FOREIGN KEY (startup_id) REFERENCES startup_profiles(id) ON DELETE CASCADE,
+    CONSTRAINT fk_startup_tag_created_by FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS ecosystem_events (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    event_code VARCHAR(80) NULL,
+    event_name VARCHAR(200) NOT NULL,
+    event_type ENUM('demo_day','pitching_day','showcase','workshop','networking','competition','other') NOT NULL DEFAULT 'other',
+    description TEXT NULL,
+    start_at DATETIME NOT NULL,
+    end_at DATETIME NULL,
+    location VARCHAR(255) NULL,
+    meeting_link VARCHAR(500) NULL,
+    visibility ENUM('private','internal','public') NOT NULL DEFAULT 'internal',
+    status ENUM('draft','published','completed','cancelled','archived') NOT NULL DEFAULT 'draft',
+    created_by BIGINT UNSIGNED NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,
+    deleted_at TIMESTAMP NULL,
+    UNIQUE KEY uk_ecosystem_event_code (event_code),
+    INDEX idx_ecosystem_event_type (event_type),
+    INDEX idx_ecosystem_event_status (status),
+    INDEX idx_ecosystem_event_visibility (visibility),
+    INDEX idx_ecosystem_event_start (start_at),
+    INDEX idx_ecosystem_event_created_by (created_by),
+    CONSTRAINT fk_ecosystem_event_created_by FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+    CONSTRAINT chk_ecosystem_event_time CHECK (end_at IS NULL OR start_at <= end_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS event_startup_participants (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    event_id BIGINT UNSIGNED NOT NULL,
+    startup_id BIGINT UNSIGNED NOT NULL,
+    pitch_order INT UNSIGNED NULL,
+    booth_location VARCHAR(150) NULL,
+    participation_status ENUM('invited','confirmed','presented','absent','withdrawn') NOT NULL DEFAULT 'invited',
+    pitch_deck_url VARCHAR(500) NULL,
+    demo_url VARCHAR(500) NULL,
+    note TEXT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,
+    UNIQUE KEY uk_event_startup (event_id, startup_id),
+    INDEX idx_event_participant_event (event_id),
+    INDEX idx_event_participant_startup (startup_id),
+    INDEX idx_event_participant_status (participation_status),
+    CONSTRAINT fk_event_participant_event FOREIGN KEY (event_id) REFERENCES ecosystem_events(id) ON DELETE CASCADE,
+    CONSTRAINT fk_event_participant_startup FOREIGN KEY (startup_id) REFERENCES startup_profiles(id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS event_judges (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    event_id BIGINT UNSIGNED NOT NULL,
+    user_id BIGINT UNSIGNED NULL,
+    mentor_id BIGINT UNSIGNED NULL,
+    full_name VARCHAR(150) NOT NULL,
+    email VARCHAR(150) NULL,
+    organization VARCHAR(255) NULL,
+    role_title VARCHAR(150) NULL,
+    judge_type ENUM('lecturer','mentor','partner','investor','guest') NOT NULL DEFAULT 'guest',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    INDEX idx_event_judge_event (event_id),
+    INDEX idx_event_judge_user (user_id),
+    INDEX idx_event_judge_mentor (mentor_id),
+    INDEX idx_event_judge_type (judge_type),
+    CONSTRAINT fk_event_judge_event FOREIGN KEY (event_id) REFERENCES ecosystem_events(id) ON DELETE CASCADE,
+    CONSTRAINT fk_event_judge_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+    CONSTRAINT fk_event_judge_mentor FOREIGN KEY (mentor_id) REFERENCES mentor_profiles(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS event_feedbacks (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    event_id BIGINT UNSIGNED NOT NULL,
+    startup_id BIGINT UNSIGNED NOT NULL,
+    judge_id BIGINT UNSIGNED NULL,
+    from_user_id BIGINT UNSIGNED NULL,
+    rating TINYINT UNSIGNED NULL,
+    feedback TEXT NULL,
+    strengths TEXT NULL,
+    improvements TEXT NULL,
+    interest_level ENUM('none','low','medium','high','follow_up') NOT NULL DEFAULT 'none',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,
+    INDEX idx_event_feedback_event (event_id),
+    INDEX idx_event_feedback_startup (startup_id),
+    INDEX idx_event_feedback_judge (judge_id),
+    INDEX idx_event_feedback_from_user (from_user_id),
+    CONSTRAINT fk_event_feedback_event FOREIGN KEY (event_id) REFERENCES ecosystem_events(id) ON DELETE CASCADE,
+    CONSTRAINT fk_event_feedback_startup FOREIGN KEY (startup_id) REFERENCES startup_profiles(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_event_feedback_judge FOREIGN KEY (judge_id) REFERENCES event_judges(id) ON DELETE SET NULL,
+    CONSTRAINT fk_event_feedback_from_user FOREIGN KEY (from_user_id) REFERENCES users(id) ON DELETE SET NULL,
+    CONSTRAINT chk_event_feedback_rating CHECK (rating IS NULL OR rating BETWEEN 1 AND 5)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS startup_awards (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    startup_id BIGINT UNSIGNED NOT NULL,
+    event_id BIGINT UNSIGNED NULL,
+    award_name VARCHAR(200) NOT NULL,
+    award_type ENUM('winner','runner_up','best_pitch','best_technology','best_business_model','social_impact','other') NOT NULL DEFAULT 'other',
+    description TEXT NULL,
+    awarded_at DATETIME NOT NULL,
+    evidence_url VARCHAR(500) NULL,
+    created_by BIGINT UNSIGNED NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    INDEX idx_startup_award_startup (startup_id),
+    INDEX idx_startup_award_event (event_id),
+    INDEX idx_startup_award_type (award_type),
+    INDEX idx_startup_award_created_by (created_by),
+    CONSTRAINT fk_startup_award_startup FOREIGN KEY (startup_id) REFERENCES startup_profiles(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_startup_award_event FOREIGN KEY (event_id) REFERENCES ecosystem_events(id) ON DELETE SET NULL,
+    CONSTRAINT fk_startup_award_created_by FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS event_media (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    event_id BIGINT UNSIGNED NOT NULL,
+    startup_id BIGINT UNSIGNED NULL,
+    media_type ENUM('image','video','document','link','other') NOT NULL DEFAULT 'other',
+    title VARCHAR(200) NULL,
+    file_url VARCHAR(500) NULL,
+    external_url VARCHAR(500) NULL,
+    visibility ENUM('private','internal','public') NOT NULL DEFAULT 'internal',
+    uploaded_by BIGINT UNSIGNED NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    deleted_at TIMESTAMP NULL,
+    INDEX idx_event_media_event (event_id),
+    INDEX idx_event_media_startup (startup_id),
+    INDEX idx_event_media_type (media_type),
+    INDEX idx_event_media_visibility (visibility),
+    INDEX idx_event_media_uploaded_by (uploaded_by),
+    CONSTRAINT fk_event_media_event FOREIGN KEY (event_id) REFERENCES ecosystem_events(id) ON DELETE CASCADE,
+    CONSTRAINT fk_event_media_startup FOREIGN KEY (startup_id) REFERENCES startup_profiles(id) ON DELETE SET NULL,
+    CONSTRAINT fk_event_media_uploaded_by FOREIGN KEY (uploaded_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT IGNORE INTO permissions (permission_code, permission_name, module, description) VALUES
+('incubation.progress.read', 'Read startup progress', 'incubation', 'Read startup progress updates'),
+('incubation.progress.manage', 'Manage startup progress', 'incubation', 'Create and manage startup progress updates'),
+('incubation.metrics.read', 'Read startup metrics', 'incubation', 'Read self-reported startup metrics'),
+('incubation.metrics.manage', 'Manage startup metrics', 'incubation', 'Create self-reported startup metrics snapshots'),
+('incubation.support.read', 'Read startup support journey', 'incubation', 'Read startup support needs and activities'),
+('incubation.support.manage', 'Manage startup support journey', 'incubation', 'Manage startup support needs and activities'),
+('incubation.event.read', 'Read ecosystem events', 'incubation', 'Read ecosystem events and showcase data'),
+('incubation.event.manage', 'Manage ecosystem events', 'incubation', 'Manage demo days, showcases, judges, feedback, awards, and media');
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p ON p.module = 'incubation'
+WHERE r.role_code = 'admin';
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p ON p.permission_code IN (
+  'incubation.progress.read', 'incubation.progress.manage',
+  'incubation.metrics.read', 'incubation.metrics.manage',
+  'incubation.support.read', 'incubation.support.manage',
+  'incubation.event.read', 'incubation.event.manage'
+) WHERE r.role_code = 'department_head';
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p ON p.permission_code IN (
+  'incubation.progress.read', 'incubation.metrics.read', 'incubation.support.read',
+  'incubation.event.read'
+) WHERE r.role_code = 'lecturer';
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p ON p.permission_code IN (
+  'incubation.progress.read', 'incubation.support.read', 'incubation.event.read'
+) WHERE r.role_code = 'mentor';
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p ON p.permission_code IN (
+  'incubation.progress.read', 'incubation.progress.manage',
+  'incubation.metrics.read', 'incubation.metrics.manage',
+  'incubation.support.read', 'incubation.support.manage'
+) WHERE r.role_code = 'student';
+
+-- Module 5 Phases 5-6: startup alumni, partners, opportunities, and analytics permissions.
+
+CREATE TABLE IF NOT EXISTS startup_alumni_profiles (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT UNSIGNED NULL,
+    student_id BIGINT UNSIGNED NULL,
+    full_name VARCHAR(150) NOT NULL,
+    email VARCHAR(150) NULL,
+    phone VARCHAR(20) NULL,
+    graduation_year INT UNSIGNED NULL,
+    major VARCHAR(150) NULL,
+    campus VARCHAR(100) NULL,
+    current_position VARCHAR(150) NULL,
+    current_company VARCHAR(255) NULL,
+    linkedin_url VARCHAR(500) NULL,
+    bio TEXT NULL,
+    status ENUM('active','inactive','archived') NOT NULL DEFAULT 'active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,
+    deleted_at TIMESTAMP NULL,
+    INDEX idx_startup_alumni_user (user_id),
+    INDEX idx_startup_alumni_student (student_id),
+    INDEX idx_startup_alumni_status (status),
+    INDEX idx_startup_alumni_year (graduation_year),
+    CONSTRAINT fk_startup_alumni_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+    CONSTRAINT fk_startup_alumni_student FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS alumni_startup_links (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    alumni_id BIGINT UNSIGNED NOT NULL,
+    startup_id BIGINT UNSIGNED NOT NULL,
+    role ENUM('founder','co_founder','member','advisor','mentor','investor','partner') NOT NULL DEFAULT 'founder',
+    start_date DATE NULL,
+    end_date DATE NULL,
+    status ENUM('active','inactive','past') NOT NULL DEFAULT 'active',
+    note TEXT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,
+    UNIQUE KEY uk_alumni_startup_role (alumni_id, startup_id, role),
+    INDEX idx_alumni_startup_alumni (alumni_id),
+    INDEX idx_alumni_startup_startup (startup_id),
+    INDEX idx_alumni_startup_status (status),
+    CONSTRAINT fk_alumni_startup_alumni FOREIGN KEY (alumni_id) REFERENCES startup_alumni_profiles(id) ON DELETE CASCADE,
+    CONSTRAINT fk_alumni_startup_startup FOREIGN KEY (startup_id) REFERENCES startup_profiles(id) ON DELETE RESTRICT,
+    CONSTRAINT chk_alumni_startup_dates CHECK (start_date IS NULL OR end_date IS NULL OR start_date <= end_date)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS ecosystem_partners (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    partner_name VARCHAR(200) NOT NULL,
+    partner_type ENUM('company','incubator','accelerator','investor_fund','angel_investor','university','government','ngo','community','other') NOT NULL DEFAULT 'other',
+    contact_person VARCHAR(150) NULL,
+    contact_email VARCHAR(150) NULL,
+    contact_phone VARCHAR(20) NULL,
+    website_url VARCHAR(500) NULL,
+    description TEXT NULL,
+    focus_areas JSON NULL,
+    status ENUM('active','inactive','archived') NOT NULL DEFAULT 'active',
+    visibility ENUM('private','internal','public') NOT NULL DEFAULT 'internal',
+    created_by BIGINT UNSIGNED NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,
+    deleted_at TIMESTAMP NULL,
+    INDEX idx_ecosystem_partner_type (partner_type),
+    INDEX idx_ecosystem_partner_status (status),
+    INDEX idx_ecosystem_partner_visibility (visibility),
+    INDEX idx_ecosystem_partner_created_by (created_by),
+    CONSTRAINT fk_ecosystem_partner_created_by FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS startup_partner_connections (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    startup_id BIGINT UNSIGNED NOT NULL,
+    partner_id BIGINT UNSIGNED NOT NULL,
+    connection_type ENUM('introduction','mentoring','pilot','customer','investor_interest','incubation_program','partnership','other') NOT NULL DEFAULT 'other',
+    status ENUM('proposed','contacted','in_progress','successful','rejected','cancelled') NOT NULL DEFAULT 'proposed',
+    introduced_by BIGINT UNSIGNED NULL,
+    contact_date DATE NULL,
+    follow_up_date DATE NULL,
+    note TEXT NULL,
+    outcome TEXT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,
+    INDEX idx_startup_partner_startup (startup_id),
+    INDEX idx_startup_partner_partner (partner_id),
+    INDEX idx_startup_partner_status (status),
+    INDEX idx_startup_partner_follow_up (follow_up_date),
+    INDEX idx_startup_partner_intro_by (introduced_by),
+    CONSTRAINT fk_startup_partner_startup FOREIGN KEY (startup_id) REFERENCES startup_profiles(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_startup_partner_partner FOREIGN KEY (partner_id) REFERENCES ecosystem_partners(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_startup_partner_intro_by FOREIGN KEY (introduced_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS ecosystem_opportunities (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    partner_id BIGINT UNSIGNED NULL,
+    opportunity_type ENUM('incubation_program','grant','competition','workshop','mentor_session','pilot_program','investor_meeting','other') NOT NULL DEFAULT 'other',
+    title VARCHAR(200) NOT NULL,
+    description TEXT NULL,
+    eligibility TEXT NULL,
+    deadline DATETIME NULL,
+    external_url VARCHAR(500) NULL,
+    status ENUM('draft','open','closed','archived') NOT NULL DEFAULT 'draft',
+    visibility ENUM('private','internal','public') NOT NULL DEFAULT 'internal',
+    created_by BIGINT UNSIGNED NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,
+    INDEX idx_ecosystem_opp_partner (partner_id),
+    INDEX idx_ecosystem_opp_type (opportunity_type),
+    INDEX idx_ecosystem_opp_status (status),
+    INDEX idx_ecosystem_opp_visibility (visibility),
+    INDEX idx_ecosystem_opp_deadline (deadline),
+    INDEX idx_ecosystem_opp_created_by (created_by),
+    CONSTRAINT fk_ecosystem_opp_partner FOREIGN KEY (partner_id) REFERENCES ecosystem_partners(id) ON DELETE SET NULL,
+    CONSTRAINT fk_ecosystem_opp_created_by FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS startup_opportunity_applications (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    startup_id BIGINT UNSIGNED NOT NULL,
+    opportunity_id BIGINT UNSIGNED NOT NULL,
+    applied_by BIGINT UNSIGNED NULL,
+    application_status ENUM('interested','applied','shortlisted','accepted','rejected','withdrawn') NOT NULL DEFAULT 'interested',
+    application_note TEXT NULL,
+    submitted_at DATETIME NULL,
+    result_note TEXT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,
+    UNIQUE KEY uk_startup_opportunity_application (startup_id, opportunity_id),
+    INDEX idx_startup_opp_app_startup (startup_id),
+    INDEX idx_startup_opp_app_opportunity (opportunity_id),
+    INDEX idx_startup_opp_app_status (application_status),
+    INDEX idx_startup_opp_app_applied_by (applied_by),
+    CONSTRAINT fk_startup_opp_app_startup FOREIGN KEY (startup_id) REFERENCES startup_profiles(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_startup_opp_app_opportunity FOREIGN KEY (opportunity_id) REFERENCES ecosystem_opportunities(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_startup_opp_app_applied_by FOREIGN KEY (applied_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT IGNORE INTO permissions (permission_code, permission_name, module, description) VALUES
+('incubation.ecosystem.read', 'Read incubation ecosystem', 'incubation', 'Read alumni, partners, connections, and opportunities'),
+('incubation.ecosystem.manage', 'Manage incubation ecosystem', 'incubation', 'Manage alumni, partners, connections, and opportunities'),
+('incubation.opportunity.read', 'Read ecosystem opportunities', 'incubation', 'Read ecosystem opportunities'),
+('incubation.opportunity.manage', 'Manage ecosystem opportunities', 'incubation', 'Manage ecosystem opportunities and applications'),
+('incubation.analytics.admin_read', 'Read all incubation analytics', 'incubation', 'Read all incubation analytics dashboards'),
+('incubation.reports.export', 'Export incubation reports', 'incubation', 'Export incubation reports'),
+('incubation.ecosystem_health.read', 'Read ecosystem health', 'incubation', 'Read incubation ecosystem health warnings');
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p ON p.module = 'incubation'
+WHERE r.role_code = 'admin';
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p ON p.permission_code IN (
+  'incubation.ecosystem.read', 'incubation.ecosystem.manage',
+  'incubation.opportunity.read', 'incubation.opportunity.manage',
+  'incubation.analytics.read', 'incubation.analytics.admin_read',
+  'incubation.reports.export', 'incubation.ecosystem_health.read'
+) WHERE r.role_code = 'department_head';
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p ON p.permission_code IN (
+  'incubation.ecosystem.read', 'incubation.opportunity.read',
+  'incubation.analytics.read', 'incubation.ecosystem_health.read'
+) WHERE r.role_code = 'lecturer';
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p ON p.permission_code IN (
+  'incubation.ecosystem.read', 'incubation.opportunity.read'
+) WHERE r.role_code = 'mentor';
+
+INSERT IGNORE INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r JOIN permissions p ON p.permission_code IN (
+  'incubation.opportunity.read'
+) WHERE r.role_code = 'student';

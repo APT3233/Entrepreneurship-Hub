@@ -9,6 +9,7 @@ const MentorAvailabilityPage = React.lazy(() => import("@/pages/mentor/availabil
 const MentorDocumentsPage = React.lazy(() => import("@/pages/mentor/documents"));
 const MentorAssignmentsPage = React.lazy(() => import("@/pages/mentor/assignments"));
 const MentorSessionsPage = React.lazy(() => import("@/pages/mentor/sessions"));
+const MentorStartupDetailPage = React.lazy(() => import("@/pages/mentor/startups/StartupDetailPage"));
 const SessionDetailPage = React.lazy(() => import("@/pages/mentoring/SessionDetailPage"));
 
 export default function init(routes) {
@@ -25,6 +26,8 @@ export default function init(routes) {
       { path: "assignments", element: <MentorAssignmentsPage /> },
       { path: "sessions", element: <MentorSessionsPage /> },
       { path: "sessions/:id", element: <SessionDetailPage /> },
+      { path: "startups/:id", element: <MentorStartupDetailPage /> },
+      { path: "startups/:id/progress", element: <MentorStartupDetailPage /> },
     ],
   });
 }

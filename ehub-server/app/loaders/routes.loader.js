@@ -16,6 +16,7 @@ import { EvaluationModule } from "app/modules/evaluation/index.js";
 import { AnalyticsModule } from "app/modules/analytics/index.js";
 import { AiEvaluationModule } from "app/modules/aiEvaluation/index.js";
 import { MentorModule } from "app/modules/mentors/index.js";
+import { IncubationModule } from "app/modules/incubation/index.js";
 import { AdminModule } from "app/modules/admin/index.js";
 
 const MODULES = [
@@ -35,6 +36,7 @@ const MODULES = [
   AnalyticsModule,
   AiEvaluationModule,
   MentorModule,
+  IncubationModule,
   AdminModule,
 ];
 

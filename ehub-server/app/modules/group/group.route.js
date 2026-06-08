@@ -34,6 +34,7 @@ export const createGroupRouter = (container) => {
   router.use("/invites", createGroupInviteRouter(container));
 
   router.get("/my-groups", authenticate, groupController.getMyGroups);
+  router.get("/available-mentors", authenticate, roleGuard("admin", "department_head", "lecturer"), groupController.availableMentors);
   router.get("/", authenticate, roleGuard("admin", "department_head", "lecturer"), validateRequest(listGroupSchema), groupController.list);
   router.get("/:id", authenticate, roleGuard("admin", "department_head", "lecturer"), validateRequest(groupParamsSchema), groupController.getById);
 

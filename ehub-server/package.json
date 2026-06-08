@@ -7,6 +7,8 @@
   "scripts": {
     "dev:win": "Get-Content .env.win | % { if ($_ -match '^(.*?)=(.*)$') { set-item env:$($matches[1]) $matches[2] } }; nodemon server.js",
     "dev:linux": "[ -f ./.env.linux ] && . ./.env.linux; nodemon server.js",
+    "worker:mail:linux": "[ -f ./.env.linux ] && . ./.env.linux; node app/workers/mailOutbox.entry.js",
+    "worker:ai:linux": "[ -f ./.env.linux ] && . ./.env.linux; node app/workers/aiEvaluation.entry.js",
     "docker:up": "docker compose -f docker/docker-compose.yml up -d",
     "docker:down": "docker compose -f docker/docker-compose.yml down",
     "docker:logs": "docker compose -f docker/docker-compose.yml logs -f"
@@ -15,6 +17,7 @@
     "@napi-rs/canvas": "^0.1.100",
     "awilix": "^13.0.0",
     "bcryptjs": "^3.0.3",
+    "bullmq": "^5.78.0",
     "compression": "^1.8.1",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",

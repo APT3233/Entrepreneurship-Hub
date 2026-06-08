@@ -23,6 +23,8 @@ const RequestMentorPage = React.lazy(() => import("@/pages/lecture/mentoring/Req
 const GroupMentorMatchingPage = React.lazy(() => import("@/pages/lecture/mentoring/GroupMentorMatchingPage"));
 const LecturerMentorAnalyticsPage = React.lazy(() => import("@/pages/lecture/mentoring/LecturerMentorAnalyticsPage"));
 const SessionDetailPage = React.lazy(() => import("@/pages/mentoring/SessionDetailPage"));
+const LecturerNominationsPage = React.lazy(() => import("@/pages/lecture/incubation/NominationsPage"));
+const LecturerNominateStartupPage = React.lazy(() => import("@/pages/lecture/incubation/NominateStartupPage"));
 
 export default function init(routes) {
   const route = {
@@ -52,6 +54,8 @@ export default function init(routes) {
       { path: "classes/:classId/mentoring-sessions", element: <ClassMentoringSessionsPage /> },
       { path: "groups/:groupId/request-mentor", element: <RequestMentorPage /> },
       { path: "groups/:groupId/mentor-matching", element: <GroupMentorMatchingPage /> },
+      { path: "incubation/nominations", element: <LecturerNominationsPage /> },
+      { path: "groups/:groupId/nominate-startup", element: <LecturerNominateStartupPage /> },
       { path: "mentoring/sessions/:id", element: <SessionDetailPage /> },
       { path: "schedule", element: <SchedulePage /> },
       { path: "profile", element: <ProfilePage /> },

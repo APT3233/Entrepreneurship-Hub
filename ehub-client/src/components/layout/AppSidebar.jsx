@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import {
   Home,
   BookOpen,
@@ -11,6 +11,7 @@ import {
   Calendar,
   PinIcon,
   PinOff,
+  Rocket,
 } from "lucide-react";
 import { GraduationCapIcon } from "@/components/icons/education";
 import { useTranslation } from "@/context/TranslationContext";
@@ -28,6 +29,7 @@ export default function AppSidebar({ items, subtitle }) {
     { label: t("lecturer.analytics"), icon: BarChart3, path: "/lecturer/analytics" },
     { label: t("lecturer.mentoring"), icon: ClipboardCheck, path: "/lecturer/mentoring/sessions" },
     { label: t("lecturer.mentorAnalytics"), icon: BarChart3, path: "/lecturer/mentor-analytics" },
+    { label: t("lecturer.incubation"), icon: Rocket, path: "/lecturer/incubation/nominations" },
     { label: t("lecturer.schedule"), icon: Calendar, path: "/lecturer/schedule" },
   ], [t]);
 
@@ -37,6 +39,32 @@ export default function AppSidebar({ items, subtitle }) {
   const [pinned, setPinned] = useState(() => {
     return localStorage.getItem("sidebar_pinned") === "true";
   });
+  const location = useLocation();
+
+  // Items with query params (e.g. ?tab=expertise) need an exact pathname+search match.
+  // Plain-path siblings on the same pathname must not stay active when a query tab is selected.
+  const isNavItemActive = (item, index) => {
+    const itemUrl = new URL(item.path, "http://x");
+    const hasQuery = itemUrl.search !== "";
+    if (hasQuery) {
+      return location.pathname === itemUrl.pathname && location.search === itemUrl.search;
+    }
+
+    const querySiblingActive = navItems.some((other) => {
+      if (other.path === item.path) return false;
+      const otherUrl = new URL(other.path, "http://x");
+      return (
+        otherUrl.pathname === item.path
+        && otherUrl.search !== ""
+        && location.pathname === otherUrl.pathname
+        && location.search === otherUrl.search
+      );
+    });
+    if (querySiblingActive) return false;
+
+    if (index === 0) return location.pathname === item.path;
+    return location.pathname.startsWith(item.path);
+  };
 
   const togglePin = () => {
     const nextValue = !pinned;
@@ -106,48 +134,44 @@ export default function AppSidebar({ items, subtitle }) {
                 </div>
               );
             }
+            const active = isNavItemActive(item, i);
             return (
               <NavLink
                 key={item.path}
                 to={item.path}
-                end={i === 0}
                 style={{ transitionDelay: isOpen ? `${i * 20}ms` : "0ms" }}
-                className={({ isActive }) =>
+                className={
                   `group flex items-center gap-3 px-[14px] py-[11px] rounded-xl text-sm font-medium
                  transition-all duration-200 overflow-hidden whitespace-nowrap
                  ${
-                   isActive
+                   active
                      ? "bg-indigo-50 text-indigo-600"
                      : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
                  }`
                 }
               >
-                {({ isActive }) => (
-                  <>
-                    <span className="relative shrink-0">
-                      <item.icon
-                        size={20}
-                        className={`transition-colors duration-200 ${
-                          isActive
-                            ? "text-indigo-500"
-                            : "text-slate-400 group-hover:text-slate-600"
-                        }`}
-                      />
-                      {isActive && !isOpen && (
-                        <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-indigo-500" />
-                      )}
-                    </span>
-                    <span
-                      style={{
-                        opacity: isOpen ? 1 : 0,
-                        width: isOpen ? "auto" : 0,
-                      }}
-                      className="transition-all duration-300 ease-in-out overflow-hidden"
-                    >
-                      {item.label}
-                    </span>
-                  </>
-                )}
+                <span className="relative shrink-0">
+                  <item.icon
+                    size={20}
+                    className={`transition-colors duration-200 ${
+                      active
+                        ? "text-indigo-500"
+                        : "text-slate-400 group-hover:text-slate-600"
+                    }`}
+                  />
+                  {active && !isOpen && (
+                    <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-indigo-500" />
+                  )}
+                </span>
+                <span
+                  style={{
+                    opacity: isOpen ? 1 : 0,
+                    width: isOpen ? "auto" : 0,
+                  }}
+                  className="transition-all duration-300 ease-in-out overflow-hidden"
+                >
+                  {item.label}
+                </span>
               </NavLink>
             );
           })}
@@ -206,35 +230,31 @@ export default function AppSidebar({ items, subtitle }) {
               </div>
             );
           }
+          const active = isNavItemActive(item, index);
           return (
             <NavLink
               key={item.path}
               to={item.path}
-              end={index === 0}
-              className={({ isActive }) =>
+              className={
                 `flex flex-col items-center gap-1 py-1 flex-1 min-w-0 rounded-xl transition-all duration-200
-               ${isActive ? "text-indigo-600" : "text-slate-400"}`
+               ${active ? "text-indigo-600" : "text-slate-400"}`
               }
             >
-              {({ isActive }) => (
-                <>
-                  <span
-                    className={`
-                  w-8 h-8 flex items-center justify-center rounded-xl transition-all duration-200
-                  ${isActive ? "bg-indigo-50 scale-110" : ""}
-                `}
-                  >
-                    <item.icon size={18} strokeWidth={isActive ? 2.5 : 1.8} />
-                  </span>
-                  <span
-                    className={`text-[9px] font-medium leading-none w-full text-center px-0.5 whitespace-nowrap overflow-hidden text-ellipsis transition-all duration-200 ${
-                      isActive ? "text-indigo-600" : "text-slate-400"
-                    }`}
-                  >
-                    {item.label}
-                  </span>
-                </>
-              )}
+              <span
+                className={`
+                w-8 h-8 flex items-center justify-center rounded-xl transition-all duration-200
+                ${active ? "bg-indigo-50 scale-110" : ""}
+              `}
+              >
+                <item.icon size={18} strokeWidth={active ? 2.5 : 1.8} />
+              </span>
+              <span
+                className={`text-[9px] font-medium leading-none w-full text-center px-0.5 whitespace-nowrap overflow-hidden text-ellipsis transition-all duration-200 ${
+                  active ? "text-indigo-600" : "text-slate-400"
+                }`}
+              >
+                {item.label}
+              </span>
             </NavLink>
           );
         })}
