@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Archive, Eye, Plus, SquarePen, Info, Briefcase, UserCog } from "lucide-react";
+import { Archive, Eye, Plus, SquarePen, Trash2, Info, Briefcase, UserCog } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { groupService, studentGroupLookupService } from "@/api/adminStudentGroup";
@@ -54,6 +54,8 @@ export default function AdminGroups() {
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [confirmGroup, setConfirmGroup] = useState(null);
+  const [confirmPermanent, setConfirmPermanent] = useState(null);
+  const isVi = t("common.confirm") === "Xác nhận";
 
   useEffect(() => {
     studentGroupLookupService.getAll()
@@ -145,8 +147,20 @@ export default function AdminGroups() {
     if (!confirmGroup) return;
     try {
       await groupService.remove(confirmGroup.id);
-      toast.success(t("common.confirm", { defaultValue: "Xác nhận" }) === "Xác nhận" ? "Đã dissolve nhóm" : "Dissolved group successfully");
+      toast.success(isVi ? "Đã dissolve nhóm" : "Dissolved group successfully");
       setConfirmGroup(null);
+      await refetch();
+    } catch (err) {
+      toast.error(err.message || t("admin.toasts.actionFailed"));
+    }
+  };
+
+  const permanentDeleteGroup = async () => {
+    if (!confirmPermanent) return;
+    try {
+      await groupService.permanentRemove(confirmPermanent.id);
+      toast.success(isVi ? "Đã xóa vĩnh viễn nhóm" : "Permanently deleted group");
+      setConfirmPermanent(null);
       await refetch();
     } catch (err) {
       toast.error(err.message || t("admin.toasts.actionFailed"));
@@ -171,11 +185,16 @@ export default function AdminGroups() {
         <div className="flex justify-end gap-1">
           <ActionButton onClick={() => navigate(`/admin/groups/${row.id}`)} title={t("admin.actions.detail")}><Eye size={16} /></ActionButton>
           {canWrite ? <ActionButton onClick={() => openEdit(row)} title={t("admin.actions.edit")}><SquarePen size={16} /></ActionButton> : null}
-          {canWrite && row.status !== "dissolved" ? <ActionButton onClick={() => setConfirmGroup(row)} title="Dissolve" tone="red"><Archive size={16} /></ActionButton> : null}
+          {canWrite && Number(row.member_count || 0) === 0 ? (
+            <ActionButton onClick={() => setConfirmPermanent(row)} title={isVi ? "Xóa vĩnh viễn" : "Delete permanently"} tone="red"><Trash2 size={16} /></ActionButton>
+          ) : null}
+          {canWrite && row.status !== "dissolved" && Number(row.member_count || 0) > 0 ? (
+            <ActionButton onClick={() => setConfirmGroup(row)} title="Dissolve" tone="red"><Archive size={16} /></ActionButton>
+          ) : null}
         </div>
       ),
     },
-  ], [t, canWrite, navigate]);
+  ], [t, canWrite, navigate, isVi]);
 
   return (
     <>
@@ -297,6 +316,19 @@ export default function AdminGroups() {
         yesLabel="Dissolve"
         onYes={archiveGroup}
         onClose={() => setConfirmGroup(null)}
+      />
+
+      <ConfirmDialog
+        isOpen={!!confirmPermanent}
+        title={isVi ? "Xóa vĩnh viễn nhóm" : "Permanently delete group"}
+        subtitle={confirmPermanent ? (isVi
+          ? `${confirmPermanent.group_name} sẽ bị xóa khỏi hệ thống. Chỉ dùng khi nhóm không còn sinh viên active và chưa có bài nộp.`
+          : `${confirmPermanent.group_name} will be removed from the system. Only use when the group has no active members and no submissions.`) : ""}
+        variant="delete"
+        color="red"
+        yesLabel={isVi ? "Xóa vĩnh viễn" : "Delete permanently"}
+        onYes={permanentDeleteGroup}
+        onClose={() => setConfirmPermanent(null)}
       />
     </>
   );

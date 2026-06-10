@@ -2,6 +2,7 @@ import { Router } from "express";
 import { validateRequest } from "app/core/middlewares/validateRequest.js";
 import { authenticate } from "app/core/middlewares/authMiddleware.js";
 import { roleGuard } from "app/core/middlewares/roleGuard.js";
+import { createRateLimiters } from "app/core/middlewares/rateLimiter.js";
 import {
   createCheckpointSchema,
   bulkCreateCheckpointSchema,
@@ -19,13 +20,14 @@ import {
 export const createCheckpointRouter = (container) => {
   const { checkpointController } = container.cradle;
   const router = Router();
+  const limiters = createRateLimiters(container);
 
   const commonRoles = roleGuard("admin", "department_head", "lecturer");
   const studentRoles = roleGuard("admin", "department_head", "lecturer", "student");
 
   router.get("/mine", authenticate, studentRoles, checkpointController.getStudentCheckpoints);
-  router.post("/:id/upload", authenticate, roleGuard("student"), validateRequest(initiateUploadSchema), checkpointController.initiateUpload);
-  router.post("/:id/confirm-upload", authenticate, roleGuard("student"), validateRequest(confirmUploadSchema), checkpointController.confirmUpload);
+  router.post("/:id/upload", authenticate, limiters.upload, roleGuard("student"), validateRequest(initiateUploadSchema), checkpointController.initiateUpload);
+  router.post("/:id/confirm-upload", authenticate, limiters.upload, roleGuard("student"), validateRequest(confirmUploadSchema), checkpointController.confirmUpload);
   router.get("/", authenticate, commonRoles, validateRequest(listCheckpointSchema), checkpointController.list);
   router.get("/:id", authenticate, commonRoles, validateRequest(checkpointParamsSchema), checkpointController.getById);
   router.post("/", authenticate, commonRoles, validateRequest(createCheckpointSchema), checkpointController.create);

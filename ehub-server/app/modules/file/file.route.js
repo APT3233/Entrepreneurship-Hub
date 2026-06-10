@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { authenticate } from "app/core/middlewares/authMiddleware.js";
+import { createRateLimiters } from "app/core/middlewares/rateLimiter.js";
 import { validateRequest } from "app/core/middlewares/validateRequest.js";
 import Joi from "joi";
 
@@ -27,6 +28,7 @@ const confirmUploadSchema = {
 export const createFileRouter = (container) => {
   const { fileController } = container.cradle;
   const router = Router();
+  const limiters = createRateLimiters(container);
 
   /** 
    * Tải file qua proxy: GET /api/v1/files/download?path=...&name=...
@@ -40,8 +42,8 @@ export const createFileRouter = (container) => {
    * POST /api/v1/files/confirm-upload
    * Mọi user đã đăng nhập đều có thể upload.
    */
-  router.post("/initiate-upload", authenticate, validateRequest(initiateUploadSchema), fileController.initiateUpload);
-  router.post("/confirm-upload", authenticate, validateRequest(confirmUploadSchema), fileController.confirmUpload);
+  router.post("/initiate-upload", authenticate, limiters.upload, validateRequest(initiateUploadSchema), fileController.initiateUpload);
+  router.post("/confirm-upload", authenticate, limiters.upload, validateRequest(confirmUploadSchema), fileController.confirmUpload);
 
   return router;
 };

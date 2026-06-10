@@ -765,7 +765,9 @@ export const createClassService = ({
       );
     }
 
-    const result = await base.remove(id, true);
+    const cleanup = await groupRepository.dissolveByClassId(id);
+    const deletedInvites = await inviteRepository.deleteByClassId(id);
+    await classRepository.update(id, { status: "archived", deleted_at: new Date() });
 
     // Ghi log audit
     await auditService.log({
@@ -774,10 +776,15 @@ export const createClassService = ({
       tableName: "classes",
       recordId: id,
       title: cls.class_code,
-      oldValues: { class_code: cls.class_code }
+      oldValues: { class_code: cls.class_code },
+      newValues: {
+        dissolved_groups: cleanup.dissolvedGroups,
+        removed_members: cleanup.removedMembers,
+        deleted_invites: deletedInvites,
+      },
     });
 
-    return result;
+    return { id: Number(id), cleanup, deletedInvites };
   };
 
   return {

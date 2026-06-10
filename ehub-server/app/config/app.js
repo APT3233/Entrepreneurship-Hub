@@ -6,10 +6,6 @@ export const appConfig = Object.freeze({
   host: optional("HOST", "0.0.0.0"),
   apiPrefix: optional("API_PREFIX", "/api/v1"),
   corsOrigins: toList(process.env.CORS_ORIGINS, ["*"]),
-  rateLimit: {
-    windowMs: toInt(optional("RATE_LIMIT_WINDOW_MS", "900000"), 900_000),
-    max: toInt(optional("RATE_LIMIT_MAX", "100"), 100),
-  },
   pagination: {
     defaultPage: 1,
     defaultLimit: 20,

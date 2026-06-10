@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { authenticate } from "app/core/middlewares/authMiddleware.js";
 import { permissionGuard } from "app/core/middlewares/permissionGuard.js";
+import { createRateLimiters } from "app/core/middlewares/rateLimiter.js";
 import { roleGuard } from "app/core/middlewares/roleGuard.js";
 import { validateRequest } from "app/core/middlewares/validateRequest.js";
 import {
@@ -82,6 +83,7 @@ export const createIncubationAdminRouter = (container) => {
   const { incubationController } = container.cradle;
   const router = Router();
   const can = (...permissions) => permissionGuard(container, ...permissions);
+  const limiters = createRateLimiters(container);
 
   router.get("/incubation/startups", can("incubation.startup.read"), validateRequest(listStartupsSchema), incubationController.listStartups);
   router.post("/incubation/startups", can("incubation.startup.create"), validateRequest(createStartupSchema), incubationController.createStartup);
@@ -101,8 +103,8 @@ export const createIncubationAdminRouter = (container) => {
   router.get("/incubation/startups/:id/history", can("incubation.pipeline.read", "incubation.startup.read"), validateRequest(startupIdParamSchema), incubationController.getStartupHistory);
 
   router.get("/incubation/startups/:id/documents", can("incubation.document.manage", "incubation.startup.read"), validateRequest(startupIdParamSchema), incubationController.listDocuments);
-  router.post("/incubation/startups/:id/documents/initiate-upload", can("incubation.document.manage"), validateRequest(initiateDocumentUploadSchema), incubationController.initiateDocumentUpload);
-  router.post("/incubation/startups/:id/documents", can("incubation.document.manage"), validateRequest(confirmDocumentUploadSchema), incubationController.confirmDocumentUpload);
+  router.post("/incubation/startups/:id/documents/initiate-upload", limiters.upload, can("incubation.document.manage"), validateRequest(initiateDocumentUploadSchema), incubationController.initiateDocumentUpload);
+  router.post("/incubation/startups/:id/documents", limiters.upload, can("incubation.document.manage"), validateRequest(confirmDocumentUploadSchema), incubationController.confirmDocumentUpload);
   router.delete("/incubation/startups/:id/documents/:documentId", can("incubation.document.manage"), validateRequest(deleteDocumentSchema), incubationController.deleteDocument);
 
   router.get("/incubation/startups/:id/milestones", can("incubation.startup.read", "incubation.milestone.manage"), validateRequest(startupIdParamSchema), incubationController.listMilestones);

@@ -18,6 +18,7 @@ export const createGroupSchema = {
     category: Joi.string().allow(null, ""),
     mentor_name: Joi.string().allow(null, ""),
     mentor_dept: Joi.string().allow(null, ""),
+    mentor_id: Joi.number().integer().positive().allow(null),
     max_members: Joi.number().integer().min(4).max(6).default(6),
     status: Joi.string()
       .valid("forming", "active", "inactive", "completed", "dissolved")

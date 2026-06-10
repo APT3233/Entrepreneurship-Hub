@@ -7,6 +7,7 @@ import { storageConfig } from "./storage.js";
 import { minioConfig } from "./minio.js";
 import { mailConfig } from "./mail.js";
 import { aiConfig } from "./ai.js";
+import { rateLimitConfig } from "./rateLimit.js";
 
 const env = process.env.NODE_ENV ?? "development";
 
@@ -24,7 +25,8 @@ export const pctu_config = Object.freeze({
   mail: mailConfig,
   minio: minioConfig,
   ai: aiConfig,
+  rateLimit: rateLimitConfig,
 });
 
 export { appConfig, dbConfig, redisConfig, minioConfig };
-export { jwtConfig, loggerConfig, storageConfig, mailConfig, aiConfig };
+export { jwtConfig, loggerConfig, storageConfig, mailConfig, aiConfig, rateLimitConfig };

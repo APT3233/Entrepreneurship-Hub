@@ -114,6 +114,14 @@ export const createMentorWorkflowRepository = ({ db }) => {
     return rows[0] || null;
   };
 
+  const findAssignableMentor = async (mentorId) => {
+    const [rows] = await db.execute(
+      "SELECT * FROM mentor_profiles WHERE id = :mentorId AND status IN ('active', 'pending') AND deleted_at IS NULL LIMIT 1",
+      { mentorId: Number(mentorId) },
+    );
+    return rows[0] || null;
+  };
+
   const findMentorByUserId = async (userId) => {
     const [rows] = await db.execute("SELECT * FROM mentor_profiles WHERE user_id = :userId AND deleted_at IS NULL LIMIT 1", { userId: Number(userId) });
     return rows[0] || null;
@@ -414,6 +422,7 @@ export const createMentorWorkflowRepository = ({ db }) => {
     findAssignmentById,
     findGroupContext,
     findActiveMentor,
+    findAssignableMentor,
     findMentorByUserId,
     listMentorExpertise,
     listActiveAssignmentsForGroup,

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Eye, Lock, Plus, RotateCcw, ShieldCheck, SquarePen, User, Settings, KeyRound, ShieldAlert, GraduationCap, CheckCircle2, Phone, MapPin } from "lucide-react";
+import { Eye, Lock, Plus, RotateCcw, ShieldCheck, SquarePen, User, Settings, KeyRound, ShieldAlert, GraduationCap, CheckCircle2, Phone, MapPin, Handshake } from "lucide-react";
 import { useSelector } from "react-redux";
 import AdminAccessControlApi from "@/api/adminAccessControl";
 import { useToast } from "@/components/ui/Toast";
@@ -60,6 +60,8 @@ const getRoleBadgeStyle = (role) => {
       return "bg-emerald-50 text-emerald-700 border border-emerald-200/60";
     case "guest":
       return "bg-amber-50 text-amber-700 border border-amber-200/60";
+    case "mentor":
+      return "bg-teal-50 text-teal-700 border border-teal-200/60";
     default:
       return "bg-slate-50 text-slate-700 border border-slate-200/60";
   }
@@ -100,6 +102,15 @@ const getRoleCardConfig = (roleCode, t) => {
         activeBorder: "border-emerald-500 ring-2 ring-emerald-100 bg-emerald-50/10",
         iconBg: "bg-emerald-50 text-emerald-600",
       };
+    case "mentor":
+      return {
+        icon: Handshake,
+        colorClass: "teal",
+        title: t("admin.roleCards.mentor.title"),
+        desc: t("admin.roleCards.mentor.desc"),
+        activeBorder: "border-teal-500 ring-2 ring-teal-100 bg-teal-50/10",
+        iconBg: "bg-teal-50 text-teal-600",
+      };
     default:
       return {
         icon: User,
@@ -138,7 +149,7 @@ export default function AdminUsers() {
       ]);
       setRows(usersRes?.data || []);
       setMeta(usersRes?.meta || null);
-      const allowedRoles = ["admin", "lecturer", "student"];
+      const allowedRoles = ["admin", "lecturer", "student", "mentor"];
       const filteredRoles = (rolesRes?.data || []).filter((r) => allowedRoles.includes(r.role_code));
       setRoles(filteredRoles);
     } catch (err) {

@@ -464,7 +464,7 @@ function AdminSidebar({ open, onClose }) {
       <aside
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
-        style={{ width: isExpanded ? "246px" : "68px" }}
+        style={{ width: isExpanded ? "280px" : "68px" }}
         className={`fixed md:static inset-y-0 left-0 z-40 flex shrink-0 flex-col border-r border-slate-200 bg-white shadow-[2px_0_12px_rgba(15,23,42,0.04)] transition-[width,transform] duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)] will-change-[width,transform] ${
           open ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         }`}
@@ -477,7 +477,7 @@ function AdminSidebar({ open, onClose }) {
             <div
               style={{
                 opacity: isExpanded ? 1 : 0,
-                maxWidth: isExpanded ? "150px" : "0px",
+                maxWidth: isExpanded ? "190px" : "0px",
                 transform: isExpanded ? "translateX(0)" : "translateX(-6px)",
               }}
               className="overflow-hidden whitespace-nowrap transition-[opacity,transform,max-width] duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)] will-change-[opacity,transform,max-width]"
@@ -520,7 +520,7 @@ function AdminSidebar({ open, onClose }) {
                       <span
                         style={{
                           opacity: isExpanded ? 1 : 0,
-                          maxWidth: isExpanded ? "160px" : "0px",
+                          maxWidth: isExpanded ? "200px" : "0px",
                           transform: isExpanded ? "translateX(0)" : "translateX(-6px)",
                         }}
                         className="min-w-0 flex-1 overflow-hidden whitespace-nowrap text-ellipsis text-left leading-snug transition-[opacity,transform,max-width] duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)] will-change-[opacity,transform,max-width]"

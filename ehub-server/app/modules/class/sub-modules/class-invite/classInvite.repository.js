@@ -119,6 +119,11 @@ export const createClassInviteRepository = ({ db }) => {
     return (res.affectedRows ?? 0) > 0;
   };
 
+  const deleteByClassId = async (classId, conn = db) => {
+    const [res] = await conn.execute("DELETE FROM class_invites WHERE class_id = ?", [Number(classId)]);
+    return res.affectedRows ?? 0;
+  };
+
   return {
     invalidateUnusedForPair,
     invalidateUnusedForPairConn,
@@ -131,5 +136,6 @@ export const createClassInviteRepository = ({ db }) => {
     findByTokenWithClass,
     findByTokenForUpdate,
     markUsed,
+    deleteByClassId,
   };
 };

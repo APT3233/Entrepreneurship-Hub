@@ -533,6 +533,45 @@ export const createMentorService = ({ mentorRepository, transaction, auditServic
     return deleteDocument(mentor.id, documentId, actor);
   };
 
+  const provisionProfileForUser = async (userId, user, actor, conn) => {
+    const existing = await mentorRepository.findMentorByUserId(userId);
+    const activate = user.account_status === "active";
+    if (existing) {
+      if (existing.status === "pending" && activate) {
+        await assertActiveEmailAvailable(existing.email, existing.id);
+        await mentorRepository.updateMentor(existing.id, {
+          status: "active",
+          reviewed_by: actor?.id || null,
+          reviewed_at: new Date(),
+        }, conn);
+      }
+      return mentorRepository.findMentorByUserId(userId);
+    }
+    const status = activate ? "active" : "pending";
+    if (status === "active") await assertActiveEmailAvailable(user.email);
+    await mentorRepository.createMentor({
+      user_id: Number(userId),
+      full_name: user.full_name,
+      email: user.email,
+      phone: user.phone || null,
+      avatar_url: user.avatar_url || null,
+      mentor_type: "business",
+      organization: null,
+      position_title: null,
+      bio: null,
+      years_of_experience: null,
+      linkedin_url: null,
+      portfolio_url: null,
+      cv_file_url: null,
+      status,
+      visibility: "internal",
+      created_by: actor?.id || null,
+      reviewed_by: activate ? (actor?.id || null) : null,
+      reviewed_at: activate ? new Date() : null,
+    }, conn);
+    return mentorRepository.findMentorByUserId(userId);
+  };
+
   return {
     listMentors,
     getMentor,
@@ -563,5 +602,6 @@ export const createMentorService = ({ mentorRepository, transaction, auditServic
     initiateMyDocumentUpload,
     confirmMyDocumentUpload,
     deleteMyDocument,
+    provisionProfileForUser,
   };
 };

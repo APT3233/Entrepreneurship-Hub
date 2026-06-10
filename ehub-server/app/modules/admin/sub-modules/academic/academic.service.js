@@ -15,7 +15,7 @@ const toDateOnlyTime = (value) => {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
 };
 
-export const createAdminAcademicService = ({ adminAcademicRepository, transaction, auditService }) => {
+export const createAdminAcademicService = ({ adminAcademicRepository, transaction, auditService, groupRepository, inviteRepository }) => {
   const pageArgs = (query) => parsePagination({ page: query.page, limit: query.limit });
 
   const listSubjects = async (query) => {
@@ -350,8 +350,8 @@ export const createAdminAcademicService = ({ adminAcademicRepository, transactio
 
   const assertClassCanArchive = async (id) => {
     const deps = await adminAcademicRepository.getClassDependencies(id);
-    if (deps.enrollments || deps.groups || deps.submissions) {
-      throw BadRequest("Không thể archive/xoá lớp đã có sinh viên, nhóm hoặc bài nộp");
+    if (deps.submissions) {
+      throw BadRequest("Không thể archive/xoá lớp đã có bài nộp");
     }
   };
 
@@ -360,6 +360,8 @@ export const createAdminAcademicService = ({ adminAcademicRepository, transactio
   const deleteClass = async (id, actor) => {
     const cls = await getClass(id);
     await assertClassCanArchive(id);
+    const cleanup = await groupRepository.dissolveByClassId(id);
+    const deletedInvites = await inviteRepository.deleteByClassId(id);
     await adminAcademicRepository.updateClass(id, { status: "archived", deleted_at: new Date() });
     await auditService.log({
       userId: actor?.id || null,
@@ -368,7 +370,13 @@ export const createAdminAcademicService = ({ adminAcademicRepository, transactio
       recordId: id,
       title: cls.class_code,
       oldValues: { class_code: cls.class_code },
+      newValues: {
+        dissolved_groups: cleanup.dissolvedGroups,
+        removed_members: cleanup.removedMembers,
+        deleted_invites: deletedInvites,
+      },
     });
+    return { cleanup, deletedInvites };
   };
 
   const getLookups = () => adminAcademicRepository.getLookups();

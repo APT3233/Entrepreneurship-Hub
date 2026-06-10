@@ -6,7 +6,7 @@ const countOne = async (db, sql, params = {}) => {
 const pageSql = (limit, offset) => `LIMIT ${Number(limit)} OFFSET ${Number(offset)}`;
 
 export const createAdminStudentGroupRepository = ({ db }) => {
-  const listStudents = async ({ search, status, major, campus, limit, offset }) => {
+  const listStudents = async ({ search, status, major, campus, semesterId, classId, limit, offset }) => {
     const params = {};
     const where = ["s.deleted_at IS NULL"];
     if (search) {
@@ -25,6 +25,27 @@ export const createAdminStudentGroupRepository = ({ db }) => {
       where.push("s.campus = :campus");
       params.campus = campus;
     }
+
+    const hasScopeFilter = Boolean(semesterId || classId);
+    const enrollmentJoin = hasScopeFilter
+      ? `
+        INNER JOIN class_students cs ON cs.student_id = s.id AND cs.status = 'enrolled'
+        INNER JOIN classes c ON c.id = cs.class_id AND c.deleted_at IS NULL
+      `
+      : `
+        LEFT JOIN class_students cs ON cs.student_id = s.id AND cs.status = 'enrolled'
+        LEFT JOIN classes c ON c.id = cs.class_id AND c.deleted_at IS NULL
+      `;
+
+    if (semesterId) {
+      where.push("c.semester_id = :semesterId");
+      params.semesterId = Number(semesterId);
+    }
+    if (classId) {
+      where.push("cs.class_id = :classId");
+      params.classId = Number(classId);
+    }
+
     const whereSql = where.join(" AND ");
     const [rows] = await db.execute(
       `
@@ -32,21 +53,37 @@ export const createAdminStudentGroupRepository = ({ db }) => {
           s.id, s.user_id, s.student_code, s.full_name, s.email, s.phone, s.major, s.campus,
           s.status, s.created_at, s.updated_at, s.deleted_at,
           u.username AS linked_username,
+          GROUP_CONCAT(DISTINCT c.class_code ORDER BY c.class_code SEPARATOR ', ') AS class_codes,
+          GROUP_CONCAT(
+            DISTINCT CONCAT(g.group_name, '::', g.status)
+            ORDER BY g.group_name SEPARATOR '||'
+          ) AS group_summaries,
           COUNT(DISTINCT cs.id) AS total_classes,
-          COUNT(DISTINCT CASE WHEN gm.status = 'active' AND g.deleted_at IS NULL THEN gm.group_id END) AS active_groups
+          COUNT(DISTINCT CASE WHEN gm_active.status = 'active' AND g_active.deleted_at IS NULL THEN gm_active.group_id END) AS active_groups
         FROM students s
         LEFT JOIN users u ON u.id = s.user_id AND u.deleted_at IS NULL
-        LEFT JOIN class_students cs ON cs.student_id = s.id
-        LEFT JOIN group_members gm ON gm.student_id = s.id
-        LEFT JOIN \`groups\` g ON g.id = gm.group_id
+        ${enrollmentJoin}
+        LEFT JOIN group_members gm ON gm.student_id = s.id AND gm.status IN ('active', 'removed')
+        LEFT JOIN \`groups\` g ON g.id = gm.group_id AND g.class_id = c.id
+        LEFT JOIN group_members gm_active ON gm_active.student_id = s.id AND gm_active.status = 'active'
+        LEFT JOIN \`groups\` g_active ON g_active.id = gm_active.group_id AND g_active.class_id = c.id AND g_active.deleted_at IS NULL
         WHERE ${whereSql}
-        GROUP BY s.id
-        ORDER BY s.created_at DESC
+        GROUP BY s.id, s.user_id, s.student_code, s.full_name, s.email, s.phone, s.major, s.campus,
+                 s.status, s.created_at, s.updated_at, s.deleted_at, u.username
+        ORDER BY s.student_code ASC
         ${pageSql(limit, offset)}
       `,
       params,
     );
-    const [totalRows] = await db.execute(`SELECT COUNT(*) AS total FROM students s WHERE ${whereSql}`, params);
+    const [totalRows] = await db.execute(
+      `
+        SELECT COUNT(DISTINCT s.id) AS total
+        FROM students s
+        ${enrollmentJoin}
+        WHERE ${whereSql}
+      `,
+      params,
+    );
     return { rows, total: Number(totalRows[0]?.total || 0) };
   };
 
@@ -70,13 +107,13 @@ export const createAdminStudentGroupRepository = ({ db }) => {
           c.id AS class_id, c.class_code, c.class_name,
           sub.subject_code, sub.subject_name,
           sem.semester_code, sem.semester_name, sem.year,
-          g.id AS group_id, g.group_code, g.group_name
+          g.id AS group_id, g.group_code, g.group_name, g.status AS group_status
         FROM class_students cs
         JOIN classes c ON c.id = cs.class_id
         JOIN subjects sub ON sub.id = c.subject_id
         JOIN semesters sem ON sem.id = c.semester_id
-        LEFT JOIN group_members gm ON gm.student_id = cs.student_id AND gm.status = 'active'
-        LEFT JOIN \`groups\` g ON g.id = gm.group_id AND g.class_id = c.id AND g.deleted_at IS NULL
+        LEFT JOIN group_members gm ON gm.student_id = cs.student_id AND gm.status IN ('active', 'removed')
+        LEFT JOIN \`groups\` g ON g.id = gm.group_id AND g.class_id = c.id
         WHERE cs.student_id = :id
         ORDER BY sem.year DESC, sem.start_date DESC, c.class_code ASC
       `,
@@ -403,6 +440,77 @@ export const createAdminStudentGroupRepository = ({ db }) => {
     return { rows, total: Number(totalRows[0]?.total || 0) };
   };
 
+  const findGroupRecordById = async (id) => {
+    const [rows] = await db.execute(
+      `
+        SELECT
+          g.*, c.class_code, c.class_name,
+          sub.subject_code, sub.subject_name,
+          sem.semester_code, sem.semester_name, sem.year,
+          COUNT(DISTINCT CASE WHEN gm.status = 'active' THEN gm.id END) AS member_count
+        FROM \`groups\` g
+        JOIN classes c ON c.id = g.class_id
+        JOIN subjects sub ON sub.id = c.subject_id
+        JOIN semesters sem ON sem.id = c.semester_id
+        LEFT JOIN group_members gm ON gm.group_id = g.id
+        WHERE g.id = :id
+        GROUP BY g.id
+        LIMIT 1
+      `,
+      { id: Number(id) },
+    );
+    return rows[0] || null;
+  };
+
+  const getGroupHardDeleteBlockers = async (groupId) => {
+    const params = { groupId: Number(groupId) };
+    const [rows] = await db.execute(
+      `
+        SELECT
+          (SELECT COUNT(*) FROM group_members WHERE group_id = :groupId AND status = 'active') AS active_members,
+          (SELECT COUNT(*) FROM checkpoint_submissions WHERE group_id = :groupId) AS checkpoint_submissions,
+          (SELECT COUNT(*) FROM assignment_submissions WHERE group_id = :groupId) AS assignment_submissions,
+          (SELECT COUNT(*) FROM evaluation_sessions WHERE group_id = :groupId) AS evaluation_sessions,
+          (SELECT COUNT(*) FROM startup_profiles WHERE group_id = :groupId AND deleted_at IS NULL) AS startup_profiles
+      `,
+      params,
+    );
+    return rows[0] || {
+      active_members: 0,
+      checkpoint_submissions: 0,
+      assignment_submissions: 0,
+      evaluation_sessions: 0,
+      startup_profiles: 0,
+    };
+  };
+
+  const hardDeleteGroup = async (groupId, conn = db) => {
+    const id = Number(groupId);
+    const [requestRows] = await conn.execute(
+      "SELECT id FROM mentor_matching_requests WHERE group_id = ?",
+      [id],
+    );
+    for (const request of requestRows) {
+      await conn.execute("DELETE FROM mentor_matching_suggestions WHERE request_id = ?", [request.id]);
+    }
+    await conn.execute("DELETE FROM mentor_matching_requests WHERE group_id = ?", [id]);
+
+    const [assignmentRows] = await conn.execute(
+      "SELECT id FROM mentor_assignments WHERE group_id = ?",
+      [id],
+    );
+    for (const assignment of assignmentRows) {
+      await conn.execute("DELETE FROM mentor_assignment_history WHERE assignment_id = ?", [assignment.id]);
+    }
+    await conn.execute("DELETE FROM mentor_assignments WHERE group_id = ?", [id]);
+
+    await conn.execute("DELETE FROM mentoring_action_items WHERE group_id = ?", [id]);
+    await conn.execute("DELETE FROM mentoring_sessions WHERE group_id = ?", [id]);
+    await conn.execute("DELETE FROM upload_sessions WHERE group_id = ?", [id]);
+    await conn.execute("DELETE FROM group_members WHERE group_id = ?", [id]);
+    await conn.execute("DELETE FROM `groups` WHERE id = ?", [id]);
+  };
+
   const findGroupById = async (id) => {
     const [rows] = await db.execute(
       `
@@ -647,7 +755,7 @@ export const createAdminStudentGroupRepository = ({ db }) => {
         `,
       ),
       db.execute("SELECT id, subject_code, subject_name FROM subjects WHERE deleted_at IS NULL ORDER BY subject_code ASC"),
-      db.execute("SELECT id, semester_code, semester_name, year FROM semesters WHERE deleted_at IS NULL ORDER BY year DESC, start_date DESC"),
+      db.execute("SELECT id, semester_code, semester_name, year, status FROM semesters WHERE deleted_at IS NULL ORDER BY year DESC, start_date DESC"),
       db.execute(`
         SELECT s.id, s.student_code, s.full_name, s.email
         FROM students s
@@ -695,6 +803,9 @@ export const createAdminStudentGroupRepository = ({ db }) => {
     listStudentsWithoutGroup,
     listGroups,
     findGroupById,
+    findGroupRecordById,
+    getGroupHardDeleteBlockers,
+    hardDeleteGroup,
     findGroupByCode,
     createGroup,
     updateGroup,

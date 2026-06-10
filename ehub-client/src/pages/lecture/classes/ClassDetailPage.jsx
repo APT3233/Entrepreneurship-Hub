@@ -221,7 +221,7 @@ export default function ClassDetailPage() {
     if (value && Number(value) !== Number(id)) navigate(`/lecturer/classes/${value}`);
   };
 
-  const handleCreateGroupSubmit = async ({ name, topic, topic_desc, zalo_link, category, mentor, mentorDept, members, leaderId }) => {
+  const handleCreateGroupSubmit = async ({ name, topic, topic_desc, zalo_link, category, mentorId, mentor, mentorDept, members, leaderId }) => {
     if (!detail?.id || !name?.trim()) return;
     setCreateGroupLoading(true);
     try {
@@ -237,6 +237,7 @@ export default function ClassDetailPage() {
         category: category,
         mentor_name: mentor || null,
         mentor_dept: mentorDept || null,
+        mentor_id: mentorId ? Number(mentorId) : null,
         max_members: 6,
         status: "forming",
       };

@@ -8,7 +8,8 @@ export const groupService = {
   get: (id) => instance.get(`${basePath}/${id}`),
   create: (body) => instance.post(basePath, body),
   update: (id, body) => instance.put(`${basePath}/${id}`, body),
-  remove: (id) => instance.delete(`${basePath}/${id}`),
+  remove: (id, query = {}) => instance.delete(`${basePath}/${id}`, { params: compactQuery(query) }),
+  permanentRemove: (id) => instance.delete(`${basePath}/${id}`, { params: { permanent: true } }),
 };
 
 export default groupService;

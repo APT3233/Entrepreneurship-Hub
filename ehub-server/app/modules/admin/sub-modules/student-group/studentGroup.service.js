@@ -28,6 +28,8 @@ export const createAdminStudentGroupService = ({
       status: query.status || null,
       major: query.major || null,
       campus: query.campus || null,
+      semesterId: query.semester_id || null,
+      classId: query.class_id || null,
       limit: pagination.limit,
       offset: pagination.offset,
     });
@@ -117,6 +119,21 @@ export const createAdminStudentGroupService = ({
       title: student.student_code,
       oldValues: { student_code: student.student_code },
     });
+  };
+
+  const bulkDeleteStudents = async (data, actor) => {
+    const results = [];
+    for (const id of data.ids || []) {
+      try {
+        await deleteStudent(id, actor);
+        results.push({ id: Number(id), success: true });
+      } catch (err) {
+        results.push({ id: Number(id), success: false, message: err.message });
+      }
+    }
+    const deletedCount = results.filter((item) => item.success).length;
+    const failedCount = results.length - deletedCount;
+    return { results, deleted_count: deletedCount, failed_count: failedCount };
   };
 
   const listEnrollments = async (query) => {
@@ -371,8 +388,39 @@ export const createAdminStudentGroupService = ({
     return getGroup(id);
   };
 
-  const deleteGroup = async (id, actor) => {
-    const group = await getGroup(id);
+  const deleteGroup = async (id, actor, { permanent = false } = {}) => {
+    const group = await adminStudentGroupRepository.findGroupRecordById(id);
+    if (!group) throw NotFound("Group");
+
+    if (permanent) {
+      const blockers = await adminStudentGroupRepository.getGroupHardDeleteBlockers(id);
+      if (Number(blockers.active_members) > 0) {
+        throw BadRequest("Chỉ có thể xóa vĩnh viễn nhóm không còn sinh viên active");
+      }
+      if (Number(blockers.checkpoint_submissions) > 0 || Number(blockers.assignment_submissions) > 0) {
+        throw BadRequest("Không thể xóa vĩnh viễn nhóm đã có bài nộp");
+      }
+      if (Number(blockers.evaluation_sessions) > 0) {
+        throw BadRequest("Không thể xóa vĩnh viễn nhóm đã có phiên chấm điểm");
+      }
+      if (Number(blockers.startup_profiles) > 0) {
+        throw BadRequest("Không thể xóa vĩnh viễn nhóm đã liên kết startup");
+      }
+      await transaction.run(async (conn) => {
+        await adminStudentGroupRepository.hardDeleteGroup(id, conn);
+      });
+      await auditService.log({
+        userId: actor?.id || null,
+        action: "admin_hard_delete_group",
+        tableName: "groups",
+        recordId: id,
+        title: group.group_code,
+        oldValues: { group_code: group.group_code, group_name: group.group_name },
+      });
+      return;
+    }
+
+    if (group.deleted_at) throw BadRequest("Nhóm đã được dissolve trước đó");
     await adminStudentGroupRepository.updateGroup(id, { status: "dissolved", deleted_at: new Date() });
     await auditService.log({
       userId: actor?.id || null,
@@ -517,6 +565,7 @@ export const createAdminStudentGroupService = ({
     createStudent,
     updateStudent,
     deleteStudent,
+    bulkDeleteStudents,
     listEnrollments,
     addEnrollment,
     bulkAddEnrollments,

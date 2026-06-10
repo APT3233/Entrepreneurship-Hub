@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import IncubationApi from "@/api/incubation";
 import AdminTable from "@/pages/admin/components/AdminTable";
@@ -7,7 +7,13 @@ import { Metric, Panel } from "./components";
 import { formatDate } from "@/utils/dateTimeDisplay";
 import { useTranslation } from "@/context/TranslationContext";
 
-const asRows = (rows = [], keyPrefix = "row") => rows.map((row, index) => ({ ...row, _key: `${keyPrefix}-${row.id || row.code || row.date || row.issue_type || index}` }));
+const toArray = (value) => (Array.isArray(value) ? value : []);
+
+const asRows = (rows, keyPrefix = "row") =>
+  toArray(rows).map((row, index) => ({
+    ...row,
+    _key: `${keyPrefix}-${row.id || row.code || row.date || row.issue_type || index}`,
+  }));
 
 export default function AnalyticsPage() {
   const location = useLocation();
@@ -25,25 +31,47 @@ export default function AnalyticsPage() {
     return "overview";
   }, [location.pathname]);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError("");
-    try {
-      if (kind === "overview") {
-        const [overview, events, alumni] = await Promise.all([IncubationApi.analyticsOverview(), IncubationApi.analyticsEvents(), IncubationApi.analyticsAlumniPartners()]);
-        setData({ overview: overview?.data || {}, events: events?.data || {}, alumni: alumni?.data || {} });
-      } else if (kind === "pipeline") setData(await IncubationApi.analyticsPipeline().then((res) => res?.data || {}));
-      else if (kind === "progress") setData(await IncubationApi.analyticsProgress().then((res) => res?.data || {}));
-      else if (kind === "events") setData(await IncubationApi.analyticsEvents().then((res) => res?.data || {}));
-      else setData(await IncubationApi.analyticsEcosystemHealth().then((res) => res?.data || []));
-    } catch (err) {
-      setError(err.message || t("admin.ecosystem.analytics.loadError"));
-    } finally {
-      setLoading(false);
-    }
-  }, [kind, t]);
+  useEffect(() => {
+    let active = true;
 
-  useEffect(() => { load(); }, [load]);
+    (async () => {
+      setLoading(true);
+      setError("");
+      try {
+        let nextData;
+        if (kind === "overview") {
+          const [overview, events, alumni] = await Promise.all([
+            IncubationApi.analyticsOverview(),
+            IncubationApi.analyticsEvents(),
+            IncubationApi.analyticsAlumniPartners(),
+          ]);
+          nextData = {
+            overview: overview?.data || {},
+            events: events?.data || {},
+            alumni: alumni?.data || {},
+          };
+        } else if (kind === "pipeline") {
+          nextData = (await IncubationApi.analyticsPipeline())?.data || {};
+        } else if (kind === "progress") {
+          nextData = (await IncubationApi.analyticsProgress())?.data || {};
+        } else if (kind === "events") {
+          nextData = (await IncubationApi.analyticsEvents())?.data || {};
+        } else {
+          const payload = (await IncubationApi.analyticsEcosystemHealth())?.data;
+          nextData = Array.isArray(payload) ? payload : toArray(payload?.rows ?? payload?.issues);
+        }
+        if (active) setData(nextData);
+      } catch (err) {
+        if (active) setError(err.message || t("admin.ecosystem.analytics.loadError"));
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [kind, t]);
 
   if (loading) return <div className="rounded-2xl bg-white p-8 text-center text-sm text-slate-400">{t("admin.ecosystem.analytics.loading")}</div>;
   if (error) return <div className="rounded-2xl bg-rose-50 p-8 text-center text-sm font-bold text-rose-600">{error}</div>;
@@ -72,7 +100,7 @@ export default function AnalyticsPage() {
       { key: "days_in_stage", label: t("admin.ecosystem.analytics.columns.days") },
       { key: "startup_status", label: t("admin.ecosystem.analytics.columns.status"), render: (row) => <StatusBadge value={row.startup_status} /> },
     ];
-    return <div className="space-y-5"><Panel title={t("admin.ecosystem.analytics.panels.pipeline")}><AdminTable rowKey="_key" columns={stageColumns} rows={asRows(data.stages, "stage")} emptyText={t("admin.ecosystem.analytics.empty.pipeline")} /></Panel><Panel title={t("admin.ecosystem.analytics.panels.stuck")}><AdminTable rowKey="id" columns={stuckColumns} rows={data.stuck_startups || []} emptyText={t("admin.ecosystem.analytics.empty.stuck")} /></Panel></div>;
+    return <div className="space-y-5"><Panel title={t("admin.ecosystem.analytics.panels.pipeline")}><AdminTable rowKey="_key" columns={stageColumns} rows={asRows(data?.stages, "stage")} emptyText={t("admin.ecosystem.analytics.empty.pipeline")} /></Panel><Panel title={t("admin.ecosystem.analytics.panels.stuck")}><AdminTable rowKey="id" columns={stuckColumns} rows={toArray(data?.stuck_startups)} emptyText={t("admin.ecosystem.analytics.empty.stuck")} /></Panel></div>;
   }
 
   if (kind === "progress") {

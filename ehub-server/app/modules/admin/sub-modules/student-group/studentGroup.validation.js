@@ -42,6 +42,8 @@ export const listAdminStudentsSchema = {
     status: studentStatus.valid("", "active", "inactive", "graduated", "suspended", "pending").allow(""),
     major: Joi.string().max(100).allow(""),
     campus: Joi.string().max(50).allow(""),
+    semester_id: Joi.number().integer().positive().allow(""),
+    class_id: Joi.number().integer().positive().allow(""),
   }),
 };
 
@@ -98,6 +100,12 @@ export const bulkCreateAdminEnrollmentSchema = {
   }),
 };
 
+export const bulkDeleteAdminStudentsSchema = {
+  body: Joi.object({
+    ids: Joi.array().items(Joi.number().integer().positive()).min(1).max(100).required(),
+  }),
+};
+
 export const updateAdminEnrollmentStatusSchema = {
   ...idParam,
   body: Joi.object({
@@ -135,6 +143,13 @@ export const createAdminGroupSchema = {
     mentor_dept: Joi.string().max(200).allow(null, ""),
     max_members: Joi.number().integer().min(1).max(20),
     status: groupStatus.default("forming"),
+  }),
+};
+
+export const deleteAdminGroupSchema = {
+  ...idParam,
+  query: Joi.object({
+    permanent: Joi.boolean().truthy("true", "1").falsy("false", "0", "").default(false),
   }),
 };
 

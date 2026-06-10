@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { validateRequest } from "app/core/middlewares/validateRequest.js";
 import { authenticate } from "app/core/middlewares/authMiddleware.js";
+import { createRateLimiters } from "app/core/middlewares/rateLimiter.js";
 import { loginSchema, activatePreviewSchema, activateBodySchema, updateProfileSchema, changePasswordSchema } from "./auth.validation.js";
 
 /**
@@ -15,9 +16,10 @@ import { loginSchema, activatePreviewSchema, activateBodySchema, updateProfileSc
 export const createAuthRouter = (container) => {
   const { authController } = container.cradle;
   const router = Router();
+  const limiters = createRateLimiters(container);
 
   // ── Public routes ──────────────────────────────────────
-  router.post("/login", validateRequest(loginSchema), authController.login);
+  router.post("/login", limiters.loginIp, limiters.login, validateRequest(loginSchema), authController.login);
   router.get("/activate", validateRequest(activatePreviewSchema), authController.getActivatePreview);
   router.post("/activate", validateRequest(activateBodySchema), authController.postActivate);
   router.post("/refresh-token", authController.refresh);

@@ -41,9 +41,10 @@ export const Conflict = (message = "Xung đột dữ liệu") =>
   AppError(message, 409, ErrorTypes.CONFLICT);
 
 // ─── 429 ────────────────────────────────────────────
-export const RateLimitExceeded = (retryAfter = 60) =>
+export const RateLimitExceeded = (retryAfter = 60, retryAt = null) =>
   AppError("Quá nhiều yêu cầu, vui lòng thử lại sau", 429, ErrorTypes.RATE_LIMIT_EXCEEDED, {
     retryAfter,
+    retryAt,
   });
 
 // ─── 500 ────────────────────────────────────────────

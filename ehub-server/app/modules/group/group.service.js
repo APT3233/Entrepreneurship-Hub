@@ -15,6 +15,7 @@ export const createGroupService = ({
   inviteRepository,
   studentRepository,
   auditService,
+  mentorWorkflowService,
 }) => {
   const base = createBaseService(groupRepository, "Group");
   const ALLOWED_SORT = ["group_code", "group_name", "status", "max_members", "created_at"];
@@ -83,11 +84,25 @@ export const createGroupService = ({
     }
   };
 
+  const maybeAssignMentorToGroup = async (groupId, mentorId, user) => {
+    if (!mentorId) return;
+    await mentorWorkflowService.createAssignment(
+      {
+        mentor_id: Number(mentorId),
+        assignment_type: "primary",
+        status: "pending_mentor",
+      },
+      user,
+      groupId,
+    );
+  };
+
   const create = async (data, user = null) => {
     const {
       members = [],
       leader_student_id: leaderStudentId,
       created_by: createdBy,
+      mentor_id: mentorId,
       ...groupPayload
     } = data;
     const classId = groupPayload.class_id;
@@ -253,6 +268,8 @@ export const createGroupService = ({
         newValues: { group_code: groupPayload.group_code, class_id: classId }
       });
 
+      await maybeAssignMentorToGroup(groupId, mentorId, user);
+
       return {
         ...full,
         ...(mailDispatchPublicId && { mail_dispatch_id: mailDispatchPublicId }),
@@ -270,6 +287,8 @@ export const createGroupService = ({
       title: groupPayload.group_code,
       newValues: { group_code: groupPayload.group_code, class_id: classId }
     });
+
+    await maybeAssignMentorToGroup(result.id, mentorId, user);
 
     return result;
   };

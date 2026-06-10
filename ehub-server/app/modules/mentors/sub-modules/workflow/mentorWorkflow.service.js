@@ -90,8 +90,8 @@ export const createMentorWorkflowService = ({ mentorWorkflowRepository, transact
   });
 
   const validateAssignmentRules = async (payload, excludeId = null) => {
-    const mentor = await mentorWorkflowRepository.findActiveMentor(payload.mentor_id);
-    if (!mentor) throw BadRequest("Only active mentors can be assigned");
+    const mentor = await mentorWorkflowRepository.findAssignableMentor(payload.mentor_id);
+    if (!mentor) throw BadRequest("Mentor is not available for assignment");
     if (await mentorWorkflowRepository.countOpenAssignmentForPair(payload.mentor_id, payload.group_id, excludeId)) {
       throw AlreadyExists("Mentor already has an open assignment for this group");
     }

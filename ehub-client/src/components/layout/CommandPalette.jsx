@@ -25,6 +25,7 @@ import {
   ShieldCheck,
   KeyRound,
   Search,
+  Rocket,
 } from "lucide-react";
 import { useTranslation } from "@/context/TranslationContext";
 
@@ -50,6 +51,18 @@ const commandItems = [
   { labelKey: "nav.mentorAnalytics", path: "/admin/mentor-analytics", icon: BarChart3, categoryKey: "commandPalette.categories.mentor" },
   { labelKey: "nav.mentorWorkload", path: "/admin/mentor-analytics/workload", icon: ClipboardList, categoryKey: "commandPalette.categories.mentor" },
   { labelKey: "nav.mentorGroupSupport", path: "/admin/mentor-analytics/group-support", icon: UsersRound, categoryKey: "commandPalette.categories.mentor" },
+
+  { labelKey: "nav.startupPool", path: "/admin/incubation/startups", icon: Rocket, categoryKey: "commandPalette.categories.incubation" },
+  { labelKey: "nav.selectionReviews", path: "/admin/incubation/selection-reviews", icon: ClipboardCheck, categoryKey: "commandPalette.categories.incubation" },
+  { labelKey: "nav.pipeline", path: "/admin/incubation/pipeline", icon: FolderKanban, categoryKey: "commandPalette.categories.incubation" },
+  { labelKey: "nav.pipelineStages", path: "/admin/incubation/pipeline/stages", icon: Layers3, categoryKey: "commandPalette.categories.incubation" },
+  { labelKey: "nav.ecosystemEvents", path: "/admin/ecosystem/events", icon: CalendarDays, categoryKey: "commandPalette.categories.incubation" },
+  { labelKey: "nav.ecosystemAlumni", path: "/admin/ecosystem/alumni", icon: GraduationCap, categoryKey: "commandPalette.categories.incubation" },
+  { labelKey: "nav.ecosystemPartners", path: "/admin/ecosystem/partners", icon: UsersRound, categoryKey: "commandPalette.categories.incubation" },
+  { labelKey: "nav.ecosystemOpportunities", path: "/admin/ecosystem/opportunities", icon: ClipboardList, categoryKey: "commandPalette.categories.incubation" },
+  { labelKey: "nav.incubationAnalytics", path: "/admin/incubation/analytics", icon: BarChart3, categoryKey: "commandPalette.categories.incubation" },
+  { labelKey: "nav.ecosystemHealth", path: "/admin/incubation/analytics/ecosystem-health", icon: TriangleAlert, categoryKey: "commandPalette.categories.incubation" },
+  { labelKey: "nav.incubationReports", path: "/admin/incubation/reports", icon: FileUp, categoryKey: "commandPalette.categories.incubation" },
 
   { labelKey: "nav.students", path: "/admin/students", icon: Users, categoryKey: "commandPalette.categories.studentsGroups" },
   { labelKey: "nav.enrollments", path: "/admin/enrollments", icon: UserPlus, categoryKey: "commandPalette.categories.studentsGroups" },

@@ -27,6 +27,18 @@ export const buildClassLabel = (cls) =>
 export const buildStudentLabel = (student) =>
   `${student.student_code} - ${student.full_name}${student.email ? ` (${student.email})` : ""}`;
 
+export const parseGroupSummaries = (value) => {
+  if (!value) return [];
+  return String(value)
+    .split("||")
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .map((item) => {
+      const [name, status = "unknown"] = item.split("::");
+      return { name: name?.trim() || "—", status: status?.trim() || "unknown" };
+    });
+};
+
 export const getShortClassCode = (classCode, semesterCode) => {
   if (classCode && semesterCode && classCode.endsWith(`-${semesterCode}`)) {
     return classCode.slice(0, -(semesterCode.length + 1));

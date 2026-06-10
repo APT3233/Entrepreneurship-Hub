@@ -221,6 +221,7 @@ export default function CreateGroupForm({
     const selectedMentor = availableMentors.find(m => m.id === selectedMentorId);
     onSubmit?.({
       name,
+      mentorId: selectedMentor ? selectedMentor.id : null,
       mentor: selectedMentor ? selectedMentor.full_name : "",
       mentorDept: selectedMentor ? (selectedMentor.organization || "Khoa Hệ thống Thông tin") : "",
       category,

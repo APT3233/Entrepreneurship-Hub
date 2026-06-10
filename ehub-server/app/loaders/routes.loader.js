@@ -1,4 +1,6 @@
 import { appConfig } from "app/config/app.js";
+import { optionalAuthenticate } from "app/core/middlewares/authMiddleware.js";
+import { createRateLimiters } from "app/core/middlewares/rateLimiter.js";
 import { logger } from "app/core/logger/index.js";
 import { AuditModule } from "app/modules/audit/index.js";
 import { AuthModule } from "app/modules/auth/index.js";
@@ -51,6 +53,9 @@ export const loadRoutes = (app, container) => {
   const prefix = appConfig.apiPrefix; // '/api/v1'
 
   registerAppModules(container);
+  const limiters = createRateLimiters(container);
+
+  app.use(prefix, optionalAuthenticate, limiters.api, limiters.mutation);
 
   for (const mod of MODULES) {
     const router = mod.router(container);

@@ -4,9 +4,10 @@ const rolesBodySchema = Joi.array().items(Joi.string().max(30)).custom((value, h
   const codes = (value || []).map((item) => String(item).trim().toLowerCase());
   const hasStudent = codes.includes("student");
   const hasStaff = codes.some((code) => code === "lecturer" || code === "admin");
-  if (hasStudent && hasStaff) {
+  const hasMentor = codes.includes("mentor");
+  if (hasStudent && (hasStaff || hasMentor)) {
     return helpers.error("any.custom", {
-      message: "Một người dùng không thể vừa là Sinh viên vừa là Giảng viên hoặc Quản trị viên.",
+      message: "Một người dùng không thể vừa là Sinh viên vừa là Giảng viên, Quản trị viên hoặc Mentor.",
     });
   }
   return value;

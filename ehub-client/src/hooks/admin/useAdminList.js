@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
 
-export function useAdminList(fetcher, query) {
+export function useAdminList(fetcher, query, { enabled = true } = {}) {
   const [rows, setRows] = useState([]);
   const [meta, setMeta] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState("");
 
   const load = useCallback(async (isSilent = false) => {
+    if (!enabled) return;
     if (!isSilent) {
       setLoading(true);
     }
@@ -22,11 +23,12 @@ export function useAdminList(fetcher, query) {
         setLoading(false);
       }
     }
-  }, [fetcher, query]);
+  }, [enabled, fetcher, query]);
 
   useEffect(() => {
+    if (!enabled) return;
     load(false);
-  }, [load]);
+  }, [enabled, load]);
 
   return { rows, meta, loading, error, refetch: load };
 }

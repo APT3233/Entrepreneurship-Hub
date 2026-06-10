@@ -168,18 +168,20 @@ export const createMentorRepository = ({ db }) => {
     return rows[0] || null;
   };
 
-  const assignUserRole = async (userId, roleCode, assignedBy, conn = db) => {
-    const [roles] = await conn.execute("SELECT id FROM roles WHERE role_code = :roleCode LIMIT 1", { roleCode });
+  const assignUserRole = async (userId, roleCode, assignedBy, conn) => {
+    const executor = conn ?? db;
+    const [roles] = await executor.execute("SELECT id FROM roles WHERE role_code = :roleCode LIMIT 1", { roleCode });
     const role = roles[0];
     if (!role) return;
-    await conn.execute(
+    await executor.execute(
       "INSERT IGNORE INTO user_roles (user_id, role_id, assigned_by, assigned_at) VALUES (:userId, :roleId, :assignedBy, NOW())",
       { userId: Number(userId), roleId: role.id, assignedBy: assignedBy || null },
     );
   };
 
-  const createMentor = async (data, conn = db) => {
-    const [result] = await conn.execute(
+  const createMentor = async (data, conn) => {
+    const executor = conn ?? db;
+    const [result] = await executor.execute(
       `
         INSERT INTO mentor_profiles
           (user_id, full_name, email, phone, avatar_url, mentor_type, organization, position_title, bio,
@@ -195,11 +197,12 @@ export const createMentorRepository = ({ db }) => {
     return result.insertId;
   };
 
-  const updateMentor = async (id, data, conn = db) => {
+  const updateMentor = async (id, data, conn) => {
+    const executor = conn ?? db;
     const keys = Object.keys(data);
     if (!keys.length) return;
     const setSql = keys.map((key) => `${key} = :${key}`).join(", ");
-    await conn.execute(
+    await executor.execute(
       `UPDATE mentor_profiles SET ${setSql}, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND deleted_at IS NULL`,
       { ...data, id: Number(id) },
     );

@@ -9,6 +9,7 @@ export const studentService = {
   create: (body) => instance.post(basePath, body),
   update: (id, body) => instance.put(`${basePath}/${id}`, body),
   remove: (id) => instance.delete(`${basePath}/${id}`),
+  bulkRemove: (ids) => instance.post(`${basePath}/bulk-delete`, { ids }),
 };
 
 export default studentService;

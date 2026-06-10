@@ -27,6 +27,11 @@ export const createAdminStudentGroupController = ({ adminStudentGroupService }) 
     return sendNoContent(res);
   });
 
+  const bulkDeleteStudents = catchAsync(async (req, res) => {
+    const data = await adminStudentGroupService.bulkDeleteStudents(req.body, req.user);
+    return sendSuccess(res, { data, message: "Bulk student delete processed successfully" });
+  });
+
   const listEnrollments = catchAsync(async (req, res) => {
     const result = await adminStudentGroupService.listEnrollments(req.query);
     return sendPaginated(res, { ...result, message: "Enrollments retrieved successfully" });
@@ -78,7 +83,9 @@ export const createAdminStudentGroupController = ({ adminStudentGroupService }) 
   });
 
   const deleteGroup = catchAsync(async (req, res) => {
-    await adminStudentGroupService.deleteGroup(req.params.id, req.user);
+    await adminStudentGroupService.deleteGroup(req.params.id, req.user, {
+      permanent: req.query.permanent === true || req.query.permanent === "true",
+    });
     return sendNoContent(res);
   });
 
@@ -128,6 +135,7 @@ export const createAdminStudentGroupController = ({ adminStudentGroupService }) 
     createStudent,
     updateStudent,
     deleteStudent,
+    bulkDeleteStudents,
     listEnrollments,
     addEnrollment,
     bulkAddEnrollments,

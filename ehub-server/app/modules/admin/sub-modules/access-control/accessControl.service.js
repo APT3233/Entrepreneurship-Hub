@@ -5,15 +5,17 @@ import { parsePagination } from "app/core/utils/pagination.js";
 const normalizeCode = (value) => String(value || "").trim().toLowerCase();
 
 const STUDENT_ROLE = "student";
+const MENTOR_ROLE = "mentor";
 const STAFF_ROLES = new Set(["lecturer", "admin"]);
 
 const assertRoleAssignmentAllowed = (roleCodes, user = null) => {
   const codes = (roleCodes || []).map(normalizeCode).filter(Boolean);
   const hasStudent = codes.includes(STUDENT_ROLE);
   const hasStaff = codes.some((code) => STAFF_ROLES.has(code));
+  const hasMentor = codes.includes(MENTOR_ROLE);
 
-  if (hasStudent && hasStaff) {
-    throw BadRequest("Một người dùng không thể vừa là Sinh viên vừa là Giảng viên hoặc Quản trị viên.");
+  if (hasStudent && (hasStaff || hasMentor)) {
+    throw BadRequest("Một người dùng không thể vừa là Sinh viên vừa là Giảng viên, Quản trị viên hoặc Mentor.");
   }
 
   if (user) {
@@ -33,7 +35,7 @@ const assertRoleAssignmentAllowed = (roleCodes, user = null) => {
   }
 };
 
-export const createAdminAccessControlService = ({ adminAccessControlRepository, transaction, auditService, tokenService }) => {
+export const createAdminAccessControlService = ({ adminAccessControlRepository, transaction, auditService, tokenService, mentorService }) => {
   const pageArgs = (query) => parsePagination({
     page: query.page,
     limit: query.limit,
@@ -77,6 +79,15 @@ export const createAdminAccessControlService = ({ adminAccessControlRepository, 
         status: data.status || "active",
       }, conn);
       await adminAccessControlRepository.replaceUserRoles(userId, roleCodes, actor?.id, conn);
+      if (roleCodes.includes(MENTOR_ROLE) && mentorService?.provisionProfileForUser) {
+        await mentorService.provisionProfileForUser(userId, {
+          full_name: data.full_name.trim(),
+          email: data.email.trim(),
+          phone: data.phone || null,
+          avatar_url: data.avatar_url || null,
+          account_status: data.status || "active",
+        }, actor, conn);
+      }
       return userId;
     });
 
@@ -142,6 +153,15 @@ export const createAdminAccessControlService = ({ adminAccessControlRepository, 
     const roleCodes = (roles || []).map(normalizeCode).filter(Boolean);
     assertRoleAssignmentAllowed(roleCodes, user);
     await adminAccessControlRepository.replaceUserRoles(id, roleCodes, actor?.id);
+    if (roleCodes.includes(MENTOR_ROLE) && mentorService?.provisionProfileForUser) {
+      await mentorService.provisionProfileForUser(id, {
+        full_name: user.full_name,
+        email: user.email,
+        phone: user.phone,
+        avatar_url: user.avatar_url,
+        account_status: user.status || "active",
+      }, actor);
+    }
     await auditService.log({
       userId: actor?.id || null,
       action: "admin_assign_user_roles",

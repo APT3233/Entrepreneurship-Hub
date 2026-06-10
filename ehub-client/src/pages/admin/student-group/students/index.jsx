@@ -17,11 +17,14 @@ import DetailGrid from "@/pages/admin/academic/components/DetailGrid";
 import { useTranslation } from "@/context/TranslationContext";
 import Dropdown from "@/components/ui/filter/DropDown";
 import {
+  buildClassLabel,
   buildStudentLabel,
   formatDate,
   pageLimit,
   getStudentStatusOptions,
   getShortClassCode,
+  parseGroupSummaries,
+  toSelectOptions,
   CAMPUS_OPTIONS,
   MAJOR_OPTIONS,
 } from "@/pages/admin/student-group/shared";
@@ -43,19 +46,40 @@ export default function AdminStudents() {
   const toast = useToast();
   const authUser = useSelector(selectAuthUser);
   const canWrite = checkPermission(authUser, "admin.students.update");
-  const [query, setQuery] = useState({ page: 1, limit: pageLimit, search: "", major: "", campus: "", status: "" });
-  const { rows, meta, loading, error, refetch } = useStudents(query);
-  const [lookups, setLookups] = useState({ majors: [], campuses: [] });
+  const [filtersReady, setFiltersReady] = useState(false);
+  const [query, setQuery] = useState({ page: 1, limit: pageLimit, search: "", major: "", campus: "", status: "", semester_id: "", class_id: "" });
+  const { rows, meta, loading, error, refetch } = useStudents(query, { enabled: filtersReady });
+  const [lookups, setLookups] = useState({ majors: [], campuses: [], classes: [], semesters: [] });
   const [modal, setModal] = useState({ type: null, student: null });
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [confirmStudent, setConfirmStudent] = useState(null);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+  const isVi = t("common.confirm") === "Xác nhận";
 
   useEffect(() => {
     studentGroupLookupService.getAll()
-      .then((res) => setLookups(res?.data || { majors: [], campuses: [] }))
-      .catch(() => setLookups({ majors: [], campuses: [] }));
+      .then((res) => {
+        const data = res?.data || { majors: [], campuses: [], classes: [], semesters: [] };
+        setLookups(data);
+        const ongoing = (data.semesters || []).find((item) => item.status === "ongoing");
+        setQuery((prev) => ({
+          ...prev,
+          semester_id: ongoing ? String(ongoing.id) : "",
+        }));
+        setFiltersReady(true);
+      })
+      .catch(() => {
+        setLookups({ majors: [], campuses: [], classes: [], semesters: [] });
+        setFiltersReady(true);
+      });
   }, []);
+
+  useEffect(() => {
+    setSelectedIds([]);
+  }, [query.page, query.search, query.major, query.campus, query.status, query.semester_id, query.class_id]);
 
   const majorOptions = useMemo(() => [
     { value: "", label: t("common.confirm") === "Xác nhận" ? "Tất cả ngành" : "All majors" },
@@ -66,6 +90,26 @@ export default function AdminStudents() {
     { value: "", label: t("common.confirm") === "Xác nhận" ? "Tất cả campus" : "All campuses" },
     ...(lookups.campuses || []).map((campus) => ({ value: campus, label: campus })),
   ], [lookups.campuses, t]);
+
+  const semesterOptions = useMemo(
+    () => toSelectOptions(
+      lookups.semesters,
+      (item) => item.id,
+      (item) => `${item.semester_code} - ${item.semester_name}${item.status === "ongoing" ? (isVi ? " (Hiện tại)" : " (Current)") : ""}`,
+      isVi ? "Tất cả học kỳ" : "All semesters",
+    ),
+    [lookups.semesters, isVi],
+  );
+
+  const filteredClasses = useMemo(() => {
+    if (!query.semester_id) return lookups.classes || [];
+    return (lookups.classes || []).filter((item) => String(item.semester_id) === String(query.semester_id));
+  }, [lookups.classes, query.semester_id]);
+
+  const classOptions = useMemo(
+    () => toSelectOptions(filteredClasses, (item) => item.id, buildClassLabel, isVi ? "Tất cả lớp" : "All classes"),
+    [filteredClasses, isVi],
+  );
 
   const openCreate = () => {
     setForm(emptyForm);
@@ -144,20 +188,112 @@ export default function AdminStudents() {
     if (!confirmStudent) return;
     try {
       await studentService.remove(confirmStudent.id);
-      toast.success(t("common.confirm") === "Xác nhận" ? "Đã xoá mềm sinh viên" : "Soft deleted student successfully");
+      toast.success(isVi ? "Đã xoá mềm sinh viên" : "Soft deleted student successfully");
       setConfirmStudent(null);
+      setSelectedIds((prev) => prev.filter((id) => id !== confirmStudent.id));
       await refetch();
     } catch (err) {
       toast.error(err.message || t("admin.toasts.actionFailed"));
     }
   };
 
+  const pageIds = useMemo(() => rows.map((row) => row.id), [rows]);
+  const allPageSelected = pageIds.length > 0 && pageIds.every((id) => selectedIds.includes(id));
+  const somePageSelected = pageIds.some((id) => selectedIds.includes(id));
+
+  const toggleSelect = (id) => {
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]));
+  };
+
+  const toggleSelectAllPage = () => {
+    if (allPageSelected) {
+      setSelectedIds((prev) => prev.filter((id) => !pageIds.includes(id)));
+      return;
+    }
+    setSelectedIds((prev) => [...new Set([...prev, ...pageIds])]);
+  };
+
+  const bulkDeleteStudents = async () => {
+    if (!selectedIds.length) return;
+    setBulkDeleting(true);
+    try {
+      const res = await studentService.bulkRemove(selectedIds);
+      const data = res?.data || {};
+      const deletedCount = data.deleted_count ?? 0;
+      const failedCount = data.failed_count ?? 0;
+      if (deletedCount > 0) {
+        toast.success(isVi ? `Đã xoá mềm ${deletedCount} sinh viên` : `Soft deleted ${deletedCount} student(s)`);
+      }
+      if (failedCount > 0) {
+        const firstError = (data.results || []).find((item) => !item.success)?.message;
+        toast.error(isVi ? `Không xoá được ${failedCount} sinh viên${firstError ? `: ${firstError}` : ""}` : `Failed to delete ${failedCount} student(s)${firstError ? `: ${firstError}` : ""}`);
+      }
+      setConfirmBulkDelete(false);
+      setSelectedIds([]);
+      await refetch();
+    } catch (err) {
+      toast.error(err.message || t("admin.toasts.actionFailed"));
+    } finally {
+      setBulkDeleting(false);
+    }
+  };
+
   const columns = useMemo(() => [
+    ...(canWrite ? [{
+      key: "select",
+      label: (
+        <input
+          type="checkbox"
+          checked={allPageSelected}
+          ref={(el) => {
+            if (el) el.indeterminate = somePageSelected && !allPageSelected;
+          }}
+          onChange={toggleSelectAllPage}
+          className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+          aria-label={isVi ? "Chọn tất cả trên trang" : "Select all on page"}
+        />
+      ),
+      width: 44,
+      render: (row) => (
+        <input
+          type="checkbox"
+          checked={selectedIds.includes(row.id)}
+          onChange={() => toggleSelect(row.id)}
+          onClick={(e) => e.stopPropagation()}
+          className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+          aria-label={isVi ? `Chọn ${row.student_code}` : `Select ${row.student_code}`}
+        />
+      ),
+    }] : []),
     { key: "student_code", label: t("admin.fields.studentCode"), render: (row) => <span className="font-mono text-xs font-bold text-indigo-700">{row.student_code}</span> },
     { key: "full_name", label: t("admin.fields.fullName"), render: (row) => <span className="font-semibold text-gray-900">{row.full_name}</span> },
     { key: "email", label: t("admin.fields.email") },
     { key: "phone", label: t("admin.fields.phone"), render: (row) => row.phone || "—" },
-    { key: "major", label: t("admin.fields.major"), render: (row) => row.major || "—" },
+    {
+      key: "class_codes",
+      label: isVi ? "Lớp / Nhóm" : "Class / Group",
+      render: (row) => {
+        const groups = parseGroupSummaries(row.group_summaries);
+        return (
+          <div className="min-w-[140px] space-y-1">
+            <div className="font-semibold text-gray-800">{row.class_codes || "—"}</div>
+            {groups.length ? groups.map((group) => (
+              <div key={`${row.id}-${group.name}-${group.status}`} className="flex flex-wrap items-center gap-1.5 text-xs">
+                <span className="font-medium text-gray-600">{group.name}</span>
+                <StatusBadge value={group.status} />
+              </div>
+            )) : (
+              <div className="text-xs text-gray-400">{isVi ? "Chưa có nhóm" : "No group"}</div>
+            )}
+            {Number(row.active_groups) > 0 ? (
+              <div className="text-[10px] font-semibold text-amber-600">
+                {isVi ? `${row.active_groups} nhóm active` : `${row.active_groups} active group(s)`}
+              </div>
+            ) : null}
+          </div>
+        );
+      },
+    },
     { key: "campus", label: t("admin.fields.campus"), render: (row) => row.campus || "—" },
     { key: "status", label: t("admin.fields.status"), render: (row) => <StatusBadge value={row.status} /> },
     { key: "linked", label: t("common.confirm") === "Xác nhận" ? "Liên kết User" : "User linked", render: (row) => row.user_id ? <StatusBadge value="linked" /> : <span className="text-gray-400">No</span> },
@@ -173,18 +309,46 @@ export default function AdminStudents() {
         </div>
       ),
     },
-  ], [t, canWrite]);
+  ], [t, canWrite, allPageSelected, somePageSelected, selectedIds, isVi]);
 
   return (
     <>
       <FilterBar
         right={canWrite ? (
-          <button type="button" onClick={openCreate} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 cursor-pointer">
-            <Plus size={16} /> {t("admin.actions.create")}
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            {selectedIds.length > 0 ? (
+              <button
+                type="button"
+                onClick={() => setConfirmBulkDelete(true)}
+                className="inline-flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm font-semibold text-rose-700 hover:bg-rose-100 cursor-pointer"
+              >
+                <Trash2 size={16} />
+                {isVi ? `Xoá đã chọn (${selectedIds.length})` : `Delete selected (${selectedIds.length})`}
+              </button>
+            ) : null}
+            <button type="button" onClick={openCreate} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 cursor-pointer">
+              <Plus size={16} /> {t("admin.actions.create")}
+            </button>
+          </div>
         ) : null}
       >
-        <SearchInput value={query.search} onChange={(search) => setQuery((prev) => ({ ...prev, page: 1, search }))} placeholder={t("common.confirm") === "Xác nhận" ? "MSSV, tên, email..." : "Code, name, email..."} />
+        <SearchInput value={query.search} onChange={(search) => setQuery((prev) => ({ ...prev, page: 1, search }))} placeholder={isVi ? "MSSV, tên, email..." : "Code, name, email..."} />
+        <FilterSelect
+          label={t("filterLabels.semester")}
+          value={query.semester_id}
+          onChange={(semester_id) => setQuery((prev) => {
+            const classesInSemester = (lookups.classes || []).filter((item) => String(item.semester_id) === String(semester_id));
+            const keepClass = prev.class_id && classesInSemester.some((item) => String(item.id) === String(prev.class_id));
+            return {
+              ...prev,
+              page: 1,
+              semester_id,
+              class_id: keepClass ? prev.class_id : "",
+            };
+          })}
+          options={semesterOptions}
+        />
+        <FilterSelect label={isVi ? "Lớp" : "Class"} value={query.class_id} onChange={(class_id) => setQuery((prev) => ({ ...prev, page: 1, class_id }))} options={classOptions} />
         <FilterSelect label={t("admin.fields.major")} value={query.major} onChange={(major) => setQuery((prev) => ({ ...prev, page: 1, major }))} options={majorOptions} />
         <FilterSelect label={t("admin.fields.campus")} value={query.campus} onChange={(campus) => setQuery((prev) => ({ ...prev, page: 1, campus }))} options={campusOptions} />
         <FilterSelect label={t("admin.fields.status")} value={query.status} onChange={(status) => setQuery((prev) => ({ ...prev, page: 1, status }))} options={studentStatusOptions} />
@@ -345,7 +509,17 @@ export default function AdminStudents() {
                 {(modal.student.classes || []).length ? modal.student.classes.map((item) => (
                   <div key={item.enrollment_id} className="rounded-xl border border-gray-100 p-3 text-sm">
                     <div className="font-bold text-gray-900">{getShortClassCode(item.class_code, item.semester_code)} · {item.subject_code}</div>
-                    <div className="mt-1 text-gray-500">{item.semester_code} · {item.enrollment_status} · {item.group_name || (t("common.confirm") === "Xác nhận" ? "Chưa có nhóm" : "No group")}</div>
+                    <div className="mt-1 flex flex-wrap items-center gap-2 text-gray-500">
+                      <span>{item.semester_code} · {item.enrollment_status}</span>
+                      {item.group_name ? (
+                        <>
+                          <span>· {item.group_name}</span>
+                          {item.group_status ? <StatusBadge value={item.group_status} /> : null}
+                        </>
+                      ) : (
+                        <span>· {isVi ? "Chưa có nhóm" : "No group"}</span>
+                      )}
+                    </div>
                   </div>
                 )) : <div className="rounded-xl bg-gray-50 p-3 text-sm text-gray-400">{t("common.confirm") === "Xác nhận" ? "Sinh viên chưa tham gia lớp nào." : "Student has not joined any class."}</div>}
               </div>
@@ -356,13 +530,30 @@ export default function AdminStudents() {
 
       <ConfirmDialog
         isOpen={!!confirmStudent}
-        title={t("common.confirm") === "Xác nhận" ? "Xoá mềm sinh viên" : "Soft delete student"}
-        subtitle={confirmStudent ? (t("common.confirm") === "Xác nhận" ? `${confirmStudent.student_code} - ${confirmStudent.full_name}. Không xoá cứng dữ liệu học thuật liên quan.` : `${confirmStudent.student_code} - ${confirmStudent.full_name}. Does not hard delete related academic data.`) : ""}
+        title={isVi ? "Xoá mềm sinh viên" : "Soft delete student"}
+        subtitle={confirmStudent ? (isVi ? `${confirmStudent.student_code} - ${confirmStudent.full_name}. Không xoá cứng dữ liệu học thuật liên quan.` : `${confirmStudent.student_code} - ${confirmStudent.full_name}. Does not hard delete related academic data.`) : ""}
         variant="delete"
         color="red"
-        yesLabel={t("common.confirm") === "Xác nhận" ? "Xoá mềm" : "Soft delete"}
+        yesLabel={isVi ? "Xoá mềm" : "Soft delete"}
         onYes={deleteStudent}
         onClose={() => setConfirmStudent(null)}
+      />
+
+      <ConfirmDialog
+        isOpen={confirmBulkDelete}
+        title={isVi ? "Xoá mềm nhiều sinh viên" : "Bulk soft delete students"}
+        subtitle={
+          selectedIds.length
+            ? (isVi
+              ? `Bạn sắp xoá mềm ${selectedIds.length} sinh viên. Sinh viên đang thuộc nhóm active sẽ bị bỏ qua.`
+              : `You are about to soft delete ${selectedIds.length} student(s). Students in active groups will be skipped.`)
+            : ""
+        }
+        variant="delete"
+        color="red"
+        yesLabel={bulkDeleting ? (isVi ? "Đang xoá..." : "Deleting...") : (isVi ? "Xoá mềm" : "Soft delete")}
+        onYes={bulkDeleteStudents}
+        onClose={() => !bulkDeleting && setConfirmBulkDelete(false)}
       />
     </>
   );

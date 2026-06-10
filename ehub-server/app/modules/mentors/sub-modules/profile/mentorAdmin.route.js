@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { permissionGuard } from "app/core/middlewares/permissionGuard.js";
+import { createRateLimiters } from "app/core/middlewares/rateLimiter.js";
 import { validateRequest } from "app/core/middlewares/validateRequest.js";
 import {
   confirmMentorDocumentUploadSchema,
@@ -23,6 +24,7 @@ export const createMentorAdminRouter = (container) => {
   const { mentorController } = container.cradle;
   const router = Router();
   const can = (...permissions) => permissionGuard(container, ...permissions);
+  const limiters = createRateLimiters(container);
 
   router.get("/mentor-documents", can("mentor.document.manage", "mentor.admin_read"), validateRequest(listMentorDocumentsSchema), mentorController.listAllDocuments);
 
@@ -45,8 +47,8 @@ export const createMentorAdminRouter = (container) => {
   router.put("/mentors/:id/availability", can("mentor.availability.manage"), validateRequest(replaceMentorAvailabilitySchema), mentorController.replaceMentorAvailability);
 
   router.get("/mentors/:id/documents", can("mentor.document.manage", "mentor.admin_read"), validateRequest(mentorIdParamSchema), mentorController.listMentorDocuments);
-  router.post("/mentors/:id/documents/initiate-upload", can("mentor.document.manage"), validateRequest(initiateMentorDocumentUploadSchema), mentorController.initiateMentorDocumentUpload);
-  router.post("/mentors/:id/documents", can("mentor.document.manage"), validateRequest(confirmMentorDocumentUploadSchema), mentorController.confirmMentorDocumentUpload);
+  router.post("/mentors/:id/documents/initiate-upload", limiters.upload, can("mentor.document.manage"), validateRequest(initiateMentorDocumentUploadSchema), mentorController.initiateMentorDocumentUpload);
+  router.post("/mentors/:id/documents", limiters.upload, can("mentor.document.manage"), validateRequest(confirmMentorDocumentUploadSchema), mentorController.confirmMentorDocumentUpload);
   router.delete("/mentors/:id/documents/:documentId", can("mentor.document.manage"), validateRequest(deleteMentorDocumentSchema), mentorController.deleteMentorDocument);
 
   return router;

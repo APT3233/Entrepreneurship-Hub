@@ -224,15 +224,8 @@ export const createGroupRepository = ({ db }) => {
     const sql = `
       SELECT mp.id, mp.full_name, mp.email, mp.mentor_type, mp.organization, mp.position_title
       FROM mentor_profiles mp
-      WHERE mp.status = 'active'
+      WHERE mp.status IN ('active', 'pending')
         AND mp.deleted_at IS NULL
-        AND NOT EXISTS (
-          SELECT 1
-          FROM mentor_assignments ma
-          WHERE ma.mentor_id = mp.id
-            AND ma.status = 'active'
-            AND ma.deleted_at IS NULL
-        )
       ORDER BY mp.full_name ASC
     `;
     const [rows] = await db.execute(sql);
@@ -255,6 +248,48 @@ export const createGroupRepository = ({ db }) => {
     return findWithMembers(id);
   };
 
+  const dissolveByClassId = async (classId, conn = db) => {
+    const classIdNum = Number(classId);
+    const [groups] = await conn.execute(
+      "SELECT id FROM `groups` WHERE class_id = ? AND deleted_at IS NULL",
+      [classIdNum],
+    );
+    if (!groups.length) {
+      await conn.execute(
+        `UPDATE class_students
+            SET status = 'dropped', dropped_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+          WHERE class_id = ? AND status = 'enrolled'`,
+        [classIdNum],
+      );
+      return { dissolvedGroups: 0, removedMembers: 0 };
+    }
+
+    const groupIds = groups.map((row) => row.id);
+    const placeholders = groupIds.map(() => "?").join(", ");
+    const [memberResult] = await conn.execute(
+      `UPDATE group_members
+          SET status = 'removed', updated_at = CURRENT_TIMESTAMP
+        WHERE group_id IN (${placeholders}) AND status = 'active'`,
+      groupIds,
+    );
+    const [groupResult] = await conn.execute(
+      `UPDATE \`groups\`
+          SET status = 'dissolved', deleted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+        WHERE class_id = ? AND deleted_at IS NULL`,
+      [classIdNum],
+    );
+    await conn.execute(
+      `UPDATE class_students
+          SET status = 'dropped', dropped_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+        WHERE class_id = ? AND status = 'enrolled'`,
+      [classIdNum],
+    );
+    return {
+      dissolvedGroups: groupResult.affectedRows || 0,
+      removedMembers: memberResult.affectedRows || 0,
+    };
+  };
+
   return {
     ...base,
     insertWithConn,
@@ -269,5 +304,6 @@ export const createGroupRepository = ({ db }) => {
     getMemberStatsByGroupId,
     findByStudent,
     getAvailableMentors,
+    dissolveByClassId,
   };
 };

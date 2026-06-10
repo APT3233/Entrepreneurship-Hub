@@ -1,4 +1,5 @@
 export const STUDENT_ROLE_CODE = "student";
+export const MENTOR_ROLE_CODE = "mentor";
 export const STAFF_ROLE_CODES = ["lecturer", "admin"];
 
 export function isStaffRoleCode(roleCode) {
@@ -22,8 +23,9 @@ export function isStaffAccount(user) {
 
 export function canAssignRoleToUser(user, roleCode) {
   if (!user) return true;
-  if (isStaffRoleCode(roleCode) && isStudentAccount(user)) return false;
+  if ((isStaffRoleCode(roleCode) || roleCode === MENTOR_ROLE_CODE) && isStudentAccount(user)) return false;
   if (roleCode === STUDENT_ROLE_CODE && isStaffAccount(user)) return false;
+  if (roleCode === STUDENT_ROLE_CODE && (user.roles || []).includes(MENTOR_ROLE_CODE)) return false;
   return true;
 }
 
@@ -33,8 +35,8 @@ export function applyRoleToggle(currentRoles, roleCode) {
     : [...currentRoles, roleCode];
 
   if (roleCode === STUDENT_ROLE_CODE && next.includes(STUDENT_ROLE_CODE)) {
-    next = next.filter((item) => !STAFF_ROLE_CODES.includes(item));
-  } else if (isStaffRoleCode(roleCode) && next.includes(roleCode)) {
+    next = next.filter((item) => !STAFF_ROLE_CODES.includes(item) && item !== MENTOR_ROLE_CODE);
+  } else if ((isStaffRoleCode(roleCode) || roleCode === MENTOR_ROLE_CODE) && next.includes(roleCode)) {
     next = next.filter((item) => item !== STUDENT_ROLE_CODE);
   }
 
@@ -44,12 +46,13 @@ export function applyRoleToggle(currentRoles, roleCode) {
 export function getRoleAssignmentError(roles, user, t) {
   const hasStudent = roles.includes(STUDENT_ROLE_CODE);
   const hasStaff = roles.some(isStaffRoleCode);
+  const hasMentor = roles.includes(MENTOR_ROLE_CODE);
 
-  if (hasStudent && hasStaff) {
+  if (hasStudent && (hasStaff || hasMentor)) {
     return t("admin.errors.roleMixed");
   }
 
-  if (user && isStudentAccount(user) && hasStaff) {
+  if (user && isStudentAccount(user) && (hasStaff || hasMentor)) {
     return t("admin.errors.roleStudentCannotStaff");
   }
 

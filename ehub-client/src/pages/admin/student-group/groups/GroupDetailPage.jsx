@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Ban, Crown, Plus, RefreshCw, UserMinus } from "lucide-react";
+import { ArrowLeft, Ban, Crown, Plus, RefreshCw, Trash2, UserMinus } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import {
@@ -40,6 +40,8 @@ export default function AdminGroupDetail() {
   const [memberForm, setMemberForm] = useState({ student_id: "", role: "member" });
   const [saving, setSaving] = useState(false);
   const [confirmMember, setConfirmMember] = useState(null);
+  const [confirmPermanentDelete, setConfirmPermanentDelete] = useState(false);
+  const isVi = t("common.confirm") === "Xác nhận";
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -122,6 +124,17 @@ export default function AdminGroupDetail() {
       toast.success(t("common.confirm") === "Xác nhận" ? "Đã gỡ thành viên" : "Member removed successfully");
       setConfirmMember(null);
       await load();
+    } catch (err) {
+      toast.error(err.message || t("admin.toasts.actionFailed"));
+    }
+  };
+
+  const permanentDeleteGroup = async () => {
+    try {
+      await groupService.permanentRemove(id);
+      toast.success(isVi ? "Đã xóa vĩnh viễn nhóm" : "Permanently deleted group");
+      setConfirmPermanentDelete(false);
+      navigate("/admin/groups");
     } catch (err) {
       toast.error(err.message || t("admin.toasts.actionFailed"));
     }
@@ -228,7 +241,19 @@ export default function AdminGroupDetail() {
           <h2 className="truncate text-xl font-black text-gray-900">{title}</h2>
           <p className="mt-1 text-sm text-gray-500">{group.class_code} · {group.subject_code} · {group.semester_code}</p>
         </div>
-        <StatusBadge value={group.status} />
+        <div className="flex flex-wrap items-center gap-2">
+          <StatusBadge value={group.status} />
+          {canWrite && Number(group.member_count || 0) === 0 ? (
+            <button
+              type="button"
+              onClick={() => setConfirmPermanentDelete(true)}
+              className="inline-flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-100 cursor-pointer"
+            >
+              <Trash2 size={16} />
+              {isVi ? "Xóa vĩnh viễn" : "Delete permanently"}
+            </button>
+          ) : null}
+        </div>
       </div>
 
       <div className="overflow-x-auto rounded-2xl border border-gray-100 bg-white p-2 shadow-sm">
@@ -322,6 +347,19 @@ export default function AdminGroupDetail() {
         yesLabel={t("common.confirm") === "Xác nhận" ? "Gỡ thành viên" : "Remove"}
         onYes={removeMember}
         onClose={() => setConfirmMember(null)}
+      />
+
+      <ConfirmDialog
+        isOpen={confirmPermanentDelete}
+        title={isVi ? "Xóa vĩnh viễn nhóm" : "Permanently delete group"}
+        subtitle={isVi
+          ? `${group.group_name} sẽ bị xóa khỏi hệ thống. Chỉ dùng khi nhóm không còn sinh viên active và chưa có bài nộp.`
+          : `${group.group_name} will be removed from the system. Only use when the group has no active members and no submissions.`}
+        variant="delete"
+        color="red"
+        yesLabel={isVi ? "Xóa vĩnh viễn" : "Delete permanently"}
+        onYes={permanentDeleteGroup}
+        onClose={() => setConfirmPermanentDelete(false)}
       />
     </div>
   );

@@ -31,10 +31,30 @@ export const createAdminDashboardRepository = ({ db }) => {
         JOIN roles r ON r.id = ur.role_id
         WHERE u.deleted_at IS NULL AND r.role_code = 'student'
       `),
-      countOne("SELECT COUNT(*) AS total FROM classes WHERE deleted_at IS NULL"),
-      countOne("SELECT COUNT(*) AS total FROM `groups` WHERE deleted_at IS NULL"),
-      countOne("SELECT COUNT(*) AS total FROM class_invites WHERE used = 0 AND expires_at >= NOW()"),
-      countOne("SELECT COUNT(*) AS total FROM group_invites WHERE status = 'pending' AND expires_at >= NOW()"),
+      countOne(`
+        SELECT COUNT(*) AS total
+        FROM classes
+        WHERE deleted_at IS NULL AND status <> 'archived'
+      `),
+      countOne(`
+        SELECT COUNT(*) AS total
+        FROM \`groups\` g
+        JOIN classes c ON c.id = g.class_id AND c.deleted_at IS NULL AND c.status <> 'archived'
+        WHERE g.deleted_at IS NULL
+      `),
+      countOne(`
+        SELECT COUNT(*) AS total
+        FROM class_invites ci
+        INNER JOIN classes c ON c.id = ci.class_id AND c.deleted_at IS NULL AND c.status <> 'archived'
+        WHERE ci.used = 0 AND ci.expires_at >= NOW()
+      `),
+      countOne(`
+        SELECT COUNT(*) AS total
+        FROM group_invites gi
+        INNER JOIN \`groups\` g ON g.id = gi.group_id AND g.deleted_at IS NULL
+        INNER JOIN classes c ON c.id = g.class_id AND c.deleted_at IS NULL AND c.status <> 'archived'
+        WHERE gi.status = 'pending' AND gi.expires_at >= NOW()
+      `),
       countOne(`
         SELECT COUNT(*) AS total
         FROM checkpoint_submissions cs
