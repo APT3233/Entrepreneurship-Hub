@@ -11,7 +11,7 @@ tests/
 
 docs/
 .rules/
-logs/
+/ehub-server/logs/
 data/.minio.sys
 data/ehub
 .plan/
