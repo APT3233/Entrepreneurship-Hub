@@ -22,6 +22,7 @@ export default function PendingMentorsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [confirm, setConfirm] = useState(null);
+  const [saving, setSaving] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -40,16 +41,31 @@ export default function PendingMentorsPage() {
   useEffect(() => { load(); }, [load]);
 
   const updateStatus = async () => {
-    if (!confirm) return;
+    if (!confirm || saving) return;
+    const { mentor, status } = confirm;
+    setSaving(true);
     try {
-      await AdminMentorApi.updateMentorStatus(confirm.mentor.id, confirm.status);
+      await AdminMentorApi.updateMentorStatus(mentor.id, status);
       toast.success(t("admin.mentors.reviewedSuccess"));
+      setRows((prev) => prev.filter((row) => Number(row.id) !== Number(mentor.id)));
       setConfirm(null);
       await load();
     } catch (err) {
       toast.error(err.message || t("admin.mentors.actionFailed"));
+    } finally {
+      setSaving(false);
     }
   };
+
+  const openDetail = useCallback((event, mentor) => {
+    event.stopPropagation();
+    navigate(`/admin/mentors/${mentor.id}`);
+  }, [navigate]);
+
+  const openStatusConfirm = useCallback((event, mentor, status, actionKey, color) => {
+    event.stopPropagation();
+    setConfirm({ mentor, status, actionKey, color });
+  }, []);
 
   const columns = useMemo(() => [
     { key: "avatar", label: "", width: 70, render: (row) => <MentorAvatar mentor={row} /> },
@@ -60,12 +76,12 @@ export default function PendingMentorsPage() {
     { key: "created_at", label: t("admin.mentors.created"), render: (row) => formatDate(row.created_at) },
     { key: "actions", label: "", width: 160, render: (row) => (
       <div className="flex justify-end gap-1">
-        <button type="button" onClick={() => navigate(`/admin/mentors/${row.id}`)} className="rounded-lg p-2 text-slate-500 hover:bg-slate-50"><Eye size={16} /></button>
-        <button type="button" onClick={() => setConfirm({ mentor: row, status: "active", actionKey: "approve", color: "green" })} className="rounded-lg p-2 text-emerald-600 hover:bg-emerald-50"><CheckCircle2 size={16} /></button>
-        <button type="button" onClick={() => setConfirm({ mentor: row, status: "rejected", actionKey: "reject", color: "red" })} className="rounded-lg p-2 text-rose-600 hover:bg-rose-50"><XCircle size={16} /></button>
+        <button type="button" onClick={(event) => openDetail(event, row)} className="rounded-lg p-2 text-slate-500 hover:bg-slate-50"><Eye size={16} /></button>
+        <button type="button" onClick={(event) => openStatusConfirm(event, row, "active", "approve", "green")} className="rounded-lg p-2 text-emerald-600 hover:bg-emerald-50"><CheckCircle2 size={16} /></button>
+        <button type="button" onClick={(event) => openStatusConfirm(event, row, "rejected", "reject", "red")} className="rounded-lg p-2 text-rose-600 hover:bg-rose-50"><XCircle size={16} /></button>
       </div>
     ) },
-  ], [navigate, t]);
+  ], [openDetail, openStatusConfirm, t]);
 
   const confirmTitle = useMemo(() => {
     if (!confirm) return "";
@@ -84,7 +100,7 @@ export default function PendingMentorsPage() {
     <>
       <FilterBar><SearchInput value={query.search} onChange={(search) => setQuery((prev) => ({ ...prev, page: 1, search }))} placeholder={t("admin.mentors.searchPendingPlaceholder")} /></FilterBar>
       <AdminTable columns={columns} rows={rows} loading={loading} error={error} emptyText={t("admin.mentors.emptyPendingText")} meta={meta} onPageChange={(page, limit) => setQuery((prev) => ({ ...prev, page, limit: limit || prev.limit }))} onRowClick={(row) => navigate(`/admin/mentors/${row.id}`)} />
-      <ConfirmDialog isOpen={!!confirm} title={confirmTitle} subtitle={confirmSubtitle} variant="confirm" color={confirm?.color} yesLabel={t("admin.mentors.yesLabel")} noLabel={t("admin.mentors.noLabel")} onYes={updateStatus} onNo={() => setConfirm(null)} onClose={() => setConfirm(null)} />
+      <ConfirmDialog isOpen={!!confirm} title={confirmTitle} subtitle={confirmSubtitle} variant="confirm" color={confirm?.color} yesLabel={t("admin.mentors.yesLabel")} noLabel={t("admin.mentors.noLabel")} loading={saving} onYes={updateStatus} onNo={() => setConfirm(null)} onClose={() => setConfirm(null)} />
     </>
   );
 }
