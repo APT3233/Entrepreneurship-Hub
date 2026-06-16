@@ -303,7 +303,7 @@ export const createEvaluationService = ({ evaluationRepository, transaction, aud
     const payload = {
       rubric_id: Number(rubricId),
       target_type: data.target_type,
-      target_id: Number(data.target_id),
+      target_id: String(data.target_id),
       created_by: actor?.id || null,
     };
     if (!existing) await evaluationRepository.createBinding(payload);
@@ -311,7 +311,7 @@ export const createEvaluationService = ({ evaluationRepository, transaction, aud
       userId: actor?.id || null,
       action: "bind_rubric",
       tableName: "rubric_bindings",
-      recordId: Number(data.target_id),
+      recordId: payload.target_id,
       title: rubric.name,
       oldValues: existing || null,
       newValues: payload,
@@ -319,11 +319,67 @@ export const createEvaluationService = ({ evaluationRepository, transaction, aud
     return getRubric(rubricId, actor);
   };
 
+  const mapSubmissionFiles = (files) => files.map((file) => ({
+    id: file.id,
+    file_name: file.file_name,
+    file_type: file.file_type,
+    mime_type: file.mime_type,
+    file_size: file.file_size != null ? Number(file.file_size) : null,
+    uploaded_at: file.uploaded_at,
+    download_url: getFileProxyUrl(file.file_path, file.file_name),
+  }));
+
+  const mapGradingFormBase = (context, files) => ({
+    target_type: context.target_type || null,
+    target_id: Number(context.id),
+    source_id: context.source_id,
+    source_title: context.source_title,
+    source_deadline: context.source_deadline,
+    source_status: context.source_status,
+    source_max_score: context.source_max_score != null ? Number(context.source_max_score) : null,
+    class_id: context.class_id,
+    class_code: context.class_code,
+    subject_code: context.subject_code,
+    subject_name: context.subject_name,
+    semester_code: context.semester_code,
+    semester_name: context.semester_name,
+    year: context.year,
+    group_id: context.group_id,
+    group_code: context.group_code,
+    group_name: context.group_name,
+    topic: context.topic,
+    topic_desc: context.topic_desc,
+    submission_status: context.status,
+    submitted_at: context.submitted_at,
+    is_late: Boolean(context.is_late),
+    current_score: context.score != null ? Number(context.score) : null,
+    current_feedback: context.feedback || null,
+    graded_by: context.graded_by || null,
+    graded_at: context.graded_at || null,
+    files: mapSubmissionFiles(files),
+  });
+
   const getGradingForm = async (targetType, targetId, user) => {
     const context = await evaluationRepository.findSubmissionContext(targetType, targetId);
     if (!context) throw NotFound("Submission");
     assertCanGrade(context, user);
-    if (!context.rubric_id) throw BadRequest("Submission này chưa được bind rubric.");
+    const files = await evaluationRepository.listSubmissionFiles(targetType, targetId);
+    const base = mapGradingFormBase({ ...context, target_type: targetType }, files);
+
+    if (!context.rubric_id) {
+      return {
+        ...base,
+        grading_mode: "direct",
+        scoring: {
+          method: "direct",
+          total_score_formula: "manual",
+          weight_used: false,
+        },
+        rubric: null,
+        evaluation: null,
+      };
+    }
+
     const rubric = await evaluationRepository.findRubricDetailById(context.rubric_id);
     if (!rubric) throw NotFound("Rubric");
     const existing = await evaluationRepository.findOpenEvaluationSession({
@@ -333,43 +389,9 @@ export const createEvaluationService = ({ evaluationRepository, transaction, aud
       evaluatorId: user.id,
     });
     const detail = existing ? await evaluationRepository.findEvaluationDetailById(existing.id) : null;
-    const files = await evaluationRepository.listSubmissionFiles(targetType, targetId);
     return {
-      target_type: targetType,
-      target_id: Number(targetId),
-      source_id: context.source_id,
-      source_title: context.source_title,
-      source_deadline: context.source_deadline,
-      source_status: context.source_status,
-      source_max_score: context.source_max_score != null ? Number(context.source_max_score) : null,
-      class_id: context.class_id,
-      class_code: context.class_code,
-      subject_code: context.subject_code,
-      subject_name: context.subject_name,
-      semester_code: context.semester_code,
-      semester_name: context.semester_name,
-      year: context.year,
-      group_id: context.group_id,
-      group_code: context.group_code,
-      group_name: context.group_name,
-      topic: context.topic,
-      topic_desc: context.topic_desc,
-      submission_status: context.status,
-      submitted_at: context.submitted_at,
-      is_late: Boolean(context.is_late),
-      current_score: context.score != null ? Number(context.score) : null,
-      current_feedback: context.feedback || null,
-      graded_by: context.graded_by || null,
-      graded_at: context.graded_at || null,
-      files: files.map((file) => ({
-        id: file.id,
-        file_name: file.file_name,
-        file_type: file.file_type,
-        mime_type: file.mime_type,
-        file_size: file.file_size != null ? Number(file.file_size) : null,
-        uploaded_at: file.uploaded_at,
-        download_url: getFileProxyUrl(file.file_path, file.file_name),
-      })),
+      ...base,
+      grading_mode: "rubric",
       scoring: {
         method: "sum",
         total_score_formula: "sum(evaluation_scores.score)",
@@ -438,13 +460,108 @@ export const createEvaluationService = ({ evaluationRepository, transaction, aud
     status: context.status || null,
   });
 
+  const summarizeLegacyEvaluation = ({ score, feedback, status, evaluatorId, evaluatedAt }) => ({
+    id: null,
+    status: status || "draft",
+    total_score: score === null || score === undefined ? null : Number(score),
+    overall_feedback: feedback || null,
+    evaluator_id: evaluatorId || null,
+    evaluated_at: evaluatedAt || null,
+    scores: [],
+  });
+
+  const saveLegacyGrade = async ({ body, actor, finalStatus, auditMeta = {} }) => {
+    const targetType = body.target_type;
+    const targetId = Number(body.target_id);
+    const context = await evaluationRepository.findSubmissionContext(targetType, targetId);
+    if (!context) throw NotFound("Submission");
+    assertCanGrade(context, actor);
+    if (context.rubric_id) throw BadRequest("Submission này đã bind rubric. Hãy chấm theo rubric.");
+
+    const rawScore = body.direct_score;
+    const hasScore = rawScore !== null && rawScore !== undefined && rawScore !== "";
+    const score = hasScore ? Number(rawScore) : null;
+    const maxScore = Number(context.source_max_score);
+    const feedback = nullable(body.overall_feedback);
+    const previousLegacySubmission = summarizeLegacySubmission(context);
+
+    if (hasScore) {
+      if (!Number.isFinite(score) || score < 0) throw BadRequest("Điểm không hợp lệ.");
+      if (score > maxScore) throw BadRequest(`Điểm phải từ 0 đến ${maxScore}.`);
+    }
+
+    if (finalStatus !== "draft") {
+      if (!hasScore) throw BadRequest("Điểm là bắt buộc khi submit.");
+      const gradingConfig = await getGradingConfig();
+      if (gradingConfig.feedback_required && !feedback) {
+        throw BadRequest("Feedback là bắt buộc khi chấm bài.");
+      }
+      if (feedback && feedback.length < gradingConfig.min_feedback_length) {
+        throw BadRequest(`Feedback phải có ít nhất ${gradingConfig.min_feedback_length} ký tự.`);
+      }
+    }
+
+    await transaction.run(async (conn) => {
+      if (finalStatus === "draft") {
+        await evaluationRepository.updateLegacySubmissionDraft({
+          targetType,
+          targetId,
+          totalScore: hasScore ? score : null,
+          feedback,
+        }, conn);
+        return;
+      }
+      await evaluationRepository.updateLegacySubmissionGrade({
+        targetType,
+        targetId,
+        totalScore: score,
+        feedback,
+        evaluatorId: actor.id,
+      }, conn);
+    });
+
+    const refreshed = await evaluationRepository.findSubmissionContext(targetType, targetId);
+    const result = summarizeLegacyEvaluation({
+      score: refreshed?.score ?? score,
+      feedback: refreshed?.feedback ?? feedback,
+      status: finalStatus === "draft" ? "draft" : "submitted",
+      evaluatorId: finalStatus === "draft" ? null : actor.id,
+      evaluatedAt: finalStatus === "draft" ? null : refreshed?.graded_at || new Date(),
+    });
+
+    await auditService.log({
+      userId: actor?.id || null,
+      action: finalStatus === "draft" ? "save_direct_grade_draft" : "submit_direct_grade",
+      tableName: targetType === "checkpoint_submission" ? "checkpoint_submissions" : "assignment_submissions",
+      recordId: targetId,
+      title: context.source_title,
+      oldValues: { legacy_submission: previousLegacySubmission },
+      newValues: {
+        legacy_submission: finalStatus === "draft"
+          ? { score, feedback, status: refreshed?.status || context.status }
+          : {
+              score,
+              feedback,
+              graded_by: actor.id,
+              status: "graded",
+            },
+      },
+      ipAddress: auditMeta.ipAddress || null,
+      userAgent: auditMeta.userAgent || null,
+    });
+
+    return result;
+  };
+
   const saveEvaluation = async ({ body, actor, finalStatus, auditMeta = {} }) => {
     const targetType = body.target_type;
     const targetId = Number(body.target_id);
     const context = await evaluationRepository.findSubmissionContext(targetType, targetId);
     if (!context) throw NotFound("Submission");
     assertCanGrade(context, actor);
-    if (!context.rubric_id) throw BadRequest("Submission này chưa được bind rubric.");
+    if (!context.rubric_id) {
+      return saveLegacyGrade({ body, actor, finalStatus, auditMeta });
+    }
     const rubric = await evaluationRepository.findRubricById(context.rubric_id);
     if (!rubric || rubric.status === "archived") throw BadRequest("Rubric không khả dụng.");
     const criteria = await evaluationRepository.listCriteriaByRubricId(context.rubric_id);
@@ -573,6 +690,8 @@ export const createEvaluationService = ({ evaluationRepository, transaction, aud
     const row = await evaluationRepository.getGradingDashboardStats({
       classId: query.class_id || null,
       lecturerId: lecturerScope(actor),
+      semesterId: query.semester_id || null,
+      year: query.year || null,
     });
     return {
       total_need_grading: Number(row.total_need_grading || 0),
@@ -597,6 +716,8 @@ export const createEvaluationService = ({ evaluationRepository, transaction, aud
       isLate: query.is_late,
       evaluationStatus: query.evaluation_status || null,
       lecturerId: lecturerScope(actor),
+      semesterId: query.semester_id || null,
+      year: query.year || null,
       limit: pagination.limit,
       offset: pagination.offset,
     });

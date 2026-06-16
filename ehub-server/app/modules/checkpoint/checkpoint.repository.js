@@ -89,7 +89,7 @@ export const createCheckpointRepository = ({ db }) => {
         AND c.deleted_at IS NULL
       LIMIT 1
     `;
-    const [rows] = await db.execute(sql, { id: Number(id) });
+    const [rows] = await db.execute(sql, { id });
     return rows[0] || null;
   };
 
@@ -137,7 +137,7 @@ export const createCheckpointRepository = ({ db }) => {
         AND cp.deleted_at IS NULL
       ORDER BY g.group_name ASC
     `;
-    const [rows] = await db.execute(sql, { checkpointId: Number(checkpointId) });
+    const [rows] = await db.execute(sql, { checkpointId });
     return rows;
   };
 
@@ -156,7 +156,7 @@ export const createCheckpointRepository = ({ db }) => {
       WHERE cs.checkpoint_id = :checkpointId AND cs.group_id = :groupId
       LIMIT 1
     `;
-    const [rows] = await db.execute(sql, { checkpointId: Number(checkpointId), groupId: Number(groupId) });
+    const [rows] = await db.execute(sql, { checkpointId, groupId: Number(groupId) });
     const submission = rows[0] || null;
 
     if (submission) {
@@ -378,7 +378,7 @@ export const createCheckpointRepository = ({ db }) => {
        FROM checkpoint_submissions
        WHERE checkpoint_id = :checkpointId AND group_id = :groupId
        LIMIT 1`,
-      { checkpointId: Number(checkpointId), groupId: Number(groupId) }
+      { checkpointId, groupId: Number(groupId) }
     );
     return rows[0] || null;
   };
@@ -588,7 +588,7 @@ export const createCheckpointRepository = ({ db }) => {
         AND cp.deleted_at IS NULL
       LIMIT 1
     `;
-    const [rows] = await db.execute(sql, { id: Number(id) });
+    const [rows] = await db.execute(sql, { id });
     return rows[0] || null;
   };
 

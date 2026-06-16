@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { Archive, Eye, Plus, SquarePen, Info, BookOpen, Users } from "lucide-react";
 import Dropdown from "@/components/ui/filter/DropDown";
 import { useNavigate } from "react-router-dom";
@@ -8,14 +8,17 @@ import { useToast } from "@/components/ui/Toast";
 import { selectAuthUser } from "@/store/slices/authSlice";
 import { checkPermission } from "@/utils/permissions";
 import { useClasses } from "@/hooks/admin/useClasses";
+import { useAdminSemesterFilter } from "@/hooks/admin/useAdminSemesterFilter";
+import { useAdminUrlQuerySync } from "@/hooks/admin/useAdminUrlQuerySync";
 import AdminTable from "@/pages/admin/components/AdminTable";
-import FilterBar, { FilterSelect } from "@/pages/admin/components/FilterBar";
+import FilterBar, { AdminSemesterFilterGroup, FilterSelect } from "@/pages/admin/components/FilterBar";
 import SearchInput from "@/pages/admin/components/SearchInput";
 import StatusBadge from "@/pages/admin/components/StatusBadge";
 import FormModal, { Field, inputClass } from "@/pages/admin/components/FormModal";
 import ConfirmDialog from "@/pages/admin/components/ConfirmDialog";
 import ActionButton from "@/pages/admin/academic/components/ActionButton";
 import { useTranslation } from "@/context/TranslationContext";
+import { countActiveAdminFilters } from "@/pages/admin/shared/filterUtils";
 import {
   formatDate,
   getClassStatusOptions,
@@ -54,8 +57,22 @@ export default function AdminClasses() {
     lecturer_id: "",
     status: "",
   });
-  const { rows, meta, loading, error, refetch } = useClasses(query);
+  useAdminUrlQuerySync({
+    query,
+    setQuery,
+    keys: ["page", "search", "subject_id", "semester_id", "lecturer_id", "status"],
+  });
   const [lookups, setLookups] = useState({ subjects: [], semesters: [], lecturers: [] });
+
+  const onSemesterChange = useCallback(({ semesterId }) => {
+    setQuery((prev) => ({ ...prev, page: 1, semester_id: semesterId }));
+  }, []);
+
+  const semesterFilter = useAdminSemesterFilter(lookups.semesters, {
+    onSemesterChange,
+    preferredSemesterId: query.semester_id,
+  });
+  const { rows, meta, loading, error, refetch } = useClasses(query, { enabled: semesterFilter.ready });
   const [modal, setModal] = useState({ type: null, cls: null });
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
@@ -84,14 +101,6 @@ export default function AdminClasses() {
       label: `${subject.subject_code} - ${subject.subject_name}`,
     })),
   ], [lookups.subjects, t]);
-
-  const semesterOptions = useMemo(() => [
-    { value: "", label: t("lookupAll.semesters") },
-    ...(lookups.semesters || []).map((semester) => ({
-      value: String(semester.id),
-      label: `${semester.semester_code} - ${semester.semester_name}`,
-    })),
-  ], [lookups.semesters, t]);
 
   const lecturerOptions = useMemo(() => [
     { value: "", label: t("lookupAll.lecturers") },
@@ -249,18 +258,43 @@ export default function AdminClasses() {
     },
   ], [t, canUpdate, canDelete, navigate]);
 
+  const activeFilterCount = countActiveAdminFilters(query);
+
+  const clearFilters = () => {
+    semesterFilter.reset();
+    setQuery((prev) => ({
+      ...prev,
+      page: 1,
+      search: "",
+      subject_id: "",
+      lecturer_id: "",
+      status: "",
+    }));
+  };
+
   return (
     <>
       <FilterBar
+        search={(
+          <SearchInput value={query.search} onChange={(search) => setQuery((prev) => ({ ...prev, page: 1, search }))} placeholder={t("admin.placeholders.classSearch")} />
+        )}
+        activeFilterCount={activeFilterCount}
+        onClear={clearFilters}
         right={canCreate ? (
-          <button type="button" onClick={openCreate} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 cursor-pointer">
+          <button type="button" onClick={openCreate} className="inline-flex h-10 items-center gap-2 rounded-lg bg-indigo-600 px-4 text-sm font-semibold text-white hover:bg-indigo-700 cursor-pointer">
             <Plus size={16} /> {t("admin.actions.create")}
           </button>
         ) : null}
       >
-        <SearchInput value={query.search} onChange={(search) => setQuery((prev) => ({ ...prev, page: 1, search }))} placeholder={t("admin.placeholders.classSearch")} />
+        <AdminSemesterFilterGroup
+          filterYear={semesterFilter.filterYear}
+          semesterId={semesterFilter.semesterId}
+          yearOptions={semesterFilter.yearOptions}
+          semesterOptions={semesterFilter.semesterOptions}
+          onYearChange={semesterFilter.onYearChange}
+          onSemesterChange={semesterFilter.onSemesterIdChange}
+        />
         <FilterSelect label={t("nav.subjects")} value={query.subject_id} onChange={(subject_id) => setQuery((prev) => ({ ...prev, page: 1, subject_id }))} options={subjectOptions} />
-        <FilterSelect label={t("admin.fields.semester")} value={query.semester_id} onChange={(semester_id) => setQuery((prev) => ({ ...prev, page: 1, semester_id }))} options={semesterOptions} />
         <FilterSelect label={t("admin.fields.lecturer")} value={query.lecturer_id} onChange={(lecturer_id) => setQuery((prev) => ({ ...prev, page: 1, lecturer_id }))} options={lecturerOptions} />
         <FilterSelect label={t("admin.fields.status")} value={query.status} onChange={(status) => setQuery((prev) => ({ ...prev, page: 1, status }))} options={classStatusOptions} />
       </FilterBar>

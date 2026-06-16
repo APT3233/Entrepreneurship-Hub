@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Download, Eye, FileDown, SquarePen } from "lucide-react";
+import { ArrowLeft, Download, Eye, FileDown, SquarePen, Trash2 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   checkpointService,
@@ -17,8 +17,11 @@ import {
   formatBytes,
   formatDate,
   pageLimit,
+  resolveCheckpointOpenAt,
 } from "@/pages/admin/project-submission/shared";
 import GradingSummaryPanel from "@/pages/admin/components/GradingSummaryPanel";
+import ConfirmDialog from "@/pages/admin/components/ConfirmDialog";
+import { useTranslation } from "@/context/TranslationContext";
 import { downloadCsv } from "@/utils/exportCsv";
 import useDocumentTitle from "@/hooks/useDocumentTitle";
 
@@ -33,6 +36,7 @@ export default function AdminCheckpointDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const toast = useToast();
+  const { t } = useTranslation();
   const [checkpoint, setCheckpoint] = useState(null);
   const [submissions, setSubmissions] = useState([]);
   const [files, setFiles] = useState([]);
@@ -42,6 +46,7 @@ export default function AdminCheckpointDetail() {
   const [gradeTarget, setGradeTarget] = useState(null);
   const [detail, setDetail] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -121,6 +126,17 @@ export default function AdminCheckpointDetail() {
     }
   };
 
+  const deleteCheckpoint = async () => {
+    try {
+      await checkpointService.remove(id);
+      toast.success("Đã xóa checkpoint");
+      setConfirmDelete(false);
+      navigate("/admin/checkpoints");
+    } catch (err) {
+      toast.error(err.message || "Không xóa được checkpoint.");
+    }
+  };
+
   if (loading) return <div className="rounded-2xl border border-gray-100 bg-white p-8 text-center text-sm text-gray-400 shadow-sm">Đang tải checkpoint...</div>;
   if (error) return <div className="rounded-2xl border border-red-100 bg-red-50 p-8 text-center text-sm font-medium text-red-600">{error}</div>;
   if (!checkpoint) return <div className="rounded-2xl border border-gray-100 bg-white p-8 text-center text-sm text-gray-400 shadow-sm">Không tìm thấy checkpoint.</div>;
@@ -178,7 +194,19 @@ export default function AdminCheckpointDetail() {
           <h2 className="truncate text-xl font-black text-gray-900">{title}</h2>
           <p className="mt-1 text-sm text-gray-500">{checkpoint.class_code} · {checkpoint.subject_code} · {checkpoint.semester_code}</p>
         </div>
-        <StatusBadge value={checkpoint.status} />
+        <div className="flex flex-wrap items-center gap-2">
+          <StatusBadge value={checkpoint.status} />
+          {checkpoint.status === "archived" ? (
+            <button
+              type="button"
+              onClick={() => setConfirmDelete(true)}
+              className="inline-flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-100"
+            >
+              <Trash2 size={16} />
+              {t("common.confirm") === "Xác nhận" ? "Xóa checkpoint" : "Delete checkpoint"}
+            </button>
+          ) : null}
+        </div>
       </div>
 
       <div className="overflow-x-auto rounded-2xl border border-gray-100 bg-white p-2 shadow-sm">
@@ -207,7 +235,7 @@ export default function AdminCheckpointDetail() {
               ["Semester", checkpoint.semester_code],
               ["Order", Number(checkpoint.order_index || 0)],
               ["Deadline", formatDate(checkpoint.deadline)],
-              ["Open at", formatDate(checkpoint.open_at)],
+              ["Open at", formatDate(resolveCheckpointOpenAt(checkpoint) || checkpoint.open_at)],
               ["Max score", Number(checkpoint.max_score || 0)],
               ["Weight", Number(checkpoint.weight || 0)],
               ["File rule", `${checkpoint.required_file_types || "any"} · ${checkpoint.max_files} files · ${checkpoint.max_file_size_mb}MB`],
@@ -264,6 +292,16 @@ export default function AdminCheckpointDetail() {
         saving={saving}
       />
       <SubmissionDetailModal open={!!detail} submission={detail} title="Checkpoint submission detail" onClose={() => setDetail(null)} />
+      <ConfirmDialog
+        isOpen={confirmDelete}
+        title={t("lecturer.assignmentsPage.deleteCheckpointTitle")}
+        subtitle={`${checkpoint.title} — ${t("lecturer.assignmentsPage.deleteSubtitle")}`}
+        variant="delete"
+        color="red"
+        yesLabel={t("common.confirm") === "Xác nhận" ? "Xóa" : "Delete"}
+        onYes={deleteCheckpoint}
+        onClose={() => setConfirmDelete(false)}
+      />
     </div>
   );
 }

@@ -8,6 +8,8 @@ import { useToast } from "@/components/ui/Toast";
 import aiEvaluationApi from "@/api/aiEvaluation";
 import gradingService from "@/api/grading";
 import { useTranslation } from "@/context/TranslationContext";
+import useDocumentTitle from "@/hooks/useDocumentTitle";
+import DirectGradingForm from "./components/DirectGradingForm";
 import EvaluationStatusBadge from "./components/EvaluationStatusBadge";
 import RubricCriteriaScoringForm from "./components/RubricCriteriaScoringForm";
 import ScoreSummary from "./components/ScoreSummary";
@@ -47,6 +49,7 @@ export default function GradingFormPage({ sourceType }) {
   const [data, setData] = useState(null);
   const [scores, setScores] = useState({});
   const [overallFeedback, setOverallFeedback] = useState("");
+  const [directScore, setDirectScore] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -56,9 +59,12 @@ export default function GradingFormPage({ sourceType }) {
 
   const rubricCriteria = data?.rubric?.criteria;
   const criteria = useMemo(() => rubricCriteria || [], [rubricCriteria]);
+  const isDirectGrading = data?.grading_mode === "direct" || (data != null && !data.rubric);
   const evaluation = data?.evaluation || null;
-  const isConfirmed = evaluation?.status === "confirmed";
+  const isConfirmed = !isDirectGrading && evaluation?.status === "confirmed";
   const backPath = location.state?.from || "/lecturer/grading";
+
+  useDocumentTitle(data?.source_title || null, 1);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -69,7 +75,14 @@ export default function GradingFormPage({ sourceType }) {
       const next = res?.data || null;
       setData(next);
       setScores(getInitialScores(next?.rubric?.criteria || [], next?.evaluation));
-      setOverallFeedback(next?.evaluation?.overall_feedback || "");
+      setOverallFeedback(next?.evaluation?.overall_feedback || next?.current_feedback || "");
+      setDirectScore(
+        next?.current_score != null && next?.current_score !== ""
+          ? String(next.current_score)
+          : next?.evaluation?.total_score != null
+            ? String(next.evaluation.total_score)
+            : "",
+      );
     } catch (err) {
       if (err.status === 403) setForbidden(true);
       else setError(err.message || t("lecturer.gradingPage.form.loadError"));
@@ -82,7 +95,41 @@ export default function GradingFormPage({ sourceType }) {
     load();
   }, [load]);
 
+  const directScoreState = useMemo(() => {
+    const max = Number(data?.source_max_score ?? 0);
+    const value = directScore;
+    const missing = value === "" || value === undefined || value === null;
+    if (missing) {
+      return {
+        total: 0,
+        scoreMissing: true,
+        scoreInvalid: false,
+        overallFeedbackMissing: !overallFeedback.trim(),
+        overallFeedbackTooShort: Boolean(overallFeedback.trim()) && overallFeedback.trim().length < minOverallFeedbackLength,
+      };
+    }
+    const number = Number(value);
+    const invalid = !Number.isFinite(number) || number < 0 || (max > 0 && number > max);
+    return {
+      total: invalid ? 0 : number,
+      scoreMissing: false,
+      scoreInvalid: invalid,
+      overallFeedbackMissing: !overallFeedback.trim(),
+      overallFeedbackTooShort: Boolean(overallFeedback.trim()) && overallFeedback.trim().length < minOverallFeedbackLength,
+    };
+  }, [data?.source_max_score, directScore, overallFeedback]);
+
   const scoreState = useMemo(() => {
+    if (isDirectGrading) {
+      return {
+        total: directScoreState.total,
+        invalidCount: directScoreState.scoreInvalid ? 1 : 0,
+        missingFeedbackCount: 0,
+        missingScoreCount: directScoreState.scoreMissing ? 1 : 0,
+        overallFeedbackMissing: directScoreState.overallFeedbackMissing,
+        overallFeedbackTooShort: directScoreState.overallFeedbackTooShort,
+      };
+    }
     let invalidCount = 0;
     let missingFeedbackCount = 0;
     let missingScoreCount = 0;
@@ -105,19 +152,36 @@ export default function GradingFormPage({ sourceType }) {
     const overallFeedbackMissing = !overallFeedback.trim();
     const overallFeedbackTooShort = Boolean(overallFeedback.trim()) && overallFeedback.trim().length < minOverallFeedbackLength;
     return { total, invalidCount, missingFeedbackCount, missingScoreCount, overallFeedbackMissing, overallFeedbackTooShort };
-  }, [criteria, scores, overallFeedback]);
+  }, [criteria, scores, overallFeedback, isDirectGrading, directScoreState]);
 
-  const canSubmit =
-    !isConfirmed &&
-    criteria.length > 0 &&
-    scoreState.invalidCount === 0 &&
-    scoreState.missingFeedbackCount === 0 &&
-    scoreState.missingScoreCount === 0 &&
-    !scoreState.overallFeedbackMissing &&
-    !scoreState.overallFeedbackTooShort;
-  const canSaveDraft = !isConfirmed && criteria.length > 0 && scoreState.invalidCount === 0;
+  const canSubmit = isDirectGrading
+    ? !isConfirmed &&
+      !directScoreState.scoreMissing &&
+      !directScoreState.scoreInvalid &&
+      !directScoreState.overallFeedbackMissing &&
+      !directScoreState.overallFeedbackTooShort
+    : !isConfirmed &&
+      criteria.length > 0 &&
+      scoreState.invalidCount === 0 &&
+      scoreState.missingFeedbackCount === 0 &&
+      scoreState.missingScoreCount === 0 &&
+      !scoreState.overallFeedbackMissing &&
+      !scoreState.overallFeedbackTooShort;
+  const canSaveDraft = isDirectGrading
+    ? !isConfirmed && !directScoreState.scoreInvalid
+    : !isConfirmed && criteria.length > 0 && scoreState.invalidCount === 0;
 
-  const buildPayload = (includeAll) => ({
+  const buildPayload = (includeAll) => {
+    if (isDirectGrading) {
+      return {
+        target_type: targetTypeBySource[sourceType],
+        target_id: Number(submissionId),
+        direct_score: directScore === "" ? null : Number(directScore),
+        overall_feedback: overallFeedback,
+        scores: [],
+      };
+    }
+    return {
     target_type: targetTypeBySource[sourceType],
     target_id: Number(submissionId),
     evaluation_session_id: evaluation?.id || undefined,
@@ -129,13 +193,20 @@ export default function GradingFormPage({ sourceType }) {
         score: Number(scores[criterion.id]?.score),
         feedback: scores[criterion.id]?.feedback || "",
       })),
-  });
+    };
+  };
 
   const saveDraft = async () => {
     setSaving(true);
     try {
       const res = await gradingService.saveDraft(buildPayload(false));
-      setData((prev) => ({ ...prev, evaluation: res?.data || null }));
+      const nextEvaluation = res?.data || null;
+      setData((prev) => ({
+        ...prev,
+        evaluation: nextEvaluation,
+        current_score: nextEvaluation?.total_score ?? prev?.current_score,
+        current_feedback: nextEvaluation?.overall_feedback ?? prev?.current_feedback,
+      }));
       toast.success(t("lecturer.gradingPage.toasts.draftSaved"));
     } catch (err) {
       toast.error(err.message || t("lecturer.gradingPage.toasts.draftError"));
@@ -149,7 +220,14 @@ export default function GradingFormPage({ sourceType }) {
     setSaving(true);
     try {
       const res = await gradingService.submit(buildPayload(true));
-      setData((prev) => ({ ...prev, evaluation: res?.data || null }));
+      const nextEvaluation = res?.data || null;
+      setData((prev) => ({
+        ...prev,
+        evaluation: nextEvaluation,
+        submission_status: "graded",
+        current_score: nextEvaluation?.total_score ?? prev?.current_score,
+        current_feedback: nextEvaluation?.overall_feedback ?? prev?.current_feedback,
+      }));
       toast.success(t("lecturer.gradingPage.toasts.submitSuccess"));
     } catch (err) {
       toast.error(err.message || t("lecturer.gradingPage.toasts.submitError"));
@@ -159,6 +237,17 @@ export default function GradingFormPage({ sourceType }) {
   };
 
   const resetForm = () => {
+    if (isDirectGrading) {
+      setDirectScore(
+        data?.current_score != null && data?.current_score !== ""
+          ? String(data.current_score)
+          : evaluation?.total_score != null
+            ? String(evaluation.total_score)
+            : "",
+      );
+      setOverallFeedback(evaluation?.overall_feedback || data?.current_feedback || "");
+      return;
+    }
     setScores(getInitialScores(criteria, evaluation));
     setOverallFeedback(evaluation?.overall_feedback || "");
   };
@@ -219,7 +308,7 @@ export default function GradingFormPage({ sourceType }) {
             {data.class_code} · {data.group_name || "—"}
           </p>
         </div>
-        <EvaluationStatusBadge value={evaluation?.status || "not_started"} />
+        <EvaluationStatusBadge value={isDirectGrading ? (data.submission_status === "graded" ? "confirmed" : evaluation?.status || "not_started") : (evaluation?.status || "not_started")} />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
@@ -242,16 +331,34 @@ export default function GradingFormPage({ sourceType }) {
             <SubmissionFileList files={data.files || []} />
           </section>
 
-          <AiAssistantPanel
-            targetType={targetTypeBySource[sourceType]}
-            targetId={submissionId}
-            criteria={criteria}
-            disabled={isConfirmed || saving}
-            onApplyCriterion={applyAiCriterion}
-            onApplyOverall={applyAiOverall}
-            onTrackApplied={trackAiApplied}
-          />
+          {!isDirectGrading ? (
+            <AiAssistantPanel
+              targetType={targetTypeBySource[sourceType]}
+              targetId={submissionId}
+              criteria={criteria}
+              disabled={isConfirmed || saving}
+              onApplyCriterion={applyAiCriterion}
+              onApplyOverall={applyAiOverall}
+              onTrackApplied={trackAiApplied}
+            />
+          ) : null}
 
+          {isDirectGrading ? (
+            <DirectGradingForm
+              score={directScore}
+              feedback={overallFeedback}
+              maxScore={data.source_max_score}
+              disabled={saving}
+              scoreInvalid={directScoreState.scoreInvalid}
+              scoreMissing={false}
+              feedbackMissing={directScoreState.overallFeedbackMissing}
+              feedbackTooShort={directScoreState.overallFeedbackTooShort}
+              minFeedbackLength={minOverallFeedbackLength}
+              onScoreChange={setDirectScore}
+              onFeedbackChange={setOverallFeedback}
+            />
+          ) : (
+            <>
           <section className="space-y-3">
             <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -294,16 +401,19 @@ export default function GradingFormPage({ sourceType }) {
               {scoreState.overallFeedbackTooShort ? <span className="mt-1 block text-xs text-red-600">{t("lecturer.gradingPage.form.overallFeedbackMinLength", { min: minOverallFeedbackLength })}</span> : null}
             </label>
           </section>
+            </>
+          )}
         </div>
 
         <aside className="space-y-4">
           <ScoreSummary
             total={scoreState.total}
-            rubricTotal={data.rubric?.total_score}
+            rubricTotal={isDirectGrading ? null : data.rubric?.total_score}
             sourceMax={data.source_max_score}
             invalidCount={scoreState.invalidCount}
             missingFeedbackCount={scoreState.missingFeedbackCount}
             missingScoreCount={scoreState.missingScoreCount}
+            directMode={isDirectGrading}
           />
           <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
             <div className="grid gap-2">
@@ -337,7 +447,7 @@ export default function GradingFormPage({ sourceType }) {
             </div>
             {isConfirmed ? <p className="mt-3 text-xs text-gray-500">{t("lecturer.gradingPage.form.confirmedReadOnly")}</p> : null}
           </div>
-          <EvaluationDetailPanel evaluation={evaluation} />
+          {!isDirectGrading ? <EvaluationDetailPanel evaluation={evaluation} /> : null}
         </aside>
       </div>
 

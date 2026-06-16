@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
-import { Archive, Eye, Lock, Plus, SquarePen, Unlock, Info, FileSpreadsheet, Settings } from "lucide-react";
+import { Archive, Eye, Lock, Plus, SquarePen, Trash2, Unlock, Info, FileSpreadsheet, Settings, FileDown } from "lucide-react";
 import Dropdown from "@/components/ui/filter/DropDown";
 import { useNavigate } from "react-router-dom";
 import { assignmentService, projectSubmissionLookupService } from "@/api/adminProjectSubmission";
 import { useToast } from "@/components/ui/Toast";
 import { useAdminAssignments } from "@/hooks/admin/useAdminAssignments";
+import { useAdminListSemesterFilters } from "@/hooks/admin/useAdminListSemesterFilters";
+import { useAdminUrlQuerySync } from "@/hooks/admin/useAdminUrlQuerySync";
 import AdminTable from "@/pages/admin/components/AdminTable";
-import FilterBar, { FilterSelect } from "@/pages/admin/components/FilterBar";
+import FilterBar, { AdminSemesterFilterGroup, FilterSelect } from "@/pages/admin/components/FilterBar";
 import SearchInput from "@/pages/admin/components/SearchInput";
 import StatusBadge from "@/pages/admin/components/StatusBadge";
 import FormModal, { Field, inputClass } from "@/pages/admin/components/FormModal";
@@ -14,14 +16,16 @@ import ConfirmDialog from "@/pages/admin/components/ConfirmDialog";
 import ActionButton from "@/pages/admin/academic/components/ActionButton";
 import DeadlineBadge from "@/pages/admin/project-submission/components/DeadlineBadge";
 import { useTranslation } from "@/context/TranslationContext";
+import { countActiveAdminFilters } from "@/pages/admin/shared/filterUtils";
 import {
   buildClassLabel,
+  fetchAllAdminRows,
   getAssignmentStatusOptions,
   getDeadlineOptions,
   pageLimit,
   toDateTimeInputValue,
-  toSelectOptions,
 } from "@/pages/admin/project-submission/shared";
+import { downloadCsv } from "@/utils/exportCsv";
 
 const emptyForm = {
   class_id: "",
@@ -44,8 +48,20 @@ export default function AdminAssignments() {
   const assignmentStatusOptions = useMemo(() => getAssignmentStatusOptions(t), [t]);
   const deadlineOptions = useMemo(() => getDeadlineOptions(t), [t]);
   const [query, setQuery] = useState({ page: 1, limit: pageLimit, search: "", class_id: "", semester_id: "", status: "", deadline: "" });
-  const { rows, meta, loading, error, refetch } = useAdminAssignments(query);
+  useAdminUrlQuerySync({
+    query,
+    setQuery,
+    keys: ["page", "search", "semester_id", "class_id", "status", "deadline"],
+  });
   const [lookups, setLookups] = useState({ classes: [], semesters: [] });
+  const { semesterFilter, classOptions, listEnabled } = useAdminListSemesterFilters({
+    semesters: lookups.semesters,
+    classes: lookups.classes,
+    buildClassLabel,
+    setQuery,
+    querySemesterId: query.semester_id,
+  });
+  const { rows, meta, loading, error, refetch } = useAdminAssignments(query, { enabled: listEnabled });
   const [modal, setModal] = useState({ type: null, assignment: null });
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
@@ -56,9 +72,6 @@ export default function AdminAssignments() {
       .then((res) => setLookups(res?.data || { classes: [], semesters: [] }))
       .catch(() => setLookups({ classes: [], semesters: [] }));
   }, []);
-
-  const classOptions = useMemo(() => toSelectOptions(lookups.classes, (item) => item.id, buildClassLabel, t("lookupAll.classes")), [lookups.classes, t]);
-  const semesterOptions = useMemo(() => toSelectOptions(lookups.semesters, (item) => item.id, (item) => `${item.semester_code} - ${item.semester_name}`, t("lookupAll.semesters")), [lookups.semesters, t]);
 
   const formClassOptions = useMemo(() => (lookups.classes || []).map((item) => ({
     value: String(item.id),
@@ -73,6 +86,32 @@ export default function AdminAssignments() {
   const openCreate = () => {
     setForm({ ...emptyForm, class_id: query.class_id || "" });
     setModal({ type: "create", assignment: null });
+  };
+
+  const exportAll = async () => {
+    try {
+      const all = await fetchAllAdminRows(assignmentService.list, query);
+      if (!all.length) {
+        toast.error("Không có dữ liệu để export.");
+        return;
+      }
+      downloadCsv({
+        filename: `admin-assignments-${new Date().toISOString().slice(0, 10)}.csv`,
+        headers: ["id", "title", "class_code", "semester_code", "status", "deadline", "max_score", "created_by_name"],
+        rows: all.map((r) => ({
+          id: r.id,
+          title: r.title,
+          class_code: r.class_code,
+          semester_code: r.semester_code,
+          status: r.status,
+          deadline: r.deadline || "",
+          max_score: r.max_score,
+          created_by_name: r.created_by_name || "",
+        })),
+      });
+    } catch (err) {
+      toast.error(err.message || "Không export được dữ liệu.");
+    }
   };
 
   const openEdit = (assignment) => {
@@ -133,12 +172,13 @@ export default function AdminAssignments() {
   const runAction = async () => {
     if (!confirmAction) return;
     try {
-      await assignmentService.updateStatus(confirmAction.assignment.id, confirmAction.status);
-      toast.success("Đã cập nhật assignment");
+      if (confirmAction.type === "delete") await assignmentService.remove(confirmAction.assignment.id);
+      else await assignmentService.updateStatus(confirmAction.assignment.id, confirmAction.status);
+      toast.success(confirmAction.type === "delete" ? "Đã xóa assignment" : "Đã cập nhật assignment");
       setConfirmAction(null);
       await refetch();
     } catch (err) {
-      toast.error(err.message || "Không cập nhật được assignment.");
+      toast.error(err.message || "Không thực hiện được thao tác assignment.");
     }
   };
 
@@ -163,23 +203,54 @@ export default function AdminAssignments() {
           {row.status !== "open" ? <ActionButton onClick={() => setConfirmAction({ assignment: row, status: "open" })} title="Open" tone="green"><Unlock size={16} /></ActionButton> : null}
           {row.status === "open" ? <ActionButton onClick={() => setConfirmAction({ assignment: row, status: "closed" })} title="Close" tone="red"><Lock size={16} /></ActionButton> : null}
           {row.status !== "archived" ? <ActionButton onClick={() => setConfirmAction({ assignment: row, status: "archived" })} title="Archive" tone="red"><Archive size={16} /></ActionButton> : null}
+          {row.status === "archived" ? <ActionButton onClick={() => setConfirmAction({ type: "delete", assignment: row })} title="Xóa" tone="red"><Trash2 size={16} /></ActionButton> : null}
         </div>
       ),
     },
   ];
 
+  const activeFilterCount = countActiveAdminFilters(query);
+
+  const clearFilters = () => {
+    semesterFilter.reset();
+    setQuery((prev) => ({
+      ...prev,
+      page: 1,
+      search: "",
+      class_id: "",
+      status: "",
+      deadline: "",
+    }));
+  };
+
   return (
     <>
       <FilterBar
+        search={(
+          <SearchInput value={query.search} onChange={(search) => setQuery((prev) => ({ ...prev, page: 1, search }))} placeholder="Title, class..." />
+        )}
+        activeFilterCount={activeFilterCount}
+        onClear={clearFilters}
         right={(
-          <button type="button" onClick={openCreate} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700">
-            <Plus size={16} /> Create assignment
-          </button>
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={exportAll} className="inline-flex h-10 items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+              <FileDown size={16} /> Export CSV
+            </button>
+            <button type="button" onClick={openCreate} className="inline-flex h-10 items-center gap-2 rounded-lg bg-indigo-600 px-4 text-sm font-semibold text-white hover:bg-indigo-700">
+              <Plus size={16} /> Create assignment
+            </button>
+          </div>
         )}
       >
-        <SearchInput value={query.search} onChange={(search) => setQuery((prev) => ({ ...prev, page: 1, search }))} placeholder="Title, class..." />
+        <AdminSemesterFilterGroup
+          filterYear={semesterFilter.filterYear}
+          semesterId={semesterFilter.semesterId}
+          yearOptions={semesterFilter.yearOptions}
+          semesterOptions={semesterFilter.semesterOptions}
+          onYearChange={semesterFilter.onYearChange}
+          onSemesterChange={semesterFilter.onSemesterIdChange}
+        />
         <FilterSelect label={t("filterLabels.class")} value={query.class_id} onChange={(class_id) => setQuery((prev) => ({ ...prev, page: 1, class_id }))} options={classOptions} />
-        <FilterSelect label={t("filterLabels.semester")} value={query.semester_id} onChange={(semester_id) => setQuery((prev) => ({ ...prev, page: 1, semester_id }))} options={semesterOptions} />
         <FilterSelect label={t("filterLabels.status")} value={query.status} onChange={(status) => setQuery((prev) => ({ ...prev, page: 1, status }))} options={assignmentStatusOptions} />
         <FilterSelect label={t("filterLabels.deadline")} value={query.deadline} onChange={(deadline) => setQuery((prev) => ({ ...prev, page: 1, deadline }))} options={deadlineOptions} />
       </FilterBar>
@@ -272,11 +343,19 @@ export default function AdminAssignments() {
 
       <ConfirmDialog
         isOpen={!!confirmAction}
-        title="Cập nhật trạng thái assignment"
-        subtitle={confirmAction?.assignment ? confirmAction.assignment.title : ""}
-        variant={confirmAction?.status === "closed" || confirmAction?.status === "archived" ? "warning" : "confirm"}
-        color={confirmAction?.status === "closed" || confirmAction?.status === "archived" ? "red" : "blue"}
-        yesLabel="Xác nhận"
+        title={
+          confirmAction?.type === "delete"
+            ? t("lecturer.assignmentsPage.deleteAssignmentTitle")
+            : "Cập nhật trạng thái assignment"
+        }
+        subtitle={
+          confirmAction?.type === "delete"
+            ? `${confirmAction?.assignment?.title || ""} — ${t("lecturer.assignmentsPage.deleteSubtitle")}`
+            : confirmAction?.assignment ? confirmAction.assignment.title : ""
+        }
+        variant={confirmAction?.type === "delete" ? "delete" : confirmAction?.status === "closed" || confirmAction?.status === "archived" ? "warning" : "confirm"}
+        color={confirmAction?.type === "delete" || confirmAction?.status === "closed" || confirmAction?.status === "archived" ? "red" : "blue"}
+        yesLabel={confirmAction?.type === "delete" ? (t("common.confirm") === "Xác nhận" ? "Xóa" : "Delete") : "Xác nhận"}
         onYes={runAction}
         onClose={() => setConfirmAction(null)}
       />

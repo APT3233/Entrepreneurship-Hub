@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Pencil, Trash2, UserPlus } from "lucide-react";
+import { Pencil, Trash2, UserPlus, Download } from "lucide-react";
 import { Avatar, Skeleton } from "./Common";
 import GroupApi from "@/api/group";
 import { useToast } from "@/components/ui/Toast";
@@ -7,6 +7,7 @@ import AddGroupMemberForm from "@/components/form/lecturer/AddGroupMemberForm";
 import EditGroupMemberForm from "@/components/form/lecturer/EditGroupMemberForm";
 import ConfirmModal from "@/components/modal/ConfirmModal";
 import { formatDate } from "@/utils/dateTimeDisplay";
+import { downloadCsv } from "@/utils/exportCsv";
 
 const STATUS_LABEL = {
   active: { text: "Đang tham gia", className: "text-emerald-700 bg-emerald-50 border-emerald-100" },
@@ -25,6 +26,7 @@ export default function MembersTab({
   classId,
   canManageMembers = false,
   onMembersChanged,
+  groupName = "",
 }) {
   const toast = useToast();
   const [addOpen, setAddOpen] = useState(false);
@@ -74,6 +76,25 @@ export default function MembersTab({
     );
   }
 
+  const handleExportGroup = () => {
+    const filename = `danh_sach_thanh_vien_${groupName || groupId || "nhom"}`;
+    const headers = ["MSSV", "Họ và tên", "Email", "Chuyên ngành", "Vai trò", "Trạng thái", "Ngày tham gia"];
+    const rows = members.map((m) => {
+      const isLeader = m.role === "leader";
+      const st = STATUS_LABEL[m.status] || STATUS_LABEL.active;
+      return {
+        mssv: m.student_code || m.mssv || "",
+        "họ và tên": m.full_name || m.fullName || "",
+        email: m.email || "",
+        "chuyên ngành": m.major || "Chưa cập nhật",
+        "vai trò": isLeader ? "Nhóm trưởng" : "Thành viên",
+        "trạng thái": st.text,
+        "ngày tham gia": formatDate(m.joined_at),
+      };
+    });
+    downloadCsv({ filename, headers, rows });
+  };
+
   return (
     <div className="mt-6 md:mt-8 mb-10">
       <div className="mb-4 md:mb-6 flex flex-row items-center justify-between gap-3 flex-wrap">
@@ -84,6 +105,14 @@ export default function MembersTab({
           <span className="text-xs md:text-sm text-gray-500 font-medium">
             {members.length} thành viên
           </span>
+          <button
+            type="button"
+            onClick={handleExportGroup}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-green-50 border border-green-100 text-green-700 text-xs font-semibold px-3 py-2 hover:bg-green-100 transition-colors cursor-pointer"
+          >
+            <Download className="h-3.5 w-3.5" />
+            Xuất thành viên
+          </button>
           {canManageMembers && classId && groupId ? (
             <button
               type="button"

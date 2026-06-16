@@ -5,6 +5,8 @@
   "type": "module",
   "main": "server.js",
   "scripts": {
+    "dev": "npm run dev:linux",
+    "start": "node server.js",
     "dev:win": "Get-Content .env.win | % { if ($_ -match '^(.*?)=(.*)$') { set-item env:$($matches[1]) $matches[2] } }; nodemon server.js",
     "dev:linux": "[ -f ./.env.linux ] && . ./.env.linux; nodemon server.js",
     "worker:mail:linux": "[ -f ./.env.linux ] && . ./.env.linux; node app/workers/mailOutbox.entry.js",

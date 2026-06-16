@@ -1,9 +1,10 @@
 import { useMemo, useState } from "react";
 import { useTranslation } from "@/context/TranslationContext";
-import { Download, RotateCcw, Trash2 } from "lucide-react";
+import { Download, RotateCcw, Trash2, FileDown } from "lucide-react";
 import { fileService } from "@/api/adminProjectSubmission";
 import { useToast } from "@/components/ui/Toast";
 import { useSubmissionFiles } from "@/hooks/admin/useSubmissionFiles";
+import { useAdminUrlQuerySync } from "@/hooks/admin/useAdminUrlQuerySync";
 import AdminTable from "@/pages/admin/components/AdminTable";
 import FilterBar, { FilterSelect } from "@/pages/admin/components/FilterBar";
 import SearchInput from "@/pages/admin/components/SearchInput";
@@ -11,12 +12,15 @@ import StatusBadge from "@/pages/admin/components/StatusBadge";
 import ConfirmDialog from "@/pages/admin/components/ConfirmDialog";
 import ActionButton from "@/pages/admin/academic/components/ActionButton";
 import {
+  fetchAllAdminRows,
   formatBytes,
   formatDate,
   getBooleanOptions,
   getFileSourceOptions,
   pageLimit,
 } from "@/pages/admin/project-submission/shared";
+import { countActiveAdminFilters } from "@/pages/admin/shared/filterUtils";
+import { downloadCsv } from "@/utils/exportCsv";
 
 export default function AdminSubmissionFiles() {
   const { t } = useTranslation();
@@ -24,6 +28,11 @@ export default function AdminSubmissionFiles() {
   const fileSourceOptions = useMemo(() => getFileSourceOptions(t), [t]);
   const booleanOptions = useMemo(() => getBooleanOptions(t), [t]);
   const [query, setQuery] = useState({ page: 1, limit: pageLimit, search: "", source: "", is_deleted: "" });
+  useAdminUrlQuerySync({
+    query,
+    setQuery,
+    keys: ["page", "search", "source", "is_deleted"],
+  });
   const { rows, meta, loading, error, refetch } = useSubmissionFiles(query);
   const [confirmFile, setConfirmFile] = useState(null);
 
@@ -37,6 +46,36 @@ export default function AdminSubmissionFiles() {
       await refetch();
     } catch (err) {
       toast.error(err.message || "Không cập nhật được file.");
+    }
+  };
+
+  const exportAll = async () => {
+    try {
+      const all = await fetchAllAdminRows(fileService.list, query);
+      if (!all.length) {
+        toast.error("Không có dữ liệu để export.");
+        return;
+      }
+      downloadCsv({
+        filename: `admin-submission-files-${new Date().toISOString().slice(0, 10)}.csv`,
+        headers: ["id", "source", "submission_id", "file_name", "file_type", "mime_type", "file_size", "group_name", "parent_title", "uploaded_by_name", "uploaded_at", "is_deleted"],
+        rows: all.map((r) => ({
+          id: r.id,
+          source: r.source,
+          submission_id: r.submission_id,
+          file_name: r.file_name,
+          file_type: r.file_type,
+          mime_type: r.mime_type,
+          file_size: r.file_size,
+          group_name: r.group_name || "",
+          parent_title: r.parent_title || "",
+          uploaded_by_name: r.uploaded_by_name || r.uploaded_by || "",
+          uploaded_at: r.uploaded_at || "",
+          is_deleted: r.is_deleted,
+        })),
+      });
+    } catch (err) {
+      toast.error(err.message || "Không export được dữ liệu.");
     }
   };
 
@@ -66,10 +105,22 @@ export default function AdminSubmissionFiles() {
     },
   ];
 
+  const activeFilterCount = countActiveAdminFilters(query, ["page", "limit", "search"]);
+
   return (
     <>
-      <FilterBar>
-        <SearchInput value={query.search} onChange={(search) => setQuery((prev) => ({ ...prev, page: 1, search }))} placeholder={t("searchPlaceholders.submissionFiles")} />
+      <FilterBar
+        search={(
+          <SearchInput value={query.search} onChange={(search) => setQuery((prev) => ({ ...prev, page: 1, search }))} placeholder={t("searchPlaceholders.submissionFiles")} />
+        )}
+        activeFilterCount={activeFilterCount}
+        onClear={() => setQuery((prev) => ({ ...prev, page: 1, search: "", source: "", is_deleted: "" }))}
+        right={(
+          <button type="button" onClick={exportAll} className="inline-flex h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+            <FileDown size={16} /> Export CSV
+          </button>
+        )}
+      >
         <FilterSelect label={t("filterLabels.source")} value={query.source} onChange={(source) => setQuery((prev) => ({ ...prev, page: 1, source }))} options={fileSourceOptions} />
         <FilterSelect label={t("filterLabels.deleted")} value={query.is_deleted} onChange={(is_deleted) => setQuery((prev) => ({ ...prev, page: 1, is_deleted }))} options={booleanOptions} />
       </FilterBar>

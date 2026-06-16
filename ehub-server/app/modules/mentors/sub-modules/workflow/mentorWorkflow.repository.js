@@ -1,4 +1,5 @@
 const pageSql = (limit, offset) => `LIMIT ${Number(limit)} OFFSET ${Number(offset)}`;
+const nullIfUndefined = (value) => (value === undefined ? null : value);
 
 const assignmentSelect = `
   ma.*,
@@ -167,20 +168,37 @@ export const createMentorWorkflowRepository = ({ db }) => {
   };
 
   const createAssignment = async (data, conn = db) => {
+    const payload = {
+      mentor_id: Number(data.mentor_id),
+      group_id: Number(data.group_id),
+      class_id: Number(data.class_id),
+      semester_id: Number(data.semester_id),
+      subject_id: Number(data.subject_id),
+      assigned_by: nullIfUndefined(data.assigned_by),
+      approved_by: nullIfUndefined(data.approved_by),
+      assignment_type: data.assignment_type || "primary",
+      status: data.status || "pending_mentor",
+      start_date: nullIfUndefined(data.start_date),
+      end_date: nullIfUndefined(data.end_date),
+      expected_sessions: nullIfUndefined(data.expected_sessions),
+      note: nullIfUndefined(data.note),
+      rejection_reason: nullIfUndefined(data.rejection_reason),
+    };
     const [result] = await conn.execute(
       `INSERT INTO mentor_assignments
        (mentor_id, group_id, class_id, semester_id, subject_id, assigned_by, approved_by, assignment_type, status, start_date, end_date, expected_sessions, note, rejection_reason)
        VALUES (:mentor_id, :group_id, :class_id, :semester_id, :subject_id, :assigned_by, :approved_by, :assignment_type, :status, :start_date, :end_date, :expected_sessions, :note, :rejection_reason)`,
-      data,
+      payload,
     );
     return result.insertId;
   };
 
   const updateAssignment = async (id, data, conn = db) => {
-    const keys = Object.keys(data);
+    const payload = Object.fromEntries(Object.entries(data).filter(([, value]) => value !== undefined));
+    const keys = Object.keys(payload);
     if (!keys.length) return;
     const setSql = keys.map((key) => `${key} = :${key}`).join(", ");
-    await conn.execute(`UPDATE mentor_assignments SET ${setSql}, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND deleted_at IS NULL`, { ...data, id: Number(id) });
+    await conn.execute(`UPDATE mentor_assignments SET ${setSql}, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND deleted_at IS NULL`, { ...payload, id: Number(id) });
   };
 
   const softDeleteAssignment = async (id) => {

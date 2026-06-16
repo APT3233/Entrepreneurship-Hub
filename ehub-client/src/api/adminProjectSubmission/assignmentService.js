@@ -9,6 +9,7 @@ export const assignmentService = {
   create: (body) => instance.post(basePath, body),
   update: (id, body) => instance.put(`${basePath}/${id}`, body),
   updateStatus: (id, status) => instance.patch(`${basePath}/${id}/status`, { status }),
+  remove: (id) => instance.delete(`${basePath}/${id}`),
 };
 
 export default assignmentService;

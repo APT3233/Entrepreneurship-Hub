@@ -8,6 +8,7 @@ import AdminTable from "@/pages/admin/components/AdminTable";
 import FormModal, { Field, inputClass } from "@/pages/admin/components/FormModal";
 import StatusBadge from "@/pages/admin/components/StatusBadge";
 import { formatDate } from "@/utils/dateTimeDisplay";
+import useDocumentTitle from "@/hooks/useDocumentTitle";
 
 export default function SessionDetailPage() {
   const { t } = useTranslation();
@@ -15,6 +16,7 @@ export default function SessionDetailPage() {
   const navigate = useNavigate();
   const toast = useToast();
   const [session, setSession] = useState(null);
+  useDocumentTitle(session?.title || null, 1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [modal, setModal] = useState(null);

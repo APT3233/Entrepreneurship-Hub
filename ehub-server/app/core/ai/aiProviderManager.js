@@ -53,16 +53,37 @@ export const validateProvider = (provider) => {
   return provider;
 };
 
+const normalizeBaseUrl = (url) =>
+  String(url || "")
+    .replace(/\/+$/, "")
+    .replace(/\/(chat\/completions|models|responses|embeddings|completions)$/i, "");
+
 export const buildChatCompletionUrl = (provider) => {
-  const base = String(provider.baseUrl || "").replace(/\/+$/, "");
+  const base = normalizeBaseUrl(provider.baseUrl);
   const path = String(provider.chatCompletionsPath || "/chat/completions");
   const suffix = path.startsWith("/") ? path : `/${path}`;
   return `${base}${suffix}`;
 };
 
 export const buildModelsUrl = (provider) => {
-  const base = String(provider.baseUrl || "").replace(/\/+$/, "");
+  const base = normalizeBaseUrl(provider.baseUrl);
   return `${base}/models`;
+};
+
+export const validateProviderForModelList = (provider) => {
+  if (!provider) {
+    throw createAiError(AiErrorCodes.PROVIDER_NOT_FOUND, "AI provider is not configured.", 400);
+  }
+  if (provider.enabled === false) {
+    throw createAiError(AiErrorCodes.PROVIDER_DISABLED, `AI provider '${provider.key}' is disabled.`, 400);
+  }
+  if (!String(provider.baseUrl || "").trim()) {
+    throw createAiError(AiErrorCodes.INVALID_RESPONSE, `AI provider '${provider.key}' is missing base URL.`, 400);
+  }
+  if (provider.apiKeyRequired && !String(provider.apiKey || "").trim()) {
+    throw createAiError(AiErrorCodes.API_KEY_MISSING, `AI provider '${provider.key}' requires an API key. Please provide an API key first.`, 400);
+  }
+  return provider;
 };
 
 export const buildHeaders = (provider) => {

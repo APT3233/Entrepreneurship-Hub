@@ -89,7 +89,11 @@ export function StartupForm({ form, setForm, showStatus = true }) {
   const { t } = useTranslation();
   const set = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
   const f = (key) => t(`admin.ecosystem.form.${key}`);
-  const localize = (options) => options.map((opt) => ({ ...opt, label: t(`status.${opt.value}`) || opt.label }));
+  const localize = (options) => options.map((opt) => {
+    const key = `status.${opt.value}`;
+    const label = t(key, { defaultValue: opt.label });
+    return { ...opt, label: label === key ? opt.label : label };
+  });
   return (
     <div className="grid gap-5 lg:grid-cols-3">
       <div className="space-y-4 lg:col-span-2">

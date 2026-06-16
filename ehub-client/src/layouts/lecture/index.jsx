@@ -1,4 +1,4 @@
-import { useState, Suspense } from "react";
+import { useState, useMemo, Suspense } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import AppHeader from "@/components/layout/AppHeader";
 import AppSidebar from "@/components/layout/AppSidebar";
@@ -8,6 +8,8 @@ import { authApi } from "@/api/auth";
 import { useDispatch, useSelector } from "react-redux";
 import { logout, selectAuthUser } from "@/store/slices/authSlice";
 import { useTranslation } from "@/context/TranslationContext";
+import useDocumentTitle from "@/hooks/useDocumentTitle";
+import { getLecturerPageTitle } from "@/utils/portalPageTitles";
 
 const LectureLayout = () => {
   const { t } = useTranslation();
@@ -16,6 +18,9 @@ const LectureLayout = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const user = useSelector(selectAuthUser);
+
+  const pageTitle = useMemo(() => getLecturerPageTitle(location.pathname, t), [location.pathname, t]);
+  useDocumentTitle(pageTitle);
 
   const handleLogout = () => {
     setLogoutModalOpen(false);

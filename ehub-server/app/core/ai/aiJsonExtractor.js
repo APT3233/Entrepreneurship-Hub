@@ -16,6 +16,15 @@ const asNullableScore = (value) => {
   return Number.isFinite(number) && number >= 0 ? number : null;
 };
 
+const criterionIdOf = (criterion) => Number(criterion?.id);
+const defaultCriterionSuggestion = (criterion) => ({
+  criterion_id: criterionIdOf(criterion),
+  suggested_score: null,
+  suggested_feedback: `AI không trả về đánh giá cho tiêu chí "${criterion?.name || criterionIdOf(criterion)}". Giảng viên cần tự kiểm tra tiêu chí này.`,
+  evidence_text: null,
+  confidence_score: null,
+});
+
 const findFirstJsonObject = (text) => {
   const raw = String(text || "").trim();
   if (!raw) return null;
@@ -66,9 +75,12 @@ export const parseAiJson = (rawText) => {
 export const normalizeAiSuggestionJson = (rawText, criteria = []) => {
   const parsed = parseAiJson(rawText);
   const warnings = [];
-  const byCriterion = new Map(criteria.map((criterion) => [Number(criterion.id), criterion]));
+  const orderedCriteria = criteria
+    .map((criterion) => ({ ...criterion, id: criterionIdOf(criterion) }))
+    .filter((criterion) => Number.isFinite(criterion.id));
+  const byCriterion = new Map(orderedCriteria.map((criterion) => [criterion.id, criterion]));
 
-  const criterionSuggestions = [];
+  const suggestionByCriterion = new Map();
   for (const item of Array.isArray(parsed.criterion_suggestions) ? parsed.criterion_suggestions : []) {
     const criterionId = Number(item?.criterion_id);
     const criterion = byCriterion.get(criterionId);
@@ -76,12 +88,19 @@ export const normalizeAiSuggestionJson = (rawText, criteria = []) => {
       warnings.push({ code: "unknown_criterion", criterion_id: item?.criterion_id ?? null });
       continue;
     }
-    const suggestedScore = asNullableScore(item?.suggested_score);
-    if (suggestedScore !== null && suggestedScore > Number(criterion.max_score)) {
-      warnings.push({ code: "score_exceeds_max", criterion_id: criterionId, max_score: Number(criterion.max_score) });
+    if (suggestionByCriterion.has(criterionId)) {
+      warnings.push({ code: "duplicate_criterion", criterion_id: criterionId });
       continue;
     }
-    criterionSuggestions.push({
+    let suggestedScore = asNullableScore(item?.suggested_score);
+    if (item?.suggested_score !== null && item?.suggested_score !== undefined && item?.suggested_score !== "" && suggestedScore === null) {
+      warnings.push({ code: "invalid_score", criterion_id: criterionId });
+    }
+    if (suggestedScore !== null && suggestedScore > Number(criterion.max_score)) {
+      warnings.push({ code: "score_exceeds_max", criterion_id: criterionId, max_score: Number(criterion.max_score) });
+      suggestedScore = null;
+    }
+    suggestionByCriterion.set(criterionId, {
       criterion_id: criterionId,
       suggested_score: suggestedScore,
       suggested_feedback: asNullableString(item?.suggested_feedback) || "Không đủ dữ liệu để đưa ra feedback.",
@@ -89,6 +108,13 @@ export const normalizeAiSuggestionJson = (rawText, criteria = []) => {
       confidence_score: asConfidence(item?.confidence_score),
     });
   }
+
+  const criterionSuggestions = orderedCriteria.map((criterion) => {
+    const suggestion = suggestionByCriterion.get(criterion.id);
+    if (suggestion) return suggestion;
+    warnings.push({ code: "missing_criterion_suggestion", criterion_id: criterion.id });
+    return defaultCriterionSuggestion(criterion);
+  });
 
   const summary = asNullableString(parsed.summary);
   const overallFeedback = asNullableString(parsed.suggested_overall_feedback);

@@ -42,6 +42,61 @@ function ListBlock({ title, items = [] }) {
   );
 }
 
+// Premium Skeleton Loader for AI Assistant Panel
+function SkeletonLoader() {
+  return (
+    <div className="mt-5 space-y-6 animate-pulse">
+      {/* Summary Skeleton */}
+      <div className="space-y-2">
+        <div className="h-5 w-24 bg-gray-200 rounded-lg"></div>
+        <div className="space-y-2">
+          <div className="h-4 bg-gray-200 rounded-lg w-full"></div>
+          <div className="h-4 bg-gray-200 rounded-lg w-11/12"></div>
+          <div className="h-4 bg-gray-200 rounded-lg w-4/5"></div>
+        </div>
+      </div>
+      
+      {/* Strengths/Weaknesses Skeleton */}
+      <div className="grid gap-4 md:grid-cols-3">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="space-y-3 p-3 bg-gray-50/50 rounded-xl border border-gray-100/50">
+            <div className="h-4 w-20 bg-gray-200 rounded-lg"></div>
+            <div className="space-y-2">
+              <div className="h-3 bg-gray-200 rounded-lg w-full"></div>
+              <div className="h-3 bg-gray-200 rounded-lg w-5/6"></div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Project Potential Skeleton */}
+      <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-4 space-y-3">
+        <div className="h-4 w-32 bg-gray-200 rounded-lg"></div>
+        <div className="h-3 bg-gray-200 rounded-lg w-1/4"></div>
+        <div className="space-y-2">
+          <div className="h-3 bg-gray-200 rounded-lg w-1/2"></div>
+          <div className="h-3 bg-gray-200 rounded-lg w-1/3"></div>
+        </div>
+      </div>
+
+      {/* Overall Feedback Skeleton */}
+      <div className="rounded-xl border border-gray-100 p-4 space-y-3">
+        <div className="flex justify-between items-center">
+          <div className="h-4 w-28 bg-gray-200 rounded-lg"></div>
+          <div className="flex gap-2">
+            <div className="h-7 w-16 bg-gray-200 rounded-lg"></div>
+            <div className="h-7 w-16 bg-gray-200 rounded-lg"></div>
+          </div>
+        </div>
+        <div className="space-y-2">
+          <div className="h-4 bg-gray-200 rounded-lg w-full"></div>
+          <div className="h-4 bg-gray-200 rounded-lg w-5/6"></div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function AiAssistantPanel({
   targetType,
   targetId,
@@ -68,7 +123,11 @@ export default function AiAssistantPanel({
     setError("");
     try {
       const res = await aiEvaluationApi.getLatestSuggestion(targetType, targetId);
-      setSuggestion(res?.data || null);
+      const data = res?.data || {};
+      setSuggestion(data.suggestion || null);
+      if (data.activeJob) {
+        setJob(data.activeJob);
+      }
     } catch (err) {
       setError(err.message || t("ai.assistant.failAnalyze"));
     } finally {
@@ -95,8 +154,12 @@ export default function AiAssistantPanel({
         const res = await aiEvaluationApi.getJob(job.id);
         const nextJob = res?.data?.job;
         setJob(nextJob || null);
-        if (res?.data?.suggestion) setSuggestion(res.data.suggestion);
-        if (nextJob?.status === "failed") setError(nextJob.error_message || t("ai.assistant.failAnalyze"));
+        if (res?.data?.suggestion) {
+          setSuggestion(res.data.suggestion);
+        }
+        if (nextJob?.status === "failed") {
+          setError(nextJob.error_message || t("ai.assistant.failAnalyze"));
+        }
       } catch (err) {
         setError(err.message || t("ai.assistant.failAnalyze"));
       }
@@ -107,6 +170,7 @@ export default function AiAssistantPanel({
   const analyze = async (forceRefresh = false) => {
     setAnalyzing(true);
     setError("");
+    setSuggestion(null); // Clear old suggestion to show skeleton during active analysis
     try {
       const res = await aiEvaluationApi.analyze({
         target_type: targetType,
@@ -207,25 +271,34 @@ export default function AiAssistantPanel({
         </div>
       </div>
 
-      {loading ? <p className="mt-4 text-sm text-gray-400">{t("ai.assistant.analyzing")}</p> : null}
-      {job?.status ? (
-        <p className="mt-4 text-sm font-semibold text-indigo-700">
-          Job #{job.id}: {t(statusTextKeys[job.status] || job.status)}
-        </p>
-      ) : null}
       {error ? <p className="mt-4 rounded-xl border border-red-100 bg-red-50 p-3 text-sm font-semibold text-red-600">{error}</p> : null}
 
-      {!loading && !suggestion && !isBusy ? (
+      {/* Show Skeleton Loader when fetching or during background processing */}
+      {loading || isBusy ? (
+        <div className="mt-4 space-y-4">
+          <div className="flex items-center gap-2 text-sm font-medium text-indigo-700 animate-pulse">
+            <span className="flex h-2 w-2 rounded-full bg-indigo-600 animate-ping"></span>
+            <span>
+              {job?.status ? `${t("ai.assistant.statusPrefix", "Job")} #${job.id}: ${t(statusTextKeys[job.status] || job.status)}` : t("ai.assistant.analyzing")}
+            </span>
+          </div>
+          <SkeletonLoader />
+        </div>
+      ) : null}
+
+      {!loading && !isBusy && !suggestion ? (
         <div className="mt-4 rounded-xl border border-dashed border-gray-200 p-4 text-sm text-gray-500">
           {t("ai.assistant.notGenerated")}
         </div>
       ) : null}
 
-      {suggestion ? (
+      {!loading && !isBusy && suggestion ? (
         <div className="mt-5 space-y-5">
           <div>
             <h3 className="text-base font-bold text-gray-900">Summary</h3>
-            <p className="mt-2 text-sm leading-6 text-gray-600">{suggestion.summary}</p>
+            <p className="mt-2 text-sm leading-6 text-gray-600 whitespace-pre-wrap">
+              {suggestion.summary}
+            </p>
           </div>
           <div className="grid gap-4 md:grid-cols-3">
             <ListBlock title={t("ai.assistant.strengths")} items={suggestion.strengths} />
@@ -247,7 +320,9 @@ export default function AiAssistantPanel({
                   <h4 className="text-sm font-bold text-gray-800">{t("ai.assistant.overallFeedback")}</h4>
                   <ActionBadge status={actionState.overall_feedback} t={t} />
                 </div>
-                <p className="mt-2 text-sm leading-6 text-gray-600">{suggestion.suggested_overall_feedback}</p>
+                <p className="mt-2 text-sm leading-6 text-gray-600 whitespace-pre-wrap">
+                  {suggestion.suggested_overall_feedback}
+                </p>
               </div>
               <div className="flex shrink-0 gap-2">
                 <button
@@ -296,7 +371,9 @@ export default function AiAssistantPanel({
                       <p className="mt-1 text-sm text-gray-500">
                         {t("ai.suggestions.colSuggestedScore")}: <span className="font-semibold text-indigo-700">{item.suggested_score ?? "—"}</span> / {criterion?.max_score ?? item.max_score ?? "—"} · {t("ai.suggestions.colConfidence")} {confidenceText(item.confidence_score)}
                       </p>
-                      <p className="mt-2 text-sm leading-6 text-gray-600">{item.suggested_feedback}</p>
+                      <p className="mt-2 text-sm leading-6 text-gray-600 whitespace-pre-wrap">
+                        {item.suggested_feedback}
+                      </p>
                       {item.evidence_text ? (
                         <p className="mt-2 rounded-lg bg-gray-50 p-2 text-xs leading-5 text-gray-500">
                           <Clipboard size={13} className="mr-1 inline" />

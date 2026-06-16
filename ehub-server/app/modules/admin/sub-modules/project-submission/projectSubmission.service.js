@@ -55,22 +55,29 @@ export const createAdminProjectSubmissionService = ({ adminProjectSubmissionRepo
     return getProject(id);
   };
 
-  const normalizeCheckpointPayload = (data, actor, current = null) => ({
-    class_id: Number(data.class_id ?? current?.class_id),
-    title: clean(data.title ?? current?.title),
-    description: data.description !== undefined ? nullable(data.description) : current?.description || null,
-    order_index: Number(data.order_index ?? current?.order_index ?? 1),
-    deadline: data.deadline ?? current?.deadline,
-    open_at: data.open_at !== undefined ? nullable(data.open_at) : current?.open_at || null,
-    max_score: numberOrDefault(data.max_score ?? current?.max_score, 10),
-    weight: numberOrDefault(data.weight ?? current?.weight, 1),
-    required_file_types: data.required_file_types !== undefined ? nullable(data.required_file_types) : current?.required_file_types || null,
-    max_file_size_mb: Number(data.max_file_size_mb ?? current?.max_file_size_mb ?? 20),
-    max_files: Number(data.max_files ?? current?.max_files ?? 5),
-    attachment_url: data.attachment_url !== undefined ? nullable(data.attachment_url) : current?.attachment_url || null,
-    status: data.status ?? current?.status ?? "draft",
-    created_by: current?.created_by ?? actor?.id ?? null,
-  });
+  const normalizeCheckpointPayload = (data, actor, current = null) => {
+    const nextStatus = data.status ?? current?.status ?? "draft";
+    let openAt = data.open_at !== undefined ? nullable(data.open_at) : current?.open_at ?? null;
+    if (!openAt && nextStatus === "open") {
+      openAt = current?.open_at ?? new Date();
+    }
+    return {
+      class_id: Number(data.class_id ?? current?.class_id),
+      title: clean(data.title ?? current?.title),
+      description: data.description !== undefined ? nullable(data.description) : current?.description || null,
+      order_index: Number(data.order_index ?? current?.order_index ?? 1),
+      deadline: data.deadline ?? current?.deadline,
+      open_at: openAt,
+      max_score: numberOrDefault(data.max_score ?? current?.max_score, 10),
+      weight: numberOrDefault(data.weight ?? current?.weight, 1),
+      required_file_types: data.required_file_types !== undefined ? nullable(data.required_file_types) : current?.required_file_types || null,
+      max_file_size_mb: Number(data.max_file_size_mb ?? current?.max_file_size_mb ?? 20),
+      max_files: Number(data.max_files ?? current?.max_files ?? 5),
+      attachment_url: data.attachment_url !== undefined ? nullable(data.attachment_url) : current?.attachment_url || null,
+      status: nextStatus,
+      created_by: current?.created_by ?? actor?.id ?? null,
+    };
+  };
 
   const assertCheckpointOrderAvailable = async (classId, orderIndex, excludeId = null) => {
     const existing = await adminProjectSubmissionRepository.findCheckpointOrder(classId, orderIndex, excludeId);
@@ -136,7 +143,11 @@ export const createAdminProjectSubmissionService = ({ adminProjectSubmissionRepo
 
   const updateCheckpointStatus = async (id, status, actor) => {
     const current = await getCheckpoint(id);
-    await adminProjectSubmissionRepository.updateCheckpoint(id, { status });
+    const patch = { status };
+    if (status === "open" && !current.open_at) {
+      patch.open_at = new Date();
+    }
+    await adminProjectSubmissionRepository.updateCheckpoint(id, patch);
     await auditService.log({
       userId: actor?.id || null,
       action: "admin_update_checkpoint_status",
@@ -146,6 +157,28 @@ export const createAdminProjectSubmissionService = ({ adminProjectSubmissionRepo
       newValues: { status },
     });
     return getCheckpoint(id);
+  };
+
+  const deleteCheckpoint = async (id, actor) => {
+    const current = await getCheckpoint(id);
+    if (current.status !== "archived") {
+      throw BadRequest("Chỉ có thể xóa checkpoint khi trạng thái là archived.");
+    }
+    const graded = await adminProjectSubmissionRepository.countCheckpointGraded(id);
+    if (graded > 0) {
+      throw BadRequest("Không thể xóa checkpoint đã có bài nộp được chấm điểm.");
+    }
+    const deleted = await adminProjectSubmissionRepository.softDeleteCheckpoint(id);
+    if (!deleted) throw NotFound("Checkpoint");
+    await auditService.log({
+      userId: actor?.id || null,
+      action: "admin_delete_checkpoint",
+      tableName: "checkpoints",
+      recordId: id,
+      title: current.title,
+      oldValues: { title: current.title, status: current.status },
+    });
+    return { id: String(id), deleted: true };
   };
 
   const duplicateCheckpoint = async (id, actor) => {
@@ -164,7 +197,7 @@ export const createAdminProjectSubmissionService = ({ adminProjectSubmissionRepo
       tableName: "checkpoints",
       recordId: newId,
       title: payload.title,
-      newValues: { source_id: Number(id), class_id: payload.class_id },
+      newValues: { source_id: String(id), class_id: payload.class_id },
     });
     return getCheckpoint(newId);
   };
@@ -175,6 +208,7 @@ export const createAdminProjectSubmissionService = ({ adminProjectSubmissionRepo
       search: query.search?.trim() || null,
       semesterId: query.semester_id || null,
       classId: query.class_id || null,
+      groupId: query.group_id || null,
       checkpointId: query.checkpoint_id || null,
       status: query.status || null,
       isLate: query.is_late,
@@ -297,12 +331,31 @@ export const createAdminProjectSubmissionService = ({ adminProjectSubmissionRepo
     return getAssignment(id);
   };
 
+  const deleteAssignment = async (id, actor) => {
+    const current = await getAssignment(id);
+    if (current.status !== "archived") {
+      throw BadRequest("Chỉ có thể xóa assignment khi trạng thái là archived.");
+    }
+    const deleted = await adminProjectSubmissionRepository.softDeleteAssignment(id);
+    if (!deleted) throw NotFound("Assignment");
+    await auditService.log({
+      userId: actor?.id || null,
+      action: "admin_delete_assignment",
+      tableName: "assignments",
+      recordId: id,
+      title: current.title,
+      oldValues: { title: current.title, status: current.status },
+    });
+    return { id: String(id), deleted: true };
+  };
+
   const listAssignmentSubmissions = async (query) => {
     const pagination = pageArgs(query);
     const result = await adminProjectSubmissionRepository.listAssignmentSubmissions({
       search: query.search?.trim() || null,
       semesterId: query.semester_id || null,
       classId: query.class_id || null,
+      groupId: query.group_id || null,
       assignmentId: query.assignment_id || null,
       status: query.status || null,
       isLate: query.is_late,
@@ -379,6 +432,7 @@ export const createAdminProjectSubmissionService = ({ adminProjectSubmissionRepo
     createCheckpoint,
     updateCheckpoint,
     updateCheckpointStatus,
+    deleteCheckpoint,
     duplicateCheckpoint,
     listCheckpointSubmissions,
     getCheckpointSubmission,
@@ -388,6 +442,7 @@ export const createAdminProjectSubmissionService = ({ adminProjectSubmissionRepo
     createAssignment,
     updateAssignment,
     updateAssignmentStatus,
+    deleteAssignment,
     listAssignmentSubmissions,
     getAssignmentSubmission,
     gradeAssignmentSubmission,

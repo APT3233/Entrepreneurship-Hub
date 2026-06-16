@@ -8,6 +8,7 @@ import {
   getProvider,
   normalizeProviderKey,
   validateProvider,
+  validateProviderForModelList,
 } from "./aiProviderManager.js";
 import { parseSseChatCompletion } from "./aiStreamParser.js";
 
@@ -155,7 +156,7 @@ const requestModels = async ({ provider, signal }) => {
 
 export const listModels = async (request = {}) => {
   const runtimeSettings = request.runtimeSettings || {};
-  const provider = validateProvider(buildProviderForRequest(request));
+  const provider = validateProviderForModelList(buildProviderForRequest(request));
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), Number(request.timeoutMs || runtimeSettings.timeoutMs || aiConfig.timeoutMs) || 120_000);
   const attemptedBaseUrls = [];

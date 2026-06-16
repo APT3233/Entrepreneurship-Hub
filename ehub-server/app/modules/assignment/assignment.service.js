@@ -301,7 +301,7 @@ export const createAssignmentService = ({ assignmentRepository, storageService, 
     });
 
     eventBus.emit(Events.ASSIGNMENT_SUBMISSION_GRADED, {
-      assignmentId: Number(assignmentId),
+      assignmentId,
       groupId: Number(groupId),
       submissionId: updated.id,
       gradedBy: user.id,
@@ -325,7 +325,7 @@ export const createAssignmentService = ({ assignmentRepository, storageService, 
       newValues: data
     });
 
-    eventBus.emit(Events.ASSIGNMENT_UPDATED, { assignmentId: Number(id), updatedBy: user?.id || null });
+    eventBus.emit(Events.ASSIGNMENT_UPDATED, { assignmentId: id, updatedBy: user?.id || null });
     return getById(id, user);
   };
 
@@ -343,7 +343,7 @@ export const createAssignmentService = ({ assignmentRepository, storageService, 
       newValues: { status }
     });
 
-    eventBus.emit(Events.ASSIGNMENT_UPDATED, { assignmentId: Number(id), status, updatedBy: user?.id || null });
+    eventBus.emit(Events.ASSIGNMENT_UPDATED, { assignmentId: id, status, updatedBy: user?.id || null });
     return getById(id, user);
   };
 
@@ -362,7 +362,7 @@ export const createAssignmentService = ({ assignmentRepository, storageService, 
       oldValues: { title: assignment?.title }
     });
 
-    eventBus.emit(Events.ASSIGNMENT_DELETED, { assignmentId: Number(id), deletedBy: user?.id || null });
+    eventBus.emit(Events.ASSIGNMENT_DELETED, { assignmentId: id, deletedBy: user?.id || null });
   };
 
   const initiateUpload = async (file, user) => {
@@ -480,7 +480,7 @@ export const createAssignmentService = ({ assignmentRepository, storageService, 
       const safeName = String(f.name || "file")
         .replace(/[\\/]/g, "_")
         .replace(/\s+/g, "_");
-      const objectKey = `${semesterFolder}/assignments/submit/${Number(assignmentId)}/group_${Number(group.id)}/${ts}_${i}_${safeName}`;
+      const objectKey = `${semesterFolder}/assignments/submit/${assignmentId}/group_${Number(group.id)}/${ts}_${i}_${safeName}`;
 
       const presignedUrl = await storageService.generatePresignedPutUrl(objectKey, 900);
       const uploadToken = tokenService.signPayload(
@@ -491,7 +491,7 @@ export const createAssignmentService = ({ assignmentRepository, storageService, 
           n: f.name,
           t: f.type || "application/octet-stream",
           s: Number(f.size),
-          aid: Number(assignmentId),
+          aid: assignmentId,
           gid: Number(group.id),
         },
         "15m"
@@ -535,9 +535,9 @@ export const createAssignmentService = ({ assignmentRepository, storageService, 
       }
       if (pl.p !== "asubmit") throw BadRequest("Token không dùng cho nộp bài");
       if (Number(pl.u) !== Number(user.id)) throw Forbidden("Upload token không thuộc về bạn");
-      if (Number(pl.aid) !== Number(assignmentId)) throw BadRequest("Token không khớp bài tập");
+      if (pl.aid !== assignmentId) throw BadRequest("Token không khớp bài tập");
       const semesterFolder = (access.semester_code || "UNKNOWN").toUpperCase();
-      const expectedPrefix = `${semesterFolder}/assignments/submit/${Number(assignmentId)}/group_${Number(pl.gid)}/`;
+      const expectedPrefix = `${semesterFolder}/assignments/submit/${assignmentId}/group_${Number(pl.gid)}/`;
       if (!String(pl.k || "").startsWith(expectedPrefix)) throw BadRequest("Object key không hợp lệ");
       payloads.push({ pl });
     }
@@ -606,7 +606,7 @@ export const createAssignmentService = ({ assignmentRepository, storageService, 
     });
 
     eventBus.emit(Events.ASSIGNMENT_SUBMISSION_COMPLETED, {
-      assignmentId: Number(assignmentId),
+      assignmentId: assignmentId,
       groupId: gid,
       userId: user.id,
     });

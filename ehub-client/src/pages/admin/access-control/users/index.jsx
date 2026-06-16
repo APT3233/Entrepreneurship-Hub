@@ -5,6 +5,7 @@ import AdminAccessControlApi from "@/api/adminAccessControl";
 import { useToast } from "@/components/ui/Toast";
 import { selectAuthUser } from "@/store/slices/authSlice";
 import { checkPermission } from "@/utils/permissions";
+import { useAdminUrlQuerySync } from "@/hooks/admin/useAdminUrlQuerySync";
 import AdminTable from "@/pages/admin/components/AdminTable";
 import FilterBar, { FilterSelect } from "@/pages/admin/components/FilterBar";
 import SearchInput from "@/pages/admin/components/SearchInput";
@@ -132,6 +133,11 @@ export default function AdminUsers() {
   const [roles, setRoles] = useState([]);
   const [meta, setMeta] = useState(null);
   const [query, setQuery] = useState({ page: 1, limit: 10, search: "", status: "", role: "" });
+  useAdminUrlQuerySync({
+    query,
+    setQuery,
+    keys: ["page", "search", "status", "role"],
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [modal, setModal] = useState({ type: null, user: null });

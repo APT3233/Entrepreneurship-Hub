@@ -10,6 +10,7 @@ export const checkpointService = {
   update: (id, body) => instance.put(`${basePath}/${id}`, body),
   updateStatus: (id, status) => instance.patch(`${basePath}/${id}/status`, { status }),
   duplicate: (id) => instance.post(`${basePath}/${id}/duplicate`),
+  remove: (id) => instance.delete(`${basePath}/${id}`),
 };
 
 export default checkpointService;

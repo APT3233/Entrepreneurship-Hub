@@ -63,3 +63,19 @@ export function formatDateTimeText(value, language = "vi") {
   if (!parts) return "—";
   return `${parts.dateLine} ${parts.timeLine}`;
 }
+
+export function toDatetimeLocalInput(value) {
+  if (!value) return "";
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const pad = (part) => String(part).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+/** NULL open_at + status open => effective open time is created_at (schema: NULL = mở ngay). */
+export function resolveCheckpointOpenAt(checkpoint) {
+  if (!checkpoint) return null;
+  if (checkpoint.open_at) return checkpoint.open_at;
+  if (checkpoint.status === "open" && checkpoint.created_at) return checkpoint.created_at;
+  return null;
+}

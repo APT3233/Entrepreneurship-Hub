@@ -1,27 +1,32 @@
 import { useEffect, useMemo, useState } from "react";
-import { Eye, SquarePen } from "lucide-react";
+import { Eye, SquarePen, FileDown } from "lucide-react";
 import {
   assignmentSubmissionService,
   projectSubmissionLookupService,
 } from "@/api/adminProjectSubmission";
 import { useToast } from "@/components/ui/Toast";
 import { useAssignmentSubmissions } from "@/hooks/admin/useAssignmentSubmissions";
+import { useAdminListSemesterFilters } from "@/hooks/admin/useAdminListSemesterFilters";
+import { useAdminUrlQuerySync } from "@/hooks/admin/useAdminUrlQuerySync";
 import AdminTable from "@/pages/admin/components/AdminTable";
-import FilterBar, { FilterSelect } from "@/pages/admin/components/FilterBar";
+import FilterBar, { AdminSemesterFilterGroup, FilterSelect } from "@/pages/admin/components/FilterBar";
 import SearchInput from "@/pages/admin/components/SearchInput";
 import StatusBadge from "@/pages/admin/components/StatusBadge";
 import ActionButton from "@/pages/admin/academic/components/ActionButton";
 import GradeModal from "@/pages/admin/project-submission/components/GradeModal";
 import SubmissionDetailModal from "@/pages/admin/project-submission/components/SubmissionDetailModal";
 import { useTranslation } from "@/context/TranslationContext";
+import { countActiveAdminFilters } from "@/pages/admin/shared/filterUtils";
 import {
   buildClassLabel,
+  fetchAllAdminRows,
   formatDate,
   getBooleanOptions,
   getSubmissionStatusOptions,
   pageLimit,
   toSelectOptions,
 } from "@/pages/admin/project-submission/shared";
+import { downloadCsv } from "@/utils/exportCsv";
 
 export default function AdminAssignmentSubmissions() {
   const { t } = useTranslation();
@@ -29,8 +34,20 @@ export default function AdminAssignmentSubmissions() {
   const submissionStatusOptions = useMemo(() => getSubmissionStatusOptions(t), [t]);
   const booleanOptions = useMemo(() => getBooleanOptions(t), [t]);
   const [query, setQuery] = useState({ page: 1, limit: pageLimit, search: "", semester_id: "", class_id: "", assignment_id: "", status: "", is_late: "", graded_by: "" });
-  const { rows, meta, loading, error, refetch } = useAssignmentSubmissions(query);
+  useAdminUrlQuerySync({
+    query,
+    setQuery,
+    keys: ["page", "search", "semester_id", "class_id", "assignment_id", "status", "is_late", "graded_by"],
+  });
   const [lookups, setLookups] = useState({ classes: [], semesters: [], assignments: [], graders: [] });
+  const { semesterFilter, classOptions, listEnabled } = useAdminListSemesterFilters({
+    semesters: lookups.semesters,
+    classes: lookups.classes,
+    buildClassLabel,
+    setQuery,
+    querySemesterId: query.semester_id,
+  });
+  const { rows, meta, loading, error, refetch } = useAssignmentSubmissions(query, { enabled: listEnabled });
   const [detail, setDetail] = useState(null);
   const [gradeTarget, setGradeTarget] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -41,8 +58,6 @@ export default function AdminAssignmentSubmissions() {
       .catch(() => setLookups({ classes: [], semesters: [], assignments: [], graders: [] }));
   }, []);
 
-  const classOptions = useMemo(() => toSelectOptions(lookups.classes, (item) => item.id, buildClassLabel, t("lookupAll.classes")), [lookups.classes, t]);
-  const semesterOptions = useMemo(() => toSelectOptions(lookups.semesters, (item) => item.id, (item) => `${item.semester_code} - ${item.semester_name}`, t("lookupAll.semesters")), [lookups.semesters, t]);
   const assignmentOptions = useMemo(() => toSelectOptions(lookups.assignments, (item) => item.id, (item) => item.title, t("lookupAll.assignments")), [lookups.assignments, t]);
   const graderOptions = useMemo(() => toSelectOptions(lookups.graders, (item) => item.id, (item) => item.full_name || item.email, t("lookupAll.graders")), [lookups.graders, t]);
 
@@ -56,6 +71,36 @@ export default function AdminAssignmentSubmissions() {
       setDetail(res?.data || null);
     } catch (err) {
       toast.error(err.message || "Không tải được submission.");
+    }
+  };
+
+  const exportAll = async () => {
+    try {
+      const all = await fetchAllAdminRows(assignmentSubmissionService.list, query);
+      if (!all.length) {
+        toast.error("Không có dữ liệu để export.");
+        return;
+      }
+      downloadCsv({
+        filename: `admin-assignment-submissions-${new Date().toISOString().slice(0, 10)}.csv`,
+        headers: ["assignment_id", "assignment_title", "class_code", "group_code", "group_name", "submission_id", "display_status", "is_late", "submitted_at", "graded_at", "graded_by_name", "score"],
+        rows: all.map((r) => ({
+          assignment_id: r.assignment_id || "",
+          assignment_title: r.assignment_title || "",
+          class_code: r.class_code || "",
+          group_code: r.group_code || "",
+          group_name: r.group_name || "",
+          submission_id: r.submission_id || "",
+          display_status: r.display_status || "",
+          is_late: r.is_late,
+          submitted_at: r.submitted_at || "",
+          graded_at: r.graded_at || "",
+          graded_by_name: r.graded_by_name || r.graded_by || "",
+          score: r.score,
+        })),
+      });
+    } catch (err) {
+      toast.error(err.message || "Không export được dữ liệu.");
     }
   };
 
@@ -97,11 +142,44 @@ export default function AdminAssignmentSubmissions() {
     },
   ];
 
+  const activeFilterCount = countActiveAdminFilters(query);
+
+  const clearFilters = () => {
+    semesterFilter.reset();
+    setQuery((prev) => ({
+      ...prev,
+      page: 1,
+      search: "",
+      class_id: "",
+      assignment_id: "",
+      status: "",
+      is_late: "",
+      graded_by: "",
+    }));
+  };
+
   return (
     <>
-      <FilterBar>
-        <SearchInput value={query.search} onChange={(search) => setQuery((prev) => ({ ...prev, page: 1, search }))} placeholder={t("searchPlaceholders.assignmentSubmissions")} />
-        <FilterSelect label={t("filterLabels.semester")} value={query.semester_id} onChange={(semester_id) => setQuery((prev) => ({ ...prev, page: 1, semester_id }))} options={semesterOptions} />
+      <FilterBar
+        search={(
+          <SearchInput value={query.search} onChange={(search) => setQuery((prev) => ({ ...prev, page: 1, search }))} placeholder={t("searchPlaceholders.assignmentSubmissions")} />
+        )}
+        activeFilterCount={activeFilterCount}
+        onClear={clearFilters}
+        right={(
+          <button type="button" onClick={exportAll} className="inline-flex h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+            <FileDown size={16} /> Export CSV
+          </button>
+        )}
+      >
+        <AdminSemesterFilterGroup
+          filterYear={semesterFilter.filterYear}
+          semesterId={semesterFilter.semesterId}
+          yearOptions={semesterFilter.yearOptions}
+          semesterOptions={semesterFilter.semesterOptions}
+          onYearChange={semesterFilter.onYearChange}
+          onSemesterChange={semesterFilter.onSemesterIdChange}
+        />
         <FilterSelect label={t("filterLabels.class")} value={query.class_id} onChange={(class_id) => setQuery((prev) => ({ ...prev, page: 1, class_id }))} options={classOptions} />
         <FilterSelect label={t("filterLabels.assignment")} value={query.assignment_id} onChange={(assignment_id) => setQuery((prev) => ({ ...prev, page: 1, assignment_id }))} options={assignmentOptions} />
         <FilterSelect label={t("filterLabels.status")} value={query.status} onChange={(status) => setQuery((prev) => ({ ...prev, page: 1, status }))} options={submissionStatusOptions} />

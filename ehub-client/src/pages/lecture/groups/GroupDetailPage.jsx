@@ -15,6 +15,7 @@ import MembersTab from "./components/MembersTab";
 import CheckpointTab from "./components/CheckpointTab";
 import EditGroupForm from "@/components/form/lecturer/EditGroupForm";
 import CheckpointDetailForm from "@/components/form/lecturer/CheckpointDetailForm";
+import useDocumentTitle from "@/hooks/useDocumentTitle";
 
 const TABS = [
   { key: "overview", label: "Tổng quan", icon: BarChart2 },
@@ -36,6 +37,7 @@ export default function GroupDetailPage() {
   const isLecturer = useSelector((state) => selectHasAnyRole(state, [Roles.LECTURER, Roles.ADMIN]));
   
   const [group, setGroup] = useState(null);
+  useDocumentTitle(group?.group_name || group?.group_code || null, 1);
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
@@ -81,7 +83,7 @@ export default function GroupDetailPage() {
           setCheckpoints(cpRes.data.map(cp => ({
             ...cp,
             name: cp.title,
-            status: cp.submission_status || "not_submitted",
+            status: cp.submission_status === "submitted" || cp.submission_status === "resubmitted" ? "ungraded" : (cp.submission_status || "not_submitted"),
             submittedAt: cp.submitted_at,
             maxScore: cp.max_score
           })));
@@ -149,7 +151,7 @@ export default function GroupDetailPage() {
         setCheckpoints(cpRes.data.map(cp => ({
           ...cp,
           name: cp.title,
-          status: cp.submission_status || "not_submitted",
+          status: cp.submission_status === "submitted" || cp.submission_status === "resubmitted" ? "ungraded" : (cp.submission_status || "not_submitted"),
           submittedAt: cp.submitted_at,
           maxScore: cp.max_score
         })));
@@ -256,6 +258,7 @@ export default function GroupDetailPage() {
               classId={group?.class_id}
               canManageMembers={isLecturer}
               onMembersChanged={fetchData}
+              groupName={group?.group_name || group?.group_code}
             />
           )}
           {activeTab === "checkpoint" && (

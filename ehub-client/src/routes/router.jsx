@@ -9,6 +9,7 @@ import GuardRoute from "@/routes/guradRoute";
 import RootLayout from "@/routes/RootLayout";
 import RootRedirect from "@/routes/RootRedirect";
 import PageNotFound from "@/components/PageNotFound";
+import GlobalErrorBoundary from "@/components/GlobalErrorBoundary";
 
 const initRoutes = () => {
   const publicRoutes = [];
@@ -23,6 +24,7 @@ const initRoutes = () => {
   return [
     {
       element: <RootLayout />,
+      errorElement: <GlobalErrorBoundary />,
       children: [
         // Public routes
         ...publicRoutes,
@@ -48,7 +50,11 @@ const wrapWithGuard = (routes) => {
       element = <GuardRoute allowedRoles={route.roles}>{element}</GuardRoute>;
     }
 
-    const newRoute = { ...route, element };
+    const newRoute = {
+      ...route,
+      element,
+      errorElement: route.errorElement || <GlobalErrorBoundary />,
+    };
 
     if (route.children) {
       newRoute.children = wrapWithGuard(route.children);

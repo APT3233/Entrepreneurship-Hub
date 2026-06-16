@@ -1,4 +1,8 @@
+import { v7 as uuidv7 } from "uuid";
+
 const pageSql = (limit, offset) => `LIMIT ${Number(limit)} OFFSET ${Number(offset)}`;
+const newUuid = () => uuidv7().replace(/-/g, "");
+const asUuid = (id) => String(id);
 
 const countRows = async (db, sql, params = {}) => {
   const [rows] = await db.execute(sql, params);
@@ -211,24 +215,25 @@ export const createAdminProjectSubmissionRepository = ({ db }) => {
         GROUP BY cp.id
         LIMIT 1
       `,
-      { id: Number(id) },
+      { id: asUuid(id) },
     );
     return rows[0] || null;
   };
 
   const createCheckpoint = async (data) => {
-    const [result] = await db.execute(
+    const id = newUuid();
+    await db.execute(
       `
         INSERT INTO checkpoints
-          (class_id, title, description, order_index, deadline, open_at, max_score, weight,
+          (id, class_id, title, description, order_index, deadline, open_at, max_score, weight,
            required_file_types, max_file_size_mb, max_files, attachment_url, status, created_by)
         VALUES
-          (:class_id, :title, :description, :order_index, :deadline, :open_at, :max_score, :weight,
+          (:id, :class_id, :title, :description, :order_index, :deadline, :open_at, :max_score, :weight,
            :required_file_types, :max_file_size_mb, :max_files, :attachment_url, :status, :created_by)
       `,
-      data,
+      { ...data, id },
     );
-    return result.insertId;
+    return id;
   };
 
   const updateCheckpoint = async (id, data) => {
@@ -237,7 +242,7 @@ export const createAdminProjectSubmissionRepository = ({ db }) => {
     const setSql = keys.map((key) => `${key} = :${key}`).join(", ");
     await db.execute(
       `UPDATE checkpoints SET ${setSql}, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND deleted_at IS NULL`,
-      { ...data, id: Number(id) },
+      { ...data, id: asUuid(id) },
     );
   };
 
@@ -246,7 +251,7 @@ export const createAdminProjectSubmissionRepository = ({ db }) => {
     let sql = "SELECT id FROM checkpoints WHERE class_id = :classId AND order_index = :orderIndex AND deleted_at IS NULL";
     if (excludeId) {
       sql += " AND id <> :excludeId";
-      params.excludeId = Number(excludeId);
+      params.excludeId = asUuid(excludeId);
     }
     sql += " LIMIT 1";
     const [rows] = await db.execute(sql, params);
@@ -263,10 +268,10 @@ export const createAdminProjectSubmissionRepository = ({ db }) => {
 
   const countCheckpointGraded = async (checkpointId) =>
     countRows(db, "SELECT COUNT(*) AS total FROM checkpoint_submissions WHERE checkpoint_id = :checkpointId AND score IS NOT NULL", {
-      checkpointId: Number(checkpointId),
+      checkpointId: asUuid(checkpointId),
     });
 
-  const listCheckpointSubmissions = async ({ search, semesterId, classId, checkpointId, status, isLate, gradedBy, limit, offset }) => {
+  const listCheckpointSubmissions = async ({ search, semesterId, classId, groupId, checkpointId, status, isLate, gradedBy, limit, offset }) => {
     const params = {};
     const where = ["cp.deleted_at IS NULL", "c.deleted_at IS NULL"];
     buildSearch(where, params, ["vcs.checkpoint_title", "vcs.group_code", "vcs.group_name", "c.class_code"], search);
@@ -275,12 +280,16 @@ export const createAdminProjectSubmissionRepository = ({ db }) => {
       params.semesterId = Number(semesterId);
     }
     if (classId) {
-      where.push("vcs.class_id = :classId");
+      where.push("cp.class_id = :classId");
       params.classId = Number(classId);
+    }
+    if (groupId) {
+      where.push("vcs.group_id = :groupId");
+      params.groupId = Number(groupId);
     }
     if (checkpointId) {
       where.push("vcs.checkpoint_id = :checkpointId");
-      params.checkpointId = Number(checkpointId);
+      params.checkpointId = asUuid(checkpointId);
     }
     if (status) {
       where.push(status === "pending_grading" ? "vcs.display_status = :status" : "vcs.submission_status = :status");
@@ -291,7 +300,7 @@ export const createAdminProjectSubmissionRepository = ({ db }) => {
       params.isLate = Number(isLate);
     }
     if (gradedBy) {
-      where.push("vcs.graded_by = :gradedBy");
+      where.push("cs_sub.graded_by = :gradedBy");
       params.gradedBy = Number(gradedBy);
     }
     const whereSql = where.join(" AND ");
@@ -304,10 +313,12 @@ export const createAdminProjectSubmissionRepository = ({ db }) => {
           grader.full_name AS graded_by_name
         FROM v_checkpoint_status vcs
         JOIN checkpoints cp ON cp.id = vcs.checkpoint_id
-        JOIN classes c ON c.id = vcs.class_id
+        JOIN classes c ON c.id = cp.class_id
         JOIN subjects sub ON sub.id = c.subject_id
         JOIN semesters sem ON sem.id = c.semester_id
-        LEFT JOIN users grader ON grader.id = vcs.graded_by
+        LEFT JOIN checkpoint_submissions cs_sub
+          ON cs_sub.checkpoint_id = vcs.checkpoint_id AND cs_sub.group_id = vcs.group_id
+        LEFT JOIN users grader ON grader.id = cs_sub.graded_by
         WHERE ${whereSql}
         ORDER BY cp.deadline DESC, c.class_code ASC, vcs.group_code ASC
         ${pageSql(limit, offset)}
@@ -320,9 +331,11 @@ export const createAdminProjectSubmissionRepository = ({ db }) => {
         SELECT COUNT(*) AS total
         FROM v_checkpoint_status vcs
         JOIN checkpoints cp ON cp.id = vcs.checkpoint_id
-        JOIN classes c ON c.id = vcs.class_id
+        JOIN classes c ON c.id = cp.class_id
         JOIN subjects sub ON sub.id = c.subject_id
         JOIN semesters sem ON sem.id = c.semester_id
+        LEFT JOIN checkpoint_submissions cs_sub
+          ON cs_sub.checkpoint_id = vcs.checkpoint_id AND cs_sub.group_id = vcs.group_id
         WHERE ${whereSql}
       `,
       params,
@@ -449,24 +462,25 @@ export const createAdminProjectSubmissionRepository = ({ db }) => {
         GROUP BY a.id
         LIMIT 1
       `,
-      { id: Number(id) },
+      { id: asUuid(id) },
     );
     return rows[0] || null;
   };
 
   const createAssignment = async (data) => {
-    const [result] = await db.execute(
+    const id = newUuid();
+    await db.execute(
       `
         INSERT INTO assignments
-          (class_id, title, description, deadline, max_score, status,
+          (id, class_id, title, description, deadline, max_score, status,
            required_file_types, max_file_size_mb, max_files, attachment_url, created_by)
         VALUES
-          (:class_id, :title, :description, :deadline, :max_score, :status,
+          (:id, :class_id, :title, :description, :deadline, :max_score, :status,
            :required_file_types, :max_file_size_mb, :max_files, :attachment_url, :created_by)
       `,
-      data,
+      { ...data, id },
     );
-    return result.insertId;
+    return id;
   };
 
   const updateAssignment = async (id, data) => {
@@ -475,16 +489,32 @@ export const createAdminProjectSubmissionRepository = ({ db }) => {
     const setSql = keys.map((key) => `${key} = :${key}`).join(", ");
     await db.execute(
       `UPDATE assignments SET ${setSql}, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND deleted_at IS NULL`,
-      { ...data, id: Number(id) },
+      { ...data, id: asUuid(id) },
     );
+  };
+
+  const softDeleteCheckpoint = async (id) => {
+    const [result] = await db.execute(
+      `UPDATE checkpoints SET deleted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND deleted_at IS NULL`,
+      { id: asUuid(id) },
+    );
+    return result.affectedRows > 0;
+  };
+
+  const softDeleteAssignment = async (id) => {
+    const [result] = await db.execute(
+      `UPDATE assignments SET deleted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND deleted_at IS NULL`,
+      { id: asUuid(id) },
+    );
+    return result.affectedRows > 0;
   };
 
   const countAssignmentGraded = async (assignmentId) =>
     countRows(db, "SELECT COUNT(*) AS total FROM assignment_submissions WHERE assignment_id = :assignmentId AND score IS NOT NULL", {
-      assignmentId: Number(assignmentId),
+      assignmentId: asUuid(assignmentId),
     });
 
-  const listAssignmentSubmissions = async ({ search, semesterId, classId, assignmentId, status, isLate, gradedBy, limit, offset }) => {
+  const listAssignmentSubmissions = async ({ search, semesterId, classId, groupId, assignmentId, status, isLate, gradedBy, limit, offset }) => {
     const params = {};
     const where = ["a.deleted_at IS NULL", "c.deleted_at IS NULL"];
     buildSearch(where, params, ["a.title", "g.group_code", "g.group_name", "c.class_code"], search);
@@ -496,9 +526,13 @@ export const createAdminProjectSubmissionRepository = ({ db }) => {
       where.push("a.class_id = :classId");
       params.classId = Number(classId);
     }
+    if (groupId) {
+      where.push("g.id = :groupId");
+      params.groupId = Number(groupId);
+    }
     if (assignmentId) {
       where.push("a.id = :assignmentId");
-      params.assignmentId = Number(assignmentId);
+      params.assignmentId = asUuid(assignmentId);
     }
     if (status) {
       where.push("COALESCE(s.status, 'not_submitted') = :status");
@@ -615,7 +649,7 @@ export const createAdminProjectSubmissionRepository = ({ db }) => {
       }
       if (checkpointId) {
         cpWhere.push("cs.checkpoint_id = :checkpointId");
-        params.checkpointId = Number(checkpointId);
+        params.checkpointId = asUuid(checkpointId);
       }
       const whereSql = cpWhere.join(" AND ");
       rowsSql.push(`
@@ -653,7 +687,7 @@ export const createAdminProjectSubmissionRepository = ({ db }) => {
       }
       if (assignmentId) {
         asWhere.push("s.assignment_id = :assignmentId");
-        params.assignmentId = Number(assignmentId);
+        params.assignmentId = asUuid(assignmentId);
       }
       const whereSql = asWhere.join(" AND ");
       rowsSql.push(`
@@ -715,7 +749,7 @@ export const createAdminProjectSubmissionRepository = ({ db }) => {
           ORDER BY sem.year DESC, sem.start_date DESC, c.class_code ASC
         `,
       ),
-      db.execute("SELECT id, semester_code, semester_name, year FROM semesters WHERE deleted_at IS NULL ORDER BY year DESC, start_date DESC"),
+      db.execute("SELECT id, semester_code, semester_name, year, status FROM semesters WHERE deleted_at IS NULL ORDER BY year DESC, start_date DESC"),
       db.execute("SELECT DISTINCT category FROM `groups` WHERE deleted_at IS NULL AND category IS NOT NULL AND category <> '' ORDER BY category ASC"),
       db.execute("SELECT id, title, class_id FROM checkpoints WHERE deleted_at IS NULL ORDER BY deadline DESC LIMIT 500"),
       db.execute("SELECT id, title, class_id FROM assignments WHERE deleted_at IS NULL ORDER BY deadline DESC LIMIT 500"),
@@ -747,6 +781,7 @@ export const createAdminProjectSubmissionRepository = ({ db }) => {
     findCheckpointById,
     createCheckpoint,
     updateCheckpoint,
+    softDeleteCheckpoint,
     findCheckpointOrder,
     getNextCheckpointOrder,
     countCheckpointGraded,
@@ -757,6 +792,7 @@ export const createAdminProjectSubmissionRepository = ({ db }) => {
     findAssignmentById,
     createAssignment,
     updateAssignment,
+    softDeleteAssignment,
     countAssignmentGraded,
     listAssignmentSubmissions,
     findAssignmentSubmissionById,

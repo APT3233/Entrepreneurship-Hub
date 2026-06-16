@@ -1,7 +1,8 @@
 import { useMemo } from "react";
-import { Plus, Trash2, Pencil } from "lucide-react";
+import { Plus, Trash2, Pencil, Download } from "lucide-react";
 import Dropdown from "@/components/ui/filter/DropDown";
 import { LastNameAvatar } from "@/components/icons/ui";
+import { downloadCsv } from "@/utils/exportCsv";
 
 /**
  * StudentList — Danh sách sinh viên (sau khi tạo nhóm: có cột Nhóm*, Nhóm trưởng, lọc theo nhóm)
@@ -37,6 +38,7 @@ export default function StudentList({
   onDeleteStudent,
   onAddStudent,
   onEditStudent,
+  classCode = "",
 }) {
   const hasGroups = groupOptions.length > 0;
   const columns = [...(hasGroups ? columnsWithGroup : columnsWithoutGroup)];
@@ -55,6 +57,24 @@ export default function StudentList({
       return (a.mssv || "").localeCompare(b.mssv || "");
     });
   }, [students]);
+
+  const handleExport = () => {
+    const groupOpt = groupOptions.find((g) => String(g.value) === String(selectedGroup));
+    const groupLabel = groupOpt && selectedGroup !== "all" ? `_${groupOpt.label.replace(/\s+/g, "_")}` : "";
+    const filename = `danh_sach_sinh_vien_${classCode || "lop"}${groupLabel}`;
+
+    const headers = ["MSSV", "Họ và tên", "Email", "Nhóm", "Chuyên ngành", "Trạng thái kích hoạt"];
+    const rows = sortedStudents.map((s) => ({
+      mssv: s.mssv || s.student_code || "",
+      "họ và tên": s.name || s.full_name || "",
+      email: s.email || "",
+      "nhóm": s.groupName || s.group_name || "Chưa phân nhóm",
+      "chuyên ngành": s.major || "Chưa cập nhật",
+      "trạng thái kích hoạt": s.accountActivated ? "Đã kích hoạt" : "Chưa kích hoạt",
+    }));
+
+    downloadCsv({ filename, headers, rows });
+  };
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 md:p-6 w-full">
@@ -76,6 +96,14 @@ export default function StudentList({
           )}
         </div>
         <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
+          <button
+            type="button"
+            onClick={handleExport}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-50 text-green-700 text-xs font-bold hover:bg-green-100 transition-colors border border-green-100 cursor-pointer"
+          >
+            <Download size={16} />
+            Xuất danh sách
+          </button>
           {canEdit && onAddStudent && (
             <button
               onClick={onAddStudent}

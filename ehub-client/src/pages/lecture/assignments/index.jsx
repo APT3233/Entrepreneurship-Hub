@@ -29,16 +29,22 @@ export default function AssignmentManagement() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Get active tab from URL, default to assignments
-  const activeTab = (searchParams.get("tab") === "assignments" || searchParams.get("tab") === "checkpoints") 
-    ? (searchParams.get("tab") === "checkpoints" ? "checkpoint" : "assignments")
-    : "assignments";
+  const activeTab = useMemo(() => {
+    const tabParam = searchParams.get("tab");
+    if (tabParam === "checkpoints" || searchParams.has("checkpointId")) {
+      return "checkpoint";
+    }
+    return "assignments";
+  }, [searchParams]);
 
   const handleTabChange = (tab) => {
     const params = new URLSearchParams(searchParams);
     if (tab === "assignments") {
       params.delete("tab");
+      params.delete("checkpointId");
     } else {
-      params.set("tab", tab);
+      params.set("tab", "checkpoints");
+      params.delete("assignmentId");
     }
     setSearchParams(params);
   };
@@ -283,6 +289,74 @@ export default function AssignmentManagement() {
     }
   }, [filterYear, filterSemesterId, filterClass, activeTab]);
 
+  // Sync assignmentId from query param
+  const assignmentIdParam = searchParams.get("assignmentId");
+  useEffect(() => {
+    if (assignmentIdParam) {
+      const id = assignmentIdParam;
+      if (viewedAssignment?.id !== id) {
+        setSelectedId(id);
+        Promise.all([
+          AssignmentApi.getById(id),
+          AssignmentApi.getSubmissions(id).catch(() => ({ data: [] })),
+        ])
+          .then(([detailRes, subRes]) => {
+            const a = detailRes?.data;
+            if (a) {
+              setViewedAssignment({ ...a, groupSubmissions: subRes?.data || [] });
+            } else {
+              toast.error("Không tìm thấy bài tập");
+              const params = new URLSearchParams(searchParams);
+              params.delete("assignmentId");
+              setSearchParams(params);
+            }
+          })
+          .catch((err) => {
+            console.error("Failed to fetch assignment detail:", err);
+            toast.error("Không thể tải chi tiết bài tập.");
+            const params = new URLSearchParams(searchParams);
+            params.delete("assignmentId");
+            setSearchParams(params);
+          });
+      }
+    } else {
+      setViewedAssignment(null);
+      setSelectedId(null);
+    }
+  }, [assignmentIdParam]);
+
+  // Sync checkpointId from query param
+  const checkpointIdParam = searchParams.get("checkpointId");
+  useEffect(() => {
+    if (checkpointIdParam) {
+      const id = checkpointIdParam;
+      if (selectedCheckpoint?.id !== id) {
+        CheckpointApi.getById(id)
+          .then((res) => {
+            if (res?.data) {
+              setSelectedCheckpoint(res.data);
+              setIsCheckpointDetailOpen(true);
+            } else {
+              toast.error("Không tìm thấy checkpoint");
+              const params = new URLSearchParams(searchParams);
+              params.delete("checkpointId");
+              setSearchParams(params);
+            }
+          })
+          .catch((err) => {
+            console.error("Failed to fetch checkpoint detail:", err);
+            toast.error("Không thể tải chi tiết checkpoint.");
+            const params = new URLSearchParams(searchParams);
+            params.delete("checkpointId");
+            setSearchParams(params);
+          });
+      }
+    } else {
+      setIsCheckpointDetailOpen(false);
+      setSelectedCheckpoint(null);
+    }
+  }, [checkpointIdParam]);
+
   // Handlers for Assignments
   const handleDeleteAssignment = (assignment) => {
     setAssignmentToDelete(assignment);
@@ -321,7 +395,7 @@ export default function AssignmentManagement() {
 
   // Handlers for Checkpoints
   const handleSaveCheckpoint = async (data) => {
-    const editedId = selectedCheckpoint?.id != null ? Number(selectedCheckpoint.id) : null;
+    const editedId = selectedCheckpoint?.id != null ? selectedCheckpoint.id : null;
     try {
       if (selectedCheckpoint?.id) {
         await CheckpointApi.update(selectedCheckpoint.id, data);
@@ -336,7 +410,7 @@ export default function AssignmentManagement() {
       setIsEditCheckpointOpen(false);
       const { checkpoints: list } = await fetchCheckpoints();
       if (editedId != null && Array.isArray(list)) {
-        const fresh = list.find((c) => Number(c.id) === editedId);
+        const fresh = list.find((c) => c.id === editedId);
         if (fresh) setSelectedCheckpoint(fresh);
       }
     } catch (error) {
@@ -440,16 +514,9 @@ export default function AssignmentManagement() {
                         }}
                         onDelete={() => handleDeleteAssignment(item)}
                         onClick={() => {
-                          setSelectedId(item.id);
-                          setViewedAssignment(item);
-                          Promise.all([
-                            AssignmentApi.getById(item.id),
-                            AssignmentApi.getSubmissions(item.id).catch(() => ({ data: [] })),
-                          ]).then(([detailRes, subRes]) => {
-                            const a = detailRes?.data;
-                            if (!a) return;
-                            setViewedAssignment({ ...a, groupSubmissions: subRes?.data || [] });
-                          });
+                          const params = new URLSearchParams(searchParams);
+                          params.set("assignmentId", item.id);
+                          setSearchParams(params);
                         }}
                       />
                     ))}
@@ -477,7 +544,11 @@ export default function AssignmentManagement() {
                         key={cp.id} 
                         checkpoint={cp} 
                         onEdit={() => { setSelectedCheckpoint(cp); setIsEditCheckpointOpen(true); }} 
-                        onDetail={() => { setSelectedCheckpoint(cp); setIsCheckpointDetailOpen(true); }}
+                        onDetail={() => {
+                          const params = new URLSearchParams(searchParams);
+                          params.set("checkpointId", cp.id);
+                          setSearchParams(params);
+                        }}
                         onDelete={() => { setCheckpointToDelete(cp); setIsDeleteConfirmOpen(true); }}
                       />
                     ))}
@@ -493,7 +564,13 @@ export default function AssignmentManagement() {
         <AssignmentDetailForm
           key={viewedAssignment?.id ?? "assignment-detail-closed"}
           assignment={viewedAssignment}
-          onClose={() => setViewedAssignment(null)}
+          onClose={() => {
+            setViewedAssignment(null);
+            setSelectedId(null);
+            const params = new URLSearchParams(searchParams);
+            params.delete("assignmentId");
+            setSearchParams(params);
+          }}
           onAfterGrade={async (assignmentId) => {
             try {
               const [detailRes, subRes] = await Promise.all([
@@ -577,9 +654,19 @@ export default function AssignmentManagement() {
           <CheckpointDetailForm
             isOpen={isCheckpointDetailOpen}
             checkpoint={selectedCheckpoint}
-            onClose={() => setIsCheckpointDetailOpen(false)}
-            onSaveGrade={() => {
-               fetchCheckpoints();
+            onClose={() => {
+              setIsCheckpointDetailOpen(false);
+              setSelectedCheckpoint(null);
+              const params = new URLSearchParams(searchParams);
+              params.delete("checkpointId");
+              setSearchParams(params);
+            }}
+            onSaveGrade={async () => {
+              await fetchCheckpoints();
+              if (selectedCheckpoint?.id) {
+                const res = await CheckpointApi.getById(selectedCheckpoint.id);
+                if (res?.data) setSelectedCheckpoint(res.data);
+              }
             }}
           />
         )}

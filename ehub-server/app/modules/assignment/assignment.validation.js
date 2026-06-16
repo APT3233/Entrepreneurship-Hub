@@ -27,7 +27,7 @@ export const createAssignmentSchema = {
 
 export const updateAssignmentSchema = {
   params: Joi.object({
-    id: Joi.number().integer().positive().required(),
+    id: Joi.string().required(),
   }),
   body: Joi.object({
     title: Joi.string().max(200),
@@ -44,7 +44,7 @@ export const updateAssignmentSchema = {
 
 export const updateAssignmentStatusSchema = {
   params: Joi.object({
-    id: Joi.number().integer().positive().required(),
+    id: Joi.string().required(),
   }),
   body: Joi.object({
     status: Joi.string().valid("open", "closed").required(),
@@ -66,7 +66,7 @@ export const listAssignmentSchema = {
 
 export const assignmentParamsSchema = {
   params: Joi.object({
-    id: Joi.number().integer().positive().required(),
+    id: Joi.string().required(),
   }),
 };
 
@@ -94,7 +94,7 @@ const fileMetaSchema = Joi.object({
 
 export const assignmentSubmitInitiateSchema = {
   params: Joi.object({
-    id: Joi.number().integer().positive().required(),
+    id: Joi.string().required(),
   }),
   body: Joi.object({
     files: Joi.array().items(fileMetaSchema).min(1).max(20).required(),
@@ -103,7 +103,7 @@ export const assignmentSubmitInitiateSchema = {
 
 export const assignmentSubmitConfirmSchema = {
   params: Joi.object({
-    id: Joi.number().integer().positive().required(),
+    id: Joi.string().required(),
   }),
   body: Joi.object({
     session_id: Joi.string().required(),
@@ -113,7 +113,7 @@ export const assignmentSubmitConfirmSchema = {
 /** Chấm điểm bài nộp theo nhóm — max điểm kiểm tra thêm ở service theo bài tập */
 export const assignmentGradeSchema = {
   params: Joi.object({
-    id: Joi.number().integer().positive().required(),
+    id: Joi.string().required(),
     groupId: Joi.number().integer().positive().required(),
   }),
   body: Joi.object({

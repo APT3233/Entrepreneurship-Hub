@@ -78,6 +78,8 @@ export default function AdminTable({
     document.addEventListener("mouseup", handleMouseUp);
   };
 
+  const isStickyRight = (column) => column.stickyRight || column.key === "actions";
+
   if (loading) {
     return (
       <div className="rounded-2xl border border-gray-100 bg-white p-8 text-center text-sm text-gray-400 shadow-sm">
@@ -101,11 +103,14 @@ export default function AdminTable({
             <tr>
               {columns.map((column) => {
                 const width = colWidths[column.key];
+                const stickyRight = isStickyRight(column);
                 return (
                   <th
                     key={column.key}
                     style={width ? { width: `${width}px`, minWidth: `${width}px`, maxWidth: `${width}px` } : undefined}
-                    className="relative px-4 py-3 text-left text-xs font-bold text-gray-500 select-none group/th"
+                    className={`relative px-4 py-3 text-left text-xs font-bold text-gray-500 select-none group/th ${
+                      stickyRight ? "sticky right-0 z-30 bg-gray-50 shadow-[-6px_0_12px_-8px_rgba(0,0,0,0.12)]" : ""
+                    }`}
                   >
                     <div className="truncate pr-2">{column.label}</div>
                     <div
@@ -123,15 +128,18 @@ export default function AdminTable({
               <tr 
                 key={row[rowKey]} 
                 onClick={() => onRowClick?.(row)} 
-                className={`hover:bg-gray-50/70 transition-colors ${onRowClick ? "cursor-pointer" : ""}`}
+                className={`group/row hover:bg-gray-50/70 transition-colors ${onRowClick ? "cursor-pointer" : ""}`}
               >
                 {columns.map((column) => {
                   const width = colWidths[column.key];
+                  const stickyRight = isStickyRight(column);
                   return (
                     <td
                       key={column.key}
                       style={width ? { width: `${width}px`, minWidth: `${width}px`, maxWidth: `${width}px` } : undefined}
-                      className="px-4 py-3 align-middle text-sm text-gray-700 truncate"
+                      className={`px-4 py-3 align-middle text-sm text-gray-700 truncate ${
+                        stickyRight ? "sticky right-0 z-20 bg-white shadow-[-6px_0_12px_-8px_rgba(0,0,0,0.12)] group-hover/row:bg-gray-50" : ""
+                      }`}
                     >
                       {column.render ? column.render(row) : row[column.key]}
                     </td>

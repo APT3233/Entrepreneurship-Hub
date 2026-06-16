@@ -47,7 +47,7 @@ export const rateLimitConfig = Object.freeze({
   }),
   ai: withToggle("AI", {
     windowMs: toInt(optional("RATE_LIMIT_AI_WINDOW_MS", "900000"), 900_000),
-    max: toInt(optional("RATE_LIMIT_AI_MAX", "20"), 20),
+    max: toInt(optional("RATE_LIMIT_AI_MAX", "200"), 200),
     keyPrefix: optional("RATE_LIMIT_AI_KEY_PREFIX", "rl:ai"),
   }),
 });

@@ -35,6 +35,10 @@ export const createAdminProjectSubmissionController = ({ adminProjectSubmissionS
     data: await adminProjectSubmissionService.updateCheckpointStatus(req.params.id, req.body.status, req.user),
     message: "Checkpoint status updated successfully",
   }));
+  const deleteCheckpoint = catchAsync(async (req, res) => sendSuccess(res, {
+    data: await adminProjectSubmissionService.deleteCheckpoint(req.params.id, req.user),
+    message: "Checkpoint deleted successfully",
+  }));
   const duplicateCheckpoint = catchAsync(async (req, res) => sendCreated(res, {
     data: await adminProjectSubmissionService.duplicateCheckpoint(req.params.id, req.user),
     message: "Checkpoint duplicated successfully",
@@ -72,6 +76,10 @@ export const createAdminProjectSubmissionController = ({ adminProjectSubmissionS
   const updateAssignmentStatus = catchAsync(async (req, res) => sendSuccess(res, {
     data: await adminProjectSubmissionService.updateAssignmentStatus(req.params.id, req.body.status, req.user),
     message: "Assignment status updated successfully",
+  }));
+  const deleteAssignment = catchAsync(async (req, res) => sendSuccess(res, {
+    data: await adminProjectSubmissionService.deleteAssignment(req.params.id, req.user),
+    message: "Assignment deleted successfully",
   }));
 
   const listAssignmentSubmissions = catchAsync(async (req, res) => {
@@ -114,6 +122,7 @@ export const createAdminProjectSubmissionController = ({ adminProjectSubmissionS
     createCheckpoint,
     updateCheckpoint,
     updateCheckpointStatus,
+    deleteCheckpoint,
     duplicateCheckpoint,
     listCheckpointSubmissions,
     getCheckpointSubmission,
@@ -123,6 +132,7 @@ export const createAdminProjectSubmissionController = ({ adminProjectSubmissionS
     createAssignment,
     updateAssignment,
     updateAssignmentStatus,
+    deleteAssignment,
     listAssignmentSubmissions,
     getAssignmentSubmission,
     gradeAssignmentSubmission,

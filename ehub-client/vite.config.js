@@ -22,6 +22,16 @@ export default defineConfig({
       ".trycloudflare.com",
       "ehub.apt3233.id.vn",
     ],
+    warmup: {
+      clientFiles: [
+        "./src/main.jsx",
+        "./src/App.jsx",
+        "./src/routes/router.jsx",
+        "./src/routes/adminRoute.jsx",
+        "./src/routes/lectureRoute.jsx",
+        "./src/layouts/admin/index.jsx",
+      ],
+    },
     proxy: {
       "/api": {
         target: "http://127.0.0.1:7777",

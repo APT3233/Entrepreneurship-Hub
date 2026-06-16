@@ -9,10 +9,10 @@ import {
   LECTURER_ATTACH_MAX_FILES,
   LECTURER_ATTACH_MAX_BYTES,
 } from "@/utils/lecturerAttachments";
+import { toDatetimeLocalInput, resolveCheckpointOpenAt } from "@/utils/formatDateTime";
 
 function formatDatetimeLocalValue(d = new Date()) {
-  const pad = (n) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return toDatetimeLocalInput(d);
 }
 
 const FILE_TYPE_OPTIONS = [
@@ -265,8 +265,8 @@ export default function EditCheckpointForm({ isOpen, checkpoint, onClose, onSave
     title: checkpoint?.title || "",
     description: checkpoint?.description || "",
     order_index: checkpoint?.order_index || firstAvailableOrder,
-    deadline: checkpoint?.deadline ? checkpoint.deadline.slice(0, 16) : "",
-    open_at: checkpoint?.open_at ? checkpoint.open_at.slice(0, 16) : "",
+    deadline: toDatetimeLocalInput(checkpoint?.deadline),
+    open_at: toDatetimeLocalInput(resolveCheckpointOpenAt(checkpoint)),
     max_score: checkpoint?.max_score || 10,
     weight: checkpoint?.weight || 0.25,
     required_file_types: checkpoint?.required_file_types || "pdf,docx",
@@ -310,8 +310,8 @@ export default function EditCheckpointForm({ isOpen, checkpoint, onClose, onSave
         title: checkpoint?.title || "",
         description: checkpoint?.description || "",
         order_index: checkpoint?.order_index || firstAvailableOrder,
-        deadline: checkpoint?.deadline ? checkpoint.deadline.slice(0, 16) : "",
-        open_at: checkpoint?.open_at ? checkpoint.open_at.slice(0, 16) : "",
+        deadline: toDatetimeLocalInput(checkpoint?.deadline),
+        open_at: toDatetimeLocalInput(resolveCheckpointOpenAt(checkpoint)),
         max_score: checkpoint?.max_score || 10,
         weight: checkpoint?.weight || 0.25,
         required_file_types: checkpoint?.required_file_types || "pdf,docx",
@@ -402,6 +402,19 @@ export default function EditCheckpointForm({ isOpen, checkpoint, onClose, onSave
       return;
     }
 
+    if (formData.open_at) {
+      const openAtMs = new Date(formData.open_at).getTime();
+      const deadlineMs = new Date(formData.deadline).getTime();
+      if (Number.isNaN(openAtMs)) {
+        toast.error("Thời gian mở không hợp lệ.");
+        return;
+      }
+      if (!Number.isNaN(deadlineMs) && openAtMs > deadlineMs) {
+        toast.error("Thời gian mở phải trước hạn nộp.");
+        return;
+      }
+    }
+
     const deadlineMs = new Date(formData.deadline).getTime();
     if (Number.isNaN(deadlineMs) || deadlineMs <= Date.now()) {
       toast.error("Hạn nộp phải sau thời điểm hiện tại.");
@@ -452,7 +465,12 @@ export default function EditCheckpointForm({ isOpen, checkpoint, onClose, onSave
       attachmentUrl = serializeLecturerAttachmentUrls(existingAttachmentUrls);
     }
 
-    await Promise.resolve(onSave({ ...formData, attachment_url: attachmentUrl }));
+    await Promise.resolve(onSave({
+      ...formData,
+      attachment_url: attachmentUrl,
+      deadline: formData.deadline ? new Date(formData.deadline).toISOString() : formData.deadline,
+      open_at: formData.open_at ? new Date(formData.open_at).toISOString() : null,
+    }));
   };
 
   return (
@@ -510,8 +528,18 @@ export default function EditCheckpointForm({ isOpen, checkpoint, onClose, onSave
             </div>
           </div>
 
-          {/* Row 2: Deadline, Accepted File Types */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Row 2: Open at, Deadline, Accepted File Types */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Thời gian mở</label>
+              <input
+                type="datetime-local"
+                name="open_at"
+                value={formData.open_at}
+                onChange={handleChange}
+                className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-100 focus:bg-white focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50 outline-none transition-all text-sm font-medium"
+              />
+            </div>
             <div className="space-y-1.5">
               <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Hạn nộp bài</label>
               <input

@@ -62,13 +62,13 @@ const AssignmentApi = {
     });
   },
   initiateUpload: async (assignmentIdOrFile, maybeFiles) => {
-    if (typeof assignmentIdOrFile === "number" && Array.isArray(maybeFiles)) {
+    if (Array.isArray(maybeFiles)) {
       return AssignmentApi.initiateStudentSubmit(assignmentIdOrFile, maybeFiles);
     }
     return AssignmentApi.initiateAttachmentUpload(assignmentIdOrFile);
   },
   confirmUpload: async (assignmentIdOrUploadToken, maybeSessionId) => {
-    if (typeof assignmentIdOrUploadToken === "number" && typeof maybeSessionId === "string") {
+    if (maybeSessionId && typeof maybeSessionId === "string") {
       return AssignmentApi.confirmStudentSubmit(assignmentIdOrUploadToken, maybeSessionId);
     }
     return AssignmentApi.confirmAttachmentUpload(assignmentIdOrUploadToken);

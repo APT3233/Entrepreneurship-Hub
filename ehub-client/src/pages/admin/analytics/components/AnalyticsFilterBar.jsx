@@ -1,8 +1,9 @@
-import FilterBar, { FilterSelect } from "@/pages/admin/components/FilterBar";
+import FilterBar, { AdminSemesterFilterGroup, FilterDateField, FilterSelect } from "@/pages/admin/components/FilterBar";
 import { useTranslation } from "@/context/TranslationContext";
+import { useAdminSemesterFilter } from "@/hooks/admin/useAdminSemesterFilter";
+import { filterClassesBySemester } from "@/pages/admin/shared/filterUtils";
 import { buildClassLabel, toOptionList } from "../shared";
-
-const dateInputClass = "h-10 rounded-xl border border-gray-200 px-3 text-sm text-gray-700 outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100";
+import { useMemo } from "react";
 
 export default function AnalyticsFilterBar({
   query,
@@ -16,6 +17,12 @@ export default function AnalyticsFilterBar({
   const { t } = useTranslation();
   const setFilter = (key, value) => onChange({ ...query, [key]: value });
 
+  const onSemesterChange = ({ semesterId }) => {
+    onChange({ ...query, semester_id: semesterId, class_id: "" });
+  };
+
+  const semesterFilter = useAdminSemesterFilter(lookups.semesters || [], { onSemesterChange });
+
   const targetTypeOptions = [
     { value: "", label: t("admin.analytics.filters.allTypes") },
     { value: "checkpoint", label: t("status.checkpoint") },
@@ -28,13 +35,15 @@ export default function AnalyticsFilterBar({
     (item) => `${item.subject_code} - ${item.subject_name}`,
     t("lookupAll.subjects"),
   );
-  const semesterOptions = toOptionList(
-    lookups.semesters || [],
-    (item) => item.id,
-    (item) => item.semester_code,
-    t("lookupAll.semesters"),
-  );
-  const classOptions = toOptionList(lookups.classes || [], (item) => item.id, buildClassLabel, t("lookupAll.classes"));
+
+  const classOptions = useMemo(() => {
+    const filtered = filterClassesBySemester(lookups.classes || [], lookups.semesters || [], {
+      semesterId: semesterFilter.semesterId,
+      year: semesterFilter.filterYear,
+    });
+    return toOptionList(filtered, (item) => item.id, buildClassLabel, t("lookupAll.classes"));
+  }, [lookups.classes, lookups.semesters, semesterFilter.semesterId, semesterFilter.filterYear, t]);
+
   const lecturerOptions = toOptionList(
     lookups.graders || [],
     (item) => item.id,
@@ -50,7 +59,14 @@ export default function AnalyticsFilterBar({
 
   return (
     <FilterBar right={right}>
-      <FilterSelect label={t("filterLabels.semester")} value={query.semester_id || ""} onChange={(value) => setFilter("semester_id", value)} options={semesterOptions} />
+      <AdminSemesterFilterGroup
+        filterYear={semesterFilter.filterYear}
+        semesterId={semesterFilter.semesterId}
+        yearOptions={semesterFilter.yearOptions}
+        semesterOptions={semesterFilter.semesterOptions}
+        onYearChange={semesterFilter.onYearChange}
+        onSemesterChange={semesterFilter.onSemesterIdChange}
+      />
       <FilterSelect label={t("filterLabels.subject")} value={query.subject_id || ""} onChange={(value) => setFilter("subject_id", value)} options={subjectOptions} />
       <FilterSelect label={t("filterLabels.class")} value={query.class_id || ""} onChange={(value) => setFilter("class_id", value)} options={classOptions} />
       {showLecturer ? (
@@ -60,14 +76,8 @@ export default function AnalyticsFilterBar({
       {showRubric ? (
         <FilterSelect label={t("filterLabels.rubric")} value={query.rubric_id || ""} onChange={(value) => setFilter("rubric_id", value)} options={rubricOptions} />
       ) : null}
-      <label className="flex items-center gap-2 text-sm font-medium text-gray-500">
-        {t("filterLabels.dateFrom")}
-        <input type="date" value={query.date_from || ""} onChange={(event) => setFilter("date_from", event.target.value)} className={dateInputClass} />
-      </label>
-      <label className="flex items-center gap-2 text-sm font-medium text-gray-500">
-        {t("filterLabels.dateTo")}
-        <input type="date" value={query.date_to || ""} onChange={(event) => setFilter("date_to", event.target.value)} className={dateInputClass} />
-      </label>
+      <FilterDateField label={t("filterLabels.dateFrom")} value={query.date_from || ""} onChange={(value) => setFilter("date_from", value)} />
+      <FilterDateField label={t("filterLabels.dateTo")} value={query.date_to || ""} onChange={(value) => setFilter("date_to", value)} />
     </FilterBar>
   );
 }

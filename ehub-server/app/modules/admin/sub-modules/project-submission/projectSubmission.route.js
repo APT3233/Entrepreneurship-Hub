@@ -36,6 +36,7 @@ export const createAdminProjectSubmissionRouter = (container) => {
   router.get("/checkpoints/:id", can("core.class.read"), validateRequest(adminProjectSubmissionIdParamSchema), adminProjectSubmissionController.getCheckpoint);
   router.put("/checkpoints/:id", can("core.class.update"), validateRequest(updateAdminCheckpointSchema), adminProjectSubmissionController.updateCheckpoint);
   router.patch("/checkpoints/:id/status", can("core.class.update"), validateRequest(updateAdminCheckpointStatusSchema), adminProjectSubmissionController.updateCheckpointStatus);
+  router.delete("/checkpoints/:id", can("core.class.update"), validateRequest(adminProjectSubmissionIdParamSchema), adminProjectSubmissionController.deleteCheckpoint);
   router.post("/checkpoints/:id/duplicate", can("core.class.update"), validateRequest(adminProjectSubmissionIdParamSchema), adminProjectSubmissionController.duplicateCheckpoint);
 
   router.get("/checkpoint-submissions", can("core.group.read"), validateRequest(listAdminCheckpointSubmissionsSchema), adminProjectSubmissionController.listCheckpointSubmissions);
@@ -47,6 +48,7 @@ export const createAdminProjectSubmissionRouter = (container) => {
   router.get("/assignments/:id", can("core.class.read"), validateRequest(adminProjectSubmissionIdParamSchema), adminProjectSubmissionController.getAssignment);
   router.put("/assignments/:id", can("core.class.update"), validateRequest(updateAdminAssignmentSchema), adminProjectSubmissionController.updateAssignment);
   router.patch("/assignments/:id/status", can("core.class.update"), validateRequest(updateAdminAssignmentStatusSchema), adminProjectSubmissionController.updateAssignmentStatus);
+  router.delete("/assignments/:id", can("core.class.update"), validateRequest(adminProjectSubmissionIdParamSchema), adminProjectSubmissionController.deleteAssignment);
 
   router.get("/assignment-submissions", can("core.group.read"), validateRequest(listAdminAssignmentSubmissionsSchema), adminProjectSubmissionController.listAssignmentSubmissions);
   router.get("/assignment-submissions/:id", can("core.group.read"), validateRequest(adminProjectSubmissionIdParamSchema), adminProjectSubmissionController.getAssignmentSubmission);

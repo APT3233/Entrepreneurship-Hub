@@ -9,6 +9,7 @@ import FormModal, { Field, inputClass } from "@/pages/admin/components/FormModal
 import StatusBadge from "@/pages/admin/components/StatusBadge";
 import { Panel, progressTypeOptions, SaveButton, SelectField, StartupForm, StartupHeader, supportNeedTypeOptions, supportPriorityOptions, visibilityOptions } from "@/pages/admin/incubation/components";
 import { formatDate } from "@/utils/dateTimeDisplay";
+import useDocumentTitle from "@/hooks/useDocumentTitle";
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -22,6 +23,7 @@ export default function StudentStartupProfileDetailPage() {
   const activeTab = location.pathname.endsWith("/progress") ? "progress" : location.pathname.endsWith("/support-needs") ? "support" : params.get("tab") || "profile";
   const toast = useToast();
   const [startup, setStartup] = useState(null);
+  useDocumentTitle(startup?.startup_name || null, 1);
   const [progressRows, setProgressRows] = useState([]);
   const [supportNeeds, setSupportNeeds] = useState([]);
   const [form, setForm] = useState({});

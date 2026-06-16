@@ -53,7 +53,7 @@ export const bulkCreateCheckpointSchema = {
 
 export const updateCheckpointSchema = {
   params: Joi.object({
-    id: Joi.number().integer().positive().required(),
+    id: Joi.string().required(),
   }),
   body: Joi.object({
     title: Joi.string().max(255),
@@ -83,13 +83,13 @@ export const listCheckpointSchema = {
 
 export const checkpointParamsSchema = {
   params: Joi.object({
-    id: Joi.number().integer().positive().required(),
+    id: Joi.string().required(),
   }),
 };
 
 export const initiateUploadSchema = {
   params: Joi.object({
-    id: Joi.number().integer().positive().required(),
+    id: Joi.string().required(),
   }),
   body: Joi.object({
     files: Joi.array().items(
@@ -104,7 +104,7 @@ export const initiateUploadSchema = {
 
 export const confirmUploadSchema = {
   params: Joi.object({
-    id: Joi.number().integer().positive().required(),
+    id: Joi.string().required(),
   }),
   body: Joi.object({
     session_id: Joi.number().integer().positive().required(),

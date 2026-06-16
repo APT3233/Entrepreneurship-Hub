@@ -17,6 +17,7 @@ import GroupApi from "@/api/group";
 import EnrollmentApi from "@/api/enrollment";
 import { useTranslation } from "@/context/TranslationContext";
 import { formatSemesterLabel, useSemesterYearOptions } from "@/hooks/useLectureFilterOptions";
+import useDocumentTitle from "@/hooks/useDocumentTitle";
 
 
 export default function ClassDetailPage() {
@@ -25,6 +26,7 @@ export default function ClassDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [detail, setDetail] = useState(null);
+  useDocumentTitle(detail?.classCode || null, 1);
   const [semesterList, setSemesterList] = useState([]);
   const [classList, setClassList] = useState([]);
   const [filterYear, setFilterYear] = useState(null);
@@ -508,6 +510,7 @@ export default function ClassDetailPage() {
               setAddStudentModalOpen(true);
             }}
             onDeleteStudent={handleUnenrollStudent}
+            classCode={detail?.classCode}
           />
         </section>
       )}

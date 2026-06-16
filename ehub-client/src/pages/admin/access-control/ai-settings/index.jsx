@@ -214,8 +214,12 @@ export default function AdminAiSettingsPage() {
         updateProvider(provider.key, "model", models[0].id);
       }
     } catch (err) {
-      setModelErrors((prev) => ({ ...prev, [provider.key]: err.message || t("ai.settings.loadModelsFailed") }));
-      if (!silent) toast.error(err.message || t("ai.settings.loadModelsFailed"));
+      const isApiKeyMissing = err?.response?.data?.error_code === "ai_api_key_missing" || err?.message?.toLowerCase?.()?.includes("api key");
+      const errorMsg = isApiKeyMissing
+        ? t("ai.settings.apiKeyRequiredForModels")
+        : (err.message || t("ai.settings.loadModelsFailed"));
+      setModelErrors((prev) => ({ ...prev, [provider.key]: errorMsg }));
+      if (!silent) toast.error(errorMsg);
     } finally {
       setModelLoadingKey((current) => (current === provider.key ? "" : current));
     }
@@ -389,6 +393,7 @@ export default function AdminAiSettingsPage() {
                   onChange={updateProvider}
                   models={providerModels[selectedProvider.key] || []}
                   isLoading={modelLoadingKey === selectedProvider.key}
+                  modelError={modelErrors[selectedProvider.key] || ""}
                   onReloadModels={() => loadProviderModels(selectedProvider.key, selectedProvider)}
                 />
               ) : null}
@@ -460,7 +465,7 @@ export default function AdminAiSettingsPage() {
   );
 }
 
-function ProviderCard({ provider, onChange, models = [], isLoading, onReloadModels }) {
+function ProviderCard({ provider, onChange, models = [], isLoading, modelError, onReloadModels }) {
   const { t } = useTranslation();
   const [isManual, setIsManual] = useState(false);
 
@@ -484,7 +489,7 @@ function ProviderCard({ provider, onChange, models = [], isLoading, onReloadMode
       </div>
       <div className="grid gap-4 md:grid-cols-2">
         <Field label={t("ai.settings.labelApiUrl")}>
-          <input className={inputClass} value={provider.base_url || ""} onChange={(event) => onChange(provider.key, "base_url", event.target.value)} />
+          <input className={inputClass} value={provider.base_url || ""} placeholder="https://api.example.com/v1" onChange={(event) => onChange(provider.key, "base_url", event.target.value)} />
         </Field>
         
         <Field
@@ -547,8 +552,10 @@ function ProviderCard({ provider, onChange, models = [], isLoading, onReloadMode
           )}
         </Field>
 
-
       </div>
+      {modelError && (
+        <p className="mt-2 text-xs font-semibold text-amber-600">{modelError}</p>
+      )}
     </div>
   );
 }

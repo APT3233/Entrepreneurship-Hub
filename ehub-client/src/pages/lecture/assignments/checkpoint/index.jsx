@@ -129,7 +129,7 @@ export default function CheckpointManagement() {
   };
 
   const handleSave = async (data) => {
-    const editedId = selectedCheckpoint?.id != null ? Number(selectedCheckpoint.id) : null;
+    const editedId = selectedCheckpoint?.id != null ? String(selectedCheckpoint.id) : null;
     try {
       if (selectedCheckpoint) {
         await CheckpointApi.update(selectedCheckpoint.id, data);
@@ -159,7 +159,7 @@ export default function CheckpointManagement() {
       setAllCheckpoints(all);
 
       if (editedId != null) {
-        const fresh = list.find((c) => Number(c.id) === editedId);
+        const fresh = list.find((c) => String(c.id) === editedId);
         if (fresh) setSelectedCheckpoint(fresh);
       }
     } catch (err) {

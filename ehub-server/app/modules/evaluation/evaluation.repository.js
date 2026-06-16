@@ -39,6 +39,7 @@ export const createEvaluationRepository = ({ db }) => {
       c.lecturer_id,
       sub.subject_code,
       sub.subject_name,
+      sem.id AS semester_id,
       sem.semester_code,
       sem.semester_name,
       sem.year,
@@ -88,6 +89,7 @@ export const createEvaluationRepository = ({ db }) => {
       c.lecturer_id,
       sub.subject_code,
       sub.subject_name,
+      sem.id AS semester_id,
       sem.semester_code,
       sem.semester_name,
       sem.year,
@@ -133,6 +135,8 @@ export const createEvaluationRepository = ({ db }) => {
     isLate,
     evaluationStatus,
     lecturerId,
+    semesterId,
+    year,
   }) => {
     const params = {};
     const where = ["1 = 1"];
@@ -147,11 +151,11 @@ export const createEvaluationRepository = ({ db }) => {
     }
     if (checkpointId) {
       where.push("q.source_type = 'checkpoint' AND q.source_id = :checkpointId");
-      params.checkpointId = Number(checkpointId);
+      params.checkpointId = String(checkpointId);
     }
     if (assignmentId) {
       where.push("q.source_type = 'assignment' AND q.source_id = :assignmentId");
-      params.assignmentId = Number(assignmentId);
+      params.assignmentId = String(assignmentId);
     }
     if (status) {
       where.push("q.submission_status = :status");
@@ -168,6 +172,14 @@ export const createEvaluationRepository = ({ db }) => {
     if (lecturerId) {
       where.push("q.lecturer_id = :lecturerId");
       params.lecturerId = Number(lecturerId);
+    }
+    if (semesterId) {
+      where.push("q.semester_id = :semesterId");
+      params.semesterId = Number(semesterId);
+    }
+    if (year) {
+      where.push("q.year = :year");
+      params.year = Number(year);
     }
     return { whereSql: where.join(" AND "), params };
   };
@@ -359,7 +371,7 @@ export const createEvaluationRepository = ({ db }) => {
         WHERE ${alias}.id = :targetId AND ${alias}.deleted_at IS NULL
         LIMIT 1
       `,
-      { targetId: Number(targetId) },
+      { targetId: String(targetId) },
     );
     return rows[0] || null;
   };
@@ -383,7 +395,7 @@ export const createEvaluationRepository = ({ db }) => {
         WHERE rb.target_type = :targetType AND rb.target_id = :targetId
         LIMIT 1
       `,
-      { targetType, targetId: Number(targetId) },
+      { targetType, targetId: String(targetId) },
     );
     return rows[0] || null;
   };
@@ -490,6 +502,8 @@ export const createEvaluationRepository = ({ db }) => {
     isLate,
     evaluationStatus,
     lecturerId,
+    semesterId,
+    year,
     limit,
     offset,
   }) => {
@@ -503,6 +517,8 @@ export const createEvaluationRepository = ({ db }) => {
       isLate,
       evaluationStatus,
       lecturerId,
+      semesterId,
+      year,
     });
     const fromSql = `FROM (${gradingSubmissionUnionSql}) q`;
     const [rows] = await db.execute(
@@ -519,8 +535,8 @@ export const createEvaluationRepository = ({ db }) => {
     return { rows, total };
   };
 
-  const getGradingDashboardStats = async ({ classId, lecturerId }) => {
-    const { whereSql, params } = buildGradingSubmissionWhere({ classId, lecturerId });
+  const getGradingDashboardStats = async ({ classId, lecturerId, semesterId, year }) => {
+    const { whereSql, params } = buildGradingSubmissionWhere({ classId, lecturerId, semesterId, year });
     const [rows] = await db.execute(
       `
         SELECT
@@ -674,6 +690,23 @@ export const createEvaluationRepository = ({ db }) => {
     }
   };
 
+  const updateLegacySubmissionDraft = async ({ targetType, targetId, totalScore, feedback }, conn = db) => {
+    const table = targetType === "checkpoint_submission" ? "checkpoint_submissions" : "assignment_submissions";
+    await conn.execute(
+      `
+        UPDATE ${table}
+        SET score = :totalScore,
+            feedback = :feedback
+        WHERE id = :targetId
+      `,
+      {
+        totalScore: totalScore === null || totalScore === undefined ? null : Number(totalScore),
+        feedback: feedback || null,
+        targetId: Number(targetId),
+      },
+    );
+  };
+
   const updateLegacySubmissionGrade = async ({ targetType, targetId, totalScore, feedback, evaluatorId }, conn = db) => {
     const table = targetType === "checkpoint_submission" ? "checkpoint_submissions" : "assignment_submissions";
     await conn.execute(
@@ -704,11 +737,11 @@ export const createEvaluationRepository = ({ db }) => {
     }
     if (checkpointId) {
       where.push("cp.id = :checkpointId");
-      params.checkpointId = Number(checkpointId);
+      params.checkpointId = String(checkpointId);
     }
     if (assignmentId) {
       where.push("a.id = :assignmentId");
-      params.assignmentId = Number(assignmentId);
+      params.assignmentId = String(assignmentId);
     }
     if (groupId) {
       where.push("es.group_id = :groupId");
@@ -783,6 +816,7 @@ export const createEvaluationRepository = ({ db }) => {
     createEvaluationSession,
     updateEvaluationSession,
     replaceEvaluationScores,
+    updateLegacySubmissionDraft,
     updateLegacySubmissionGrade,
     listEvaluations,
   };

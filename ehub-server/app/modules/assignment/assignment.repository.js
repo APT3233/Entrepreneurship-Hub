@@ -1,4 +1,5 @@
 import { createBaseRepository } from "app/core/database/baseRepository.js";
+import { v7 as uuidv7 } from "uuid";
 
 export const createAssignmentRepository = ({ db }) => {
   const base = createBaseRepository(db, "assignments");
@@ -24,12 +25,14 @@ export const createAssignmentRepository = ({ db }) => {
   const insertMany = async (rows, conn) => {
     if (!rows.length) return [];
     const sql = `
-      INSERT INTO assignments (class_id, title, description, deadline, max_score, status, required_file_types, max_file_size_mb, max_files, attachment_url, created_by)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO assignments (id, class_id, title, description, deadline, max_score, status, required_file_types, max_file_size_mb, max_files, attachment_url, created_by)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
     const insertedIds = [];
     for (const row of rows) {
-      const [result] = await conn.execute(sql, [
+      const id = uuidv7().replace(/-/g, "");
+      await conn.execute(sql, [
+        id,
         row.class_id,
         row.title,
         row.description,
@@ -42,7 +45,7 @@ export const createAssignmentRepository = ({ db }) => {
         row.attachment_url,
         row.created_by,
       ]);
-      insertedIds.push(result.insertId);
+      insertedIds.push(id);
     }
     return insertedIds;
   };
@@ -146,7 +149,7 @@ export const createAssignmentRepository = ({ db }) => {
       GROUP BY a.id, c.class_code, c.class_name, rb.rubric_id, r.name
       LIMIT 1
     `;
-    const [rows] = await db.execute(sql, { id: Number(id) });
+    const [rows] = await db.execute(sql, { id });
     return rows[0] || null;
   };
 
@@ -160,7 +163,7 @@ export const createAssignmentRepository = ({ db }) => {
         AND c.deleted_at IS NULL
       LIMIT 1
     `;
-    const [rows] = await db.execute(sql, { id: Number(id) });
+    const [rows] = await db.execute(sql, { id });
     return rows[0] || null;
   };
 
@@ -253,7 +256,7 @@ export const createAssignmentRepository = ({ db }) => {
       LIMIT 1
     `;
     const [rows] = await db.execute(sql, {
-      assignmentId: Number(assignmentId),
+      assignmentId,
       userId,
       userId2: userId,
     });
@@ -264,7 +267,7 @@ export const createAssignmentRepository = ({ db }) => {
     const q = conn || db;
     const [existing] = await q.execute(
       "SELECT id, status FROM assignment_submissions WHERE assignment_id = :aid AND group_id = :gid",
-      { aid: Number(assignmentId), gid: Number(groupId) }
+      { aid: assignmentId, gid: Number(groupId) }
     );
     if (existing.length) {
       const { id, status: previousStatus } = existing[0];
@@ -274,7 +277,7 @@ export const createAssignmentRepository = ({ db }) => {
     const [ins] = await q.execute(
       `INSERT INTO assignment_submissions (assignment_id, group_id, submitted_by, status)
        VALUES (:aid, :gid, NULL, 'not_submitted')`,
-      { aid: Number(assignmentId), gid: Number(groupId) }
+      { aid: assignmentId, gid: Number(groupId) }
     );
     return { id: ins.insertId, previousStatus: "not_submitted" };
   };
@@ -386,7 +389,7 @@ export const createAssignmentRepository = ({ db }) => {
         AND s.status IN ('submitted', 'graded', 'resubmitted')
       ORDER BY g.group_name ASC, g.group_code ASC
     `;
-    const [rows] = await db.execute(sql, { aid: Number(assignmentId) });
+    const [rows] = await db.execute(sql, { aid: assignmentId });
     return rows;
   };
 
@@ -424,7 +427,7 @@ export const createAssignmentRepository = ({ db }) => {
     const [rows] = await db.execute(
       `SELECT id, status FROM assignment_submissions
        WHERE assignment_id = :aid AND group_id = :gid`,
-      { aid: Number(assignmentId), gid: Number(groupId) }
+      { aid: assignmentId, gid: Number(groupId) }
     );
     if (!rows.length) return null;
     const st = String(rows[0].status || "");

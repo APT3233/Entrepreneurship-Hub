@@ -1,3 +1,4 @@
+import "@/patchReactLazy";
 import { createRoot } from "react-dom/client";
 import "./index.css";
 import "./i18n";
@@ -5,6 +6,9 @@ import { Provider } from "react-redux";
 import { store } from "@/store";
 import App from "@/App";
 import { Suspense } from "react";
+import { registerChunkLoadRecoveryListeners } from "@/utils/chunkLoadRecovery";
+
+registerChunkLoadRecoveryListeners();
 
 createRoot(document.getElementById("root")).render(
   <Suspense fallback={null}>

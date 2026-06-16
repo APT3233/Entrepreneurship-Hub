@@ -23,7 +23,7 @@ export function StatusBadge({ status }) {
     },
   };
   
-  const s = map[status] ?? map.not_submitted;
+  const s = map[status] ?? (status === "submitted" || status === "resubmitted" ? map.ungraded : map.not_submitted);
   
   return (
     <span

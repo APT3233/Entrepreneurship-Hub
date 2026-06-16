@@ -15,6 +15,18 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      window.addEventListener("vite:preloadError", function (event) {
+        event.preventDefault();
+        var key = "ehub_chunk_reload_at";
+        var last = sessionStorage.getItem(key);
+        var now = Date.now();
+        if (!last || now - Number(last) > 10000) {
+          sessionStorage.setItem(key, String(now));
+          window.location.reload();
+        }
+      });
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

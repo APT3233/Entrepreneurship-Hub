@@ -17,6 +17,8 @@ import { authApi } from "@/api/auth";
 import { useDispatch, useSelector } from "react-redux";
 import { logout, selectAuthUser } from "@/store/slices/authSlice";
 import { useTranslation } from "@/context/TranslationContext";
+import useDocumentTitle from "@/hooks/useDocumentTitle";
+import { getStudentPageTitle } from "@/utils/portalPageTitles";
 
 const StudentLayout = () => {
   const { t } = useTranslation();
@@ -55,6 +57,9 @@ const StudentLayout = () => {
       disabled: !(it.path === "/student/dashboard" || it.path === "/student/groups"),
     }));
   }, [hasGroup, baseNavItems]);
+
+  const pageTitle = useMemo(() => getStudentPageTitle(location.pathname, t), [location.pathname, t]);
+  useDocumentTitle(pageTitle);
 
   const handleLogout = () => {
     setLogoutModalOpen(false);

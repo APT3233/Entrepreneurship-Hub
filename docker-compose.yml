@@ -242,8 +242,6 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
-      ollama:
-        condition: service_healthy
     networks:
       - ehub-network
 

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Eye, FileDown, SquarePen } from "lucide-react";
+import { ArrowLeft, Eye, FileDown, SquarePen, Trash2 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { assignmentService, assignmentSubmissionService } from "@/api/adminProjectSubmission";
 import { useToast } from "@/components/ui/Toast";
@@ -11,6 +11,8 @@ import GradeModal from "@/pages/admin/project-submission/components/GradeModal";
 import SubmissionDetailModal from "@/pages/admin/project-submission/components/SubmissionDetailModal";
 import { formatDate } from "@/pages/admin/project-submission/shared";
 import GradingSummaryPanel from "@/pages/admin/components/GradingSummaryPanel";
+import ConfirmDialog from "@/pages/admin/components/ConfirmDialog";
+import { useTranslation } from "@/context/TranslationContext";
 import { downloadCsv } from "@/utils/exportCsv";
 import useDocumentTitle from "@/hooks/useDocumentTitle";
 
@@ -24,6 +26,7 @@ export default function AdminAssignmentDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const toast = useToast();
+  const { t } = useTranslation();
   const [assignment, setAssignment] = useState(null);
   const [submissions, setSubmissions] = useState([]);
   const [activeTab, setActiveTab] = useState("overview");
@@ -32,6 +35,7 @@ export default function AdminAssignmentDetail() {
   const [gradeTarget, setGradeTarget] = useState(null);
   const [detail, setDetail] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -108,6 +112,17 @@ export default function AdminAssignmentDetail() {
     }
   };
 
+  const deleteAssignment = async () => {
+    try {
+      await assignmentService.remove(id);
+      toast.success("Đã xóa assignment");
+      setConfirmDelete(false);
+      navigate("/admin/assignments");
+    } catch (err) {
+      toast.error(err.message || "Không xóa được assignment.");
+    }
+  };
+
   if (loading) return <div className="rounded-2xl border border-gray-100 bg-white p-8 text-center text-sm text-gray-400 shadow-sm">Đang tải assignment...</div>;
   if (error) return <div className="rounded-2xl border border-red-100 bg-red-50 p-8 text-center text-sm font-medium text-red-600">{error}</div>;
   if (!assignment) return <div className="rounded-2xl border border-gray-100 bg-white p-8 text-center text-sm text-gray-400 shadow-sm">Không tìm thấy assignment.</div>;
@@ -145,7 +160,19 @@ export default function AdminAssignmentDetail() {
           <h2 className="truncate text-xl font-black text-gray-900">{title}</h2>
           <p className="mt-1 text-sm text-gray-500">{assignment.class_code} · {assignment.subject_code} · {assignment.semester_code}</p>
         </div>
-        <StatusBadge value={assignment.status} />
+        <div className="flex flex-wrap items-center gap-2">
+          <StatusBadge value={assignment.status} />
+          {assignment.status === "archived" ? (
+            <button
+              type="button"
+              onClick={() => setConfirmDelete(true)}
+              className="inline-flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-100"
+            >
+              <Trash2 size={16} />
+              {t("common.confirm") === "Xác nhận" ? "Xóa assignment" : "Delete assignment"}
+            </button>
+          ) : null}
+        </div>
       </div>
 
       <div className="overflow-x-auto rounded-2xl border border-gray-100 bg-white p-2 shadow-sm">
@@ -212,6 +239,16 @@ export default function AdminAssignmentDetail() {
 
       <GradeModal open={!!gradeTarget} submission={gradeTarget} maxScore={assignment.max_score} onClose={() => setGradeTarget(null)} onSubmit={grade} saving={saving} />
       <SubmissionDetailModal open={!!detail} submission={detail} title="Assignment submission detail" onClose={() => setDetail(null)} />
+      <ConfirmDialog
+        isOpen={confirmDelete}
+        title={t("lecturer.assignmentsPage.deleteAssignmentTitle")}
+        subtitle={`${assignment.title} — ${t("lecturer.assignmentsPage.deleteSubtitle")}`}
+        variant="delete"
+        color="red"
+        yesLabel={t("common.confirm") === "Xác nhận" ? "Xóa" : "Delete"}
+        onYes={deleteAssignment}
+        onClose={() => setConfirmDelete(false)}
+      />
     </div>
   );
 }

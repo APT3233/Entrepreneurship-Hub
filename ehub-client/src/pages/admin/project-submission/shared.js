@@ -1,4 +1,5 @@
 import { booleanYesNoOptions, deadlineFilterOptions, statusOptions } from "@/utils/i18nOptions";
+import { toDatetimeLocalInput, resolveCheckpointOpenAt } from "@/utils/formatDateTime";
 
 export { toSelectOptions } from "@/utils/i18nOptions";
 
@@ -6,13 +7,34 @@ export const pageLimit = 10;
 
 export { formatDate, formatDateOnly } from "@/utils/dateTimeDisplay";
 
-export const toDateTimeInputValue = (value) => {
-  if (!value) return "";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-  const pad = (part) => String(part).padStart(2, "0");
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
-};
+export const toDateTimeInputValue = toDatetimeLocalInput;
+
+export const toCheckpointOpenAtInput = (checkpoint) =>
+  toDatetimeLocalInput(resolveCheckpointOpenAt(checkpoint));
+
+export { resolveCheckpointOpenAt };
+
+/**
+ * Fetch all pages for admin list endpoints (respecting backend max limit=100).
+ * @param {(query: any) => Promise<any>} listFn - service.list(query) returning axios response { data, meta }
+ * @param {Record<string, any>} query
+ */
+export async function fetchAllAdminRows(listFn, query) {
+  const all = [];
+  let page = 1;
+  const limit = 100;
+  // Avoid infinite loops on bad meta
+  for (let i = 0; i < 200; i += 1) {
+    // eslint-disable-next-line no-await-in-loop
+    const res = await listFn({ ...(query || {}), page, limit });
+    const rows = res?.data || [];
+    all.push(...rows);
+    const totalPages = Number(res?.meta?.totalPages || res?.meta?.total_pages || 1);
+    if (!rows.length || page >= totalPages) break;
+    page += 1;
+  }
+  return all;
+}
 
 export const buildClassLabel = (cls) =>
   `${cls.class_code}${cls.class_name ? ` - ${cls.class_name}` : ""} · ${cls.semester_code || ""}`;

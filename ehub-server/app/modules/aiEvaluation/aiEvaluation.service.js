@@ -3,7 +3,7 @@ import { BadRequest, NotFound } from "app/core/errors/errorFactory.js";
 import { AiErrorCodes, createAiError, publicAiError } from "app/core/ai/aiErrors.js";
 import { chatCompletion, listModels } from "app/core/ai/aiClient.js";
 import { normalizeAiSuggestionJson } from "app/core/ai/aiJsonExtractor.js";
-import { getProvider, getProviderPublicConfig, normalizeProviderKey, validateProvider } from "app/core/ai/aiProviderManager.js";
+import { getProvider, getProviderPublicConfig, normalizeProviderKey, validateProvider, validateProviderForModelList } from "app/core/ai/aiProviderManager.js";
 import { logger } from "app/core/logger/index.js";
 import { enqueueAiEvaluationJob } from "app/core/queues/aiEvaluation.queue.js";
 import { canEncryptSecrets, decryptSecret, encryptSecret } from "app/core/security/secretCipher.js";
@@ -91,9 +91,32 @@ const serializeSettingValue = (key, value) => {
 const providerSettingName = (providerKey, suffix) => `provider_${normalizeProviderKey(providerKey).replace(/-/g, "_")}_${suffix}`;
 const legacyCmdProviderSettingName = (suffix) => `provider_cmd_api_${suffix}`;
 const readSetting = (byKey, key, fallback) => (byKey.has(key) ? parseSettingValue(byKey.get(key)) : fallback);
-const resolveActiveProviderKey = (byKey) => normalizeProviderKey(
-  readSetting(byKey, "ai_active_provider", readSetting(byKey, "ai_provider", aiConfig.activeProvider)),
-);
+const resolveActiveProviderKey = (byKey) => {
+  const dbActive = readSetting(byKey, "ai_active_provider", readSetting(byKey, "ai_provider", null));
+  if (dbActive) {
+    const key = normalizeProviderKey(dbActive);
+    if (key === "local-gemma") {
+      const gemmaEnabled = readSetting(byKey, "provider_local_gemma_enabled", aiConfig.providers["local-gemma"].enabled);
+      if (!gemmaEnabled) {
+        const apiKeyStatus = getApiKeyStatus(byKey);
+        const thirdPartyEnabled = readSetting(byKey, "provider_third_party_api_enabled", readSetting(byKey, "provider_cmd_api_enabled", aiConfig.providers["third-party-api"].enabled));
+        if (thirdPartyEnabled && apiKeyStatus.configured) {
+          return "third-party-api";
+        }
+      }
+    }
+    return key;
+  }
+
+  const apiKeyStatus = getApiKeyStatus(byKey);
+  const thirdPartyEnabled = readSetting(byKey, "provider_third_party_api_enabled", readSetting(byKey, "provider_cmd_api_enabled", aiConfig.providers["third-party-api"].enabled));
+  const thirdPartyBaseUrl = readSetting(byKey, "provider_third_party_api_base_url", readSetting(byKey, "base_url", aiConfig.providers["third-party-api"].baseUrl));
+  if (thirdPartyEnabled && apiKeyStatus.configured && thirdPartyBaseUrl) {
+    return "third-party-api";
+  }
+
+  return normalizeProviderKey(aiConfig.activeProvider);
+};
 const getApiKeyStatus = (byKey) => {
   const encryptedValue = String(
     byKey.get(THIRD_PARTY_API_KEY_SETTING_KEY)?.setting_value ||
@@ -152,6 +175,31 @@ const isRetryableAiError = (err) => [
 const sourceAttachmentMaxChars = (maxChars) => Math.min(20_000, Math.max(8_000, Math.floor((Number(maxChars) || 60_000) / 3)));
 
 const aiJsonResponseFormat = (provider) => (provider?.key === "local-gemma" ? { type: "json_object" } : null);
+const fallbackCriterionSuggestion = (criterion) => ({
+  id: null,
+  criterion_id: Number(criterion.id),
+  criterion_name: criterion.name,
+  max_score: criterion.max_score,
+  suggested_score: null,
+  suggested_feedback: `AI không trả về đánh giá cho tiêu chí "${criterion.name || criterion.id}". Giảng viên cần tự kiểm tra tiêu chí này.`,
+  evidence_text: null,
+  confidence_score: null,
+});
+
+const completeCriterionSuggestions = (criteria = [], suggestions = []) => {
+  if (!criteria.length) return suggestions;
+  const byCriterion = new Map(suggestions.map((item) => [Number(item.criterion_id), item]));
+  return criteria.map((criterion) => {
+    const criterionId = Number(criterion.id);
+    const suggestion = byCriterion.get(criterionId);
+    if (!suggestion) return fallbackCriterionSuggestion(criterion);
+    return {
+      ...suggestion,
+      criterion_name: suggestion.criterion_name || criterion.name,
+      max_score: suggestion.max_score ?? criterion.max_score,
+    };
+  });
+};
 
 const buildJsonRepairMessages = ({ originalMessages, rawText, rubric }) => [
   {
@@ -160,6 +208,7 @@ const buildJsonRepairMessages = ({ originalMessages, rawText, rubric }) => [
       "Bạn sửa output AI Evaluation Assistant thành đúng một JSON object hợp lệ.",
       "Không markdown, không giải thích, không thêm văn bản ngoài JSON.",
       "Giữ đúng criterion_id trong rubric. Nếu không đủ căn cứ thì suggested_score = null.",
+      "criterion_suggestions phải có đúng một item cho mọi criterion_id hợp lệ trong rubric.",
     ].join(" "),
   },
   ...originalMessages,
@@ -172,6 +221,7 @@ const buildJsonRepairMessages = ({ originalMessages, rawText, rubric }) => [
     content: JSON.stringify({
       repair_task: "Previous assistant response was invalid JSON. Re-evaluate from INPUT_JSON and return only valid JSON matching this schema.",
       valid_criterion_ids: (rubric.criteria || []).map((criterion) => Number(criterion.id)),
+      criterion_suggestions_rule: "Return exactly one criterion_suggestions item for every valid_criterion_ids value.",
       schema: {
         summary: "string",
         strengths: ["string"],
@@ -322,9 +372,11 @@ export const createAiEvaluationService = ({ aiEvaluationRepository, storageServi
     }
   };
 
-  const formatSuggestion = async (suggestion) => {
+  const formatSuggestion = async (suggestion, providerStream = false) => {
     if (!suggestion) return null;
     const criteria = await aiEvaluationRepository.listCriterionSuggestions(suggestion.id);
+    const rubric = suggestion.rubric_id ? await aiEvaluationRepository.findRubricDetailById(suggestion.rubric_id) : null;
+    const completedCriteria = completeCriterionSuggestions(rubric?.criteria || [], criteria);
     return {
       ...suggestion,
       id: Number(suggestion.id),
@@ -339,9 +391,10 @@ export const createAiEvaluationService = ({ aiEvaluationRepository, storageServi
       suggested_total_score: suggestion.suggested_total_score == null ? null : Number(suggestion.suggested_total_score),
       confidence_score: suggestion.confidence_score == null ? null : Number(suggestion.confidence_score),
       project_potential_confidence_score: suggestion.project_potential_confidence_score == null ? null : Number(suggestion.project_potential_confidence_score),
-      criterion_suggestions: criteria.map((criterion) => ({
+      stream: providerStream,
+      criterion_suggestions: completedCriteria.map((criterion) => ({
         ...criterion,
-        id: Number(criterion.id),
+        id: criterion.id == null ? null : Number(criterion.id),
         criterion_id: Number(criterion.criterion_id),
         suggested_score: criterion.suggested_score == null ? null : Number(criterion.suggested_score),
         confidence_score: criterion.confidence_score == null ? null : Number(criterion.confidence_score),
@@ -367,7 +420,7 @@ export const createAiEvaluationService = ({ aiEvaluationRepository, storageServi
 
     if (!body.force_refresh) {
       const latest = await aiEvaluationRepository.findLatestCompletedSuggestionByTarget(targetType, targetId);
-      if (latest) return { statusCode: 200, data: { job: null, suggestion: await formatSuggestion(latest), reused: true } };
+      if (latest) return { statusCode: 200, data: { job: null, suggestion: await formatSuggestion(latest, Boolean(provider?.stream)), reused: true } };
       const active = await aiEvaluationRepository.findActiveJobByTarget(targetType, targetId);
       if (active) return { statusCode: 202, data: { job: active, suggestion: null, reused: true } };
     }
@@ -408,16 +461,24 @@ export const createAiEvaluationService = ({ aiEvaluationRepository, storageServi
     const job = await aiEvaluationRepository.findJobById(id);
     if (!job) throw NotFound("AI analysis job");
     await getContextForTarget(job.target_type, job.target_id, actor);
+    const config = await getRuntimeConfig();
+    const provider = getProvider(config.activeProvider, config);
     const suggestion = job.status === "completed"
       ? await aiEvaluationRepository.findLatestCompletedSuggestionByTarget(job.target_type, job.target_id)
       : null;
-    return { job, suggestion: suggestion ? await formatSuggestion(suggestion) : null };
+    return { job, suggestion: suggestion ? await formatSuggestion(suggestion, Boolean(provider?.stream)) : null };
   };
 
   const getLatestSuggestion = async (targetType, targetId, actor) => {
     await getContextForTarget(targetType, targetId, actor);
     const suggestion = await aiEvaluationRepository.findLatestCompletedSuggestionByTarget(targetType, targetId);
-    return suggestion ? formatSuggestion(suggestion) : null;
+    const activeJob = await aiEvaluationRepository.findActiveJobByTarget(targetType, targetId);
+    const config = await getRuntimeConfig();
+    const provider = getProvider(config.activeProvider, config);
+    return {
+      suggestion: suggestion ? await formatSuggestion(suggestion, Boolean(provider?.stream)) : null,
+      activeJob: activeJob || null,
+    };
   };
 
   const recordAction = async (id, body, actor, auditMeta = {}) => {
@@ -458,7 +519,9 @@ export const createAiEvaluationService = ({ aiEvaluationRepository, storageServi
       maxChars: sourceAttachmentMaxChars(config.inputMaxChars),
     });
     const extracted = await extractSubmissionText({ files, storageService, maxChars: config.inputMaxChars });
-    const messages = buildAiEvaluationPrompt({ context, rubric, extracted, sourceMaterials });
+    const previous = await aiEvaluationRepository.findLatestCompletedSuggestionByTarget(job.target_type, job.target_id);
+    const formattedPrevious = previous ? await formatSuggestion(previous) : null;
+    const messages = buildAiEvaluationPrompt({ context, rubric, extracted, sourceMaterials, previousSuggestion: formattedPrevious });
     logDebugPrompt({ config: runConfig, job, context, messages });
     const { rawText, normalized, repaired } = await requestAiEvaluationJson({ provider, config, messages, rubric, job, context });
     if (
@@ -653,9 +716,34 @@ export const createAiEvaluationService = ({ aiEvaluationRepository, storageServi
     };
   };
 
+  const getProviderForModelList = async (body = {}) => {
+    const requestApiKey = String(body.api_key || "").trim();
+    const runtime = await getRuntimeConfig({ skipApiKeyResolve: Boolean(requestApiKey) });
+    const providerKey = normalizeProviderKey(body.provider_key || body.active_provider || body.ai_provider || runtime.activeProvider);
+    const current = getProvider(providerKey, runtime);
+    const override = {
+      ...(body.base_url ? { baseUrl: body.base_url } : {}),
+      ...(body.model_name ? { model: body.model_name } : {}),
+      ...(body.model ? { model: body.model } : {}),
+      ...(body.stream !== undefined ? { stream: parseBoolean(body.stream) } : {}),
+      ...(body.api_key_required !== undefined ? { apiKeyRequired: parseBoolean(body.api_key_required) } : {}),
+      ...(requestApiKey ? { apiKey: requestApiKey, apiKeySource: "request" } : {}),
+    };
+    const nextProvider = validateProviderForModelList({ ...current, ...override });
+    return {
+      runtime: {
+        ...runtime,
+        enabled: true,
+        activeProvider: providerKey,
+        providers: { ...runtime.providers, [providerKey]: nextProvider },
+      },
+      provider: nextProvider,
+    };
+  };
+
   const listProviderModels = async (body = {}, actor, auditMeta = {}) => {
     assertCanConfigureAi(actor);
-    const { runtime, provider } = await getProviderForTest(body);
+    const { runtime, provider } = await getProviderForModelList(body);
     const startedAt = Date.now();
     const models = await listModels({
       providerKey: provider.key,

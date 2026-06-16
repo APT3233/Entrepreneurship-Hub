@@ -181,7 +181,7 @@ export default function AdminRubricDetail({
     try {
       const res = await rubricService.bind(id, {
         target_type: bindForm.target_type,
-        target_id: Number(bindForm.target_id),
+        target_id: bindForm.target_id,
       });
       setDetail(res?.data || null);
       setBindOpen(false);

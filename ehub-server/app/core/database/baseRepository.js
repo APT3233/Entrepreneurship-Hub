@@ -89,8 +89,9 @@ export const createBaseRepository = (db, tableName) => {
 
     const [result] = await db.execute(sql, insertData);
 
-    if (result.insertId) {
-      return findById(result.insertId);
+    const idToFind = insertData.id || result.insertId;
+    if (idToFind) {
+      return findById(idToFind);
     }
     return result;
   };

@@ -1,4 +1,5 @@
 import { createBaseService } from "app/core/services/baseService.js";
+import { v7 as uuidv7 } from "uuid";
 import { BadRequest, Forbidden, NotFound } from "app/core/errors/errorFactory.js";
 import { Events } from "app/core/constants/events.js";
 import { logger } from "app/core/logger/index.js";
@@ -132,9 +133,13 @@ export const createCheckpointService = ({ checkpointRepository, eventBus, storag
     };
   };
 
-  const cleanData = (data) => {
+  const cleanData = (data, current = null) => {
     const cleaned = { ...data };
     if (cleaned.open_at === "") cleaned.open_at = null;
+    const nextStatus = cleaned.status ?? current?.status;
+    if (!cleaned.open_at && nextStatus === "open" && !current?.open_at) {
+      cleaned.open_at = new Date();
+    }
     return cleaned;
   };
 
@@ -195,7 +200,8 @@ export const createCheckpointService = ({ checkpointRepository, eventBus, storag
       throw BadRequest(`Checkpoint ${data.order_index} đã tồn tại trong lớp này. Vui lòng chọn số khác.`);
     }
 
-    const result = await base.create({ ...cleanData(data), created_by: user.id });
+    const id = uuidv7().replace(/-/g, "");
+    const result = await base.create({ id, ...cleanData(data), created_by: user.id });
     
     // Ghi log audit
     await auditService.log({
@@ -243,7 +249,9 @@ export const createCheckpointService = ({ checkpointRepository, eventBus, storag
           continue;
         }
 
+        const id = uuidv7().replace(/-/g, "");
         const result = await checkpointRepository.create({ 
+          id,
           ...cleanData(checkpointData), 
           class_id: classId,
           created_by: user.id 
@@ -317,7 +325,7 @@ export const createCheckpointService = ({ checkpointRepository, eventBus, storag
 
     if (data.deadline != null) assertDeadlineNotPast(data.deadline);
 
-    const result = await base.update(id, cleanData(data));
+    const result = await base.update(id, cleanData(data, checkpoint));
     
     // Ghi log audit
     await auditService.log({
@@ -329,7 +337,7 @@ export const createCheckpointService = ({ checkpointRepository, eventBus, storag
       newValues: data
     });
 
-    eventBus.emit(Events.CHECKPOINT_UPDATED, { checkpointId: Number(id), updatedBy: user.id });
+    eventBus.emit(Events.CHECKPOINT_UPDATED, { checkpointId: id, updatedBy: user.id });
     return enrichCheckpointRow(result);
   };
 
@@ -356,7 +364,7 @@ export const createCheckpointService = ({ checkpointRepository, eventBus, storag
       oldValues: { title: checkpoint.title }
     });
 
-    eventBus.emit(Events.CHECKPOINT_DELETED, { checkpointId: Number(id), deletedBy: user.id });
+    eventBus.emit(Events.CHECKPOINT_DELETED, { checkpointId: id, deletedBy: user.id });
   };
 
   /**
@@ -415,7 +423,7 @@ export const createCheckpointService = ({ checkpointRepository, eventBus, storag
       }
     });
 
-    eventBus.emit(Events.CHECKPOINT_UPDATED, { checkpointId: Number(checkpointId), submissionId, gradedBy: user.id });
+    eventBus.emit(Events.CHECKPOINT_UPDATED, { checkpointId: checkpointId, submissionId, gradedBy: user.id });
     
     return enrichCheckpointSubmissionForLecturer(row);
   };
@@ -577,7 +585,7 @@ export const createCheckpointService = ({ checkpointRepository, eventBus, storag
     const session = await checkpointRepository.findUploadSession(sessionId);
     if (!session) throw NotFound("Upload session");
     if (session.user_id !== userId) throw Forbidden("Bạn không có quyền xác nhận session này");
-    if (session.checkpoint_id !== Number(checkpointId)) throw BadRequest("Session không khớp checkpoint");
+    if (session.checkpoint_id !== checkpointId) throw BadRequest("Session không khớp checkpoint");
     if (session.status === "completed") throw BadRequest("Session đã hoàn tất");
     if (new Date() > new Date(session.expires_at)) {
       await checkpointRepository.updateUploadSessionStatus(sessionId, "expired");

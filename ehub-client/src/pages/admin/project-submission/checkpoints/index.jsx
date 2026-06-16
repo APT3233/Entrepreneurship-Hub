@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
-import { Archive, Copy, Eye, Lock, Plus, SquarePen, Unlock, Info, Settings } from "lucide-react";
+import { Archive, Copy, Eye, Lock, Plus, SquarePen, Trash2, Unlock, Info, Settings, FileDown } from "lucide-react";
 import Dropdown from "@/components/ui/filter/DropDown";
 import { useNavigate } from "react-router-dom";
 import { checkpointService, projectSubmissionLookupService } from "@/api/adminProjectSubmission";
 import { useToast } from "@/components/ui/Toast";
 import { useAdminCheckpoints } from "@/hooks/admin/useAdminCheckpoints";
+import { useAdminListSemesterFilters } from "@/hooks/admin/useAdminListSemesterFilters";
+import { useAdminUrlQuerySync } from "@/hooks/admin/useAdminUrlQuerySync";
 import AdminTable from "@/pages/admin/components/AdminTable";
-import FilterBar, { FilterSelect } from "@/pages/admin/components/FilterBar";
+import FilterBar, { AdminSemesterFilterGroup, FilterSelect } from "@/pages/admin/components/FilterBar";
 import SearchInput from "@/pages/admin/components/SearchInput";
 import StatusBadge from "@/pages/admin/components/StatusBadge";
 import FormModal, { Field, inputClass } from "@/pages/admin/components/FormModal";
@@ -14,15 +16,19 @@ import ConfirmDialog from "@/pages/admin/components/ConfirmDialog";
 import ActionButton from "@/pages/admin/academic/components/ActionButton";
 import DeadlineBadge from "@/pages/admin/project-submission/components/DeadlineBadge";
 import { useTranslation } from "@/context/TranslationContext";
+import { countActiveAdminFilters } from "@/pages/admin/shared/filterUtils";
 import {
   buildClassLabel,
   formatDate,
+  fetchAllAdminRows,
   getCheckpointStatusOptions,
   getDeadlineOptions,
   pageLimit,
   toDateTimeInputValue,
-  toSelectOptions,
+  toCheckpointOpenAtInput,
+  resolveCheckpointOpenAt,
 } from "@/pages/admin/project-submission/shared";
+import { downloadCsv } from "@/utils/exportCsv";
 
 const emptyForm = {
   class_id: "",
@@ -48,8 +54,20 @@ export default function AdminCheckpoints() {
   const checkpointStatusOptions = useMemo(() => getCheckpointStatusOptions(t), [t]);
   const deadlineOptions = useMemo(() => getDeadlineOptions(t), [t]);
   const [query, setQuery] = useState({ page: 1, limit: pageLimit, search: "", class_id: "", semester_id: "", status: "", deadline: "" });
-  const { rows, meta, loading, error, refetch } = useAdminCheckpoints(query);
+  useAdminUrlQuerySync({
+    query,
+    setQuery,
+    keys: ["page", "search", "semester_id", "class_id", "status", "deadline"],
+  });
   const [lookups, setLookups] = useState({ classes: [], semesters: [] });
+  const { semesterFilter, classOptions, listEnabled } = useAdminListSemesterFilters({
+    semesters: lookups.semesters,
+    classes: lookups.classes,
+    buildClassLabel,
+    setQuery,
+    querySemesterId: query.semester_id,
+  });
+  const { rows, meta, loading, error, refetch } = useAdminCheckpoints(query, { enabled: listEnabled });
   const [modal, setModal] = useState({ type: null, checkpoint: null });
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
@@ -60,9 +78,6 @@ export default function AdminCheckpoints() {
       .then((res) => setLookups(res?.data || { classes: [], semesters: [] }))
       .catch(() => setLookups({ classes: [], semesters: [] }));
   }, []);
-
-  const classOptions = useMemo(() => toSelectOptions(lookups.classes, (item) => item.id, buildClassLabel, t("lookupAll.classes")), [lookups.classes, t]);
-  const semesterOptions = useMemo(() => toSelectOptions(lookups.semesters, (item) => item.id, (item) => `${item.semester_code} - ${item.semester_name}`, t("lookupAll.semesters")), [lookups.semesters, t]);
 
   const formClassOptions = useMemo(() => (lookups.classes || []).map((item) => ({
     value: String(item.id),
@@ -79,6 +94,34 @@ export default function AdminCheckpoints() {
     setModal({ type: "create", checkpoint: null });
   };
 
+  const exportAll = async () => {
+    try {
+      const all = await fetchAllAdminRows(checkpointService.list, query);
+      if (!all.length) {
+        toast.error("Không có dữ liệu để export.");
+        return;
+      }
+      downloadCsv({
+        filename: `admin-checkpoints-${new Date().toISOString().slice(0, 10)}.csv`,
+        headers: ["id", "title", "class_code", "semester_code", "order_index", "status", "open_at", "deadline", "max_score", "weight"],
+        rows: all.map((r) => ({
+          id: r.id,
+          title: r.title,
+          class_code: r.class_code,
+          semester_code: r.semester_code,
+          order_index: r.order_index,
+          status: r.status,
+          open_at: resolveCheckpointOpenAt(r) || r.open_at || "",
+          deadline: r.deadline || "",
+          max_score: r.max_score,
+          weight: r.weight,
+        })),
+      });
+    } catch (err) {
+      toast.error(err.message || "Không export được dữ liệu.");
+    }
+  };
+
   const openEdit = (checkpoint) => {
     setForm({
       class_id: String(checkpoint.class_id || ""),
@@ -86,7 +129,7 @@ export default function AdminCheckpoints() {
       description: checkpoint.description || "",
       order_index: Number(checkpoint.order_index || 1),
       deadline: toDateTimeInputValue(checkpoint.deadline),
-      open_at: toDateTimeInputValue(checkpoint.open_at),
+      open_at: toCheckpointOpenAtInput(checkpoint),
       max_score: Number(checkpoint.max_score || 10),
       weight: Number(checkpoint.weight || 1),
       required_file_types: checkpoint.required_file_types || "",
@@ -124,7 +167,8 @@ export default function AdminCheckpoints() {
         weight: Number(form.weight),
         max_file_size_mb: Number(form.max_file_size_mb),
         max_files: Number(form.max_files),
-        open_at: form.open_at || null,
+        deadline: new Date(form.deadline).toISOString(),
+        open_at: form.open_at ? new Date(form.open_at).toISOString() : null,
       };
       if (modal.type === "create") {
         await checkpointService.create(payload);
@@ -146,12 +190,13 @@ export default function AdminCheckpoints() {
     if (!confirmAction) return;
     try {
       if (confirmAction.type === "duplicate") await checkpointService.duplicate(confirmAction.checkpoint.id);
+      else if (confirmAction.type === "delete") await checkpointService.remove(confirmAction.checkpoint.id);
       else await checkpointService.updateStatus(confirmAction.checkpoint.id, confirmAction.status);
-      toast.success("Đã cập nhật checkpoint");
+      toast.success(confirmAction.type === "delete" ? "Đã xóa checkpoint" : "Đã cập nhật checkpoint");
       setConfirmAction(null);
       await refetch();
     } catch (err) {
-      toast.error(err.message || "Không cập nhật được checkpoint.");
+      toast.error(err.message || "Không thực hiện được thao tác checkpoint.");
     }
   };
 
@@ -162,7 +207,7 @@ export default function AdminCheckpoints() {
     { key: "semester", label: "Semester", render: (row) => row.semester_code },
     { key: "order_index", label: "Order", render: (row) => Number(row.order_index || 0) },
     { key: "deadline", label: "Deadline", render: (row) => <DeadlineBadge deadline={row.deadline} status={row.status} /> },
-    { key: "open_at", label: "Open at", render: (row) => formatDate(row.open_at) },
+    { key: "open_at", label: "Open at", render: (row) => formatDate(resolveCheckpointOpenAt(row) || row.open_at) },
     { key: "max_score", label: "Max", render: (row) => Number(row.max_score || 0) },
     { key: "weight", label: "Weight", render: (row) => Number(row.weight || 0) },
     { key: "files", label: "Files", render: (row) => `${row.required_file_types || "any"} · ${row.max_files} files · ${row.max_file_size_mb}MB` },
@@ -180,23 +225,54 @@ export default function AdminCheckpoints() {
           {row.status !== "open" ? <ActionButton onClick={() => setConfirmAction({ checkpoint: row, status: "open" })} title="Open" tone="green"><Unlock size={16} /></ActionButton> : null}
           {row.status === "open" ? <ActionButton onClick={() => setConfirmAction({ checkpoint: row, status: "closed" })} title="Close" tone="red"><Lock size={16} /></ActionButton> : null}
           {row.status !== "archived" ? <ActionButton onClick={() => setConfirmAction({ checkpoint: row, status: "archived" })} title="Archive" tone="red"><Archive size={16} /></ActionButton> : null}
+          {row.status === "archived" ? <ActionButton onClick={() => setConfirmAction({ type: "delete", checkpoint: row })} title="Xóa" tone="red"><Trash2 size={16} /></ActionButton> : null}
         </div>
       ),
     },
   ];
 
+  const activeFilterCount = countActiveAdminFilters(query);
+
+  const clearFilters = () => {
+    semesterFilter.reset();
+    setQuery((prev) => ({
+      ...prev,
+      page: 1,
+      search: "",
+      class_id: "",
+      status: "",
+      deadline: "",
+    }));
+  };
+
   return (
     <>
       <FilterBar
+        search={(
+          <SearchInput value={query.search} onChange={(search) => setQuery((prev) => ({ ...prev, page: 1, search }))} placeholder="Title, class..." />
+        )}
+        activeFilterCount={activeFilterCount}
+        onClear={clearFilters}
         right={(
-          <button type="button" onClick={openCreate} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700">
-            <Plus size={16} /> Create checkpoint
-          </button>
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={exportAll} className="inline-flex h-10 items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+              <FileDown size={16} /> Export CSV
+            </button>
+            <button type="button" onClick={openCreate} className="inline-flex h-10 items-center gap-2 rounded-lg bg-indigo-600 px-4 text-sm font-semibold text-white hover:bg-indigo-700">
+              <Plus size={16} /> Create checkpoint
+            </button>
+          </div>
         )}
       >
-        <SearchInput value={query.search} onChange={(search) => setQuery((prev) => ({ ...prev, page: 1, search }))} placeholder="Title, class..." />
+        <AdminSemesterFilterGroup
+          filterYear={semesterFilter.filterYear}
+          semesterId={semesterFilter.semesterId}
+          yearOptions={semesterFilter.yearOptions}
+          semesterOptions={semesterFilter.semesterOptions}
+          onYearChange={semesterFilter.onYearChange}
+          onSemesterChange={semesterFilter.onSemesterIdChange}
+        />
         <FilterSelect label={t("filterLabels.class")} value={query.class_id} onChange={(class_id) => setQuery((prev) => ({ ...prev, page: 1, class_id }))} options={classOptions} />
-        <FilterSelect label={t("filterLabels.semester")} value={query.semester_id} onChange={(semester_id) => setQuery((prev) => ({ ...prev, page: 1, semester_id }))} options={semesterOptions} />
         <FilterSelect label={t("filterLabels.status")} value={query.status} onChange={(status) => setQuery((prev) => ({ ...prev, page: 1, status }))} options={checkpointStatusOptions} />
         <FilterSelect label={t("filterLabels.deadline")} value={query.deadline} onChange={(deadline) => setQuery((prev) => ({ ...prev, page: 1, deadline }))} options={deadlineOptions} />
       </FilterBar>
@@ -300,11 +376,21 @@ export default function AdminCheckpoints() {
 
       <ConfirmDialog
         isOpen={!!confirmAction}
-        title={confirmAction?.type === "duplicate" ? "Duplicate checkpoint" : "Cập nhật trạng thái checkpoint"}
-        subtitle={confirmAction?.checkpoint ? `${confirmAction.checkpoint.title}` : ""}
-        variant={confirmAction?.type === "duplicate" ? "confirm" : confirmAction?.status === "closed" || confirmAction?.status === "archived" ? "warning" : "confirm"}
-        color={confirmAction?.status === "closed" || confirmAction?.status === "archived" ? "red" : "blue"}
-        yesLabel={confirmAction?.type === "duplicate" ? "Duplicate" : "Xác nhận"}
+        title={
+          confirmAction?.type === "delete"
+            ? t("lecturer.assignmentsPage.deleteCheckpointTitle")
+            : confirmAction?.type === "duplicate"
+              ? "Duplicate checkpoint"
+              : "Cập nhật trạng thái checkpoint"
+        }
+        subtitle={
+          confirmAction?.type === "delete"
+            ? `${confirmAction?.checkpoint?.title || ""} — ${t("lecturer.assignmentsPage.deleteSubtitle")}`
+            : confirmAction?.checkpoint ? `${confirmAction.checkpoint.title}` : ""
+        }
+        variant={confirmAction?.type === "delete" ? "delete" : confirmAction?.type === "duplicate" ? "confirm" : confirmAction?.status === "closed" || confirmAction?.status === "archived" ? "warning" : "confirm"}
+        color={confirmAction?.type === "delete" || confirmAction?.status === "closed" || confirmAction?.status === "archived" ? "red" : "blue"}
+        yesLabel={confirmAction?.type === "delete" ? (t("common.confirm") === "Xác nhận" ? "Xóa" : "Delete") : confirmAction?.type === "duplicate" ? "Duplicate" : "Xác nhận"}
         onYes={runAction}
         onClose={() => setConfirmAction(null)}
       />

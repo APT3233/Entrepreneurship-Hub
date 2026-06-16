@@ -6,8 +6,10 @@ import { useToast } from "@/components/ui/Toast";
 import { selectAuthUser } from "@/store/slices/authSlice";
 import { checkPermission } from "@/utils/permissions";
 import { useEnrollments } from "@/hooks/admin/useEnrollments";
+import { useAdminListSemesterFilters } from "@/hooks/admin/useAdminListSemesterFilters";
+import { useAdminUrlQuerySync } from "@/hooks/admin/useAdminUrlQuerySync";
 import AdminTable from "@/pages/admin/components/AdminTable";
-import FilterBar, { FilterSelect } from "@/pages/admin/components/FilterBar";
+import FilterBar, { AdminSemesterFilterGroup, FilterSelect } from "@/pages/admin/components/FilterBar";
 import SearchInput from "@/pages/admin/components/SearchInput";
 import StatusBadge from "@/pages/admin/components/StatusBadge";
 import FormModal, { Field } from "@/pages/admin/components/FormModal";
@@ -15,6 +17,7 @@ import ConfirmDialog from "@/pages/admin/components/ConfirmDialog";
 import ActionButton from "@/pages/admin/academic/components/ActionButton";
 import WarningNote from "@/pages/admin/student-group/components/WarningNote";
 import { useTranslation } from "@/context/TranslationContext";
+import { countActiveAdminFilters } from "@/pages/admin/shared/filterUtils";
 import Dropdown from "@/components/ui/filter/DropDown";
 import {
   buildClassLabel,
@@ -34,8 +37,20 @@ export default function AdminEnrollments() {
   const authUser = useSelector(selectAuthUser);
   const canWrite = checkPermission(authUser, "admin.enrollments.update");
   const [query, setQuery] = useState({ page: 1, limit: pageLimit, search: "", class_id: "", semester_id: "", subject_id: "", status: "" });
-  const { rows, meta, loading, error, refetch } = useEnrollments(query);
+  useAdminUrlQuerySync({
+    query,
+    setQuery,
+    keys: ["page", "search", "semester_id", "class_id", "subject_id", "status"],
+  });
   const [lookups, setLookups] = useState({ classes: [], subjects: [], semesters: [], students: [] });
+  const { semesterFilter, classOptions, listEnabled } = useAdminListSemesterFilters({
+    semesters: lookups.semesters,
+    classes: lookups.classes,
+    buildClassLabel,
+    setQuery,
+    querySemesterId: query.semester_id,
+  });
+  const { rows, meta, loading, error, refetch } = useEnrollments(query, { enabled: listEnabled });
   const [modal, setModal] = useState({ type: null });
   const [form, setForm] = useState(emptyForm);
   const [bulkForm, setBulkForm] = useState({ class_id: "", student_ids: [] });
@@ -54,9 +69,7 @@ export default function AdminEnrollments() {
   }, [refreshLookups]);
 
   const enrollmentStatusOptions = useMemo(() => getEnrollmentStatusOptions(t), [t]);
-  const classOptions = useMemo(() => toSelectOptions(lookups.classes, (item) => item.id, buildClassLabel, t("lookupAll.classes")), [lookups.classes, t]);
   const subjectOptions = useMemo(() => toSelectOptions(lookups.subjects, (item) => item.id, (item) => `${item.subject_code} - ${item.subject_name}`, t("lookupAll.subjects")), [lookups.subjects, t]);
-  const semesterOptions = useMemo(() => toSelectOptions(lookups.semesters, (item) => item.id, (item) => `${item.semester_code} - ${item.semester_name}`, t("lookupAll.semesters")), [lookups.semesters, t]);
 
   const filteredBulkStudents = useMemo(() => {
     if (!bulkSearch.trim()) return lookups.students || [];
@@ -228,26 +241,51 @@ export default function AdminEnrollments() {
     },
   ], [t, canWrite, sendingInviteId]);
 
+  const activeFilterCount = countActiveAdminFilters(query);
+
+  const clearFilters = () => {
+    semesterFilter.reset();
+    setQuery((prev) => ({
+      ...prev,
+      page: 1,
+      search: "",
+      class_id: "",
+      subject_id: "",
+      status: "",
+    }));
+  };
+
   return (
     <>
       <FilterBar
+        search={(
+          <SearchInput value={query.search} onChange={(search) => setQuery((prev) => ({ ...prev, page: 1, search }))} placeholder={t("admin.enrollment.searchPlaceholder")} />
+        )}
+        activeFilterCount={activeFilterCount}
+        onClear={clearFilters}
         right={canWrite ? (
           <>
-            <button type="button" onClick={() => loadWithoutGroup(query.class_id)} className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 cursor-pointer">
+            <button type="button" onClick={() => loadWithoutGroup(query.class_id)} className="inline-flex h-10 items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-600 hover:bg-gray-50 cursor-pointer">
               <UsersRound size={16} /> {t("admin.enrollment.withoutGroupBtn")}
             </button>
-            <button type="button" onClick={openBulk} className="inline-flex items-center gap-2 rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-2.5 text-sm font-semibold text-indigo-700 hover:bg-indigo-100 cursor-pointer">
+            <button type="button" onClick={openBulk} className="inline-flex h-10 items-center gap-2 rounded-lg border border-indigo-100 bg-indigo-50 px-4 text-sm font-semibold text-indigo-700 hover:bg-indigo-100 cursor-pointer">
               <UsersRound size={16} /> {t("admin.enrollment.bulkAdd")}
             </button>
-            <button type="button" onClick={openAdd} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 cursor-pointer">
+            <button type="button" onClick={openAdd} className="inline-flex h-10 items-center gap-2 rounded-lg bg-indigo-600 px-4 text-sm font-semibold text-white hover:bg-indigo-700 cursor-pointer">
               <Plus size={16} /> {t("admin.actions.create")}
             </button>
           </>
         ) : null}
       >
-        <SearchInput value={query.search} onChange={(search) => setQuery((prev) => ({ ...prev, page: 1, search }))} placeholder={t("admin.enrollment.searchPlaceholder")} />
+        <AdminSemesterFilterGroup
+          filterYear={semesterFilter.filterYear}
+          semesterId={semesterFilter.semesterId}
+          yearOptions={semesterFilter.yearOptions}
+          semesterOptions={semesterFilter.semesterOptions}
+          onYearChange={semesterFilter.onYearChange}
+          onSemesterChange={semesterFilter.onSemesterIdChange}
+        />
         <FilterSelect label={t("admin.columns.class")} value={query.class_id} onChange={(class_id) => setQuery((prev) => ({ ...prev, page: 1, class_id }))} options={classOptions} />
-        <FilterSelect label={t("admin.columns.semester")} value={query.semester_id} onChange={(semester_id) => setQuery((prev) => ({ ...prev, page: 1, semester_id }))} options={semesterOptions} />
         <FilterSelect label={t("admin.columns.subject")} value={query.subject_id} onChange={(subject_id) => setQuery((prev) => ({ ...prev, page: 1, subject_id }))} options={subjectOptions} />
         <FilterSelect label={t("admin.fields.status")} value={query.status} onChange={(status) => setQuery((prev) => ({ ...prev, page: 1, status }))} options={enrollmentStatusOptions} />
       </FilterBar>

@@ -99,7 +99,7 @@ export const bindRubricSchema = {
   }),
   body: Joi.object({
     target_type: Joi.string().valid("checkpoint", "assignment").required(),
-    target_id: positiveId.required(),
+    target_id: Joi.string().required(),
   }),
 };
 
@@ -113,6 +113,8 @@ export const gradingFormSchema = {
 export const gradingDashboardSchema = {
   query: Joi.object({
     class_id: optionalPositiveId,
+    semester_id: optionalPositiveId,
+    year: Joi.number().integer().positive().empty(""),
   }),
 };
 
@@ -122,11 +124,13 @@ export const listGradingSubmissionSchema = {
     search: Joi.string().max(200).allow("").empty(""),
     source_type: Joi.string().valid("checkpoint", "assignment").empty(""),
     class_id: optionalPositiveId,
-    checkpoint_id: optionalPositiveId,
-    assignment_id: optionalPositiveId,
+    checkpoint_id: Joi.string().empty(""),
+    assignment_id: Joi.string().empty(""),
     status: Joi.string().valid("submitted", "resubmitted", "graded").empty(""),
     is_late: Joi.number().valid(0, 1).empty(""),
     evaluation_status: Joi.string().valid("not_started", "draft", "submitted", "confirmed").empty(""),
+    semester_id: optionalPositiveId,
+    year: Joi.number().integer().positive().empty(""),
   }),
 };
 
@@ -142,6 +146,7 @@ export const saveEvaluationSchema = {
     target_id: positiveId.required(),
     evaluation_session_id: optionalPositiveId,
     overall_feedback: nullableString(),
+    direct_score: Joi.number().min(0).max(1000).allow(null).empty(""),
     scores: Joi.array().items(evaluationScoreSchema).default([]),
   }),
 };
@@ -156,8 +161,8 @@ export const listEvaluationSchema = {
   query: Joi.object({
     ...paginationQuery,
     class_id: optionalPositiveId,
-    checkpoint_id: optionalPositiveId,
-    assignment_id: optionalPositiveId,
+    checkpoint_id: Joi.string().empty(""),
+    assignment_id: Joi.string().empty(""),
     group_id: optionalPositiveId,
     status: Joi.string().valid("draft", "submitted", "confirmed").empty(""),
   }),

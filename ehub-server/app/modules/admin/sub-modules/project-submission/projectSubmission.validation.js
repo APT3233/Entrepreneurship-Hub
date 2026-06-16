@@ -1,8 +1,12 @@
 import Joi from "joi";
 
+const entityId = Joi.alternatives()
+  .try(Joi.number().integer().positive(), Joi.string().max(36))
+  .required();
+
 const idParam = {
   params: Joi.object({
-    id: Joi.number().integer().positive().required(),
+    id: entityId,
   }),
 };
 
@@ -112,7 +116,8 @@ export const listAdminCheckpointSubmissionsSchema = {
     search: Joi.string().max(100).allow(""),
     semester_id: Joi.number().integer().positive().allow(""),
     class_id: Joi.number().integer().positive().allow(""),
-    checkpoint_id: Joi.number().integer().positive().allow(""),
+    group_id: Joi.number().integer().positive().allow(""),
+    checkpoint_id: Joi.string().max(36).allow(""),
     status: submissionStatus,
     is_late: Joi.boolean().allow(""),
     graded_by: Joi.number().integer().positive().allow(""),
@@ -183,7 +188,8 @@ export const listAdminAssignmentSubmissionsSchema = {
     search: Joi.string().max(100).allow(""),
     semester_id: Joi.number().integer().positive().allow(""),
     class_id: Joi.number().integer().positive().allow(""),
-    assignment_id: Joi.number().integer().positive().allow(""),
+    group_id: Joi.number().integer().positive().allow(""),
+    assignment_id: Joi.string().max(36).allow(""),
     status: submissionStatus,
     is_late: Joi.boolean().allow(""),
     graded_by: Joi.number().integer().positive().allow(""),
@@ -195,8 +201,8 @@ export const listAdminSubmissionFilesSchema = {
     ...paginationQuery,
     search: Joi.string().max(100).allow(""),
     source: Joi.string().valid("", "checkpoint", "assignment").allow(""),
-    checkpoint_id: Joi.number().integer().positive().allow(""),
-    assignment_id: Joi.number().integer().positive().allow(""),
+    checkpoint_id: Joi.string().max(36).allow(""),
+    assignment_id: Joi.string().max(36).allow(""),
     is_deleted: Joi.boolean().allow(""),
   }),
 };

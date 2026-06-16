@@ -349,6 +349,12 @@ const getBreadcrumbRoot = (pathname, t) => {
   return t("nav.workspace");
 };
 
+const NAV_EXCLUSIVE_CHILDREN = {
+  "/admin/incubation/pipeline": ["/admin/incubation/pipeline/stages"],
+  "/admin/incubation/analytics": ["/admin/incubation/analytics/ecosystem-health"],
+  "/admin/incubation/startups": ["/admin/incubation/startups/create"],
+};
+
 const isPathActive = (pathname, path) => {
   if (path === "/admin/evaluation") return pathname === path;
   if (path === "/admin/analytics") return pathname === path;
@@ -359,6 +365,14 @@ const isPathActive = (pathname, path) => {
   }
   if (path === "/admin/mentors") {
     return pathname === path || pathname === "/admin/mentors/create" || /^\/admin\/mentors\/\d+/.test(pathname);
+  }
+  const exclusiveChildren = NAV_EXCLUSIVE_CHILDREN[path];
+  if (exclusiveChildren) {
+    const matches = pathname === path || pathname.startsWith(`${path}/`);
+    if (!matches) return false;
+    return !exclusiveChildren.some(
+      (exclusivePath) => pathname === exclusivePath || pathname.startsWith(`${exclusivePath}/`),
+    );
   }
   return pathname === path || pathname.startsWith(`${path}/`);
 };

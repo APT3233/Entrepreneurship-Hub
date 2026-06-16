@@ -14,6 +14,7 @@ export const buildAiEvaluationPrompt = ({
   rubric,
   extracted,
   sourceMaterials = null,
+  previousSuggestion = null,
 }) => {
   const payload = {
     instruction: [
@@ -21,8 +22,10 @@ export const buildAiEvaluationPrompt = ({
       "Bám sát rubric và nội dung bài nộp. Không bịa thông tin không xuất hiện trong bài nộp.",
       "source_materials là đề/yêu cầu của giảng viên; extraction.submission_text là bài nộp của sinh viên. Không nhầm hai nguồn này.",
       "Nếu thiếu căn cứ, hãy nói rõ thiếu dữ liệu và đặt suggested_score = null.",
+      "criterion_suggestions phải có đúng một item cho mọi rubric.criteria theo criterion_id; không bỏ sót, không đổi ID, không gộp tiêu chí.",
       "Không gọi điểm gợi ý là điểm chính thức. Giảng viên là người quyết định điểm cuối cùng.",
       "Evidence text phải trích hoặc tóm lược sát nội dung bài nộp, không tự tạo bằng chứng.",
+      "Nếu có previous_ai_suggestion (kết quả chấm của lần trước), hãy tham khảo đối chiếu để cải tiến đánh giá, duy trì tính nhất quán, hoặc điều chỉnh thích hợp nếu bài nộp hoặc rubric có sự thay đổi.",
       "Trả về đúng một JSON object hợp lệ, không markdown, không ```json, không trailing comma.",
     ],
     required_output_schema: {
@@ -108,6 +111,24 @@ export const buildAiEvaluationPrompt = ({
     },
   };
 
+  if (previousSuggestion) {
+    payload.previous_ai_suggestion = {
+      note: "Đây là kết quả gợi ý chấm điểm của AI ở lần trước. Hãy đối chiếu để cải thiện, nâng cao chất lượng nhận xét hoặc tăng tính nhất quán.",
+      summary: previousSuggestion.summary,
+      suggested_overall_feedback: previousSuggestion.suggested_overall_feedback,
+      suggested_total_score: previousSuggestion.suggested_total_score,
+      strengths: previousSuggestion.strengths,
+      weaknesses: previousSuggestion.weaknesses,
+      missing_requirements: previousSuggestion.missing_requirements,
+      criterion_suggestions: (previousSuggestion.criterion_suggestions || []).map((c) => ({
+        criterion_id: c.criterion_id,
+        suggested_score: c.suggested_score,
+        suggested_feedback: c.suggested_feedback,
+      })),
+      project_potential_level: previousSuggestion.project_potential_level,
+    };
+  }
+
   return [
     {
       role: "system",
@@ -116,6 +137,7 @@ export const buildAiEvaluationPrompt = ({
         "Nhiệm vụ duy nhất: trả về đúng một JSON object hợp lệ theo schema được yêu cầu.",
         "Không trả markdown, không bọc ```json, không giải thích ngoài JSON, không thêm văn bản trước/sau JSON.",
         "Nếu thiếu căn cứ thì dùng null hoặc mảng rỗng theo schema, không bịa dữ liệu.",
+        "Luôn trả đủ criterion_suggestions cho toàn bộ rubric.criteria, đúng criterion_id và đúng một item mỗi tiêu chí.",
       ].join(" "),
     },
     {

@@ -6,8 +6,10 @@ import { useToast } from "@/components/ui/Toast";
 import { selectAuthUser } from "@/store/slices/authSlice";
 import { checkPermission } from "@/utils/permissions";
 import { useStudents } from "@/hooks/admin/useStudents";
+import { useAdminListSemesterFilters } from "@/hooks/admin/useAdminListSemesterFilters";
+import { useAdminUrlQuerySync } from "@/hooks/admin/useAdminUrlQuerySync";
 import AdminTable from "@/pages/admin/components/AdminTable";
-import FilterBar, { FilterSelect } from "@/pages/admin/components/FilterBar";
+import FilterBar, { AdminSemesterFilterGroup, FilterSelect } from "@/pages/admin/components/FilterBar";
 import SearchInput from "@/pages/admin/components/SearchInput";
 import StatusBadge from "@/pages/admin/components/StatusBadge";
 import FormModal, { Field, inputClass } from "@/pages/admin/components/FormModal";
@@ -15,6 +17,7 @@ import ConfirmDialog from "@/pages/admin/components/ConfirmDialog";
 import ActionButton from "@/pages/admin/academic/components/ActionButton";
 import DetailGrid from "@/pages/admin/academic/components/DetailGrid";
 import { useTranslation } from "@/context/TranslationContext";
+import { countActiveAdminFilters } from "@/pages/admin/shared/filterUtils";
 import Dropdown from "@/components/ui/filter/DropDown";
 import {
   buildClassLabel,
@@ -24,7 +27,6 @@ import {
   getStudentStatusOptions,
   getShortClassCode,
   parseGroupSummaries,
-  toSelectOptions,
   CAMPUS_OPTIONS,
   MAJOR_OPTIONS,
 } from "@/pages/admin/student-group/shared";
@@ -46,10 +48,21 @@ export default function AdminStudents() {
   const toast = useToast();
   const authUser = useSelector(selectAuthUser);
   const canWrite = checkPermission(authUser, "admin.students.update");
-  const [filtersReady, setFiltersReady] = useState(false);
   const [query, setQuery] = useState({ page: 1, limit: pageLimit, search: "", major: "", campus: "", status: "", semester_id: "", class_id: "" });
-  const { rows, meta, loading, error, refetch } = useStudents(query, { enabled: filtersReady });
+  useAdminUrlQuerySync({
+    query,
+    setQuery,
+    keys: ["page", "limit", "search", "semester_id", "class_id", "major", "campus", "status"],
+  });
   const [lookups, setLookups] = useState({ majors: [], campuses: [], classes: [], semesters: [] });
+  const { semesterFilter, classOptions, listEnabled } = useAdminListSemesterFilters({
+    semesters: lookups.semesters,
+    classes: lookups.classes,
+    buildClassLabel,
+    setQuery,
+    querySemesterId: query.semester_id,
+  });
+  const { rows, meta, loading, error, refetch } = useStudents(query, { enabled: listEnabled });
   const [modal, setModal] = useState({ type: null, student: null });
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
@@ -64,16 +77,9 @@ export default function AdminStudents() {
       .then((res) => {
         const data = res?.data || { majors: [], campuses: [], classes: [], semesters: [] };
         setLookups(data);
-        const ongoing = (data.semesters || []).find((item) => item.status === "ongoing");
-        setQuery((prev) => ({
-          ...prev,
-          semester_id: ongoing ? String(ongoing.id) : "",
-        }));
-        setFiltersReady(true);
       })
       .catch(() => {
         setLookups({ majors: [], campuses: [], classes: [], semesters: [] });
-        setFiltersReady(true);
       });
   }, []);
 
@@ -90,26 +96,6 @@ export default function AdminStudents() {
     { value: "", label: t("common.confirm") === "Xác nhận" ? "Tất cả campus" : "All campuses" },
     ...(lookups.campuses || []).map((campus) => ({ value: campus, label: campus })),
   ], [lookups.campuses, t]);
-
-  const semesterOptions = useMemo(
-    () => toSelectOptions(
-      lookups.semesters,
-      (item) => item.id,
-      (item) => `${item.semester_code} - ${item.semester_name}${item.status === "ongoing" ? (isVi ? " (Hiện tại)" : " (Current)") : ""}`,
-      isVi ? "Tất cả học kỳ" : "All semesters",
-    ),
-    [lookups.semesters, isVi],
-  );
-
-  const filteredClasses = useMemo(() => {
-    if (!query.semester_id) return lookups.classes || [];
-    return (lookups.classes || []).filter((item) => String(item.semester_id) === String(query.semester_id));
-  }, [lookups.classes, query.semester_id]);
-
-  const classOptions = useMemo(
-    () => toSelectOptions(filteredClasses, (item) => item.id, buildClassLabel, isVi ? "Tất cả lớp" : "All classes"),
-    [filteredClasses, isVi],
-  );
 
   const openCreate = () => {
     setForm(emptyForm);
@@ -311,42 +297,54 @@ export default function AdminStudents() {
     },
   ], [t, canWrite, allPageSelected, somePageSelected, selectedIds, isVi]);
 
+  const activeFilterCount = countActiveAdminFilters(query);
+
+  const clearFilters = () => {
+    semesterFilter.reset();
+    setQuery((prev) => ({
+      ...prev,
+      page: 1,
+      search: "",
+      major: "",
+      campus: "",
+      status: "",
+      class_id: "",
+    }));
+  };
+
   return (
     <>
       <FilterBar
+        search={(
+          <SearchInput value={query.search} onChange={(search) => setQuery((prev) => ({ ...prev, page: 1, search }))} placeholder={isVi ? "MSSV, tên, email..." : "Code, name, email..."} />
+        )}
+        activeFilterCount={activeFilterCount}
+        onClear={clearFilters}
         right={canWrite ? (
           <div className="flex flex-wrap items-center gap-2">
             {selectedIds.length > 0 ? (
               <button
                 type="button"
                 onClick={() => setConfirmBulkDelete(true)}
-                className="inline-flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm font-semibold text-rose-700 hover:bg-rose-100 cursor-pointer"
+                className="inline-flex h-10 items-center gap-2 rounded-lg border border-rose-200 bg-rose-50 px-4 text-sm font-semibold text-rose-700 hover:bg-rose-100 cursor-pointer"
               >
                 <Trash2 size={16} />
                 {isVi ? `Xoá đã chọn (${selectedIds.length})` : `Delete selected (${selectedIds.length})`}
               </button>
             ) : null}
-            <button type="button" onClick={openCreate} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 cursor-pointer">
+            <button type="button" onClick={openCreate} className="inline-flex h-10 items-center gap-2 rounded-lg bg-indigo-600 px-4 text-sm font-semibold text-white hover:bg-indigo-700 cursor-pointer">
               <Plus size={16} /> {t("admin.actions.create")}
             </button>
           </div>
         ) : null}
       >
-        <SearchInput value={query.search} onChange={(search) => setQuery((prev) => ({ ...prev, page: 1, search }))} placeholder={isVi ? "MSSV, tên, email..." : "Code, name, email..."} />
-        <FilterSelect
-          label={t("filterLabels.semester")}
-          value={query.semester_id}
-          onChange={(semester_id) => setQuery((prev) => {
-            const classesInSemester = (lookups.classes || []).filter((item) => String(item.semester_id) === String(semester_id));
-            const keepClass = prev.class_id && classesInSemester.some((item) => String(item.id) === String(prev.class_id));
-            return {
-              ...prev,
-              page: 1,
-              semester_id,
-              class_id: keepClass ? prev.class_id : "",
-            };
-          })}
-          options={semesterOptions}
+        <AdminSemesterFilterGroup
+          filterYear={semesterFilter.filterYear}
+          semesterId={semesterFilter.semesterId}
+          yearOptions={semesterFilter.yearOptions}
+          semesterOptions={semesterFilter.semesterOptions}
+          onYearChange={semesterFilter.onYearChange}
+          onSemesterChange={semesterFilter.onSemesterIdChange}
         />
         <FilterSelect label={isVi ? "Lớp" : "Class"} value={query.class_id} onChange={(class_id) => setQuery((prev) => ({ ...prev, page: 1, class_id }))} options={classOptions} />
         <FilterSelect label={t("admin.fields.major")} value={query.major} onChange={(major) => setQuery((prev) => ({ ...prev, page: 1, major }))} options={majorOptions} />
@@ -354,7 +352,15 @@ export default function AdminStudents() {
         <FilterSelect label={t("admin.fields.status")} value={query.status} onChange={(status) => setQuery((prev) => ({ ...prev, page: 1, status }))} options={studentStatusOptions} />
       </FilterBar>
 
-      <AdminTable columns={columns} rows={rows} loading={loading} error={error} meta={meta} onPageChange={(page) => setQuery((prev) => ({ ...prev, page }))} emptyText={t("common.noData")} />
+      <AdminTable
+        columns={columns}
+        rows={rows}
+        loading={loading}
+        error={error}
+        meta={meta}
+        onPageChange={(page, limit) => setQuery((prev) => ({ ...prev, page, limit: Number(limit || prev.limit || pageLimit) }))}
+        emptyText={t("common.noData")}
+      />
 
       <FormModal open={["create", "edit"].includes(modal.type)} title={modal.type === "create" ? t("admin.actions.create") + " Student" : t("admin.actions.edit") + " Student"} onClose={() => setModal({ type: null, student: null })} onSubmit={save} saving={saving}>
         <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-1">

@@ -527,7 +527,7 @@ CREATE TABLE audit_logs (
     action      VARCHAR(64)  NOT NULL,
 
     table_name  VARCHAR(64)  NOT NULL,
-    record_id   BIGINT UNSIGNED  NULL,
+    record_id   VARCHAR(36)      NULL,
     title       VARCHAR(200) NULL,
 
     old_values  JSON         NULL COMMENT 'Giá trị trước thay đổi',
@@ -879,7 +879,7 @@ WHERE cs.status = 'enrolled'
 -- Mỗi lớp học có nhiều checkpoint (do GV tạo)
 -- -------------------------------------------
 CREATE TABLE checkpoints (
-    id            BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    id            VARCHAR(36)     PRIMARY KEY,
     class_id      INT UNSIGNED    NOT NULL
                   COMMENT 'Thuộc lớp học nào',
     title         VARCHAR(200)    NOT NULL
@@ -935,7 +935,7 @@ CREATE TABLE checkpoints (
 -- -------------------------------------------
 CREATE TABLE checkpoint_submissions (
     id             BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    checkpoint_id  BIGINT UNSIGNED NOT NULL,
+    checkpoint_id  VARCHAR(36)     NOT NULL,
     group_id       BIGINT UNSIGNED NOT NULL,
 
     -- Thông tin nộp bài
@@ -1094,7 +1094,7 @@ GROUP BY
 -- Mỗi lớp có thể có nhiều bài tập
 -- -------------------------------------------
 CREATE TABLE assignments (
-    id            BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    id            VARCHAR(36)     PRIMARY KEY,
     class_id       INT UNSIGNED    NOT NULL
                   COMMENT 'Thuộc lớp học nào',
     title          VARCHAR(200)    NOT NULL
@@ -1131,7 +1131,7 @@ CREATE TABLE assignments (
 -- -------------------------------------------
 CREATE TABLE assignment_submissions (
     id             BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    assignment_id  BIGINT UNSIGNED NOT NULL,
+    assignment_id  VARCHAR(36)     NOT NULL,
     group_id       BIGINT UNSIGNED NOT NULL,
     submitted_by   BIGINT UNSIGNED     NULL,
     submitted_at   DATETIME            NULL,
@@ -1256,7 +1256,7 @@ CREATE TABLE rubric_bindings (
     id            BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     rubric_id     BIGINT UNSIGNED NOT NULL,
     target_type   ENUM('checkpoint','assignment') NOT NULL,
-    target_id     BIGINT UNSIGNED NOT NULL,
+    target_id     VARCHAR(36)     NOT NULL,
     created_by    BIGINT UNSIGNED NULL,
     created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
 
@@ -1337,7 +1337,7 @@ ALTER TABLE evaluation_scores
 CREATE TABLE upload_sessions (
     id             BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id        BIGINT UNSIGNED NOT NULL,
-    checkpoint_id  BIGINT UNSIGNED NOT NULL,
+    checkpoint_id  VARCHAR(36)     NOT NULL,
     group_id       BIGINT UNSIGNED NOT NULL,
     status         ENUM('initiated','uploading','completed','expired')
                        DEFAULT 'initiated' NOT NULL,

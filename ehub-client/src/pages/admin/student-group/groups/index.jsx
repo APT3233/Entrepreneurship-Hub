@@ -7,8 +7,10 @@ import { useToast } from "@/components/ui/Toast";
 import { selectAuthUser } from "@/store/slices/authSlice";
 import { checkPermission } from "@/utils/permissions";
 import { useGroups } from "@/hooks/admin/useGroups";
+import { useAdminListSemesterFilters } from "@/hooks/admin/useAdminListSemesterFilters";
+import { useAdminUrlQuerySync } from "@/hooks/admin/useAdminUrlQuerySync";
 import AdminTable from "@/pages/admin/components/AdminTable";
-import FilterBar, { FilterSelect } from "@/pages/admin/components/FilterBar";
+import FilterBar, { AdminSemesterFilterGroup, FilterSelect } from "@/pages/admin/components/FilterBar";
 import SearchInput from "@/pages/admin/components/SearchInput";
 import StatusBadge from "@/pages/admin/components/StatusBadge";
 import FormModal, { Field, inputClass } from "@/pages/admin/components/FormModal";
@@ -16,6 +18,7 @@ import ConfirmDialog from "@/pages/admin/components/ConfirmDialog";
 import ActionButton from "@/pages/admin/academic/components/ActionButton";
 import WarningNote from "@/pages/admin/student-group/components/WarningNote";
 import { useTranslation } from "@/context/TranslationContext";
+import { countActiveAdminFilters } from "@/pages/admin/shared/filterUtils";
 import Dropdown from "@/components/ui/filter/DropDown";
 import {
   buildClassLabel,
@@ -48,8 +51,20 @@ export default function AdminGroups() {
   const authUser = useSelector(selectAuthUser);
   const canWrite = checkPermission(authUser, "admin.groups.update");
   const [query, setQuery] = useState({ page: 1, limit: pageLimit, search: "", class_id: "", semester_id: "", category: "", status: "" });
-  const { rows, meta, loading, error, refetch } = useGroups(query);
+  useAdminUrlQuerySync({
+    query,
+    setQuery,
+    keys: ["page", "search", "semester_id", "class_id", "category", "status"],
+  });
   const [lookups, setLookups] = useState({ classes: [], semesters: [], categories: [] });
+  const { semesterFilter, classOptions, listEnabled } = useAdminListSemesterFilters({
+    semesters: lookups.semesters,
+    classes: lookups.classes,
+    buildClassLabel,
+    setQuery,
+    querySemesterId: query.semester_id,
+  });
+  const { rows, meta, loading, error, refetch } = useGroups(query, { enabled: listEnabled });
   const [modal, setModal] = useState({ type: null, group: null });
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
@@ -63,8 +78,6 @@ export default function AdminGroups() {
       .catch(() => setLookups({ classes: [], semesters: [], categories: [] }));
   }, []);
 
-  const classOptions = useMemo(() => toSelectOptions(lookups.classes, (item) => item.id, buildClassLabel, t("lookupAll.classes")), [lookups.classes, t]);
-  const semesterOptions = useMemo(() => toSelectOptions(lookups.semesters, (item) => item.id, (item) => `${item.semester_code} - ${item.semester_name}`, t("lookupAll.semesters")), [lookups.semesters, t]);
   const categoryOptions = useMemo(() => [
     { value: "", label: t("lookupAll.categories") },
     ...(lookups.categories || []).map((category) => ({ value: category, label: category })),
@@ -196,18 +209,43 @@ export default function AdminGroups() {
     },
   ], [t, canWrite, navigate, isVi]);
 
+  const activeFilterCount = countActiveAdminFilters(query);
+
+  const clearFilters = () => {
+    semesterFilter.reset();
+    setQuery((prev) => ({
+      ...prev,
+      page: 1,
+      search: "",
+      class_id: "",
+      category: "",
+      status: "",
+    }));
+  };
+
   return (
     <>
       <FilterBar
+        search={(
+          <SearchInput value={query.search} onChange={(search) => setQuery((prev) => ({ ...prev, page: 1, search }))} placeholder={t("common.confirm", { defaultValue: "Xác nhận" }) === "Xác nhận" ? "Mã nhóm, tên nhóm, topic..." : "Group code, name, topic..."} />
+        )}
+        activeFilterCount={activeFilterCount}
+        onClear={clearFilters}
         right={canWrite ? (
-          <button type="button" onClick={openCreate} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 cursor-pointer">
+          <button type="button" onClick={openCreate} className="inline-flex h-10 items-center gap-2 rounded-lg bg-indigo-600 px-4 text-sm font-semibold text-white hover:bg-indigo-700 cursor-pointer">
             <Plus size={16} /> {t("admin.actions.create")}
           </button>
         ) : null}
       >
-        <SearchInput value={query.search} onChange={(search) => setQuery((prev) => ({ ...prev, page: 1, search }))} placeholder={t("common.confirm", { defaultValue: "Xác nhận" }) === "Xác nhận" ? "Mã nhóm, tên nhóm, topic..." : "Group code, name, topic..."} />
+        <AdminSemesterFilterGroup
+          filterYear={semesterFilter.filterYear}
+          semesterId={semesterFilter.semesterId}
+          yearOptions={semesterFilter.yearOptions}
+          semesterOptions={semesterFilter.semesterOptions}
+          onYearChange={semesterFilter.onYearChange}
+          onSemesterChange={semesterFilter.onSemesterIdChange}
+        />
         <FilterSelect label={t("admin.fields.classCode")} value={query.class_id} onChange={(class_id) => setQuery((prev) => ({ ...prev, page: 1, class_id }))} options={classOptions} />
-        <FilterSelect label={t("admin.fields.semester")} value={query.semester_id} onChange={(semester_id) => setQuery((prev) => ({ ...prev, page: 1, semester_id }))} options={semesterOptions} />
         <FilterSelect label={t("filterLabels.category")} value={query.category} onChange={(category) => setQuery((prev) => ({ ...prev, page: 1, category }))} options={categoryOptions} />
         <FilterSelect label={t("admin.fields.status")} value={query.status} onChange={(status) => setQuery((prev) => ({ ...prev, page: 1, status }))} options={groupStatusOptions} />
       </FilterBar>

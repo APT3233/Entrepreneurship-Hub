@@ -1,23 +1,27 @@
 import { useEffect, useMemo, useState } from "react";
-import { Eye, SquarePen } from "lucide-react";
+import { Eye, SquarePen, FileDown } from "lucide-react";
 import { projectService, projectSubmissionLookupService } from "@/api/adminProjectSubmission";
 import { useToast } from "@/components/ui/Toast";
 import { useProjects } from "@/hooks/admin/useProjects";
+import { useAdminListSemesterFilters } from "@/hooks/admin/useAdminListSemesterFilters";
+import { useAdminUrlQuerySync } from "@/hooks/admin/useAdminUrlQuerySync";
 import AdminTable from "@/pages/admin/components/AdminTable";
-import FilterBar, { FilterSelect } from "@/pages/admin/components/FilterBar";
+import FilterBar, { AdminSemesterFilterGroup, FilterSelect } from "@/pages/admin/components/FilterBar";
 import SearchInput from "@/pages/admin/components/SearchInput";
 import StatusBadge from "@/pages/admin/components/StatusBadge";
 import FormModal, { Field, inputClass } from "@/pages/admin/components/FormModal";
 import ActionButton from "@/pages/admin/academic/components/ActionButton";
 import DetailGrid from "@/pages/admin/academic/components/DetailGrid";
 import { useTranslation } from "@/context/TranslationContext";
+import { countActiveAdminFilters } from "@/pages/admin/shared/filterUtils";
 import {
   buildClassLabel,
+  fetchAllAdminRows,
   formatDate,
   pageLimit,
-  toSelectOptions,
 } from "@/pages/admin/project-submission/shared";
 import { getGroupStatusOptions } from "@/pages/admin/student-group/shared";
+import { downloadCsv } from "@/utils/exportCsv";
 
 const emptyForm = {
   topic: "",
@@ -33,8 +37,20 @@ export default function AdminProjects() {
   const groupStatusOptions = useMemo(() => getGroupStatusOptions(t), [t]);
   const toast = useToast();
   const [query, setQuery] = useState({ page: 1, limit: pageLimit, search: "", semester_id: "", class_id: "", category: "", status: "" });
-  const { rows, meta, loading, error, refetch } = useProjects(query);
+  useAdminUrlQuerySync({
+    query,
+    setQuery,
+    keys: ["page", "search", "semester_id", "class_id", "category", "status"],
+  });
   const [lookups, setLookups] = useState({ classes: [], semesters: [], categories: [] });
+  const { semesterFilter, classOptions, listEnabled } = useAdminListSemesterFilters({
+    semesters: lookups.semesters,
+    classes: lookups.classes,
+    buildClassLabel,
+    setQuery,
+    querySemesterId: query.semester_id,
+  });
+  const { rows, meta, loading, error, refetch } = useProjects(query, { enabled: listEnabled });
   const [modal, setModal] = useState({ type: null, project: null });
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
@@ -45,8 +61,6 @@ export default function AdminProjects() {
       .catch(() => setLookups({ classes: [], semesters: [], categories: [] }));
   }, []);
 
-  const classOptions = useMemo(() => toSelectOptions(lookups.classes, (item) => item.id, buildClassLabel, t("lookupAll.classes")), [lookups.classes, t]);
-  const semesterOptions = useMemo(() => toSelectOptions(lookups.semesters, (item) => item.id, (item) => `${item.semester_code} - ${item.semester_name}`, t("lookupAll.semesters")), [lookups.semesters, t]);
   const categoryOptions = useMemo(() => [
     { value: "", label: t("lookupAll.categories") },
     ...(lookups.categories || []).map((category) => ({ value: category, label: category })),
@@ -88,6 +102,48 @@ export default function AdminProjects() {
     }
   };
 
+  const exportAll = async () => {
+    try {
+      const all = await fetchAllAdminRows(projectService.list, query);
+      if (!all.length) {
+        toast.error("Không có dữ liệu để export.");
+        return;
+      }
+      downloadCsv({
+        filename: `admin-projects-${new Date().toISOString().slice(0, 10)}.csv`,
+        headers: ["id", "group_code", "group_name", "class_code", "semester_code", "topic", "category", "status", "member_count", "updated_at"],
+        rows: all.map((r) => ({
+          id: r.id,
+          group_code: r.group_code,
+          group_name: r.group_name,
+          class_code: r.class_code,
+          semester_code: r.semester_code,
+          topic: r.topic,
+          category: r.category,
+          status: r.status,
+          member_count: r.member_count,
+          updated_at: r.updated_at || "",
+        })),
+      });
+    } catch (err) {
+      toast.error(err.message || "Không export được dữ liệu.");
+    }
+  };
+
+  const activeFilterCount = countActiveAdminFilters(query);
+
+  const clearFilters = () => {
+    semesterFilter.reset();
+    setQuery((prev) => ({
+      ...prev,
+      page: 1,
+      search: "",
+      class_id: "",
+      category: "",
+      status: "",
+    }));
+  };
+
   const columns = [
     { key: "topic", label: "Project/topic", render: (row) => <span className="font-semibold text-gray-900">{row.topic || "Chưa có topic"}</span> },
     { key: "group_name", label: "Group", render: (row) => row.group_name || "—" },
@@ -114,9 +170,30 @@ export default function AdminProjects() {
 
   return (
     <>
-      <FilterBar>
-        <SearchInput value={query.search} onChange={(search) => setQuery((prev) => ({ ...prev, page: 1, search }))} placeholder="Topic, group, category..." />
-        <FilterSelect label={t("filterLabels.semester")} value={query.semester_id} onChange={(semester_id) => setQuery((prev) => ({ ...prev, page: 1, semester_id }))} options={semesterOptions} />
+      <FilterBar
+        search={(
+          <SearchInput
+            value={query.search}
+            onChange={(search) => setQuery((prev) => ({ ...prev, page: 1, search }))}
+            placeholder="Topic, group, category..."
+          />
+        )}
+        activeFilterCount={activeFilterCount}
+        onClear={clearFilters}
+        right={(
+          <button type="button" onClick={exportAll} className="inline-flex h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+            <FileDown size={16} /> Export CSV
+          </button>
+        )}
+      >
+        <AdminSemesterFilterGroup
+          filterYear={semesterFilter.filterYear}
+          semesterId={semesterFilter.semesterId}
+          yearOptions={semesterFilter.yearOptions}
+          semesterOptions={semesterFilter.semesterOptions}
+          onYearChange={semesterFilter.onYearChange}
+          onSemesterChange={semesterFilter.onSemesterIdChange}
+        />
         <FilterSelect label={t("filterLabels.class")} value={query.class_id} onChange={(class_id) => setQuery((prev) => ({ ...prev, page: 1, class_id }))} options={classOptions} />
         <FilterSelect label={t("filterLabels.category")} value={query.category} onChange={(category) => setQuery((prev) => ({ ...prev, page: 1, category }))} options={categoryOptions} />
         <FilterSelect label={t("filterLabels.status")} value={query.status} onChange={(status) => setQuery((prev) => ({ ...prev, page: 1, status }))} options={groupStatusOptions} />

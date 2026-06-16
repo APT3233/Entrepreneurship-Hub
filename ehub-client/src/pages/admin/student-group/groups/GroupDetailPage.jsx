@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Ban, Crown, Plus, RefreshCw, Trash2, UserMinus } from "lucide-react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import {
   groupMemberService,
@@ -23,17 +23,31 @@ import { buildStudentLabel, formatDate } from "@/pages/admin/student-group/share
 import GroupSubmissionsTab from "@/pages/admin/components/GroupSubmissionsTab";
 import useDocumentTitle from "@/hooks/useDocumentTitle";
 
+const GROUP_DETAIL_TABS = ["overview", "members", "invites", "reports", "submissions"];
+
 export default function AdminGroupDetail() {
   const { t, language } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const toast = useToast();
   const authUser = useSelector(selectAuthUser);
   const canWrite = checkPermission(authUser, "admin.groups.update");
   const [group, setGroup] = useState(null);
   const [invites, setInvites] = useState([]);
   const [reports, setReports] = useState([]);
-  const [activeTab, setActiveTab] = useState("overview");
+  const tabParam = searchParams.get("tab");
+  const activeTab = GROUP_DETAIL_TABS.includes(tabParam) ? tabParam : "overview";
+
+  const handleTabChange = (tab) => {
+    const params = new URLSearchParams(searchParams);
+    if (tab === "overview") {
+      params.delete("tab");
+    } else {
+      params.set("tab", tab);
+    }
+    setSearchParams(params, { replace: true });
+  };
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [modal, setModal] = useState({ type: null });
@@ -262,7 +276,7 @@ export default function AdminGroupDetail() {
             <button
               key={tab.key}
               type="button"
-              onClick={() => setActiveTab(tab.key)}
+              onClick={() => handleTabChange(tab.key)}
               className={`h-10 rounded-xl px-4 text-sm font-bold transition-colors cursor-pointer ${
                 activeTab === tab.key ? "bg-indigo-50 text-indigo-700" : "text-gray-500 hover:bg-gray-50"
               }`}
