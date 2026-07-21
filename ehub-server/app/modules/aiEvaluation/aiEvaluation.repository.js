@@ -27,6 +27,8 @@ const addOptionalFilters = (where, params, filters = {}) => {
   if (filters.providerKey) {
     if (filters.providerKey === "third-party-api") {
       where.push("q.provider_key IN ('third-party-api', 'cmd-api')");
+    } else if (filters.providerKey === "local-9router") {
+      where.push("q.provider_key IN ('local-9router', 'local-gateway', '9router', 'ninerouter', 'local-antigravity')");
     } else {
       where.push("q.provider_key = :providerKey");
       params.providerKey = filters.providerKey;

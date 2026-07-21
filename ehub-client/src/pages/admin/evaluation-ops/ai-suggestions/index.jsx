@@ -32,8 +32,9 @@ export default function AdminAiSuggestionsPage() {
 
   const providerOptions = useMemo(() => [
     { value: "", label: "All providers" },
+    { value: "local-gemma", label: "Local Ollama" },
+    { value: "local-9router", label: "Local 9Router" },
     { value: "third-party-api", label: "Third-party API" },
-    { value: "local-gemma", label: "Local Gemma" },
   ], []);
 
   const loadRows = async () => {

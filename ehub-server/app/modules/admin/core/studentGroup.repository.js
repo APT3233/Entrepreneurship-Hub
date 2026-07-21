@@ -112,7 +112,15 @@ export const createAdminStudentGroupRepository = ({ db }) => {
         JOIN classes c ON c.id = cs.class_id
         JOIN subjects sub ON sub.id = c.subject_id
         JOIN semesters sem ON sem.id = c.semester_id
-        LEFT JOIN group_members gm ON gm.student_id = cs.student_id AND gm.status IN ('active', 'removed')
+        LEFT JOIN group_members gm
+          ON gm.student_id = cs.student_id
+         AND gm.status IN ('active', 'removed')
+         AND EXISTS (
+           SELECT 1 FROM \`groups\` g_scope
+           WHERE g_scope.id = gm.group_id
+             AND g_scope.class_id = c.id
+             AND (g_scope.deleted_at IS NULL OR gm.status = 'removed')
+         )
         LEFT JOIN \`groups\` g ON g.id = gm.group_id AND g.class_id = c.id
         WHERE cs.student_id = :id
         ORDER BY sem.year DESC, sem.start_date DESC, c.class_code ASC
@@ -222,7 +230,15 @@ export const createAdminStudentGroupRepository = ({ db }) => {
       JOIN subjects sub ON sub.id = c.subject_id
       JOIN semesters sem ON sem.id = c.semester_id
       JOIN students s ON s.id = cs.student_id
-      LEFT JOIN group_members gm ON gm.student_id = s.id AND gm.status = 'active'
+      LEFT JOIN group_members gm
+        ON gm.student_id = s.id
+       AND gm.status = 'active'
+       AND EXISTS (
+         SELECT 1 FROM \`groups\` g_scope
+         WHERE g_scope.id = gm.group_id
+           AND g_scope.class_id = c.id
+           AND g_scope.deleted_at IS NULL
+       )
       LEFT JOIN \`groups\` g ON g.id = gm.group_id AND g.class_id = c.id AND g.deleted_at IS NULL
       WHERE ${whereSql}
       ORDER BY cs.enrolled_at DESC

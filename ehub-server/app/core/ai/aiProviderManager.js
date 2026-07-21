@@ -4,7 +4,8 @@ import { AiErrorCodes, createAiError } from "./aiErrors.js";
 export const normalizeProviderKey = (value) => {
   const key = String(value || "").trim();
   if (["cmd-local", "cmd-local-api", "cmd-api", "external-api", "openai-compatible"].includes(key)) return "third-party-api";
-  return key || "third-party-api";
+  if (["local-gateway", "9router", "ninerouter", "local-antigravity"].includes(key)) return "local-9router";
+  return key || "local-gemma";
 };
 
 const mergeProvider = (providerKey, runtimeSettings = {}) => {

@@ -340,7 +340,15 @@ export const createCheckpointRepository = ({ db }) => {
       JOIN semesters sem ON sem.id = c.semester_id
       JOIN class_students cl_s ON cl_s.class_id = c.id
       JOIN students s ON s.id = cl_s.student_id
-      LEFT JOIN group_members gm ON gm.student_id = s.id AND gm.status = 'active'
+      LEFT JOIN group_members gm
+        ON gm.student_id = s.id
+       AND gm.status = 'active'
+       AND EXISTS (
+         SELECT 1 FROM \`groups\` g_scope
+         WHERE g_scope.id = gm.group_id
+           AND g_scope.class_id = c.id
+           AND g_scope.deleted_at IS NULL
+       )
       LEFT JOIN \`groups\` g ON g.id = gm.group_id AND g.class_id = c.id
       LEFT JOIN checkpoint_submissions cs ON cs.checkpoint_id = cp.id AND cs.group_id = g.id
       WHERE ${whereClause}
@@ -676,7 +684,15 @@ export const createCheckpointRepository = ({ db }) => {
       JOIN classes c ON c.id = cp.class_id
       JOIN class_students cl_s ON cl_s.class_id = c.id
       JOIN students s ON s.id = cl_s.student_id
-      LEFT JOIN group_members gm ON gm.student_id = s.id AND gm.status = 'active'
+      LEFT JOIN group_members gm
+        ON gm.student_id = s.id
+       AND gm.status = 'active'
+       AND EXISTS (
+         SELECT 1 FROM \`groups\` g_scope
+         WHERE g_scope.id = gm.group_id
+           AND g_scope.class_id = c.id
+           AND g_scope.deleted_at IS NULL
+       )
       LEFT JOIN \`groups\` g ON g.id = gm.group_id AND g.class_id = c.id
       LEFT JOIN checkpoint_submissions cs ON cs.checkpoint_id = cp.id AND cs.group_id = g.id
       WHERE s.user_id = :userId 

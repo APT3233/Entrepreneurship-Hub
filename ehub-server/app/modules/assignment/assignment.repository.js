@@ -201,7 +201,15 @@ export const createAssignmentRepository = ({ db }) => {
       JOIN semesters sem ON sem.id = c.semester_id
       JOIN class_students cs ON cs.class_id = c.id
       JOIN students std ON std.id = cs.student_id
-      LEFT JOIN group_members gm ON gm.student_id = std.id AND gm.status = 'active'
+      LEFT JOIN group_members gm
+        ON gm.student_id = std.id
+       AND gm.status = 'active'
+       AND EXISTS (
+         SELECT 1 FROM \`groups\` g_scope
+         WHERE g_scope.id = gm.group_id
+           AND g_scope.class_id = c.id
+           AND g_scope.deleted_at IS NULL
+       )
       LEFT JOIN \`groups\` g ON g.id = gm.group_id AND g.class_id = c.id
       LEFT JOIN assignment_submissions s ON s.assignment_id = a.id AND s.group_id = g.id
       WHERE std.user_id = :userId AND ${clauses.join(" AND ")}
@@ -496,7 +504,15 @@ export const createAssignmentRepository = ({ db }) => {
       JOIN classes c ON c.id = a.class_id
       JOIN class_students cs ON cs.class_id = c.id
       JOIN students std ON std.id = cs.student_id
-      LEFT JOIN group_members gm ON gm.student_id = std.id AND gm.status = 'active'
+      LEFT JOIN group_members gm
+        ON gm.student_id = std.id
+       AND gm.status = 'active'
+       AND EXISTS (
+         SELECT 1 FROM \`groups\` g_scope
+         WHERE g_scope.id = gm.group_id
+           AND g_scope.class_id = c.id
+           AND g_scope.deleted_at IS NULL
+       )
       LEFT JOIN \`groups\` g ON g.id = gm.group_id AND g.class_id = c.id
       LEFT JOIN assignment_submissions s ON s.assignment_id = a.id AND s.group_id = g.id
       WHERE std.user_id = :userId 

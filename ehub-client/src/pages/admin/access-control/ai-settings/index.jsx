@@ -7,16 +7,24 @@ import Dropdown from "@/components/ui/filter/DropDown";
 
 const inputClass = "w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 disabled:bg-gray-50 disabled:text-gray-400";
 const THIRD_PARTY_PROVIDER_KEY = "third-party-api";
-const normalizeProviderKey = (key) => (["cmd-api", "cmd-local", "cmd-local-api"].includes(key) ? THIRD_PARTY_PROVIDER_KEY : key);
+const LOCAL_9ROUTER_PROVIDER_KEY = "local-9router";
+const LOCAL_OLLAMA_PROVIDER_KEY = "local-gemma";
+const PROVIDERS_WITH_API_KEY = [THIRD_PARTY_PROVIDER_KEY, LOCAL_9ROUTER_PROVIDER_KEY];
+const normalizeProviderKey = (key) => {
+  if (["cmd-api", "cmd-local", "cmd-local-api"].includes(key)) return THIRD_PARTY_PROVIDER_KEY;
+  if (["local-gateway", "9router", "ninerouter", "local-antigravity"].includes(key)) return LOCAL_9ROUTER_PROVIDER_KEY;
+  return key;
+};
 const providerLabels = {
   "third-party-api": "Third-party API",
   "cmd-api": "Third-party API",
   "local-gemma": "Local Ollama",
+  "local-9router": "Local 9Router",
 };
 
 const emptySettings = {
   enabled: false,
-  active_provider: "local-gemma",
+  active_provider: LOCAL_OLLAMA_PROVIDER_KEY,
   global: {
     max_tokens: 4096,
     temperature: 0.2,
@@ -32,6 +40,30 @@ const emptySettings = {
 
 const defaultProviders = [
   {
+    key: LOCAL_OLLAMA_PROVIDER_KEY,
+    name: "Local Ollama",
+    type: "openai-compatible",
+    enabled: true,
+    base_url: "http://ollama:11434/v1",
+    model: "gemma3:4b",
+    stream: true,
+    api_key_required: false,
+    api_key_status: "not_required",
+    api_key_source: "none",
+  },
+  {
+    key: LOCAL_9ROUTER_PROVIDER_KEY,
+    name: "Local 9Router",
+    type: "openai-compatible",
+    enabled: true,
+    base_url: "http://ninerouter:20128/v1",
+    model: "antigravity/gemini-3-flash",
+    stream: false,
+    api_key_required: true,
+    api_key_status: "not_configured",
+    api_key_source: "none",
+  },
+  {
     key: THIRD_PARTY_PROVIDER_KEY,
     name: "Third-party API",
     type: "openai-compatible",
@@ -41,18 +73,6 @@ const defaultProviders = [
     stream: true,
     api_key_required: true,
     api_key_status: "not_configured",
-    api_key_source: "none",
-  },
-  {
-    key: "local-gemma",
-    name: "Local Ollama",
-    type: "openai-compatible",
-    enabled: true,
-    base_url: "http://ollama:11434/v1",
-    model: "gemma3:4b",
-    stream: true,
-    api_key_required: false,
-    api_key_status: "not_required",
     api_key_source: "none",
   },
 ];
@@ -115,7 +135,7 @@ export default function AdminAiSettingsPage() {
   const [apiKeyInput, setApiKeyInput] = useState("");
   const [testPrompt, setTestPrompt] = useState('Reply with JSON: {"ok": true}');
   const [testOutput, setTestOutput] = useState("");
-  const [configProviderKey, setConfigProviderKey] = useState("local-gemma");
+  const [configProviderKey, setConfigProviderKey] = useState(LOCAL_OLLAMA_PROVIDER_KEY);
   const [providerModels, setProviderModels] = useState({});
   const [modelLoadingKey, setModelLoadingKey] = useState("");
   const [modelErrors, setModelErrors] = useState({});
@@ -124,12 +144,18 @@ export default function AdminAiSettingsPage() {
     () => form.providers.find((provider) => provider.key === configProviderKey) || form.providers[0] || null,
     [configProviderKey, form.providers],
   );
-  const thirdPartyProvider = useMemo(() => form.providers.find((provider) => provider.key === THIRD_PARTY_PROVIDER_KEY) || null, [form.providers]);
+  const selectedNeedsApiKey = PROVIDERS_WITH_API_KEY.includes(normalizeProviderKey(selectedProvider?.key));
   const storageReady = Boolean(form.secret_storage?.storage_ready);
-  const thirdPartyKeyConfigured = Boolean(
-    form.secret_storage?.third_party_api_key_configured ||
-    form.secret_storage?.cmd_api_key_configured ||
-    thirdPartyProvider?.api_key_status === "configured",
+  const selectedKeyConfigured = Boolean(
+    (normalizeProviderKey(selectedProvider?.key) === LOCAL_9ROUTER_PROVIDER_KEY && (
+      form.secret_storage?.local_9router_api_key_configured ||
+      selectedProvider?.api_key_status === "configured"
+    )) ||
+    (normalizeProviderKey(selectedProvider?.key) === THIRD_PARTY_PROVIDER_KEY && (
+      form.secret_storage?.third_party_api_key_configured ||
+      form.secret_storage?.cmd_api_key_configured ||
+      selectedProvider?.api_key_status === "configured"
+    )),
   );
 
   const load = async () => {
@@ -139,7 +165,7 @@ export default function AdminAiSettingsPage() {
       const res = await aiEvaluationApi.getSettings();
       const nextForm = normalizeSettings(res?.data);
       setForm(nextForm);
-      setConfigProviderKey(nextForm.active_provider || nextForm.providers[0]?.key || "local-gemma");
+      setConfigProviderKey(nextForm.active_provider || nextForm.providers[0]?.key || LOCAL_OLLAMA_PROVIDER_KEY);
     } catch (err) {
       setError(err.message || t("ai.settings.saveFailed"));
     } finally {
@@ -183,20 +209,24 @@ export default function AdminAiSettingsPage() {
         api_key_required: Boolean(provider.api_key_required),
       })),
     };
-    if (apiKeyInput.trim()) payload.api_key = apiKeyInput.trim();
+    if (apiKeyInput.trim() && PROVIDERS_WITH_API_KEY.includes(normalizeProviderKey(form.active_provider))) {
+      payload.api_key = apiKeyInput.trim();
+      payload.api_key_provider = normalizeProviderKey(form.active_provider);
+    }
     return payload;
   };
 
   const buildProviderTestPayload = (providerOverride = null) => {
     const provider = providerOverride || selectedProvider || {};
+    const providerKey = normalizeProviderKey(provider.key || form.active_provider);
     const payload = {
-      provider_key: provider.key || form.active_provider,
+      provider_key: providerKey,
       base_url: provider.base_url,
       model: provider.model,
       stream: Boolean(provider.stream),
       api_key_required: Boolean(provider.api_key_required),
     };
-    if (normalizeProviderKey(provider.key || form.active_provider) === THIRD_PARTY_PROVIDER_KEY && apiKeyInput.trim()) payload.api_key = apiKeyInput.trim();
+    if (PROVIDERS_WITH_API_KEY.includes(providerKey) && apiKeyInput.trim()) payload.api_key = apiKeyInput.trim();
     return payload;
   };
 
@@ -244,11 +274,11 @@ export default function AdminAiSettingsPage() {
     setForm((prev) => ({
       ...emptySettings,
       enabled: true,
-      active_provider: "local-gemma",
+      active_provider: LOCAL_OLLAMA_PROVIDER_KEY,
       providers: defaultProviders.map((provider) => ({ ...provider })),
       secret_storage: prev.secret_storage,
     }));
-    setConfigProviderKey("local-gemma");
+    setConfigProviderKey(LOCAL_OLLAMA_PROVIDER_KEY);
     setProviderModels({});
     setModelErrors({});
     setApiKeyInput("");
@@ -261,7 +291,7 @@ export default function AdminAiSettingsPage() {
       const res = await aiEvaluationApi.updateSettings(buildPayload());
       const nextForm = normalizeSettings(res?.data);
       setForm(nextForm);
-      setConfigProviderKey(nextForm.active_provider || nextForm.providers[0]?.key || "local-gemma");
+      setConfigProviderKey(nextForm.active_provider || nextForm.providers[0]?.key || LOCAL_OLLAMA_PROVIDER_KEY);
       setProviderModels({});
       setModelErrors({});
       setApiKeyInput("");
@@ -302,9 +332,11 @@ export default function AdminAiSettingsPage() {
   if (loading) return <div className="rounded-lg border border-gray-100 bg-white p-8 text-center text-sm text-gray-400">{t("ai.settings.loadingSettings")}</div>;
   if (error) return <div className="rounded-lg border border-red-100 bg-red-50 p-8 text-center text-sm font-semibold text-red-600">{error}</div>;
 
-  const activeWarning = form.active_provider === "local-gemma"
+  const activeWarning = form.active_provider === LOCAL_OLLAMA_PROVIDER_KEY
     ? t("ai.settings.warningLocalOllama")
-    : t("ai.settings.warningThirdPartyApi");
+    : form.active_provider === LOCAL_9ROUTER_PROVIDER_KEY
+      ? (t("ai.settings.warningLocal9Router") || "Local 9Router chạy trong Docker (ninerouter:20128). Dashboard vẫn mở tại gateway.apt3233.id.vn.")
+      : t("ai.settings.warningThirdPartyApi");
 
   return (
     <div className="space-y-6">
@@ -324,9 +356,9 @@ export default function AdminAiSettingsPage() {
           <Badge tone={form.enabled ? "green" : "gray"}>
             {form.enabled ? t("ai.settings.aiEnabled") : t("ai.settings.aiDisabled")}
           </Badge>
-          {form.active_provider !== "local-gemma" && (
-            <Badge tone={thirdPartyKeyConfigured ? "green" : "red"}>
-              Third-party API: {thirdPartyKeyConfigured ? t("ai.settings.apiKeyConfigured") : t("ai.settings.apiKeyMissing")}
+          {selectedNeedsApiKey && (
+            <Badge tone={selectedKeyConfigured ? "green" : "red"}>
+              {providerLabels[normalizeProviderKey(selectedProvider?.key)] || "API"}: {selectedKeyConfigured ? t("ai.settings.apiKeyConfigured") : t("ai.settings.apiKeyMissing")}
             </Badge>
           )}
         </div>
@@ -398,16 +430,20 @@ export default function AdminAiSettingsPage() {
                 />
               ) : null}
 
-              {selectedProvider?.key === THIRD_PARTY_PROVIDER_KEY && thirdPartyProvider && (
+              {selectedNeedsApiKey && (
                 <div className="mt-4 pt-4 border-t border-gray-100 space-y-2">
                   <label className="block">
-                    <span className="mb-1 block text-sm font-semibold text-gray-700">Third-party API Key</span>
+                    <span className="mb-1 block text-sm font-semibold text-gray-700">
+                      {normalizeProviderKey(selectedProvider?.key) === LOCAL_9ROUTER_PROVIDER_KEY
+                        ? "9Router API Key"
+                        : "Third-party API Key"}
+                    </span>
                     <input
                       type="password"
                       className={inputClass}
                       value={apiKeyInput}
                       disabled={!storageReady}
-                      placeholder={thirdPartyKeyConfigured ? t("ai.settings.apiKeyPlaceholderConfigured") : t("ai.settings.apiKeyPlaceholderMissing")}
+                      placeholder={selectedKeyConfigured ? t("ai.settings.apiKeyPlaceholderConfigured") : t("ai.settings.apiKeyPlaceholderMissing")}
                       autoComplete="new-password"
                       onChange={(event) => setApiKeyInput(event.target.value)}
                     />

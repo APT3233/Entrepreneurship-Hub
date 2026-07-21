@@ -34,17 +34,24 @@ const AI_SETTING_DEFINITIONS = {
   provider_cmd_api_base_url: { data_type: "string", default_value: aiConfig.providers["third-party-api"].baseUrl, description: "Legacy CMD API base URL" },
   provider_cmd_api_model: { data_type: "string", default_value: aiConfig.providers["third-party-api"].model, description: "Legacy CMD API model" },
   provider_cmd_api_stream: { data_type: "boolean", default_value: aiConfig.providers["third-party-api"].stream, description: "Legacy CMD API stream mode" },
-  provider_local_gemma_enabled: { data_type: "boolean", default_value: aiConfig.providers["local-gemma"].enabled, description: "Bật provider Local Gemma" },
-  provider_local_gemma_base_url: { data_type: "string", default_value: aiConfig.providers["local-gemma"].baseUrl, description: "Local Gemma/Ollama base URL" },
-  provider_local_gemma_model: { data_type: "string", default_value: aiConfig.providers["local-gemma"].model, description: "Local Gemma/Ollama model" },
-  provider_local_gemma_stream: { data_type: "boolean", default_value: aiConfig.providers["local-gemma"].stream, description: "Local Gemma stream mode" },
-  provider_local_gemma_api_key_required: { data_type: "boolean", default_value: aiConfig.providers["local-gemma"].apiKeyRequired, description: "Local Gemma có bắt buộc API key không" },
+  provider_local_gemma_enabled: { data_type: "boolean", default_value: aiConfig.providers["local-gemma"].enabled, description: "Bật provider Local Ollama" },
+  provider_local_gemma_base_url: { data_type: "string", default_value: aiConfig.providers["local-gemma"].baseUrl, description: "Local Ollama base URL" },
+  provider_local_gemma_model: { data_type: "string", default_value: aiConfig.providers["local-gemma"].model, description: "Local Ollama model" },
+  provider_local_gemma_stream: { data_type: "boolean", default_value: aiConfig.providers["local-gemma"].stream, description: "Local Ollama stream mode" },
+  provider_local_gemma_api_key_required: { data_type: "boolean", default_value: aiConfig.providers["local-gemma"].apiKeyRequired, description: "Local Ollama có bắt buộc API key không" },
+  provider_local_9router_enabled: { data_type: "boolean", default_value: aiConfig.providers["local-9router"].enabled, description: "Bật provider Local 9Router" },
+  provider_local_9router_base_url: { data_type: "string", default_value: aiConfig.providers["local-9router"].baseUrl, description: "Local 9Router base URL (Docker internal)" },
+  provider_local_9router_model: { data_type: "string", default_value: aiConfig.providers["local-9router"].model, description: "Local 9Router model" },
+  provider_local_9router_stream: { data_type: "boolean", default_value: aiConfig.providers["local-9router"].stream, description: "Local 9Router stream mode" },
+  provider_local_9router_api_key_required: { data_type: "boolean", default_value: aiConfig.providers["local-9router"].apiKeyRequired, description: "Local 9Router có bắt buộc API key không" },
 };
 
 const THIRD_PARTY_API_KEY_SETTING_KEY = "third_party_api_key_encrypted";
+const LOCAL_9ROUTER_API_KEY_SETTING_KEY = "local_9router_api_key_encrypted";
 const LEGACY_CMD_API_KEY_SETTING_KEY = "cmd_api_key_encrypted";
 const MASKED_API_KEY = "********";
-const PROVIDER_KEYS = Object.freeze(["third-party-api", "local-gemma"]);
+const PROVIDER_KEYS = Object.freeze(["local-gemma", "local-9router", "third-party-api"]);
+const PROVIDERS_WITH_DB_API_KEY = Object.freeze(["third-party-api", "local-9router"]);
 
 const parseBoolean = (value) => value === true || value === "true" || value === "1" || value === 1;
 const parseJson = (value, fallback = []) => {
@@ -95,35 +102,31 @@ const resolveActiveProviderKey = (byKey) => {
   const dbActive = readSetting(byKey, "ai_active_provider", readSetting(byKey, "ai_provider", null));
   if (dbActive) {
     const key = normalizeProviderKey(dbActive);
-    if (key === "local-gemma") {
-      const gemmaEnabled = readSetting(byKey, "provider_local_gemma_enabled", aiConfig.providers["local-gemma"].enabled);
-      if (!gemmaEnabled) {
-        const apiKeyStatus = getApiKeyStatus(byKey);
-        const thirdPartyEnabled = readSetting(byKey, "provider_third_party_api_enabled", readSetting(byKey, "provider_cmd_api_enabled", aiConfig.providers["third-party-api"].enabled));
-        if (thirdPartyEnabled && apiKeyStatus.configured) {
-          return "third-party-api";
-        }
-      }
-    }
-    return key;
+    if (PROVIDER_KEYS.includes(key)) return key;
   }
-
-  const apiKeyStatus = getApiKeyStatus(byKey);
-  const thirdPartyEnabled = readSetting(byKey, "provider_third_party_api_enabled", readSetting(byKey, "provider_cmd_api_enabled", aiConfig.providers["third-party-api"].enabled));
-  const thirdPartyBaseUrl = readSetting(byKey, "provider_third_party_api_base_url", readSetting(byKey, "base_url", aiConfig.providers["third-party-api"].baseUrl));
-  if (thirdPartyEnabled && apiKeyStatus.configured && thirdPartyBaseUrl) {
-    return "third-party-api";
-  }
-
   return normalizeProviderKey(aiConfig.activeProvider);
 };
-const getApiKeyStatus = (byKey) => {
+
+const apiKeySettingKeyForProvider = (providerKey) => {
+  const key = normalizeProviderKey(providerKey);
+  if (key === "local-9router") return LOCAL_9ROUTER_API_KEY_SETTING_KEY;
+  return THIRD_PARTY_API_KEY_SETTING_KEY;
+};
+
+const getApiKeyStatus = (byKey, providerKey = "third-party-api") => {
+  const key = normalizeProviderKey(providerKey);
+  const settingKey = apiKeySettingKeyForProvider(key);
   const encryptedValue = String(
-    byKey.get(THIRD_PARTY_API_KEY_SETTING_KEY)?.setting_value ||
-    byKey.get(LEGACY_CMD_API_KEY_SETTING_KEY)?.setting_value ||
+    byKey.get(settingKey)?.setting_value ||
+    (key === "third-party-api" ? byKey.get(LEGACY_CMD_API_KEY_SETTING_KEY)?.setting_value : "") ||
+    // migration fallback: reuse third-party key for local-9router until dedicated key exists
+    (key === "local-9router" ? byKey.get(THIRD_PARTY_API_KEY_SETTING_KEY)?.setting_value : "") ||
     "",
   ).trim();
-  const envConfigured = Boolean(aiConfig.providers["third-party-api"].apiKey);
+  const envKey = key === "local-9router"
+    ? aiConfig.providers["local-9router"]?.apiKey
+    : aiConfig.providers["third-party-api"]?.apiKey;
+  const envConfigured = Boolean(envKey);
   const databaseConfigured = Boolean(encryptedValue);
   const configured = envConfigured || databaseConfigured;
   return {
@@ -135,16 +138,24 @@ const getApiKeyStatus = (byKey) => {
     storageReady: canEncryptSecrets(aiConfig.secretEncryptionKey),
   };
 };
-const resolveRuntimeApiKey = (byKey, status = getApiKeyStatus(byKey)) => {
-  if (aiConfig.providers["third-party-api"].apiKey) return aiConfig.providers["third-party-api"].apiKey;
 
+const resolveRuntimeApiKey = (byKey, providerKey = "third-party-api", status = null) => {
+  const key = normalizeProviderKey(providerKey);
+  const resolvedStatus = status || getApiKeyStatus(byKey, key);
+  const envKey = key === "local-9router"
+    ? aiConfig.providers["local-9router"]?.apiKey
+    : aiConfig.providers["third-party-api"]?.apiKey;
+  if (envKey) return envKey;
+
+  const settingKey = apiKeySettingKeyForProvider(key);
   const encryptedValue = String(
-    byKey.get(THIRD_PARTY_API_KEY_SETTING_KEY)?.setting_value ||
-    byKey.get(LEGACY_CMD_API_KEY_SETTING_KEY)?.setting_value ||
+    byKey.get(settingKey)?.setting_value ||
+    (key === "third-party-api" ? byKey.get(LEGACY_CMD_API_KEY_SETTING_KEY)?.setting_value : "") ||
+    (key === "local-9router" ? byKey.get(THIRD_PARTY_API_KEY_SETTING_KEY)?.setting_value : "") ||
     "",
   ).trim();
   if (!encryptedValue) return "";
-  if (!status.storageReady) {
+  if (!resolvedStatus.storageReady) {
     throw createAiError(
       AiErrorCodes.MISSING_SECRET_ENCRYPTION_KEY,
       "AI API key is stored in database but AI_SECRET_ENCRYPTION_KEY is missing.",
@@ -271,8 +282,9 @@ export const createAiEvaluationService = ({ aiEvaluationRepository, storageServi
     const base = aiConfig.providers[key];
     if (!base) return null;
     const isThirdParty = key === "third-party-api";
+    const usesDbApiKey = PROVIDERS_WITH_DB_API_KEY.includes(key);
     const legacyProviderSetting = (suffix, fallback) => readSetting(byKey, legacyCmdProviderSettingName(suffix), fallback);
-    const apiKeyStatus = isThirdParty ? getApiKeyStatus(byKey) : {
+    const apiKeyStatus = usesDbApiKey ? getApiKeyStatus(byKey, key) : {
       configured: Boolean(base.apiKey),
       source: base.apiKey ? "env" : "none",
     };
@@ -283,7 +295,7 @@ export const createAiEvaluationService = ({ aiEvaluationRepository, storageServi
       model: readSetting(byKey, providerSettingName(key, "model"), isThirdParty ? legacyProviderSetting("model", readSetting(byKey, "model_name", base.model)) : base.model),
       stream: readSetting(byKey, providerSettingName(key, "stream"), isThirdParty ? legacyProviderSetting("stream", base.stream) : base.stream),
       apiKeyRequired: readSetting(byKey, providerSettingName(key, "api_key_required"), base.apiKeyRequired),
-      apiKey: isThirdParty ? (skipApiKeyResolve ? "" : resolveRuntimeApiKey(byKey, apiKeyStatus)) : base.apiKey,
+      apiKey: usesDbApiKey ? (skipApiKeyResolve ? "" : resolveRuntimeApiKey(byKey, key, apiKeyStatus)) : base.apiKey,
       apiKeySource: apiKeyStatus.source,
       apiKeyStatus,
     };
@@ -334,7 +346,7 @@ export const createAiEvaluationService = ({ aiEvaluationRepository, storageServi
       messages,
       runtimeSettings: config,
       model: provider.model,
-      stream: provider.key === "local-gemma" ? false : provider.stream,
+      stream: ["local-gemma", "local-9router"].includes(provider.key) ? false : provider.stream,
       maxTokens: config.defaultMaxTokens,
       temperature: config.defaultTemperature,
       timeoutMs: config.timeoutMs,
@@ -618,6 +630,7 @@ export const createAiEvaluationService = ({ aiEvaluationRepository, storageServi
     assertCanConfigureAi(actor);
     const config = await getRuntimeConfig({ skipApiKeyResolve: true });
     const thirdPartyStatus = config.providers["third-party-api"]?.apiKeyStatus || { configured: false, source: "none" };
+    const local9RouterStatus = config.providers["local-9router"]?.apiKeyStatus || { configured: false, source: "none" };
     return {
       enabled: Boolean(config.enabled),
       active_provider: config.activeProvider,
@@ -641,6 +654,11 @@ export const createAiEvaluationService = ({ aiEvaluationRepository, storageServi
         third_party_api_key_masked: thirdPartyStatus.configured ? MASKED_API_KEY : "",
         third_party_api_key_env_configured: Boolean(thirdPartyStatus.envConfigured),
         third_party_api_key_database_configured: Boolean(thirdPartyStatus.databaseConfigured),
+        local_9router_api_key_configured: Boolean(local9RouterStatus.configured),
+        local_9router_api_key_source: local9RouterStatus.source || "none",
+        local_9router_api_key_masked: local9RouterStatus.configured ? MASKED_API_KEY : "",
+        local_9router_api_key_env_configured: Boolean(local9RouterStatus.envConfigured),
+        local_9router_api_key_database_configured: Boolean(local9RouterStatus.databaseConfigured),
         cmd_api_key_configured: Boolean(thirdPartyStatus.configured),
         cmd_api_key_source: thirdPartyStatus.source || "none",
         cmd_api_key_masked: thirdPartyStatus.configured ? MASKED_API_KEY : "",
@@ -685,7 +703,7 @@ export const createAiEvaluationService = ({ aiEvaluationRepository, storageServi
       providerKey: provider.key,
       runtimeSettings: runtime,
       messages: [{ role: "user", content: "Reply with OK only." }],
-      maxTokens: 32,
+      maxTokens: 256,
       temperature: 0,
       stream: false,
       timeoutMs: Math.min(120_000, Number(runtime.timeoutMs) || 120_000),
@@ -853,7 +871,7 @@ export const createAiEvaluationService = ({ aiEvaluationRepository, storageServi
         await saveSetting(providerSettingName(provider.key, "model"), provider.model_name);
       }
       if (provider.stream !== undefined) await saveSetting(providerSettingName(provider.key, "stream"), provider.stream);
-      if (provider.api_key_required !== undefined && ["third-party-api", "local-gemma"].includes(provider.key)) {
+      if (provider.api_key_required !== undefined && PROVIDER_KEYS.includes(provider.key)) {
         await saveSetting(providerSettingName(provider.key, "api_key_required"), provider.api_key_required);
       }
     }
@@ -864,11 +882,19 @@ export const createAiEvaluationService = ({ aiEvaluationRepository, storageServi
     }
     let apiKeyUpdated = false;
     if (nextApiKey) {
+      const apiKeyProvider = normalizeProviderKey(
+        body.api_key_provider || body.active_provider || body.ai_active_provider || "third-party-api",
+      );
+      if (!PROVIDERS_WITH_DB_API_KEY.includes(apiKeyProvider)) {
+        throw BadRequest("Provider này không hỗ trợ lưu API key trong database.");
+      }
       await aiEvaluationRepository.upsertAiSetting({
-        setting_key: THIRD_PARTY_API_KEY_SETTING_KEY,
+        setting_key: apiKeySettingKeyForProvider(apiKeyProvider),
         setting_value: encryptSecret(nextApiKey, aiConfig.secretEncryptionKey),
         data_type: "string",
-        description: "Encrypted third-party API key. Env THIRD_PARTY_API_KEY has priority.",
+        description: apiKeyProvider === "local-9router"
+          ? "Encrypted Local 9Router API key. Env LOCAL_9ROUTER_API_KEY has priority."
+          : "Encrypted third-party API key. Env THIRD_PARTY_API_KEY has priority.",
         updated_by: actor?.id || null,
       });
       apiKeyUpdated = true;

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Eye, Lock, Plus, RotateCcw, ShieldCheck, SquarePen, User, Settings, KeyRound, ShieldAlert, GraduationCap, CheckCircle2, Phone, MapPin, Handshake } from "lucide-react";
 import { useSelector } from "react-redux";
+import { useSearchParams } from "react-router-dom";
 import AdminAccessControlApi from "@/api/adminAccessControl";
 import { useToast } from "@/components/ui/Toast";
 import { selectAuthUser } from "@/store/slices/authSlice";
@@ -129,6 +130,7 @@ export default function AdminUsers() {
   const toast = useToast();
   const authUser = useSelector(selectAuthUser);
   const canWrite = checkPermission(authUser, "admin.users.update");
+  const [searchParams, setSearchParams] = useSearchParams();
   const [rows, setRows] = useState([]);
   const [roles, setRoles] = useState([]);
   const [meta, setMeta] = useState(null);
@@ -175,10 +177,23 @@ export default function AdminUsers() {
     ...roles.map((role) => ({ value: role.role_code, label: role.role_name || role.role_code })),
   ], [roles, t]);
 
-  const openCreate = () => {
-    setForm(emptyForm);
+  const openCreate = (presetRoles = []) => {
+    setForm({ ...emptyForm, roles: Array.isArray(presetRoles) ? presetRoles : [] });
     setModal({ type: "create", user: null });
   };
+
+  useEffect(() => {
+    const createParam = searchParams.get("create");
+    if (!createParam || !canWrite) return;
+
+    openCreate(createParam === "mentor" ? ["mentor"] : []);
+
+    const next = new URLSearchParams(searchParams);
+    next.delete("create");
+    if (!next.get("page")) next.set("page", "1");
+    setSearchParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, canWrite]);
 
   const openEdit = useCallback((user) => {
     setForm({
@@ -312,7 +327,7 @@ export default function AdminUsers() {
     <>
       <FilterBar
         right={canWrite ? (
-          <button type="button" onClick={openCreate} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 cursor-pointer">
+          <button type="button" onClick={() => openCreate()} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 cursor-pointer">
             <Plus size={16} /> {t("admin.actions.create")}
           </button>
         ) : null}

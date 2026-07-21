@@ -120,7 +120,7 @@ export default function AdminMentors() {
 
   return (
     <>
-      <FilterBar right={<button type="button" onClick={() => navigate("/admin/mentors/create")} className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-teal-700"><Plus size={16} /> {t("admin.mentors.create")}</button>}>
+      <FilterBar right={<button type="button" onClick={() => navigate("/admin/users?page=1&create=mentor")} className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-teal-700"><Plus size={16} /> {t("admin.mentors.create")}</button>}>
         <SearchInput value={query.search} onChange={(search) => setQuery((prev) => ({ ...prev, page: 1, search }))} placeholder={t("admin.mentors.searchPlaceholder")} />
         <FilterSelect label={t("admin.mentors.type")} value={query.mentor_type} onChange={(mentor_type) => setQuery((prev) => ({ ...prev, page: 1, mentor_type }))} options={typeOptions} />
         <FilterSelect label={t("admin.mentors.status")} value={query.status} onChange={(status) => setQuery((prev) => ({ ...prev, page: 1, status }))} options={statusOptions} />

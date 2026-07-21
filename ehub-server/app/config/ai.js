@@ -14,7 +14,8 @@ const normalizeSecret = (value) => {
 const normalizeProviderKey = (value) => {
   const key = String(value || "").trim();
   if (["cmd-local", "cmd-local-api", "cmd-api", "external-api", "openai-compatible"].includes(key)) return "third-party-api";
-  return key || "third-party-api";
+  if (["local-gateway", "9router", "ninerouter", "local-antigravity"].includes(key)) return "local-9router";
+  return key || "local-gemma";
 };
 
 const activeProvider = normalizeProviderKey(optional("AI_ACTIVE_PROVIDER", optional("AI_PROVIDER", "local-gemma")));
@@ -23,18 +24,6 @@ const defaultMaxTokens = toInt(optional("AI_MAX_TOKENS", "4096"), 4096);
 const defaultTemperature = toNumber(optional("AI_TEMPERATURE", "0.2"), 0.2);
 
 const providers = Object.freeze({
-  "third-party-api": Object.freeze({
-    key: "third-party-api",
-    name: "Third-party API",
-    type: "openai-compatible",
-    enabled: toBool(optional("THIRD_PARTY_AI_ENABLED", optional("CMD_AI_ENABLED", "true")), true),
-    baseUrl: optional("THIRD_PARTY_AI_BASE_URL", optional("CMD_AI_BASE_URL", optional("AI_BASE_URL", "https://api.openai.com/v1"))),
-    chatCompletionsPath: optional("THIRD_PARTY_AI_CHAT_COMPLETIONS_PATH", optional("CMD_AI_CHAT_COMPLETIONS_PATH", optional("AI_CHAT_COMPLETIONS_PATH", "/chat/completions"))),
-    apiKey: normalizeSecret(process.env.THIRD_PARTY_API_KEY || process.env.CMD_API_KEY),
-    apiKeyRequired: true,
-    model: optional("THIRD_PARTY_AI_MODEL", optional("CMD_AI_MODEL", optional("AI_MODEL", "gpt-4o-mini"))),
-    stream: toBool(optional("THIRD_PARTY_AI_STREAM", optional("CMD_AI_STREAM", optional("AI_STREAM", "true"))), true),
-  }),
   "local-gemma": Object.freeze({
     key: "local-gemma",
     name: "Local Ollama",
@@ -47,6 +36,30 @@ const providers = Object.freeze({
     apiKeyRequired: toBool(optional("LOCAL_GEMMA_API_KEY_REQUIRED", "false"), false),
     model: optional("LOCAL_GEMMA_MODEL", "gemma3:4b"),
     stream: toBool(optional("LOCAL_GEMMA_STREAM", optional("AI_STREAM", "true")), true),
+  }),
+  "local-9router": Object.freeze({
+    key: "local-9router",
+    name: "Local 9Router",
+    type: "openai-compatible",
+    enabled: toBool(optional("LOCAL_9ROUTER_ENABLED", "true"), true),
+    baseUrl: optional("LOCAL_9ROUTER_BASE_URL", "http://ninerouter:20128/v1"),
+    chatCompletionsPath: optional("LOCAL_9ROUTER_CHAT_COMPLETIONS_PATH", "/chat/completions"),
+    apiKey: normalizeSecret(process.env.LOCAL_9ROUTER_API_KEY),
+    apiKeyRequired: toBool(optional("LOCAL_9ROUTER_API_KEY_REQUIRED", "true"), true),
+    model: optional("LOCAL_9ROUTER_MODEL", "antigravity/gemini-3-flash"),
+    stream: toBool(optional("LOCAL_9ROUTER_STREAM", "false"), false),
+  }),
+  "third-party-api": Object.freeze({
+    key: "third-party-api",
+    name: "Third-party API",
+    type: "openai-compatible",
+    enabled: toBool(optional("THIRD_PARTY_AI_ENABLED", optional("CMD_AI_ENABLED", "true")), true),
+    baseUrl: optional("THIRD_PARTY_AI_BASE_URL", optional("CMD_AI_BASE_URL", optional("AI_BASE_URL", "https://api.openai.com/v1"))),
+    chatCompletionsPath: optional("THIRD_PARTY_AI_CHAT_COMPLETIONS_PATH", optional("CMD_AI_CHAT_COMPLETIONS_PATH", optional("AI_CHAT_COMPLETIONS_PATH", "/chat/completions"))),
+    apiKey: normalizeSecret(process.env.THIRD_PARTY_API_KEY || process.env.CMD_API_KEY),
+    apiKeyRequired: true,
+    model: optional("THIRD_PARTY_AI_MODEL", optional("CMD_AI_MODEL", optional("AI_MODEL", "gpt-4o-mini"))),
+    stream: toBool(optional("THIRD_PARTY_AI_STREAM", optional("CMD_AI_STREAM", optional("AI_STREAM", "true"))), true),
   }),
 });
 

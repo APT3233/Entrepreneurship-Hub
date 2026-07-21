@@ -1,7 +1,18 @@
 import Joi from "joi";
 
 const targetType = Joi.string().valid("checkpoint_submission", "assignment_submission");
-const providerKey = Joi.string().valid("third-party-api", "local-gemma", "cmd-api", "cmd-local", "cmd-local-api");
+const providerKey = Joi.string().valid(
+  "third-party-api",
+  "local-gemma",
+  "local-9router",
+  "cmd-api",
+  "cmd-local",
+  "cmd-local-api",
+  "local-gateway",
+  "9router",
+  "ninerouter",
+  "local-antigravity",
+);
 const providerSettingsSchema = Joi.object({
   key: providerKey.required(),
   enabled: Joi.boolean(),
