@@ -16,3 +16,5 @@ data/.minio.sys
 data/ehub
 .plan/
 *.log
+
+bk/
