@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host",
+    "dev:remote": "VITE_API_PROXY_TARGET=https://ehub.apt3233.id.vn vite --host",
+    "dev:local-api": "VITE_API_PROXY_TARGET=http://127.0.0.1:7777 vite --host",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
