@@ -23,7 +23,7 @@ export default function LanguageSwitcher() {
         onClick={() => setOpen(!open)}
         className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:border-slate-300 transition-all text-xs font-bold text-slate-700 shadow-sm cursor-pointer animate-in fade-in duration-200"
       >
-        <span>{language === "vi" ? "🇻🇳 VI" : "🇺🇸 EN"}</span>
+        <span>{language === "vi" ? "🇻🇳 Tiếng Việt" : "🇺🇸 English"}</span>
       </button>
       {open && (
         <div className="absolute right-0 mt-1.5 w-32 bg-white border border-slate-100 rounded-xl shadow-lg py-1 z-50 animate-in fade-in slide-in-from-top-1 duration-100">
