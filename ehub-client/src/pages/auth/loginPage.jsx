@@ -253,9 +253,9 @@ export default function LoginPage() {
   const inputWrapClass = (key) => {
     const base = "flex items-center rounded-xl px-3 py-3 gap-2 transition-all duration-150";
     if (fieldErrors[key]) {
-      return `${base} bg-red-50 border border-red-400 ring-2 ring-red-100`;
+      return `${base} bg-red-500/15 border border-red-400/60 ring-2 ring-red-400/15`;
     }
-    return `${base} bg-gray-100 border border-transparent focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-100`;
+    return `${base} glass-input`;
   };
 
   return (
@@ -274,6 +274,33 @@ export default function LoginPage() {
         }
 
         .field-error-shake { animation: shake 0.35s ease; }
+
+        /* ── Liquid glass ── */
+        .glass-card {
+          background: rgba(255, 255, 255, 0.18);
+          -webkit-backdrop-filter: blur(28px) saturate(160%);
+          backdrop-filter: blur(28px) saturate(160%);
+          border: 1px solid rgba(255, 255, 255, 0.35);
+          border-radius: 26px;
+          box-shadow:
+            0 8px 40px rgba(0, 0, 0, 0.28),
+            inset 0 1px 0 rgba(255, 255, 255, 0.5);
+        }
+        /* Fallback khi trình duyệt không hỗ trợ backdrop-filter */
+        @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+          .glass-card { background: rgba(255, 255, 255, 0.72); }
+        }
+
+        .glass-input {
+          background: rgba(255, 255, 255, 0.28);
+          border: 1px solid rgba(255, 255, 255, 0.45);
+          -webkit-backdrop-filter: blur(6px);
+          backdrop-filter: blur(6px);
+        }
+        .glass-input:focus-within {
+          background: rgba(255, 255, 255, 0.42);
+          border-color: rgba(255, 255, 255, 0.75);
+        }
       `}</style>
 
       {/* ── Full-screen campus background ── */}
@@ -310,7 +337,7 @@ export default function LoginPage() {
       {/* ── Right form panel (liquid glass) ── */}
       <div className="relative z-10 flex-1 flex items-center justify-center px-4 py-8 sm:px-6 lg:px-10 overflow-y-auto">
         <div
-          className="w-full rounded-3xl border border-white/40 bg-white/65 backdrop-blur-2xl backdrop-saturate-150 shadow-2xl p-6 sm:p-8"
+          className="w-full glass-card p-6 sm:p-8"
           style={{ maxWidth: "400px" }}
         >
           {/* Mobile logo (brand panel hidden below lg) */}
@@ -335,7 +362,7 @@ export default function LoginPage() {
           </div>
 
           {/* Role Tabs */}
-          <div className="flex bg-subtle rounded-full p-1 mb-5">
+          <div className="flex bg-white/25 rounded-full p-1 mb-5">
             <TabButton
               active={isStudent}
               onClick={() => handleRoleChange(Roles.STUDENT)}
