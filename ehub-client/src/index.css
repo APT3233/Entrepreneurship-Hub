@@ -1,6 +1,21 @@
 /* ── Tailwind CSS ──────────────────────────────────────── */
 @import "tailwindcss";
 
+/* ── Design tokens (Tailwind v4 @theme → utilities + CSS vars) ──────────────
+   Calm-dashboard palette. No hardcoded colors in components — use these tokens.
+   Utilities generated: bg-page, bg-surface, bg-subtle, border-border,
+   border-border-strong, text-text-primary, text-text-secondary, text-text-muted. */
+@theme {
+  --color-page: #FAFAF9;
+  --color-surface: #FFFFFF;
+  --color-subtle: #F5F5F4;
+  --color-border: #E7E5E4;
+  --color-border-strong: #D6D3D1;
+  --color-text-primary: #1C1917;
+  --color-text-secondary: #57534E;
+  --color-text-muted: #A8A29E;
+}
+
 /* ── Inter Variable Font ─────────────────────────────────── */
 @font-face {
   font-family: "Inter";
@@ -21,6 +36,11 @@
 /* Cỡ chữ nền responsive: nhỏ trên màn hẹp, vừa trên màn rộng */
 html {
   font-size: clamp(14px, 0.875rem + 0.25vw, 16px);
+}
+
+body {
+  background-color: var(--color-page);
+  color: var(--color-text-primary);
 }
 
 *,
