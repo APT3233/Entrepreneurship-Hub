@@ -374,16 +374,18 @@ export default function LoginPage() {
           </div>
           <div>
             <h2
-              className="text-4xl lg:text-5xl font-bold leading-tight tracking-tight"
+              className="text-5xl lg:text-6xl font-extrabold uppercase leading-[1.05] tracking-tight"
               style={{
                 backgroundImage:
                   "linear-gradient(135deg, #ffb45a 0%, #f7943f 45%, #f26f20 100%)",
                 WebkitBackgroundClip: "text",
                 backgroundClip: "text",
                 color: "transparent",
-                filter: "drop-shadow(0 2px 10px rgba(0, 0, 0, 0.45))"
+                filter: "drop-shadow(0 2px 10px rgba(0, 0, 0, 0.5))"
               }}>
-              Cổng khởi nghiệp
+              Cổng
+              <br />
+              khởi nghiệp
               <br />
               sinh viên FPT
             </h2>
