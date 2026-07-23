@@ -297,7 +297,7 @@ export default function LoginPage() {
     const base =
       "flex items-center rounded-xl px-3 py-3 gap-2 transition-all duration-150";
     if (fieldErrors[key]) {
-      return `${base} bg-red-500/15 border border-red-400/60 ring-2 ring-red-400/15`;
+      return `${base} bg-red-500/15 border border-red-400/70`;
     }
     return `${base} glass-input`;
   };
@@ -342,9 +342,9 @@ export default function LoginPage() {
           box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
         }
         .glass-input:focus-within {
-          background: rgba(255, 255, 255, 0.72);
+          background: rgba(255, 255, 255, 0.78);
           border-color: var(--color-accent);
-          box-shadow: 0 0 0 3px rgba(242, 111, 32, 0.18);
+          box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
         }
       `}</style>
 
@@ -357,7 +357,7 @@ export default function LoginPage() {
           backgroundPosition: "center"
         }}
       />
-      <div className="absolute inset-0 bg-gradient-to-tr from-slate-950/20 via-slate-900/45 to-slate-950/50" />
+      <div className="absolute inset-0 bg-gradient-to-tr from-white/100 via-slate-800/35 to-slate-950/10" />
 
       {/* ── Left brand panel (desktop) ── */}
       <div className="hidden lg:block relative z-10 lg:w-[45%]">
@@ -374,18 +374,20 @@ export default function LoginPage() {
           </div>
           <div>
             <h2
-              className="text-5xl lg:text-6xl font-extrabold uppercase leading-[1.05] tracking-tight"
-              style={{
-                backgroundImage:
-                  "linear-gradient(135deg, #ffb45a 0%, #f7943f 45%, #f26f20 100%)",
-                WebkitBackgroundClip: "text",
-                backgroundClip: "text",
-                color: "transparent",
-                filter: "drop-shadow(0 2px 10px rgba(0, 0, 0, 0.5))"
-              }}>
+              className="text-5xl lg:text-6xl font-black leading-[1.05] tracking-tight text-white"
+              style={{ filter: "drop-shadow(0 3px 16px rgba(0, 0, 0, 0.6))" }}>
               Cổng
               <br />
-              khởi nghiệp
+              <span
+                style={{
+                  backgroundImage:
+                    "linear-gradient(135deg, #ffb45a 0%, #f7943f 45%, #f26f20 100%)",
+                  WebkitBackgroundClip: "text",
+                  backgroundClip: "text",
+                  color: "transparent"
+                }}>
+                khởi nghiệp
+              </span>
               <br />
               sinh viên FPT
             </h2>
@@ -525,7 +527,7 @@ export default function LoginPage() {
                     }
                   }}
                   placeholder={isStudent ? "VD: DE123456" : "VD: gv@fpt.edu.vn"}
-                  className="flex-1 bg-transparent text-sm text-gray-700 outline-none placeholder-gray-400"
+                  className="flex-1 appearance-none border-0 bg-transparent text-sm text-gray-800 outline-none placeholder-gray-400"
                 />
               </div>
               <FieldError
@@ -557,7 +559,7 @@ export default function LoginPage() {
                     }
                   }}
                   placeholder="••••••••"
-                  className="flex-1 bg-transparent text-sm text-gray-700 outline-none placeholder-gray-400"
+                  className="flex-1 appearance-none border-0 bg-transparent text-sm text-gray-800 outline-none placeholder-gray-400"
                 />
                 <button
                   type="button"
