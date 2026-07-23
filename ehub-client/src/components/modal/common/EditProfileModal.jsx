@@ -95,14 +95,14 @@ const EditProfileModal = memo(({ isOpen, user, onClose, onSave }) => {
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-[2px] animate-in fade-in duration-300">
-      <div className="bg-white rounded-[32px] shadow-2xl w-full max-w-xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-300">
+      <div className="bg-surface rounded-card border border-border w-full max-w-xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-300">
         {/* Header */}
-        <div className="relative px-8 pt-8 pb-4 border-b border-gray-50">
-          <button onClick={onClose} className="absolute top-6 right-6 w-10 h-10 flex items-center justify-center rounded-2xl text-gray-400 hover:bg-gray-50 hover:text-gray-600 transition-all active:scale-95">
+        <div className="relative px-8 pt-8 pb-4 border-b border-border">
+          <button onClick={onClose} className="absolute top-6 right-6 w-10 h-10 flex items-center justify-center rounded-2xl text-text-muted hover:bg-subtle hover:text-text-secondary transition-all active:scale-95">
             <X size={24} />
           </button>
-          <h2 className="text-xl font-bold text-gray-900 tracking-tight">Chỉnh sửa hồ sơ</h2>
-          <p className="text-sm text-gray-500 mt-1">Cập nhật thông tin cá nhân của bạn</p>
+          <h2 className="text-xl font-medium text-text-primary tracking-tight">Chỉnh sửa hồ sơ</h2>
+          <p className="text-sm text-text-secondary mt-1">Cập nhật thông tin cá nhân của bạn</p>
         </div>
 
         {/* Form */}
@@ -110,11 +110,11 @@ const EditProfileModal = memo(({ isOpen, user, onClose, onSave }) => {
           {/* Avatar Upload */}
           <div className="flex flex-col items-center gap-4">
             <div className="relative group">
-              <div className="w-28 h-28 rounded-[32px] overflow-hidden bg-slate-100 border-4 border-white shadow-lg relative">
+              <div className="w-28 h-28 rounded-card overflow-hidden bg-subtle border-4 border-surface relative">
                 {previewUrl ? (
                   <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-slate-300">
+                  <div className="w-full h-full flex items-center justify-center text-text-muted">
                     <User size={48} />
                   </div>
                 )}
@@ -127,7 +127,7 @@ const EditProfileModal = memo(({ isOpen, user, onClose, onSave }) => {
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="absolute bottom-1 right-1 p-2 rounded-xl bg-indigo-600 text-white shadow-lg hover:bg-indigo-700 transition-all border-2 border-white"
+                className="absolute bottom-1 right-1 p-2 rounded-control bg-accent text-white hover:bg-accent-hover transition-all border-2 border-surface"
               >
                 <Camera size={16} />
               </button>
@@ -139,40 +139,40 @@ const EditProfileModal = memo(({ isOpen, user, onClose, onSave }) => {
                 onChange={handleFileChange}
               />
             </div>
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Tối đa 5MB · Định dạng: JPG, PNG, GIF</p>
+            <p className="text-[10px] font-medium text-text-muted uppercase tracking-widest">Tối đa 5MB · Định dạng: JPG, PNG, GIF</p>
           </div>
 
           {/* Inputs */}
           <div className="space-y-4">
             <div className="space-y-1.5">
-              <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+              <label className="text-[11px] font-medium text-text-muted uppercase tracking-widest flex items-center gap-2">
                 <User size={12} /> Họ và tên
               </label>
               <input
                 type="text"
                 value={formData.full_name}
                 onChange={(e) => setFormData(prev => ({ ...prev, full_name: e.target.value }))}
-                className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-100 focus:bg-white focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50 outline-none transition-all text-sm font-medium"
+                className="w-full px-4 py-2.5 rounded-control bg-subtle border border-border focus:bg-surface focus:border-accent focus:ring-2 focus:ring-accent-bg outline-none transition-all text-sm font-medium"
                 placeholder="Nhập họ và tên"
                 required
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+              <label className="text-[11px] font-medium text-text-muted uppercase tracking-widest flex items-center gap-2">
                 <Phone size={12} /> Số điện thoại
               </label>
               <input
                 type="text"
                 value={formData.phone}
                 onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-100 focus:bg-white focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50 outline-none transition-all text-sm font-medium"
+                className="w-full px-4 py-2.5 rounded-control bg-subtle border border-border focus:bg-surface focus:border-accent focus:ring-2 focus:ring-accent-bg outline-none transition-all text-sm font-medium"
                 placeholder="Ví dụ: 0912345678"
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+              <label className="text-[11px] font-medium text-text-muted uppercase tracking-widest flex items-center gap-2">
                 <MapPin size={12} /> Cơ sở (Campus)
               </label>
               <Dropdown
@@ -186,11 +186,11 @@ const EditProfileModal = memo(({ isOpen, user, onClose, onSave }) => {
         </form>
 
         {/* Footer */}
-        <div className="px-8 py-6 bg-gray-50/30 border-t border-gray-50 flex items-center justify-end gap-3">
+        <div className="px-8 py-6 bg-subtle border-t border-border flex items-center justify-end gap-3">
           <button
             type="button"
             onClick={onClose}
-            className="px-6 py-2.5 rounded-xl text-sm font-bold text-gray-500 hover:bg-gray-100 transition-all active:scale-95"
+            className="px-6 py-2.5 rounded-control text-sm font-medium text-text-secondary hover:bg-subtle transition-all active:scale-95"
           >
             Hủy bỏ
           </button>
@@ -198,7 +198,7 @@ const EditProfileModal = memo(({ isOpen, user, onClose, onSave }) => {
             type="button"
             onClick={handleSubmit}
             disabled={isUploading}
-            className="px-8 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold shadow-lg shadow-indigo-100 transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2"
+            className="px-8 py-2.5 rounded-control bg-accent hover:bg-accent-hover text-white text-sm font-medium transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2"
           >
             <Save size={18} />
             {isUploading ? "Đang lưu..." : "Lưu thay đổi"}
