@@ -17,7 +17,6 @@ import {
   API_ERROR_STUDENT_NOT_IN_ROSTER,
   API_ERROR_INSUFFICIENT_PERMISSION,
 } from "@/constants/apiErrors";
-import fptOnboarding from "@/assets/images/fpt-onboarding.png";
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 const TabButton = ({ active, onClick, icon, label }) => (
@@ -259,21 +258,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div
-      className="min-h-screen relative flex items-center justify-center px-4 py-8 sm:px-6 lg:px-8 bg-slate-950 overflow-hidden"
-    >
-      {/* Background Image with Filter */}
-      <div 
-        className="absolute inset-0 transition-all duration-700 transform scale-100"
-        style={{
-          backgroundImage: `url(${fptOnboarding})`,
-          backgroundSize: "100% 100%",
-          backgroundPosition: "center",
-        }}
-      />
-      {/* Dark gradient & backdrop blur overlay */}
-      <div className="absolute inset-0 bg-gradient-to-tr from-slate-950/90 via-slate-900/70 to-slate-950/90 backdrop-blur-[5px]" />
-
+    <div className="min-h-screen flex items-center justify-center px-4 py-8 sm:px-6 lg:px-8 bg-page">
       {/* Fonts + keyframes */}
       <style>{`
         @keyframes fadeSlideIn {
