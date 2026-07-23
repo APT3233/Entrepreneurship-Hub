@@ -336,14 +336,16 @@ export default function LoginPage() {
         }
 
         .glass-input {
-          background: rgba(255, 255, 255, 0.28);
-          border: 1px solid rgba(255, 255, 255, 0.45);
+          background: rgba(255, 255, 255, 0.55);
+          border: 1px solid rgba(255, 255, 255, 0.8);
           -webkit-backdrop-filter: blur(6px);
           backdrop-filter: blur(6px);
+          box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
         }
         .glass-input:focus-within {
-          background: rgba(255, 255, 255, 0.42);
-          border-color: rgba(255, 255, 255, 0.75);
+          background: rgba(255, 255, 255, 0.72);
+          border-color: var(--color-accent);
+          box-shadow: 0 0 0 3px rgba(242, 111, 32, 0.18);
         }
       `}</style>
 
@@ -356,14 +358,13 @@ export default function LoginPage() {
           backgroundPosition: "center"
         }}
       />
-      <div className="absolute inset-0 bg-gradient-to-tr from-black/60 via-black/10 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-tr from-slate-950/20 via-slate-900/45 to-slate-950/50" />
 
       {/* ── Left brand panel (desktop) ── */}
       <div className="hidden lg:block relative z-10 lg:w-[45%]">
         <div
           className="relative flex h-full flex-col justify-between p-12"
-          style={{ textShadow: "0 1px 12px rgba(0, 0, 0, 0.55)" }}
-        >
+          style={{ textShadow: "0 1px 12px rgba(0, 0, 0, 0.55)" }}>
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-xl bg-white/10 backdrop-blur-sm border border-white/15 flex items-center justify-center">
               <GraduationCapIcon />
@@ -395,7 +396,7 @@ export default function LoginPage() {
             <div
               className="w-14 h-14 rounded-2xl flex items-center justify-center mb-3"
               style={{
-                background: "linear-gradient(135deg, #6366f1 0%, #4F39F6 100%)"
+                background: "linear-gradient(135deg, #f7943f 0%, #f26f20 100%)"
               }}>
               <GraduationCapIcon />
             </div>
@@ -409,7 +410,7 @@ export default function LoginPage() {
             <h1 className="text-2xl font-bold text-text-primary tracking-tight">
               Đăng nhập
             </h1>
-            <p className="text-sm text-text-muted mt-1">
+            <p className="text-sm text-text-secondary mt-1">
               {isStudent
                 ? "Truy cập cổng sinh viên E-HUB"
                 : "Truy cập cổng giảng viên / mentor"}
@@ -569,14 +570,13 @@ export default function LoginPage() {
                   type="checkbox"
                   checked={remember}
                   onChange={(e) => setRemember(e.target.checked)}
-                  className="w-4 h-4 rounded border-gray-300 accent-indigo-600"
+                  className="w-4 h-4 rounded border-gray-300 accent-accent"
                 />
-                <span className="text-xs text-gray-500">Ghi nhớ đăng nhập</span>
+                <span className="text-xs text-text-secondary">Ghi nhớ đăng nhập</span>
               </label>
               <button
                 type="button"
-                className="text-xs font-semibold cursor-pointer hover:underline"
-                style={{ color: "#4F39F6" }}>
+                className="text-xs font-semibold text-accent cursor-pointer hover:underline">
                 Quên mật khẩu?
               </button>
             </div>
@@ -585,10 +585,9 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 rounded-xl text-white text-sm font-semibold tracking-wide
-                transition-all duration-200 hover:opacity-90 active:scale-[0.98]
-                disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
-              style={{ backgroundColor: "#4F39F6" }}>
+              className="w-full py-3 rounded-xl bg-accent hover:bg-accent-hover text-white text-sm font-semibold tracking-wide
+                transition-all duration-200 active:scale-[0.98]
+                disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer">
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
                   <svg
