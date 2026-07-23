@@ -14,6 +14,13 @@
   --color-text-primary: #1C1917;
   --color-text-secondary: #57534E;
   --color-text-muted: #A8A29E;
+
+  /* FPT accent — #F37021 is a placeholder until the exact brand hex is confirmed;
+     swap this one line to rebrand. Utilities: bg-accent, text-accent,
+     hover:bg-accent-hover, bg-accent-bg. */
+  --color-accent: #F37021;
+  --color-accent-hover: #D65F17;
+  --color-accent-bg: #FDEEE3;
 }
 
 /* ── Inter Variable Font ─────────────────────────────────── */
