@@ -355,6 +355,14 @@ export default function LoginPage() {
             <GoogleButton onClick={handleGoogleLogin} disabled={loading} />
           )}
 
+          {/* ── "hoặc" divider ── */}
+          <div className="relative flex items-center justify-center my-5">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-border" />
+            </div>
+            <span className="relative bg-surface px-3 text-xs font-medium text-text-muted">hoặc</span>
+          </div>
+
           <form onSubmit={handleSubmit} noValidate>
 
             {/* ── ID Field ── */}
