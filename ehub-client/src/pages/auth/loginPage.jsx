@@ -22,7 +22,7 @@ import {
   API_ERROR_STUDENT_NOT_IN_ROSTER,
   API_ERROR_INSUFFICIENT_PERMISSION
 } from "@/constants/apiErrors";
-import fptOnboarding from "@/assets/images/background-fpt-2.jpeg";
+import fptOnboarding from "@/assets/images/background-fpt.jpeg";
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 const TabButton = ({ active, onClick, icon, label }) => (
@@ -321,10 +321,9 @@ export default function LoginPage() {
 
         /* ── Liquid glass ── */
         .glass-card {
-          background: rgba(255, 255, 255, 0.18);
+          background: rgba(255, 255, 255, 0.71);
           -webkit-backdrop-filter: blur(28px) saturate(160%);
-          backdrop-filter: blur(28px) saturate(160%);
-          border: 1px solid rgba(255, 255, 255, 0.35);
+          backdrop-filter: blur(2px) saturate(160%);
           border-radius: 26px;
           box-shadow:
             0 8px 40px rgba(0, 0, 0, 0.28),
@@ -374,7 +373,16 @@ export default function LoginPage() {
             </span>
           </div>
           <div>
-            <h2 className="text-3xl font-semibold leading-snug tracking-tight text-white">
+            <h2
+              className="text-4xl lg:text-5xl font-bold leading-tight tracking-tight"
+              style={{
+                backgroundImage:
+                  "linear-gradient(135deg, #ffb45a 0%, #f7943f 45%, #f26f20 100%)",
+                WebkitBackgroundClip: "text",
+                backgroundClip: "text",
+                color: "transparent",
+                filter: "drop-shadow(0 2px 10px rgba(0, 0, 0, 0.45))"
+              }}>
               Cổng khởi nghiệp
               <br />
               sinh viên FPT
@@ -572,7 +580,9 @@ export default function LoginPage() {
                   onChange={(e) => setRemember(e.target.checked)}
                   className="w-4 h-4 rounded border-gray-300 accent-accent"
                 />
-                <span className="text-xs text-text-secondary">Ghi nhớ đăng nhập</span>
+                <span className="text-xs text-text-secondary">
+                  Ghi nhớ đăng nhập
+                </span>
               </label>
               <button
                 type="button"
