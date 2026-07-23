@@ -115,7 +115,7 @@ export default function AppSidebar({ items, subtitle }) {
               return (
                 <div
                   key={item.path}
-                  title={!isOpen ? item.label : undefined}
+                  title={`${item.label} — ${t("common.comingSoon")}`}
                   style={{ transitionDelay: isOpen ? `${i * 20}ms` : "0ms" }}
                   className="group flex items-center gap-3 px-[14px] py-[11px] rounded-xl text-sm font-medium transition-all duration-200 overflow-hidden whitespace-nowrap text-text-muted opacity-60 cursor-not-allowed"
                 >
@@ -222,7 +222,7 @@ export default function AppSidebar({ items, subtitle }) {
         {navItems.map((item, index) => {
           if (item.disabled) {
             return (
-              <div key={item.path} className="flex flex-col items-center gap-1 py-1 flex-1 min-w-0 rounded-xl text-text-muted opacity-60 cursor-not-allowed">
+              <div key={item.path} title={`${item.label} — ${t("common.comingSoon")}`} className="flex flex-col items-center gap-1 py-1 flex-1 min-w-0 rounded-xl text-text-muted opacity-60 cursor-not-allowed">
                 <span className="w-8 h-8 flex items-center justify-center rounded-xl transition-all duration-200">
                   <item.icon size={18} strokeWidth={1.8} />
                 </span>

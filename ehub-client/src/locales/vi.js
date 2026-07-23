@@ -24,6 +24,7 @@ export default {
     "unpin": "Tắt ghim",
     "pinned": "Đã ghim",
     "autoCollapse": "Tự động thu",
+    "comingSoon": "sắp ra mắt",
     "previousPage": "Trang trước",
     "nextPage": "Trang sau",
     "rowsPerPage": "Số dòng/trang:",
