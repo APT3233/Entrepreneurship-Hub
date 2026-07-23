@@ -277,8 +277,8 @@ export default function LoginPage() {
 
       {/* Card */}
       <div
-        className="bg-white/95 backdrop-blur-md rounded-3xl p-6 sm:p-8 lg:p-10 w-full z-10 border border-white/20 shadow-2xl"
-        style={{ maxWidth: "520px" }}
+        className="bg-surface rounded-card p-6 sm:p-8 lg:p-10 w-full border border-border"
+        style={{ maxWidth: "400px" }}
       >
         {/* Logo */}
         <div className="flex flex-col items-center mb-7">
