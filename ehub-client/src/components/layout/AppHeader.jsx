@@ -62,9 +62,9 @@ export default function AppHeader({ user = null, onLogout }) {
       <div className="flex items-center justify-end gap-3 sm:gap-6 px-4 sm:px-6 py-2 sm:py-3">
         <LanguageSwitcher />
         <div className="h-6 sm:h-8 w-px bg-border shrink-0" />
-        <div 
+        <div
           onClick={handleProfileClick}
-          className="flex items-center gap-1.5 sm:gap-2 min-w-0 cursor-pointer group/header"
+          className="flex items-center gap-1.5 sm:gap-2 min-h-[44px] min-w-0 cursor-pointer group/header"
         >
           <UserAvatar user={user} />
           <div className="text-right leading-tight min-w-0">
@@ -88,7 +88,7 @@ export default function AppHeader({ user = null, onLogout }) {
         <button
           type="button"
           onClick={onLogout}
-          className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-medium text-text-secondary hover:text-accent transition-colors duration-200 group shrink-0 cursor-pointer"
+          className="flex items-center gap-1.5 sm:gap-2 min-h-[44px] text-xs sm:text-sm font-medium text-text-secondary hover:text-accent transition-colors duration-200 group shrink-0 cursor-pointer"
         >
           <LogOut className="w-4 h-4 sm:w-[18px] sm:h-[18px] group-hover:translate-x-0.5 transition-transform" />
           {t("header.logoutButton")}
