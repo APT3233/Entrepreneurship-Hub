@@ -39,36 +39,36 @@ const ActivityLogsModal = memo(({ isOpen, onClose }) => {
 
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/40 backdrop-blur-[2px] animate-in fade-in duration-300">
-      <div className="bg-white rounded-[40px] shadow-2xl w-full max-w-2xl h-[85vh] overflow-hidden flex flex-col animate-in zoom-in-95 duration-300">
+      <div className="bg-surface rounded-card border border-border w-full max-w-2xl h-[85vh] overflow-hidden flex flex-col animate-in zoom-in-95 duration-300">
         {/* Header */}
-        <div className="relative px-10 pt-10 pb-6 border-b border-gray-50 bg-white z-10">
-          <button 
-            onClick={onClose} 
-            className="absolute top-8 right-8 w-12 h-12 flex items-center justify-center rounded-2xl text-gray-400 hover:bg-gray-50 hover:text-gray-600 transition-all active:scale-95"
+        <div className="relative px-10 pt-10 pb-6 border-b border-border bg-surface z-10">
+          <button
+            onClick={onClose}
+            className="absolute top-8 right-8 w-12 h-12 flex items-center justify-center rounded-2xl text-text-muted hover:bg-subtle hover:text-text-secondary transition-all active:scale-95"
           >
             <X size={28} />
           </button>
           <div className="flex items-center gap-4 mb-2">
-            <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl">
+            <div className="p-3 bg-accent-bg text-accent rounded-2xl">
               <History size={24} />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Toàn bộ hoạt động</h2>
-              <p className="text-sm text-gray-500 font-medium">Lịch sử tương tác của bạn với hệ thống</p>
+              <h2 className="text-2xl font-medium text-text-primary tracking-tight">Toàn bộ hoạt động</h2>
+              <p className="text-sm text-text-secondary font-medium">Lịch sử tương tác của bạn với hệ thống</p>
             </div>
           </div>
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto px-10 py-6 custom-scrollbar bg-gray-50/30">
+        <div className="flex-1 overflow-y-auto px-10 py-6 custom-scrollbar bg-page">
           {isLoading ? (
             <div className="space-y-6">
               {[1, 2, 3, 4, 5].map(i => (
-                <div key={i} className="flex gap-5 animate-pulse bg-white p-5 rounded-[24px] border border-gray-50">
-                  <div className="w-12 h-12 rounded-2xl bg-gray-100 shrink-0"></div>
+                <div key={i} className="flex gap-5 animate-pulse bg-surface p-5 rounded-card border border-border">
+                  <div className="w-12 h-12 rounded-2xl bg-subtle shrink-0"></div>
                   <div className="flex-1 space-y-3 py-1">
-                    <div className="h-5 bg-gray-100 rounded w-1/3"></div>
-                    <div className="h-3 bg-gray-50 rounded w-full"></div>
+                    <div className="h-5 bg-subtle rounded w-1/3"></div>
+                    <div className="h-3 bg-subtle rounded w-full"></div>
                   </div>
                 </div>
               ))}
@@ -109,36 +109,36 @@ const ActivityLogsModal = memo(({ isOpen, onClose }) => {
                 const actionLabel = getActionLabel(act.action, entityName);
 
                 return (
-                  <div key={act.id} className="bg-white p-5 rounded-[24px] border border-gray-100 shadow-sm hover:shadow-md hover:border-indigo-100 transition-all duration-300 group">
+                  <div key={act.id} className="bg-surface p-5 rounded-card border border-border hover:border-border-strong transition-all duration-300 group">
                     <div className="flex gap-5">
-                      <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center shrink-0 border border-gray-50 group-hover:bg-indigo-600 group-hover:border-indigo-600 transition-all duration-300">
-                        <div className="w-2.5 h-2.5 rounded-full bg-indigo-500 group-hover:bg-white"></div>
+                      <div className="w-12 h-12 rounded-2xl bg-subtle flex items-center justify-center shrink-0 border border-border group-hover:bg-accent group-hover:border-accent transition-all duration-300">
+                        <div className="w-2.5 h-2.5 rounded-full bg-accent group-hover:bg-white"></div>
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
-                          <p className="text-base font-bold text-gray-800 group-hover:text-indigo-600 transition-colors">
+                          <p className="text-base font-medium text-text-primary group-hover:text-accent transition-colors">
                             {actionLabel}
                           </p>
-                          <div className="flex items-center gap-1.5 text-gray-400">
+                          <div className="flex items-center gap-1.5 text-text-muted">
                             <Clock size={12} className="shrink-0" />
                             <DateTimeCell
                               value={act.created_at}
-                              dateClassName="text-[10px] font-semibold uppercase tracking-widest text-gray-500"
-                              timeClassName="text-[10px] font-medium text-gray-400"
+                              dateClassName="text-[10px] font-medium uppercase tracking-widest text-text-secondary"
+                              timeClassName="text-[10px] font-medium text-text-muted"
                             />
                           </div>
                         </div>
                         
-                        <div className="flex flex-wrap gap-4 text-xs font-medium text-gray-500">
+                        <div className="flex flex-wrap gap-4 text-xs font-medium text-text-secondary">
                           {act.ip_address && (
-                            <div className="flex items-center gap-1.5 px-3 py-1 bg-gray-50 rounded-lg">
-                              <MapPin size={12} className="text-gray-400" />
+                            <div className="flex items-center gap-1.5 px-3 py-1 bg-subtle rounded-lg">
+                              <MapPin size={12} className="text-text-muted" />
                               <span>IP: {act.ip_address}</span>
                             </div>
                           )}
                           {act.user_agent && (
-                            <div className="flex items-center gap-1.5 px-3 py-1 bg-gray-50 rounded-lg max-w-xs truncate">
-                              <Monitor size={12} className="text-gray-400" />
+                            <div className="flex items-center gap-1.5 px-3 py-1 bg-subtle rounded-lg max-w-xs truncate">
+                              <Monitor size={12} className="text-text-muted" />
                               <span className="truncate" title={act.user_agent}>{act.user_agent}</span>
                             </div>
                           )}
@@ -150,7 +150,7 @@ const ActivityLogsModal = memo(({ isOpen, onClose }) => {
               })}
             </div>
           ) : (
-            <div className="h-full flex flex-col items-center justify-center text-gray-400 py-20">
+            <div className="h-full flex flex-col items-center justify-center text-text-muted py-20">
               <History size={48} className="mb-4 opacity-20" />
               <p className="text-sm font-medium">Chưa có hoạt động nào được ghi lại</p>
             </div>
@@ -158,26 +158,26 @@ const ActivityLogsModal = memo(({ isOpen, onClose }) => {
         </div>
 
         {/* Footer / Pagination */}
-        <div className="px-10 py-6 border-t border-gray-50 bg-white flex items-center justify-between">
-          <div className="text-xs font-semibold text-gray-400 uppercase tracking-widest">
-            Tổng số: <span className="text-indigo-600">{pagination.total}</span> bản ghi
+        <div className="px-10 py-6 border-t border-border bg-surface flex items-center justify-between">
+          <div className="text-xs font-medium text-text-muted uppercase tracking-widest">
+            Tổng số: <span className="text-accent">{pagination.total}</span> bản ghi
           </div>
-          
+
           <div className="flex items-center gap-2">
             <button
               onClick={() => handlePageChange(pagination.page - 1)}
               disabled={pagination.page === 1 || isLoading}
-              className="w-10 h-10 flex items-center justify-center rounded-xl border border-gray-100 text-gray-400 hover:bg-gray-50 hover:text-indigo-600 disabled:opacity-30 disabled:hover:bg-transparent transition-all active:scale-95"
+              className="w-10 h-10 flex items-center justify-center rounded-control border border-border text-text-muted hover:bg-subtle hover:text-accent disabled:opacity-30 disabled:hover:bg-transparent transition-all active:scale-95"
             >
               <ChevronLeft size={20} />
             </button>
-            
+
             <div className="flex items-center gap-1 mx-2">
-              <span className="w-8 h-8 flex items-center justify-center rounded-lg bg-indigo-600 text-white text-xs font-semibold shadow-lg shadow-indigo-100">
+              <span className="w-8 h-8 flex items-center justify-center rounded-lg bg-accent text-white text-xs font-medium">
                 {pagination.page}
               </span>
-              <span className="text-gray-300 mx-1">/</span>
-              <span className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-50 text-gray-500 text-xs font-semibold">
+              <span className="text-text-muted mx-1">/</span>
+              <span className="w-8 h-8 flex items-center justify-center rounded-lg bg-subtle text-text-secondary text-xs font-medium">
                 {pagination.totalPages}
               </span>
             </div>
@@ -185,7 +185,7 @@ const ActivityLogsModal = memo(({ isOpen, onClose }) => {
             <button
               onClick={() => handlePageChange(pagination.page + 1)}
               disabled={pagination.page === pagination.totalPages || isLoading}
-              className="w-10 h-10 flex items-center justify-center rounded-xl border border-gray-100 text-gray-400 hover:bg-gray-50 hover:text-indigo-600 disabled:opacity-30 disabled:hover:bg-transparent transition-all active:scale-95"
+              className="w-10 h-10 flex items-center justify-center rounded-control border border-border text-text-muted hover:bg-subtle hover:text-accent disabled:opacity-30 disabled:hover:bg-transparent transition-all active:scale-95"
             >
               <ChevronRight size={20} />
             </button>
