@@ -8,7 +8,8 @@ import {
   ClipboardList,
   Activity,
   Calendar,
-  Handshake,
+  CalendarClock,
+  Megaphone,
   Rocket,
 } from "lucide-react";
 import NavProgress from "@/components/ui/NavProgress";
@@ -33,9 +34,9 @@ const StudentLayout = () => {
     { label: t("student.dashboard"), icon: Home, path: "/student/dashboard" },
     { label: t("student.groups"), icon: Users, path: "/student/groups" },
     { label: t("student.assignments"), icon: ClipboardList, path: "/student/assignments" },
-    { label: "Mentoring", icon: Handshake, path: "/student/mentoring" },
+    { label: "Mentoring", icon: CalendarClock, path: "/student/mentoring" },
     { label: "Startup", icon: Rocket, path: "/student/startup-profile" },
-    { label: "Opportunities", icon: Handshake, path: "/student/ecosystem/opportunities" },
+    { label: "Opportunities", icon: Megaphone, path: "/student/ecosystem/opportunities" },
     { label: t("student.status"), icon: Activity, path: "/student/status", disabled: true },
     { label: t("student.schedule"), icon: Calendar, path: "/student/schedule", disabled: true },
   ], [t]);
