@@ -259,7 +259,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen lg:h-screen flex flex-col lg:flex-row bg-page lg:overflow-hidden">
+    <div className="min-h-screen lg:h-screen relative flex flex-col lg:flex-row bg-page lg:overflow-hidden">
       {/* Fonts + keyframes */}
       <style>{`
         @keyframes fadeSlideIn {
@@ -276,18 +276,20 @@ export default function LoginPage() {
         .field-error-shake { animation: shake 0.35s ease; }
       `}</style>
 
-      {/* ── Left brand panel (desktop) — campus image ── */}
-      <div className="hidden lg:block relative lg:w-[45%] overflow-hidden">
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage: `url(${fptOnboarding})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-          }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-tr from-slate-950/85 via-slate-900/55 to-slate-950/80" />
-        <div className="relative z-10 flex h-full flex-col justify-between p-12">
+      {/* ── Full-screen campus background ── */}
+      <div
+        className="absolute inset-0"
+        style={{
+          backgroundImage: `url(${fptOnboarding})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      />
+      <div className="absolute inset-0 bg-gradient-to-tr from-slate-950/80 via-slate-900/45 to-slate-950/75" />
+
+      {/* ── Left brand panel (desktop) ── */}
+      <div className="hidden lg:block relative z-10 lg:w-[45%]">
+        <div className="relative flex h-full flex-col justify-between p-12">
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-xl bg-white/10 backdrop-blur-sm border border-white/15 flex items-center justify-center">
               <GraduationCapIcon />
@@ -305,9 +307,12 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* ── Right form panel ── */}
-      <div className="flex-1 flex items-center justify-center px-4 py-8 sm:px-6 lg:px-10 overflow-y-auto">
-        <div className="w-full" style={{ maxWidth: "400px" }}>
+      {/* ── Right form panel (liquid glass) ── */}
+      <div className="relative z-10 flex-1 flex items-center justify-center px-4 py-8 sm:px-6 lg:px-10 overflow-y-auto">
+        <div
+          className="w-full rounded-3xl border border-white/40 bg-white/65 backdrop-blur-2xl backdrop-saturate-150 shadow-2xl p-6 sm:p-8"
+          style={{ maxWidth: "400px" }}
+        >
           {/* Mobile logo (brand panel hidden below lg) */}
           <div className="flex flex-col items-center mb-6 lg:hidden">
             <div
@@ -380,11 +385,10 @@ export default function LoginPage() {
           )}
 
           {/* ── "hoặc" divider ── */}
-          <div className="relative flex items-center justify-center my-5">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border" />
-            </div>
-            <span className="relative bg-page px-3 text-xs font-medium text-text-muted">hoặc</span>
+          <div className="flex items-center gap-3 my-5">
+            <div className="h-px flex-1 bg-border" />
+            <span className="text-xs font-medium text-text-muted">hoặc</span>
+            <div className="h-px flex-1 bg-border" />
           </div>
 
           <form onSubmit={handleSubmit} noValidate>
