@@ -17,6 +17,7 @@ import {
   API_ERROR_STUDENT_NOT_IN_ROSTER,
   API_ERROR_INSUFFICIENT_PERMISSION,
 } from "@/constants/apiErrors";
+import fptOnboarding from "@/assets/images/fpt-onboarding.png";
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 const TabButton = ({ active, onClick, icon, label }) => (
@@ -258,7 +259,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-8 sm:px-6 lg:px-8 bg-page">
+    <div className="min-h-screen lg:h-screen flex flex-col lg:flex-row bg-page lg:overflow-hidden">
       {/* Fonts + keyframes */}
       <style>{`
         @keyframes fadeSlideIn {
@@ -275,51 +276,74 @@ export default function LoginPage() {
         .field-error-shake { animation: shake 0.35s ease; }
       `}</style>
 
-      {/* Card */}
-      <div
-        className="bg-surface rounded-card p-6 sm:p-8 lg:p-10 w-full border border-border"
-        style={{ maxWidth: "400px" }}
-      >
-        {/* Logo */}
-        <div className="flex flex-col items-center mb-7">
-          <div
-            className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4"
-            style={{ background: "linear-gradient(135deg, #6366f1 0%, #4F39F6 100%)" }}
-          >
-            <GraduationCapIcon />
+      {/* ── Left brand panel (desktop) — campus image ── */}
+      <div className="hidden lg:block relative lg:w-[45%] overflow-hidden">
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `url(${fptOnboarding})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-tr from-slate-950/85 via-slate-900/55 to-slate-950/80" />
+        <div className="relative z-10 flex h-full flex-col justify-between p-12">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-xl bg-white/10 backdrop-blur-sm border border-white/15 flex items-center justify-center">
+              <GraduationCapIcon />
+            </div>
+            <span className="text-lg font-semibold tracking-tight text-white">E-HUB</span>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
-             E-HUB
-          </h1>
-          <p className="text-sm text-gray-400 mt-1">Đăng nhập để tiếp tục</p>
+          <div>
+            <h2 className="text-3xl font-semibold leading-snug tracking-tight text-white">
+              Cổng khởi nghiệp<br />sinh viên FPT
+            </h2>
+            <p className="mt-3 max-w-sm text-sm leading-relaxed text-white/70">
+              Kết nối ý tưởng, mentor và nguồn lực — tất cả trong một nơi.
+            </p>
+          </div>
         </div>
+      </div>
 
-        {/* Role Tabs */}
-        <div className="flex bg-subtle rounded-full p-1 mb-7">
-          <TabButton
-            active={isStudent}
-            onClick={() => handleRoleChange(Roles.STUDENT)}
-            icon={<UserIcon />}
-            label="Student"
-          />
-          <TabButton
-            active={!isStudent}
-            onClick={() => handleRoleChange(Roles.LECTURER)}
-            icon={<LectureIcon />}
-            label="Lecturer / Mentor"
-          />
-        </div>
+      {/* ── Right form panel ── */}
+      <div className="flex-1 flex items-center justify-center px-4 py-8 sm:px-6 lg:px-10 overflow-y-auto">
+        <div className="w-full" style={{ maxWidth: "400px" }}>
+          {/* Mobile logo (brand panel hidden below lg) */}
+          <div className="flex flex-col items-center mb-6 lg:hidden">
+            <div
+              className="w-14 h-14 rounded-2xl flex items-center justify-center mb-3"
+              style={{ background: "linear-gradient(135deg, #6366f1 0%, #4F39F6 100%)" }}
+            >
+              <GraduationCapIcon />
+            </div>
+            <h1 className="text-xl font-bold text-text-primary tracking-tight">E-HUB</h1>
+          </div>
 
-        {/* Form Card */}
-        <div className="rounded-2xl p-6 bg-white" style={{ border: "1px solid #EEEEEE" }}>
-          <h2 className="text-base font-bold text-gray-900">
-            {isStudent ? "Đăng nhập sinh viên" : "Đăng nhập giảng viên / mentor"}
-          </h2>
-          <p className="text-xs text-gray-400 mt-0.5 mb-5">
-            {isStudent
-              ? "Nhập thông tin tài khoản sinh viên của bạn"
-              : "Nhập thông tin tài khoản giảng viên / mentor của bạn"}
-          </p>
+          {/* Heading */}
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold text-text-primary tracking-tight">Đăng nhập</h1>
+            <p className="text-sm text-text-muted mt-1">
+              {isStudent
+                ? "Truy cập cổng sinh viên E-HUB"
+                : "Truy cập cổng giảng viên / mentor"}
+            </p>
+          </div>
+
+          {/* Role Tabs */}
+          <div className="flex bg-subtle rounded-full p-1 mb-5">
+            <TabButton
+              active={isStudent}
+              onClick={() => handleRoleChange(Roles.STUDENT)}
+              icon={<UserIcon />}
+              label="Student"
+            />
+            <TabButton
+              active={!isStudent}
+              onClick={() => handleRoleChange(Roles.LECTURER)}
+              icon={<LectureIcon />}
+              label="Lecturer / Mentor"
+            />
+          </div>
 
           {/* ── General error banner (form + Google) ── */}
           {(fieldErrors.general && fieldErrors.general !== "error") || authError ? (
@@ -360,7 +384,7 @@ export default function LoginPage() {
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-border" />
             </div>
-            <span className="relative bg-surface px-3 text-xs font-medium text-text-muted">hoặc</span>
+            <span className="relative bg-page px-3 text-xs font-medium text-text-muted">hoặc</span>
           </div>
 
           <form onSubmit={handleSubmit} noValidate>
