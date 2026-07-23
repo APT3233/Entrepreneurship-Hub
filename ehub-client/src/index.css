@@ -1,6 +1,60 @@
 /* ── Tailwind CSS ──────────────────────────────────────── */
 @import "tailwindcss";
 
+/* ── Design tokens (Tailwind v4 @theme → utilities + CSS vars) ──────────────
+   Calm-dashboard palette. No hardcoded colors in components — use these tokens.
+   Utilities generated: bg-page, bg-surface, bg-subtle, border-border,
+   border-border-strong, text-text-primary, text-text-secondary, text-text-muted. */
+@theme {
+  --color-page: #FAFAF9;
+  --color-surface: #FFFFFF;
+  --color-subtle: #F5F5F4;
+  --color-border: #E7E5E4;
+  --color-border-strong: #D6D3D1;
+  --color-text-primary: #1C1917;
+  --color-text-secondary: #57534E;
+  --color-text-muted: #A8A29E;
+
+  /* FPT accent — #F37021 is a placeholder until the exact brand hex is confirmed;
+     swap this one line to rebrand. Utilities: bg-accent, text-accent,
+     hover:bg-accent-hover, bg-accent-bg. */
+  --color-accent: #F37021;
+  --color-accent-hover: #D65F17;
+  --color-accent-bg: #FDEEE3;
+
+  /* Status pairs — bg + text. Caller picks the status; component never derives it. */
+  --color-success-bg: #ECFDF5;
+  --color-success-text: #065F46;
+  --color-warning-bg: #FFFBEB;
+  --color-warning-text: #92400E;
+  --color-danger-bg: #FEF2F2;
+  --color-danger-text: #991B1B;
+  --color-neutral-bg: #F5F5F4;
+  --color-neutral-text: #57534E;
+
+  /* Type scale 22/18/16/14/13/12. Only weights 400 (normal) & 500 (medium) are used.
+     Defaults cover text-lg(18)/base(16)/sm(14)/xs(12); add the missing 22 & 13. */
+  --text-h1: 22px;
+  --text-h1--line-height: 1.3;
+  --text-label: 13px;
+  --text-label--line-height: 1.5;
+
+  /* Radius — default spacing scale (4/8/12/16/24/32 = 1/2/3/4/6/8) is kept as-is.
+     Utilities: rounded-control (controls), rounded-card (cards). */
+  --radius-control: 8px;
+  --radius-card: 12px;
+}
+
+/* Centered page container, max 1280px. */
+:root {
+  --content-max: 1280px;
+}
+.container-page {
+  width: 100%;
+  max-width: var(--content-max);
+  margin-inline: auto;
+}
+
 /* ── Inter Variable Font ─────────────────────────────────── */
 @font-face {
   font-family: "Inter";
@@ -21,6 +75,26 @@
 /* Cỡ chữ nền responsive: nhỏ trên màn hẹp, vừa trên màn rộng */
 html {
   font-size: clamp(14px, 0.875rem + 0.25vw, 16px);
+}
+
+body {
+  background-color: var(--color-page);
+  color: var(--color-text-primary);
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  line-height: 1.3;
+  font-weight: 500;
+}
+
+/* Calm surface: no gradients or shadows in base/global styles.
+   Borders carry separation; the only allowed shadow is the focus ring (below).
+   Per-screen shadow/gradient removal happens in later phases. */
+body {
+  background-image: none;
+  box-shadow: none;
 }
 
 *,
@@ -52,4 +126,19 @@ html {
 }
 .page-fade-in {
   animation: pageFadeIn 0.2s ease-out;
+}
+
+/* Global focus ring — never bare `outline: none`. Accent ring on keyboard focus. */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Respect reduced-motion: disable route/page entrance animations. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-nav-progress,
+  .page-fade-in {
+    animation: none;
+  }
 }
