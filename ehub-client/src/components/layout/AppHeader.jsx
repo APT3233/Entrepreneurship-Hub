@@ -24,14 +24,14 @@ function UserAvatar({ user }) {
       <img
         src={url}
         alt=""
-        className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border border-gray-200 shrink-0 bg-gray-50"
+        className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border border-border shrink-0 bg-subtle"
         onError={() => setFailed(true)}
       />
     );
   }
   return (
-    <div className="relative w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-white bg-gray-200 flex items-center justify-center shrink-0">
-      <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400" />
+    <div className="relative w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-surface bg-subtle flex items-center justify-center shrink-0">
+      <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-text-muted" />
     </div>
   );
 }
@@ -58,37 +58,37 @@ export default function AppHeader({ user = null, onLogout }) {
   };
 
   return (
-    <header className="shrink-0 w-full bg-white border-b border-gray-200 shadow-sm">
+    <header className="shrink-0 w-full bg-surface border-b border-border">
       <div className="flex items-center justify-end gap-3 sm:gap-6 px-4 sm:px-6 py-2 sm:py-3">
         <LanguageSwitcher />
-        <div className="h-6 sm:h-8 w-px bg-gray-200 shrink-0" />
+        <div className="h-6 sm:h-8 w-px bg-border shrink-0" />
         <div 
           onClick={handleProfileClick}
           className="flex items-center gap-1.5 sm:gap-2 min-w-0 cursor-pointer group/header"
         >
           <UserAvatar user={user} />
           <div className="text-right leading-tight min-w-0">
-            <p className="text-xs sm:text-sm font-semibold text-gray-800 truncate group-hover/header:text-indigo-600 transition-colors" title={name}>
+            <p className="text-xs sm:text-sm font-medium text-text-primary truncate group-hover/header:text-accent transition-colors" title={name}>
               {name}
             </p>
             {major ? (
-              <p className="text-[11px] sm:text-xs text-gray-700 font-medium truncate mt-0.5" title={major}>
+              <p className="text-[11px] sm:text-xs text-text-secondary font-medium truncate mt-0.5" title={major}>
                 {major}
               </p>
             ) : null}
             {!major && !email && department ? (
-              <p className="text-[11px] sm:text-xs text-gray-500 truncate">{department}</p>
+              <p className="text-[11px] sm:text-xs text-text-muted truncate">{department}</p>
             ) : null}
             {!major && !email && !department && rolesLine ? (
-              <p className="text-[11px] sm:text-xs text-gray-500 truncate">{rolesLine}</p>
+              <p className="text-[11px] sm:text-xs text-text-muted truncate">{rolesLine}</p>
             ) : null}
           </div>
         </div>
-        <div className="h-6 sm:h-8 w-px bg-gray-200 shrink-0" />
+        <div className="h-6 sm:h-8 w-px bg-border shrink-0" />
         <button
           type="button"
           onClick={onLogout}
-          className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-semibold text-gray-700 hover:text-indigo-600 transition-colors duration-200 group shrink-0 cursor-pointer"
+          className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-medium text-text-secondary hover:text-accent transition-colors duration-200 group shrink-0 cursor-pointer"
         >
           <LogOut className="w-4 h-4 sm:w-[18px] sm:h-[18px] group-hover:translate-x-0.5 transition-transform" />
           {t("header.logoutButton")}
