@@ -21,32 +21,14 @@ import { useTranslation } from "@/context/TranslationContext";
  * variant: logout | lock | unlock | delete | remove | archive | restore | revoke | send | warning | confirm | info
  */
 
+// `color` prop still accepted (behavior unchanged); it now only tints the header
+// icon via status tokens. The primary action is always the single accent color.
 const COLOR_MAP = {
-  orange: {
-    iconBg: "bg-orange-100",
-    iconText: "text-orange-500",
-    btn: "bg-orange-500 hover:bg-orange-600 shadow-orange-200",
-  },
-  red: {
-    iconBg: "bg-red-100",
-    iconText: "text-red-500",
-    btn: "bg-red-500 hover:bg-red-600 shadow-red-200",
-  },
-  blue: {
-    iconBg: "bg-blue-100",
-    iconText: "text-blue-500",
-    btn: "bg-blue-500 hover:bg-blue-600 shadow-blue-200",
-  },
-  green: {
-    iconBg: "bg-green-100",
-    iconText: "text-green-500",
-    btn: "bg-green-500 hover:bg-green-600 shadow-green-200",
-  },
-  indigo: {
-    iconBg: "bg-indigo-100",
-    iconText: "text-indigo-500",
-    btn: "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200",
-  },
+  orange: { iconBg: "bg-accent-bg", iconText: "text-accent" },
+  red: { iconBg: "bg-danger-bg", iconText: "text-danger-text" },
+  blue: { iconBg: "bg-neutral-bg", iconText: "text-text-secondary" },
+  green: { iconBg: "bg-success-bg", iconText: "text-success-text" },
+  indigo: { iconBg: "bg-accent-bg", iconText: "text-accent" },
 };
 
 const VARIANT_CONFIG = {
@@ -130,26 +112,26 @@ export default function ConfirmModal({
         if (e.target === e.currentTarget) handleClose();
       }}
     >
-      <div className="w-full max-w-sm bg-white rounded-3xl shadow-2xl px-7 py-8 flex flex-col items-center text-center gap-5">
+      <div className="w-full max-w-sm bg-surface rounded-card border border-border px-7 py-8 flex flex-col items-center text-center gap-5">
         <div className={`w-16 h-16 rounded-full flex items-center justify-center ${c.iconBg}`}>
           <span className={c.iconText}>{headerIcon}</span>
         </div>
 
         <div className="flex flex-col gap-2">
-          <h2 className="text-lg font-bold text-gray-900">{finalTitle}</h2>
-          <p className="text-sm text-gray-400 leading-relaxed">{finalSubtitle}</p>
+          <h2 className="text-lg font-medium text-text-primary">{finalTitle}</h2>
+          <p className="text-sm text-text-secondary leading-relaxed">{finalSubtitle}</p>
         </div>
 
         <div className="w-full flex flex-col gap-2.5 mt-1">
           <button
             type="button"
             onClick={onYes}
-            className={`
-              w-full py-3.5 rounded-2xl text-white text-sm font-semibold
+            className="
+              w-full py-3.5 rounded-control bg-accent hover:bg-accent-hover
+              text-white text-sm font-medium
               flex items-center justify-center gap-2 cursor-pointer
-              shadow-md transition-all duration-150 active:scale-[0.98]
-              ${c.btn}
-            `}
+              transition-colors duration-150
+            "
           >
             {finalYesLabel}
             {buttonIcon}
@@ -158,7 +140,7 @@ export default function ConfirmModal({
           <button
             type="button"
             onClick={handleClose}
-            className="w-full py-3.5 rounded-2xl bg-gray-50 hover:bg-gray-100 text-gray-600 text-sm font-semibold transition-colors duration-150 cursor-pointer"
+            className="w-full py-3.5 rounded-control border border-border bg-surface hover:bg-subtle text-text-secondary text-sm font-medium transition-colors duration-150 cursor-pointer"
           >
             {finalNoLabel}
           </button>
