@@ -394,7 +394,7 @@ export default function LoginPage() {
               <br />
               sinh viên FPT
             </h2>
-            <p className="mt-3 max-w-xl text-sm leading-relaxed text-text-secondary">
+            <p className="max-w-xl text-sm leading-relaxed text-yellow-800">
               Kết nối ý tưởng, mentor và nguồn lực — tất cả trong một nơi.
             </p>
           </div>
