@@ -127,3 +127,18 @@ body {
 .page-fade-in {
   animation: pageFadeIn 0.2s ease-out;
 }
+
+/* Global focus ring — never bare `outline: none`. Accent ring on keyboard focus. */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Respect reduced-motion: disable route/page entrance animations. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-nav-progress,
+  .page-fade-in {
+    animation: none;
+  }
+}
