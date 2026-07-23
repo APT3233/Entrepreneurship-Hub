@@ -89,6 +89,14 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 500;
 }
 
+/* Calm surface: no gradients or shadows in base/global styles.
+   Borders carry separation; the only allowed shadow is the focus ring (below).
+   Per-screen shadow/gradient removal happens in later phases. */
+body {
+  background-image: none;
+  box-shadow: none;
+}
+
 *,
 *::before,
 *::after {
