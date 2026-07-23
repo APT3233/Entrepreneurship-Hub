@@ -115,6 +115,7 @@ export default function AppSidebar({ items, subtitle }) {
               return (
                 <div
                   key={item.path}
+                  title={!isOpen ? item.label : undefined}
                   style={{ transitionDelay: isOpen ? `${i * 20}ms` : "0ms" }}
                   className="group flex items-center gap-3 px-[14px] py-[11px] rounded-xl text-sm font-medium transition-all duration-200 overflow-hidden whitespace-nowrap text-text-muted opacity-60 cursor-not-allowed"
                 >
@@ -138,6 +139,7 @@ export default function AppSidebar({ items, subtitle }) {
               <NavLink
                 key={item.path}
                 to={item.path}
+                title={!isOpen ? item.label : undefined}
                 style={{ transitionDelay: isOpen ? `${i * 20}ms` : "0ms" }}
                 className={
                   `group flex items-center gap-3 px-[14px] py-[11px] rounded-xl text-sm font-medium
