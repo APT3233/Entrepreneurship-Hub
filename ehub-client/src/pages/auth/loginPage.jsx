@@ -25,7 +25,7 @@ const TabButton = ({ active, onClick, icon, label }) => (
     onClick={onClick}
     className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-full text-sm font-medium
       transition-all duration-200 cursor-pointer
-      ${active ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+      ${active ? "bg-accent-bg text-accent" : "text-text-secondary hover:text-text-primary"}`}
   >
     {icon}
     {label}
@@ -295,7 +295,7 @@ export default function LoginPage() {
         </div>
 
         {/* Role Tabs */}
-        <div className="flex bg-gray-100 rounded-full p-1 mb-7">
+        <div className="flex bg-subtle rounded-full p-1 mb-7">
           <TabButton
             active={isStudent}
             onClick={() => handleRoleChange(Roles.STUDENT)}
