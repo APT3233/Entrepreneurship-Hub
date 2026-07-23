@@ -31,6 +31,13 @@
   --color-danger-text: #991B1B;
   --color-neutral-bg: #F5F5F4;
   --color-neutral-text: #57534E;
+
+  /* Type scale 22/18/16/14/13/12. Only weights 400 (normal) & 500 (medium) are used.
+     Defaults cover text-lg(18)/base(16)/sm(14)/xs(12); add the missing 22 & 13. */
+  --text-h1: 22px;
+  --text-h1--line-height: 1.3;
+  --text-label: 13px;
+  --text-label--line-height: 1.5;
 }
 
 /* ── Inter Variable Font ─────────────────────────────────── */
@@ -58,6 +65,13 @@ html {
 body {
   background-color: var(--color-page);
   color: var(--color-text-primary);
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  line-height: 1.3;
+  font-weight: 500;
 }
 
 *,
