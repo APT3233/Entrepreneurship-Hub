@@ -83,14 +83,13 @@ export default function AppSidebar({ items, subtitle }) {
         className="
           hidden md:flex
           relative h-screen flex-col shrink-0 overflow-hidden
-          bg-white border-r border-gray-100
+          bg-surface border-r border-border
           transition-[width] duration-300 ease-in-out
-          shadow-[2px_0_12px_rgba(0,0,0,0.06)]
         "
       >
         {/* Branding */}
-        <div className="flex items-center gap-3 px-[14px] py-5 border-b border-gray-100 overflow-hidden">
-          <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center shrink-0 shadow-sm">
+        <div className="flex items-center gap-3 px-[14px] py-5 border-b border-border overflow-hidden">
+          <div className="w-10 h-10 rounded-xl bg-accent flex items-center justify-center shrink-0">
             <GraduationCapIcon />
           </div>
           <div
@@ -100,10 +99,10 @@ export default function AppSidebar({ items, subtitle }) {
             }}
             className="transition-all duration-300 ease-in-out whitespace-nowrap overflow-hidden"
           >
-            <p className="text-[17px] font-bold text-indigo-600 tracking-tight leading-tight">
+            <p className="text-[17px] font-medium text-accent tracking-tight leading-tight">
               E-HUB
             </p>
-            <p className="text-xs text-gray-400 font-medium mt-0.5">
+            <p className="text-xs text-text-muted font-medium mt-0.5">
               {actualSubtitle}
             </p>
           </div>
@@ -117,10 +116,10 @@ export default function AppSidebar({ items, subtitle }) {
                 <div
                   key={item.path}
                   style={{ transitionDelay: isOpen ? `${i * 20}ms` : "0ms" }}
-                  className="group flex items-center gap-3 px-[14px] py-[11px] rounded-xl text-sm font-medium transition-all duration-200 overflow-hidden whitespace-nowrap text-slate-300 cursor-not-allowed"
+                  className="group flex items-center gap-3 px-[14px] py-[11px] rounded-xl text-sm font-medium transition-all duration-200 overflow-hidden whitespace-nowrap text-text-muted opacity-60 cursor-not-allowed"
                 >
                   <span className="relative shrink-0">
-                    <item.icon size={20} className="transition-colors duration-200 text-slate-300" />
+                    <item.icon size={20} className="transition-colors duration-200 text-text-muted" />
                   </span>
                   <span
                     style={{
@@ -145,8 +144,8 @@ export default function AppSidebar({ items, subtitle }) {
                  transition-all duration-200 overflow-hidden whitespace-nowrap
                  ${
                    active
-                     ? "bg-indigo-50 text-indigo-600"
-                     : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
+                     ? "bg-accent-bg text-accent"
+                     : "text-text-secondary hover:bg-subtle hover:text-text-primary"
                  }`
                 }
               >
@@ -155,12 +154,12 @@ export default function AppSidebar({ items, subtitle }) {
                     size={20}
                     className={`transition-colors duration-200 ${
                       active
-                        ? "text-indigo-500"
-                        : "text-slate-400 group-hover:text-slate-600"
+                        ? "text-accent"
+                        : "text-text-muted group-hover:text-text-secondary"
                     }`}
                   />
                   {active && !isOpen && (
-                    <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-indigo-500" />
+                    <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-accent" />
                   )}
                 </span>
                 <span
@@ -178,15 +177,15 @@ export default function AppSidebar({ items, subtitle }) {
         </nav>
 
         {/* Footer — Pin */}
-        <div className="mt-auto border-t border-gray-100 px-[14px] py-4 flex items-center gap-3 overflow-hidden">
+        <div className="mt-auto border-t border-border px-[14px] py-4 flex items-center gap-3 overflow-hidden">
           <button
             onClick={togglePin}
             title={pinned ? t("common.unpin") : t("common.pin")}
             className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 cursor-pointer
               ${
                 pinned
-                  ? "bg-indigo-100 text-indigo-600 hover:bg-indigo-200"
-                  : "text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                  ? "bg-accent-bg text-accent hover:bg-accent-bg"
+                  : "text-text-muted hover:bg-subtle hover:text-text-secondary"
               }`}
           >
             {pinned ? (
@@ -200,9 +199,9 @@ export default function AppSidebar({ items, subtitle }) {
             className="text-xs whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out"
           >
             {pinned ? (
-              <span className="text-indigo-500 font-medium">{t("common.pinned")}</span>
+              <span className="text-accent font-medium">{t("common.pinned")}</span>
             ) : (
-              <span className="text-gray-400">{t("common.autoCollapse")}</span>
+              <span className="text-text-muted">{t("common.autoCollapse")}</span>
             )}
           </span>
         </div>
@@ -212,9 +211,8 @@ export default function AppSidebar({ items, subtitle }) {
       <nav
         className="
         md:hidden fixed bottom-0 left-0 right-0 z-50
-        bg-white/95 backdrop-blur-md
-        border-t border-gray-100
-        shadow-[0_-1px_16px_rgba(0,0,0,0.08)]
+        bg-surface/95 backdrop-blur-md
+        border-t border-border
         flex items-center justify-around
         px-2 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))]
       "
@@ -222,7 +220,7 @@ export default function AppSidebar({ items, subtitle }) {
         {navItems.map((item, index) => {
           if (item.disabled) {
             return (
-              <div key={item.path} className="flex flex-col items-center gap-1 py-1 flex-1 min-w-0 rounded-xl text-slate-300 cursor-not-allowed">
+              <div key={item.path} className="flex flex-col items-center gap-1 py-1 flex-1 min-w-0 rounded-xl text-text-muted opacity-60 cursor-not-allowed">
                 <span className="w-8 h-8 flex items-center justify-center rounded-xl transition-all duration-200">
                   <item.icon size={18} strokeWidth={1.8} />
                 </span>
@@ -237,20 +235,20 @@ export default function AppSidebar({ items, subtitle }) {
               to={item.path}
               className={
                 `flex flex-col items-center gap-1 py-1 flex-1 min-w-0 rounded-xl transition-all duration-200
-               ${active ? "text-indigo-600" : "text-slate-400"}`
+               ${active ? "text-accent" : "text-text-muted"}`
               }
             >
               <span
                 className={`
                 w-8 h-8 flex items-center justify-center rounded-xl transition-all duration-200
-                ${active ? "bg-indigo-50 scale-110" : ""}
+                ${active ? "bg-accent-bg scale-110" : ""}
               `}
               >
                 <item.icon size={18} strokeWidth={active ? 2.5 : 1.8} />
               </span>
               <span
                 className={`text-[9px] font-medium leading-none w-full text-center px-0.5 whitespace-nowrap overflow-hidden text-ellipsis transition-all duration-200 ${
-                  active ? "text-indigo-600" : "text-slate-400"
+                  active ? "text-accent" : "text-text-muted"
                 }`}
               >
                 {item.label}
