@@ -346,6 +346,22 @@ export default function LoginPage() {
           border-color: var(--color-accent);
           box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
         }
+        /* Reset input mặc định + khử nền autofill của Chrome (thủ phạm "khung trong") */
+        .glass-input input {
+          border: 0;
+          outline: none;
+          background: transparent;
+          -webkit-appearance: none;
+          appearance: none;
+        }
+        .glass-input input:-webkit-autofill,
+        .glass-input input:-webkit-autofill:hover,
+        .glass-input input:-webkit-autofill:focus {
+          -webkit-box-shadow: 0 0 0 1000px transparent inset;
+          -webkit-text-fill-color: #1f2937;
+          caret-color: #1f2937;
+          transition: background-color 9999s ease-in-out 0s;
+        }
       `}</style>
 
       {/* ── Full-screen campus background ── */}
@@ -357,13 +373,11 @@ export default function LoginPage() {
           backgroundPosition: "center"
         }}
       />
-      <div className="absolute inset-0 bg-gradient-to-tr from-white/100 via-slate-800/35 to-slate-950/10" />
+      <div className="absolute inset-0 bg-linear-to-tr from-white via-slate-800/35 to-slate-950/10" />
 
       {/* ── Left brand panel (desktop) ── */}
       <div className="hidden lg:block relative z-10 lg:w-[45%]">
-        <div
-          className="relative flex h-full flex-col justify-between p-12"
-          style={{ textShadow: "0 1px 12px rgba(0, 0, 0, 0.55)" }}>
+        <div className="relative flex h-full flex-col justify-between p-12">
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-xl bg-white/10 backdrop-blur-sm border border-white/15 flex items-center justify-center">
               <GraduationCapIcon />
@@ -373,25 +387,14 @@ export default function LoginPage() {
             </span>
           </div>
           <div>
-            <h2
-              className="text-5xl lg:text-6xl font-black leading-[1.05] tracking-tight text-white"
-              style={{ filter: "drop-shadow(0 3px 16px rgba(0, 0, 0, 0.6))" }}>
+            <h2 className="text-5xl lg:text-6xl font-black text-accent">
               Cổng
               <br />
-              <span
-                style={{
-                  backgroundImage:
-                    "linear-gradient(135deg, #ffb45a 0%, #f7943f 45%, #f26f20 100%)",
-                  WebkitBackgroundClip: "text",
-                  backgroundClip: "text",
-                  color: "transparent"
-                }}>
-                khởi nghiệp
-              </span>
+              <span>khởi nghiệp</span>
               <br />
               sinh viên FPT
             </h2>
-            <p className="mt-3 max-w-sm text-sm leading-relaxed text-white/70">
+            <p className="mt-3 max-w-xl text-sm leading-relaxed text-text-secondary">
               Kết nối ý tưởng, mentor và nguồn lực — tất cả trong một nơi.
             </p>
           </div>
