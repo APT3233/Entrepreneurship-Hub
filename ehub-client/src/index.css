@@ -21,6 +21,16 @@
   --color-accent: #F37021;
   --color-accent-hover: #D65F17;
   --color-accent-bg: #FDEEE3;
+
+  /* Status pairs — bg + text. Caller picks the status; component never derives it. */
+  --color-success-bg: #ECFDF5;
+  --color-success-text: #065F46;
+  --color-warning-bg: #FFFBEB;
+  --color-warning-text: #92400E;
+  --color-danger-bg: #FEF2F2;
+  --color-danger-text: #991B1B;
+  --color-neutral-bg: #F5F5F4;
+  --color-neutral-text: #57534E;
 }
 
 /* ── Inter Variable Font ─────────────────────────────────── */
