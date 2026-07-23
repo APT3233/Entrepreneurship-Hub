@@ -342,6 +342,19 @@ export default function LoginPage() {
             </div>
           )}
 
+          {/* ── Google (above the form) ── */}
+          {googleLoading ? (
+            <div className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gray-100 border border-gray-200 text-gray-600 text-sm">
+              <svg className="animate-spin w-5 h-5" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+              </svg>
+              Đang xử lý đăng nhập Google...
+            </div>
+          ) : (
+            <GoogleButton onClick={handleGoogleLogin} disabled={loading} />
+          )}
+
           <form onSubmit={handleSubmit} noValidate>
 
             {/* ── ID Field ── */}
@@ -442,25 +455,6 @@ export default function LoginPage() {
                 "Đăng nhập"
               )}
             </button>
-
-            {/* ── Or / Google ── */}
-            <div className="relative flex items-center justify-center my-5">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-200" />
-              </div>
-              <span className="relative bg-white px-3 text-xs font-medium text-gray-500">Or</span>
-            </div>
-            {googleLoading ? (
-              <div className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gray-100 border border-gray-200 text-gray-600 text-sm">
-                <svg className="animate-spin w-5 h-5" viewBox="0 0 24 24" fill="none">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-                </svg>
-                Đang xử lý đăng nhập Google...
-              </div>
-            ) : (
-              <GoogleButton onClick={handleGoogleLogin} disabled={loading} />
-            )}
           </form>
         </div>
 
