@@ -17,7 +17,7 @@ import {
   API_ERROR_STUDENT_NOT_IN_ROSTER,
   API_ERROR_INSUFFICIENT_PERMISSION,
 } from "@/constants/apiErrors";
-import fptOnboarding from "@/assets/images/fpt-onboarding.png";
+import fptOnboarding from "@/assets/images/background-fpt.jpeg";
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 const TabButton = ({ active, onClick, icon, label }) => (
