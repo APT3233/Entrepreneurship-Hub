@@ -17,10 +17,10 @@ function InfoField({ label, value, onRequestChange, isLongText = false }) {
       {onRequestChange && (
         <button
           onClick={onRequestChange}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-indigo-100 bg-white text-indigo-600 text-[11px] font-bold hover:bg-indigo-50 hover:border-indigo-200 transition-all active:scale-95 cursor-pointer shadow-sm shadow-indigo-500/5"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-control border border-border bg-transparent text-text-secondary text-xs font-medium hover:bg-subtle transition-colors cursor-pointer"
         >
           <Pencil size={12} />
-          Request đổi
+          Yêu cầu đổi
         </button>
       )}
     </div>
