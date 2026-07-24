@@ -7,6 +7,7 @@ import AdminTable from "@/pages/admin/components/AdminTable";
 import FormModal, { Field, inputClass } from "@/pages/admin/components/FormModal";
 import StatusBadge from "@/pages/admin/components/StatusBadge";
 import { Panel, SelectField } from "@/pages/admin/incubation/components";
+import PageHeader from "@/components/ui/PageHeader";
 import { formatDate } from "@/utils/dateTimeDisplay";
 
 const statusValues = ["interested", "applied"];
@@ -87,6 +88,7 @@ export default function StudentOpportunitiesPage() {
 
   return (
     <div className="space-y-5">
+      <PageHeader title="Cơ hội" description="Các cuộc thi và chương trình ươm tạo đang mở" />
       <Panel title={t("student.startupProfile.panels.opportunities")} actions={<select className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-bold text-slate-700" value={selectedStartupId} onChange={(e) => setSelectedStartupId(e.target.value)}>{startups.map((startup) => <option key={startup.id} value={startup.id}>{startup.startup_name}</option>)}</select>}>
         <AdminTable columns={columns} rows={opportunities} emptyText={t("student.startupProfile.empty.opportunities")} />
       </Panel>
