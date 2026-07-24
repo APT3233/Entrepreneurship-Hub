@@ -5,6 +5,8 @@ import MentorWorkflowApi from "@/api/mentorWorkflow";
 import AdminTable from "@/pages/admin/components/AdminTable";
 import StatusBadge from "@/pages/admin/components/StatusBadge";
 import PageHeader from "@/components/ui/PageHeader";
+import EmptyState from "@/components/ui/EmptyState";
+import { CalendarClock } from "lucide-react";
 import { formatDate } from "@/utils/dateTimeDisplay";
 
 export default function StudentMentoringPage() {
@@ -18,7 +20,15 @@ export default function StudentMentoringPage() {
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <PageHeader title="Mentoring" description="Các buổi mentoring của nhóm bạn" />
-      <AdminTable columns={columns} rows={rows} loading={loading} error={error} emptyText="No mentoring sessions" onRowClick={(row) => navigate(`/student/mentoring/sessions/${row.id}`)} />
+      {!loading && !error && rows.length === 0 ? (
+        <EmptyState
+          icon={<CalendarClock size={24} />}
+          title="Đặt buổi mentoring đầu tiên"
+          description="Chọn khung giờ trống của mentor để đặt buổi mentoring cho nhóm bạn."
+        />
+      ) : (
+        <AdminTable columns={columns} rows={rows} loading={loading} error={error} emptyText="No mentoring sessions" onRowClick={(row) => navigate(`/student/mentoring/sessions/${row.id}`)} />
+      )}
     </div>
   );
 }
