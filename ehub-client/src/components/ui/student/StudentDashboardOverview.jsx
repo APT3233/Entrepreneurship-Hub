@@ -14,6 +14,7 @@ import {
 import { LastNameAvatar } from "@/components/icons/ui";
 import { Link } from "react-router-dom";
 import Card from "@/components/ui/Card/Card";
+import StatusBadge from "@/components/ui/StatusBadge";
 
 /**
  * Stat Card component for the dashboard
@@ -95,11 +96,11 @@ export default function StudentDashboardOverview({ group, user, statsData, loadi
   const getStatusBadge = (status) => {
     switch (status) {
       case 'eligible':
-        return <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase">Đủ điều kiện</span>;
+        return <StatusBadge status="success" label="Đủ điều kiện" />;
       case 'needs_review':
-        return <span className="bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase">Cần review</span>;
+        return <StatusBadge status="warning" label="Cần review" />;
       default:
-        return <span className="bg-rose-500/20 text-rose-300 border border-rose-500/30 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase">Chưa đạt</span>;
+        return <StatusBadge status="danger" label="Chưa đạt" />;
     }
   };
 
@@ -127,16 +128,16 @@ export default function StudentDashboardOverview({ group, user, statsData, loadi
           <Card className="p-6">
             <div className="flex flex-col h-full justify-between gap-6">
               <div>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-control bg-subtle text-text-secondary text-xs font-medium">
-                    <Target size={12} />
-                    Dự án hiện tại
-                  </div>
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-control bg-subtle text-text-secondary text-xs font-medium mb-4">
+                  <Target size={12} />
+                  Dự án hiện tại
+                </div>
+                <div className="flex items-center gap-3 mb-2">
+                  <h2 className="text-lg font-medium text-text-primary leading-tight">
+                    {group.group_name || "Tên nhóm chưa cập nhật"}
+                  </h2>
                   {getStatusBadge(memberStats.status)}
                 </div>
-                <h2 className="text-lg font-medium text-text-primary mb-2 leading-tight">
-                  {group.group_name || "Tên nhóm chưa cập nhật"}
-                </h2>
                 <p className="text-text-secondary text-sm max-w-xl line-clamp-2 leading-relaxed">
                   {group.topic || "Đề tài dự án chưa được thiết lập. Hãy thảo luận với Mentor để cập nhật đề tài."}
                 </p>
