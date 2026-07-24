@@ -49,7 +49,7 @@ export default function StudentGroupOverviewSection({ group }) {
         <div className="flex flex-col lg:flex-row gap-8 items-stretch">
           {/* Left: Group Information Card */}
           <div className="flex-1">
-            <div className="bg-white rounded-[32px] border border-gray-100 p-8 shadow-sm h-full">
+            <div className="bg-surface rounded-card border border-border p-8 h-full">
               <div className="flex items-center gap-3 mb-8">
                 <div className="w-10 h-10 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600">
                   <Info size={20} />
@@ -85,7 +85,7 @@ export default function StudentGroupOverviewSection({ group }) {
 
           {/* Right: Group Status Card */}
           <div className="w-full lg:w-[400px] shrink-0">
-            <div className="bg-white rounded-[32px] border border-gray-100 p-8 shadow-sm flex flex-col h-full">
+            <div className="bg-surface rounded-card border border-border p-8 flex flex-col h-full">
               <div className="flex items-center gap-3 mb-8 px-2">
                 <CheckCircle2 className="text-emerald-500 fill-emerald-500 text-white" size={24} strokeWidth={2.5} />
                 <h2 className="text-[22px] font-bold text-gray-900 tracking-tight">Trạng thái nhóm</h2>
@@ -137,7 +137,7 @@ export default function StudentGroupOverviewSection({ group }) {
         {/* Bottom Section: Members List */}
         <div className="flex flex-col lg:flex-row gap-8">
           <div className="flex-1">
-            <div className="bg-white rounded-[32px] border border-gray-100 overflow-hidden shadow-sm">
+            <div className="bg-surface rounded-card border border-border overflow-hidden">
               <div className="p-8 pb-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600">
