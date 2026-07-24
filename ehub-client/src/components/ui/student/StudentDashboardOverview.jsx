@@ -16,34 +16,7 @@ import { Link } from "react-router-dom";
 import Card from "@/components/ui/Card/Card";
 import StatusBadge from "@/components/ui/StatusBadge";
 import Banner from "@/components/ui/Banner";
-
-/**
- * Stat Card component for the dashboard
- */
-function StatCard({ icon: Icon, label, value, iconColor, bgColor, subValue, to }) {
-  const content = (
-    <div className="bg-white rounded-[24px] p-5 border border-gray-100 shadow-sm hover:shadow-md transition-all group h-full cursor-pointer">
-      <div className="flex items-start justify-between mb-4">
-        <div className={`p-3 rounded-2xl ${bgColor} flex items-center justify-center transition-colors`}>
-          <Icon className={`${iconColor}`} size={20} strokeWidth={2.5} />
-        </div>
-        {subValue && (
-          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{subValue}</span>
-        )}
-      </div>
-      <div>
-        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">{label}</p>
-        <p className="text-xl font-black text-gray-900 tracking-tight">{value}</p>
-      </div>
-    </div>
-  );
-
-  if (to) {
-    return <Link to={to} className="block h-full">{content}</Link>;
-  }
-
-  return content;
-}
+import StatCard from "@/components/ui/Card/StatCard";
 
 export default function StudentDashboardOverview({ group, user, statsData, loading }) {
   if (!group) return null;
@@ -176,7 +149,9 @@ export default function StudentDashboardOverview({ group, user, statsData, loadi
           {/* Stat Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-8">
             {stats.map((stat, idx) => (
-              <StatCard key={idx} {...stat} />
+              <Link key={idx} to={stat.to} className="block h-full">
+                <StatCard title={stat.label} value={stat.value} className="h-full" />
+              </Link>
             ))}
           </div>
         </div>
