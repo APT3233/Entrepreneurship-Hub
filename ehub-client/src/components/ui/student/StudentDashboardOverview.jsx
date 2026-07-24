@@ -15,6 +15,7 @@ import { LastNameAvatar } from "@/components/icons/ui";
 import { Link } from "react-router-dom";
 import Card from "@/components/ui/Card/Card";
 import StatusBadge from "@/components/ui/StatusBadge";
+import Banner from "@/components/ui/Banner";
 
 /**
  * Stat Card component for the dashboard
@@ -138,9 +139,11 @@ export default function StudentDashboardOverview({ group, user, statsData, loadi
                   </h2>
                   {getStatusBadge(memberStats.status)}
                 </div>
-                <p className="text-text-secondary text-sm max-w-xl line-clamp-2 leading-relaxed">
-                  {group.topic || "Đề tài dự án chưa được thiết lập. Hãy thảo luận với Mentor để cập nhật đề tài."}
-                </p>
+                {group.topic && (
+                  <p className="text-text-secondary text-sm max-w-xl line-clamp-2 leading-relaxed">
+                    {group.topic}
+                  </p>
+                )}
               </div>
 
               <div className="flex flex-wrap items-center justify-between gap-4">
@@ -161,6 +164,14 @@ export default function StudentDashboardOverview({ group, user, statsData, loadi
               </div>
             </div>
           </Card>
+
+          {!group.topic && (
+            <div className="mt-4">
+              <Banner variant="warning" icon={<Target size={16} />}>
+                Đề tài dự án chưa được thiết lập. Hãy thảo luận với Mentor để cập nhật đề tài.
+              </Banner>
+            </div>
+          )}
 
           {/* Stat Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-8">
