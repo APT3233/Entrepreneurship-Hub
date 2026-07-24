@@ -8,6 +8,8 @@ import FormModal, { Field, inputClass } from "@/pages/admin/components/FormModal
 import StatusBadge from "@/pages/admin/components/StatusBadge";
 import { Panel, SelectField } from "@/pages/admin/incubation/components";
 import PageHeader from "@/components/ui/PageHeader";
+import EmptyState from "@/components/ui/EmptyState";
+import { Megaphone } from "lucide-react";
 import { formatDate } from "@/utils/dateTimeDisplay";
 
 const statusValues = ["interested", "applied"];
@@ -90,7 +92,15 @@ export default function StudentOpportunitiesPage() {
     <div className="space-y-5">
       <PageHeader title="Cơ hội" description="Các cuộc thi và chương trình ươm tạo đang mở" />
       <Panel title={t("student.startupProfile.panels.opportunities")} actions={<select className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-bold text-slate-700" value={selectedStartupId} onChange={(e) => setSelectedStartupId(e.target.value)}>{startups.map((startup) => <option key={startup.id} value={startup.id}>{startup.startup_name}</option>)}</select>}>
-        <AdminTable columns={columns} rows={opportunities} emptyText={t("student.startupProfile.empty.opportunities")} />
+        {opportunities.length === 0 ? (
+          <EmptyState
+            icon={<Megaphone size={24} />}
+            title="Chưa có cơ hội nào đang mở"
+            description="Các cuộc thi, chương trình ươm tạo… sẽ hiện ở đây khi được mở."
+          />
+        ) : (
+          <AdminTable columns={columns} rows={opportunities} emptyText={t("student.startupProfile.empty.opportunities")} />
+        )}
       </Panel>
       <FormModal open={!!applyTarget} title={applyTarget?.title || t("student.startupProfile.modals.applyOpportunity")} submitLabel={t("common.save")} saving={saving} onClose={() => setApplyTarget(null)} onSubmit={submitApply}>
         <div className="grid gap-4">
