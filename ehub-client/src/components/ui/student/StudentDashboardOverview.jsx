@@ -199,10 +199,11 @@ export default function StudentDashboardOverview({ group, user, statsData, loadi
               </Link>
               
               <div className="group relative">
-                <a 
-                  href={group.zalo_link || "#"} 
+                <a
+                  href={group.zalo_link || "#"}
                   target={group.zalo_link ? "_blank" : "_self"}
                   rel="noreferrer"
+                  title={group.zalo_link ? "Mở nhóm Zalo" : "Nhóm chưa có liên kết Zalo"}
                   className={`flex flex-col items-center justify-center p-4 rounded-2xl border border-gray-100 transition-all duration-300 h-full ${group.zalo_link ? 'bg-sky-50 text-sky-600 border-sky-100 hover:bg-sky-100 hover:-translate-y-1' : 'opacity-50 cursor-not-allowed text-gray-400'}`}
                 >
                   <MessageCircle size={20} className="mb-2 group-hover:scale-110 transition-transform" />
