@@ -21,7 +21,7 @@ export default function AssignmentCard({ assignment, onClick }) {
   return (
     <div
       onClick={onClick}
-      className="relative w-full rounded-xl border border-gray-200 bg-white cursor-pointer transition-all duration-200 hover:border-indigo-300 hover:shadow-md group"
+      className="relative w-full rounded-card border border-border bg-surface cursor-pointer transition-colors duration-200 hover:border-border-strong group"
     >
       <div className="p-5">
         {/* Top row: status + class */}
