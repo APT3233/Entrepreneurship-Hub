@@ -68,7 +68,7 @@ export default function AssignmentCard({ assignment, onClick }) {
 
         {/* Action Prompt */}
         {!isSubmitted && isOpen && (
-          <div className="mt-4 flex items-center justify-center py-2 px-4 rounded-lg bg-indigo-600 text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-100 transition-all active:scale-95">
+          <div className="mt-4 flex h-10 items-center justify-center rounded-control bg-accent px-4 text-sm font-medium text-white transition-colors">
              Nộp bài ngay
           </div>
         )}
