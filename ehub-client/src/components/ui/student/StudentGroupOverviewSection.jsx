@@ -1,6 +1,7 @@
-import { Info, Pencil, CheckCircle2, AlertCircle, Calendar, FileText, BarChart3, User, BookOpen } from "lucide-react";
+import { Info, Pencil, CheckCircle2, Calendar, FileText, BarChart3, User, BookOpen } from "lucide-react";
 import { LastNameAvatar } from "@/components/icons/ui";
 import { formatDate } from "@/utils/dateTimeDisplay";
+import StatusBadge from "@/components/ui/StatusBadge";
 
 /**
  * Component hiển thị một trường thông tin với nhãn, giá trị và nút Request đổi.
@@ -92,24 +93,18 @@ export default function StudentGroupOverviewSection({ group }) {
 
               <div className="space-y-4 px-1">
                 {/* Verified Status */}
-                <div className="p-5 rounded-[20px] bg-emerald-50/50 border border-emerald-100 flex flex-col gap-2 relative overflow-hidden">
-                  <div className="flex items-center gap-2.5 text-emerald-700">
-                    <CheckCircle2 size={18} fill="currentColor" className="text-emerald-600 bg-white rounded-full" />
-                    <p className="text-[15px] font-bold">Nhóm đã được xác nhận</p>
-                  </div>
-                  <p className="text-[14px] text-emerald-600/90 font-medium leading-relaxed pl-7">
+                <div className="flex flex-col gap-2">
+                  <StatusBadge status="success" label="Nhóm đã được xác nhận" />
+                  <p className="text-sm text-text-secondary leading-relaxed">
                     Giảng viên đã phê duyệt nhóm của bạn
                   </p>
                 </div>
 
                 {/* Members Status */}
                 {!isEnoughMembers && (
-                  <div className="p-5 rounded-[20px] bg-yellow-50 border border-amber-200 flex flex-col gap-2">
-                    <div className="flex items-center gap-2.5 text-amber-700">
-                      <AlertCircle size={18} fill="currentColor" className="text-amber-500 bg-white rounded-full" />
-                      <p className="text-[15px] font-bold text-amber-600">Nhóm chưa đủ thành viên</p>
-                    </div>
-                    <p className="text-[14px] text-amber-500 font-medium pl-7">
+                  <div className="flex flex-col gap-2">
+                    <StatusBadge status="warning" label="Nhóm chưa đủ thành viên" />
+                    <p className="text-sm text-text-secondary">
                       {activeMembers}/{maxMembers} thành viên đã tham gia
                     </p>
                   </div>
