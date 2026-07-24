@@ -143,27 +143,17 @@ export default function StudentDashboardOverview({ group, user, statsData, loadi
                 </p>
               </div>
 
-              <div className="flex flex-wrap items-center gap-6">
-                <div className="flex items-center gap-3">
-                  <LastNameAvatar name={group.mentor_display_name || "M"} index={7} size="sm" />
-                  <div>
-                    <p className="text-label text-text-muted">Mentor</p>
-                    <p className="text-sm text-text-primary">{group.mentor_display_name?.replace(/\s*\(.*?\)/g, "") || "Chưa có Mentor"}</p>
-                  </div>
-                </div>
-                <div className="h-8 w-px bg-border hidden sm:block" />
-                <div>
-                  <p className="text-label text-text-muted">Lớp học</p>
-                  <p className="text-sm text-text-primary">{group.class_code || "—"}</p>
-                </div>
-                <div className="h-8 w-px bg-border hidden sm:block" />
-                <div>
-                  <p className="text-label text-text-muted">Lĩnh vực</p>
-                  <p className="text-sm text-text-primary">{group.category || "—"}</p>
-                </div>
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <p className="text-label text-text-secondary">
+                  {group.mentor_display_name?.replace(/\s*\(.*?\)/g, "") || "Chưa có Mentor"}
+                  <span className="text-text-muted"> · </span>
+                  Lớp {group.class_code || "—"}
+                  <span className="text-text-muted"> · </span>
+                  {group.category || "—"}
+                </p>
                 <Link
                   to="/student/groups"
-                  className="ml-auto inline-flex items-center gap-2 px-4 h-9 rounded-control bg-accent text-white text-sm font-medium hover:bg-accent-hover transition-colors"
+                  className="inline-flex items-center gap-2 px-4 h-9 rounded-control bg-accent text-white text-sm font-medium hover:bg-accent-hover transition-colors"
                 >
                   Chi tiết nhóm
                   <ChevronRight size={14} />
