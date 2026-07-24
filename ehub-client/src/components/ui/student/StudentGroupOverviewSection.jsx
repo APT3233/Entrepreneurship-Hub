@@ -9,7 +9,7 @@ function InfoField({ label, value, onRequestChange, isLongText = false }) {
   return (
     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 py-5 first:pt-2 last:pb-2 border-b border-gray-50 last:border-0 group">
       <div className="flex-1">
-        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">{label}</p>
+        <p className="text-label text-text-secondary mb-1">{label}</p>
         <p className={`text-sm font-bold text-gray-900 leading-relaxed ${isLongText ? "max-w-xl" : ""}`}>
           {value || "—"}
         </p>
@@ -58,12 +58,12 @@ export default function StudentGroupOverviewSection({ group }) {
 
               <div className="space-y-1">
                 <InfoField label="Tên nhóm" value={group.group_name} onRequestChange={() => {}} />
-                <InfoField label="Categories" value={group.category || "Chưa xác định"} onRequestChange={() => {}} />
-                <InfoField label="Topic" value={group.topic || "Chưa có đề tài"} isLongText onRequestChange={() => {}} />
+                <InfoField label="Lĩnh vực" value={group.category || "Chưa xác định"} onRequestChange={() => {}} />
+                <InfoField label="Đề tài" value={group.topic || "Chưa có đề tài"} isLongText onRequestChange={() => {}} />
                 
                 {/* Mentor Field */}
                 <div className="py-5 border-b border-gray-50 group">
-                  <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3">Mentor</p>
+                  <p className="text-label text-text-secondary mb-3">Mentor</p>
                   <div className="flex items-center gap-3">
                     <LastNameAvatar name={group.mentor_display_name || "M"} index={7} />
                     <div>
@@ -74,7 +74,7 @@ export default function StudentGroupOverviewSection({ group }) {
                 </div>
 
                 <div className="py-5">
-                  <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Lớp / Môn học</p>
+                  <p className="text-label text-text-secondary mb-1">Lớp</p>
                   <p className="text-sm font-bold text-gray-900">{group.class_code || "—"}</p>
                   <p className="text-xs text-gray-500 font-medium mt-1">{group.semester_name || "—"}</p>
                 </div>
