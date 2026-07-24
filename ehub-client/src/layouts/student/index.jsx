@@ -36,7 +36,7 @@ const StudentLayout = () => {
     { label: t("student.assignments"), icon: ClipboardList, path: "/student/assignments" },
     { label: "Mentoring", icon: CalendarClock, path: "/student/mentoring" },
     { label: "Startup", icon: Rocket, path: "/student/startup-profile" },
-    { label: "Opportunities", icon: Megaphone, path: "/student/ecosystem/opportunities" },
+    { label: "Cơ hội", icon: Megaphone, path: "/student/ecosystem/opportunities" },
     { label: t("student.status"), icon: Activity, path: "/student/status", disabled: true },
     { label: t("student.schedule"), icon: Calendar, path: "/student/schedule", disabled: true },
   ], [t]);
