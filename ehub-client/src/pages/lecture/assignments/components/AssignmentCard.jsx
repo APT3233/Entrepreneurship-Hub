@@ -1,4 +1,3 @@
-import React from "react";
 import { Pencil, Trash2, Calendar, Trophy } from "lucide-react";
 import { formatDateTimeText } from "@/utils/dateTimeDisplay";
 import StatusBadge from "./StatusBadge";
@@ -22,22 +21,11 @@ export default function AssignmentCard({ assignment, isSelected, onEdit, onDelet
     <div
       onClick={onClick}
       className={`
-        relative w-full rounded-[24px] border bg-white cursor-pointer overflow-hidden
-        transition-all duration-300 hover:shadow-xl hover:shadow-indigo-500/5
-        ${isSelected
-          ? "border-slate-800 shadow-md"
-          : "border-slate-100/80 hover:border-slate-200/80"}
+        relative w-full rounded-card border bg-surface cursor-pointer overflow-hidden
+        transition-colors
+        ${isSelected ? "border-border-strong" : "border-border hover:border-border-strong"}
       `}
     >
-      {/* Decorative colored glow on top edge based on submission progress */}
-      <div className={`absolute top-0 left-0 right-0 h-1 transition-colors duration-300 ${
-        progressPercent === 100
-          ? "bg-emerald-500"
-          : status === "open"
-            ? "bg-indigo-500"
-            : "bg-slate-300"
-      }`} />
-
       <div className="p-5 sm:p-6 flex flex-col justify-between h-full">
         <div>
           {/* Top Row: Tags + Edit/Delete Actions */}
@@ -46,19 +34,19 @@ export default function AssignmentCard({ assignment, isSelected, onEdit, onDelet
               <ClassTag classCode={classCode} />
               <StatusBadge status={status} />
             </div>
-            
+
             <div className="flex items-center gap-2 shrink-0">
               <button
                 onClick={(e) => { e.stopPropagation(); onEdit(assignment); }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-black text-slate-600 bg-white hover:bg-slate-50 hover:text-slate-850 hover:border-slate-300 transition-all duration-150 shadow-sm active:scale-95 cursor-pointer"
+                className="flex items-center gap-1.5 h-8 px-3 rounded-control text-xs font-medium text-text-secondary bg-subtle hover:bg-border transition-colors cursor-pointer"
               >
                 <Pencil size={12} />
                 <span>Sửa</span>
               </button>
-              
+
               <button
                 onClick={(e) => { e.stopPropagation(); onDelete(assignment); }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-rose-100 text-xs font-black text-rose-500 bg-white hover:bg-rose-50 hover:border-rose-200 transition-all duration-150 shadow-sm active:scale-95 cursor-pointer"
+                className="flex items-center gap-1.5 h-8 px-3 rounded-control text-xs font-medium text-danger-text bg-danger-bg hover:brightness-95 transition-colors cursor-pointer"
               >
                 <Trash2 size={12} />
                 <span>Xóa</span>
@@ -67,56 +55,52 @@ export default function AssignmentCard({ assignment, isSelected, onEdit, onDelet
           </div>
 
           {/* Title */}
-          <h3 className="text-lg font-black text-slate-900 group-hover:text-indigo-600 transition-colors leading-snug tracking-tight mt-3">
+          <h3 className="text-base font-medium text-text-primary leading-snug mt-3">
             {title}
           </h3>
 
           {/* Description */}
-          <p className="mt-2 text-sm text-slate-600 font-bold leading-relaxed line-clamp-2 min-h-[40px] whitespace-pre-wrap">
+          <p className="mt-2 text-sm text-text-secondary leading-relaxed line-clamp-2 min-h-[40px] whitespace-pre-wrap">
             {description || "Chưa có mô tả chi tiết cho bài tập này."}
           </p>
 
           {/* Technical Info Cards */}
           <div className="grid grid-cols-2 gap-3 mt-5 mb-5">
-            <div className="bg-slate-50 rounded-2xl p-3.5 border border-slate-200/60 flex flex-col justify-between hover:bg-slate-100/60 transition-colors duration-200">
-              <div className="flex items-center gap-1.5 text-slate-500">
-                <Calendar size={14} className="text-indigo-500" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Hạn nộp</span>
+            <div className="bg-subtle rounded-control p-3.5 flex flex-col justify-between">
+              <div className="flex items-center gap-1.5 text-text-secondary">
+                <Calendar size={14} className="text-text-muted" />
+                <span className="text-label text-text-secondary">Hạn nộp</span>
               </div>
-              <p className="text-xs font-black text-slate-800 mt-2 leading-none">
+              <p className="text-sm font-medium text-text-primary mt-2 leading-none">
                 {formatDateTimeText(deadline)}
               </p>
             </div>
 
-            <div className="bg-slate-50 rounded-2xl p-3.5 border border-slate-200/60 flex flex-col justify-between hover:bg-slate-100/60 transition-colors duration-200">
-              <div className="flex items-center gap-1.5 text-slate-500">
-                <Trophy size={14} className="text-amber-500" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Điểm tối đa</span>
+            <div className="bg-subtle rounded-control p-3.5 flex flex-col justify-between">
+              <div className="flex items-center gap-1.5 text-text-secondary">
+                <Trophy size={14} className="text-text-muted" />
+                <span className="text-label text-text-secondary">Điểm tối đa</span>
               </div>
-              <p className="text-xs font-black text-slate-800 mt-2 leading-none">
-                {maxScore} <span className="text-[9px] text-slate-500 font-bold font-black">điểm</span>
+              <p className="text-sm font-medium text-text-primary mt-2 leading-none">
+                {maxScore} <span className="text-label text-text-secondary">điểm</span>
               </p>
             </div>
           </div>
         </div>
 
         {/* Bottom Submission Progress Bar */}
-        <div className="pt-4 border-t border-slate-50 mt-auto">
-          <div className="flex items-center justify-between text-xs font-black text-slate-500 mb-1.5">
+        <div className="pt-4 border-t border-border mt-auto">
+          <div className="flex items-center justify-between text-sm text-text-secondary mb-1.5">
             <span>Tiến độ nộp bài</span>
-            <span className="text-slate-700 bg-slate-50 px-2 py-0.5 rounded-lg border border-slate-200">
+            <span className="text-text-primary font-medium">
               {submittedGroups}/{totalGroups} nhóm
             </span>
           </div>
-          
-          <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden border border-slate-200/20 shadow-inner flex">
-            <div 
-              className={`h-full rounded-full transition-all duration-500 ${
-                progressPercent === 100
-                  ? "bg-emerald-500"
-                  : "bg-gradient-to-r from-indigo-500 to-violet-500"
-              }`} 
-              style={{ width: `${progressPercent}%` }} 
+
+          <div className="w-full h-2 rounded-full bg-border overflow-hidden">
+            <div
+              className="h-full rounded-full bg-accent transition-all duration-500"
+              style={{ width: `${progressPercent}%` }}
             />
           </div>
         </div>
