@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { LastNameAvatar } from "@/components/icons/ui";
 import { Link } from "react-router-dom";
+import Card from "@/components/ui/Card/Card";
 
 /**
  * Stat Card component for the dashboard
@@ -123,57 +124,52 @@ export default function StudentDashboardOverview({ group, user, statsData, loadi
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Project Banner */}
         <div className="lg:col-span-2">
-          <div className="relative overflow-hidden bg-gradient-to-br from-indigo-600 to-violet-700 rounded-[32px] p-8 text-white shadow-lg shadow-indigo-200">
-            {/* Background Decorations */}
-            <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
-            <div className="absolute bottom-0 left-0 -ml-8 -mb-8 w-48 h-48 bg-indigo-400/20 rounded-full blur-2xl" />
-            
-            <div className="relative z-10 flex flex-col h-full justify-between">
+          <Card className="p-6">
+            <div className="flex flex-col h-full justify-between gap-6">
               <div>
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md border border-white/10 text-[10px] font-bold uppercase tracking-widest">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-control bg-subtle text-text-secondary text-xs font-medium">
                     <Target size={12} />
                     Dự án hiện tại
                   </div>
                   {getStatusBadge(memberStats.status)}
                 </div>
-                <h2 className="text-2xl font-black mb-3 leading-tight">
+                <h2 className="text-lg font-medium text-text-primary mb-2 leading-tight">
                   {group.group_name || "Tên nhóm chưa cập nhật"}
                 </h2>
-                <p className="text-indigo-50/80 text-sm font-medium max-w-xl line-clamp-2 mb-8 leading-relaxed">
+                <p className="text-text-secondary text-sm max-w-xl line-clamp-2 leading-relaxed">
                   {group.topic || "Đề tài dự án chưa được thiết lập. Hãy thảo luận với Mentor để cập nhật đề tài."}
                 </p>
               </div>
 
-              <div className="flex flex-wrap items-center gap-6 mt-4">
+              <div className="flex flex-wrap items-center gap-6">
                 <div className="flex items-center gap-3">
-                  <LastNameAvatar name={group.mentor_display_name || "M"} index={7} size="sm" className="border-2 border-white/20" />
+                  <LastNameAvatar name={group.mentor_display_name || "M"} index={7} size="sm" />
                   <div>
-                    <p className="text-[10px] font-bold text-indigo-100/60 uppercase tracking-widest">Mentor</p>
-                    <p className="text-xs font-bold">{group.mentor_display_name?.replace(/\s*\(.*?\)/g, "") || "Chưa có Mentor"}</p>
+                    <p className="text-label text-text-muted">Mentor</p>
+                    <p className="text-sm text-text-primary">{group.mentor_display_name?.replace(/\s*\(.*?\)/g, "") || "Chưa có Mentor"}</p>
                   </div>
                 </div>
-                <div className="h-8 w-px bg-white/20 hidden sm:block" />
+                <div className="h-8 w-px bg-border hidden sm:block" />
                 <div>
-                  <p className="text-[10px] font-bold text-indigo-100/60 uppercase tracking-widest">Lớp học</p>
-                  <p className="text-xs font-bold">{group.class_code || "—"}</p>
+                  <p className="text-label text-text-muted">Lớp học</p>
+                  <p className="text-sm text-text-primary">{group.class_code || "—"}</p>
                 </div>
-                <div className="h-8 w-px bg-white/20 hidden sm:block" />
+                <div className="h-8 w-px bg-border hidden sm:block" />
                 <div>
-                  <p className="text-[10px] font-bold text-indigo-100/60 uppercase tracking-widest">Lĩnh vực</p>
-                  <p className="text-xs font-bold">{group.category || "—"}</p>
+                  <p className="text-label text-text-muted">Lĩnh vực</p>
+                  <p className="text-sm text-text-primary">{group.category || "—"}</p>
                 </div>
-                <div className="h-8 w-px bg-white/20 hidden sm:block" />
-                <Link 
-                  to="/student/groups" 
-                  className="ml-auto inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-white text-indigo-600 text-xs font-bold hover:bg-indigo-50 transition-colors shadow-sm"
+                <Link
+                  to="/student/groups"
+                  className="ml-auto inline-flex items-center gap-2 px-4 h-9 rounded-control bg-accent text-white text-sm font-medium hover:bg-accent-hover transition-colors"
                 >
                   Chi tiết nhóm
                   <ChevronRight size={14} />
                 </Link>
               </div>
             </div>
-          </div>
+          </Card>
 
           {/* Stat Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-8">
