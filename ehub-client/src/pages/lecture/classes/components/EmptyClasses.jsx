@@ -1,18 +1,19 @@
 import { Plus, Users, BookOpen, TrendingUp, MonitorPlay } from "lucide-react";
+import EmptyState from "@/components/ui/EmptyState";
 
 const FEATURES = [
   {
-    icon: <Users size={28} className="text-indigo-500" />,
+    icon: <Users size={22} className="text-text-muted" />,
     title: "Quản lý sinh viên",
     desc: "Theo dõi danh sách và điểm danh",
   },
   {
-    icon: <BookOpen size={28} className="text-green-500" />,
+    icon: <BookOpen size={22} className="text-text-muted" />,
     title: "Tài liệu học tập",
     desc: "Chia sẻ bài giảng và tài liệu",
   },
   {
-    icon: <TrendingUp size={28} className="text-purple-500" />,
+    icon: <TrendingUp size={22} className="text-text-muted" />,
     title: "Theo dõi tiến độ",
     desc: "Xem báo cáo và thống kê",
   },
@@ -26,43 +27,26 @@ const FEATURES = [
  */
 export default function EmptyClasses({ onCreate }) {
   return (
-    <div className="flex flex-col items-center justify-center w-full min-h-[60vh] px-4 py-12">
-
-      {/* Illustration icon */}
-      <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-indigo-100 flex items-center justify-center mb-5 shadow-inner">
-        <MonitorPlay size={32} className="text-indigo-500 md:hidden" />
-        <MonitorPlay size={38} className="text-indigo-500 hidden md:block" />
-      </div>
-
-      {/* Title */}
-      <h2 className="text-xl md:text-2xl font-bold text-gray-900 text-center mb-2">
-        Bạn chưa tạo lớp học nào
-      </h2>
-
-      {/* Subtitle — 2 dòng, hiển thị đủ chữ */}
-      <p className="text-sm md:text-base text-gray-400 text-center max-w-xs leading-relaxed mb-7">
-        Hãy bắt đầu bằng cách tạo lớp học đầu tiên của bạn
-        <br />
-        để quản lý sinh viên và bài giảng
-      </p>
-
-      {/* CTA button */}
-      <button
-        onClick={onCreate}
-        className="
-          flex items-center gap-2 px-7 py-3 rounded-2xl
-          bg-indigo-600 hover:bg-indigo-700 active:scale-95
-          text-white text-sm md:text-base font-semibold
-          shadow-md shadow-indigo-200
-          transition-all duration-200
-        "
-      >
-        <Plus size={18} strokeWidth={2.5} />
-        Tạo lớp học
-      </button>
+    <div className="flex flex-col items-center justify-center w-full min-h-[60vh] px-4">
+      <EmptyState
+        icon={<MonitorPlay size={24} />}
+        title="Bạn chưa tạo lớp học nào"
+        description="Hãy bắt đầu bằng cách tạo lớp học đầu tiên để quản lý sinh viên và bài giảng."
+        action={
+          onCreate ? (
+            <button
+              onClick={onCreate}
+              className="inline-flex items-center gap-2 h-9 px-4 rounded-control bg-accent hover:bg-accent-hover text-white text-sm font-medium transition-colors cursor-pointer"
+            >
+              <Plus size={16} />
+              Tạo lớp học
+            </button>
+          ) : null
+        }
+      />
 
       {/* Divider */}
-      <div className="w-full max-w-lg border-t border-gray-200 my-8 md:my-10" />
+      <div className="w-full max-w-lg border-t border-border my-8" />
 
       {/* Feature hints */}
       <div className="grid grid-cols-3 gap-4 md:gap-8 w-full max-w-lg">
@@ -71,16 +55,15 @@ export default function EmptyClasses({ onCreate }) {
             <div className="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center">
               {icon}
             </div>
-            <p className="text-[11px] md:text-sm font-semibold text-gray-700 leading-tight">
+            <p className="text-sm font-medium text-text-primary leading-tight">
               {title}
             </p>
-            <p className="text-[10px] md:text-xs text-gray-400 leading-snug hidden sm:block">
+            <p className="text-label text-text-secondary leading-snug hidden sm:block">
               {desc}
             </p>
           </div>
         ))}
       </div>
-
     </div>
   );
 }

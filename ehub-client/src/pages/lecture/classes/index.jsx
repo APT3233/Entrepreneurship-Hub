@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import StatCard from "@/components/ui/Card/StatCard";
-import { BookOpenIcon, Plus } from "lucide-react";
-import { StatIconGrading, StatIconAssignment, StatIconGroups } from "@/components/icons/lecture";
+import Card from "@/components/ui/Card/Card";
+import PageHeader from "@/components/ui/PageHeader";
+import { Plus } from "lucide-react";
 import Dropdown from "@/components/ui/filter/DropDown";
 import EmptyClasses from "./components/EmptyClasses";
 import ClassCard from "./components/ClassCard";
@@ -268,40 +269,21 @@ export default function ClassesPage() {
 
   return (
     <>
+      <PageHeader
+        title="Lớp học"
+        description="Quản lý các lớp bạn phụ trách theo từng học kỳ."
+      />
+
       {/* Section 1: Thống kê tổng quan */}
-      <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <StatCard
-          title="Lớp học"
-          value={stats.classCount}
-          icon={<BookOpenIcon />}
-          iconBg="bg-blue-100"
-          iconColor="text-blue-500"
-        />
-        <StatCard
-          title="Nhóm sinh viên"
-          value={stats.groupCount}
-          icon={<StatIconGroups />}
-          iconBg="bg-amber-100"
-          iconColor="text-amber-600"
-        />
-        <StatCard
-          title="Bài tập"
-          value={stats.assignmentCount}
-          icon={<StatIconAssignment />}
-          iconBg="bg-purple-100"
-          iconColor="text-violet-600"
-        />
-        <StatCard
-          title="Cần chấm"
-          value={stats.needGradingCount}
-          icon={<StatIconGrading />}
-          iconBg="bg-green-100"
-          iconColor="text-green-600"
-        />
+      <section className="mt-4 grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <StatCard title="Lớp học" value={stats.classCount} />
+        <StatCard title="Nhóm sinh viên" value={stats.groupCount} />
+        <StatCard title="Bài tập" value={stats.assignmentCount} />
+        <StatCard title="Cần chấm" value={stats.needGradingCount} />
       </section>
 
       {/* Section 2: Bộ lọc + nút Tạo lớp học */}
-      <section className="mt-4 sm:mt-6 w-full p-4 bg-white rounded-2xl shadow-sm border border-gray-100">
+      <Card className="mt-4 sm:mt-6 w-full p-4">
         <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-4">
           <div className="grid grid-cols-3 items-center gap-2 sm:gap-4 w-full md:w-auto md:flex">
             <Dropdown
@@ -329,27 +311,27 @@ export default function ClassesPage() {
             type="button"
             disabled={!canCreateClass}
             onClick={canCreateClass ? () => setCreateFormOpen(true) : undefined}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold shadow-sm transition-colors shrink-0 ${
+            className={`flex items-center gap-2 h-9 px-4 rounded-control text-sm font-medium transition-colors shrink-0 ${
               canCreateClass
-                ? "bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer"
-                : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                ? "bg-accent hover:bg-accent-hover text-white cursor-pointer"
+                : "bg-subtle text-text-muted cursor-not-allowed"
             }`}
           >
-            <Plus size={18} strokeWidth={2.5} />
+            <Plus size={16} />
             Tạo lớp học
           </button>
         </div>
-      </section>
+      </Card>
 
       {/* Nội dung chính: empty state nếu chưa có lớp, ngược lại hiển thị danh sách ClassCard */}
       <div className="mt-4 sm:mt-6">
         {pageLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 full-width">
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="bg-white rounded-3xl border border-gray-100 shadow-sm p-5 h-[200px] animate-pulse">
-                <div className="h-5 bg-gray-200 rounded w-1/3 mb-4" />
-                <div className="h-4 bg-gray-100 rounded w-1/2 mb-2" />
-                <div className="h-4 bg-gray-100 rounded w-2/3" />
+              <div key={i} className="bg-surface rounded-card border border-border p-5 h-[200px] animate-pulse">
+                <div className="h-5 bg-subtle rounded-control w-1/3 mb-4" />
+                <div className="h-4 bg-subtle rounded-control w-1/2 mb-2" />
+                <div className="h-4 bg-subtle rounded-control w-2/3" />
               </div>
             ))}
           </div>
