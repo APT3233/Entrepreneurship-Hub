@@ -12,23 +12,23 @@ export default function RecentClasses({
   onSelect,
 }) {
   return (
-    <div className="h-full w-full rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+    <div className="h-full w-full rounded-card border border-border bg-surface p-5">
 
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-base font-bold text-gray-900">Lớp học gần đây</h2>
+        <h2 className="text-base font-medium text-text-primary">Lớp học gần đây</h2>
         <button
           onClick={onViewAll}
-          className="text-sm font-medium text-blue-500 hover:text-blue-600 transition-colors duration-150 cursor-pointer"
+          className="text-sm font-medium text-accent hover:text-accent-hover transition-colors duration-150 cursor-pointer"
         >
           Xem tất cả
         </button>
       </div>
 
       {/* List */}
-      <ul className="flex flex-1 flex-col gap-3">
+      <ul className="flex flex-1 flex-col gap-2">
         {classes.length === 0 ? (
-          <li className="text-sm text-gray-400 text-center py-6">
+          <li className="text-sm text-text-muted text-center py-6">
             Chưa có lớp học nào
           </li>
         ) : (
@@ -37,17 +37,17 @@ export default function RecentClasses({
               <button
                 onClick={() => onSelect?.(item)}
                 className="
-                  w-full text-left px-4 py-3.5 rounded-xl
-                  bg-gray-50 hover:bg-indigo-50 cursor-pointer
-                  transition-colors duration-150 group
+                  w-full text-left px-4 py-3 rounded-control
+                  bg-subtle hover:bg-accent-bg cursor-pointer
+                  transition-colors duration-150
                 "
               >
-                <p className="text-sm font-bold text-gray-800 group-hover:text-indigo-700 transition-colors duration-150">
+                <p className="text-sm font-medium text-text-primary">
                   {item.code}
                 </p>
-                <p className="text-sm text-gray-400 mt-0.5">
+                <p className="text-label text-text-secondary mt-0.5">
                   {item.studentCount} sinh viên
-                  <span className="mx-1.5">•</span>
+                  <span className="mx-1.5 text-text-muted">•</span>
                   {item.groupCount} nhóm
                 </p>
               </button>

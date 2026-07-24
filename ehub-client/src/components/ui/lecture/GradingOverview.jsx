@@ -5,43 +5,13 @@ import AnimatedNumber from "@/components/ui/common/AnimatedNumber";
  * GradingOverview — Tổng quan chấm điểm
  *
  * Props:
- * - items : Array<{ label, count, percent, note, color }>
- *   color: "green" | "orange" | "red"
+ * - items : Array<{ label, count, percent, note }>
+ *   (color vẫn được nhận để không phá nơi gọi, nhưng không còn dùng —
+ *    style calm: một màu accent cho progress, không tô nhiều màu trang trí)
  */
 
-const COLOR_MAP = {
-  green: {
-    bg: "bg-green-50",
-    border: "border-green-100",
-    label: "text-gray-800",
-    count: "text-green-500",
-    bar: "bg-green-500",
-    track: "bg-green-200",
-    note: "text-green-700",
-  },
-  orange: {
-    bg: "bg-orange-50",
-    border: "border-orange-100",
-    label: "text-gray-800",
-    count: "text-orange-400",
-    bar: "bg-orange-400",
-    track: "bg-orange-200",
-    note: "text-orange-600",
-  },
-  red: {
-    bg: "bg-red-50",
-    border: "border-red-100",
-    label: "text-gray-800",
-    count: "text-red-500",
-    bar: "bg-red-500",
-    track: "bg-red-200",
-    note: "text-red-500",
-  },
-};
-
-function ProgressBar({ percent, color }) {
+function ProgressBar({ percent }) {
   const [width, setWidth] = useState(0);
-  const c = COLOR_MAP[color] ?? COLOR_MAP.green;
 
   // Animate vào sau khi mount
   useEffect(() => {
@@ -50,51 +20,49 @@ function ProgressBar({ percent, color }) {
   }, [percent]);
 
   return (
-    <div className={`w-full h-2.5 rounded-full ${c.track} overflow-hidden`}>
+    <div className="w-full h-2 rounded-full bg-border overflow-hidden">
       <div
-        className={`h-full rounded-full ${c.bar} transition-all duration-700 ease-out`}
+        className="h-full rounded-full bg-accent transition-all duration-700 ease-out"
         style={{ width: `${width}%` }}
       />
     </div>
   );
 }
 
-function GradingRow({ label, count, percent, note, color = "green" }) {
-  const c = COLOR_MAP[color] ?? COLOR_MAP.green;
-
+function GradingRow({ label, count, percent, note }) {
   return (
-    <div className={`rounded-xl md:rounded-2xl border px-3 py-3 md:px-5 md:py-4 flex flex-col gap-2 md:gap-2.5 ${c.bg} ${c.border}`}>
+    <div className="rounded-card bg-subtle px-4 py-4 flex flex-col gap-2.5">
       {/* Top row */}
       <div className="flex items-center justify-between">
-        <span className={`text-xs md:text-sm font-semibold ${c.label}`}>{label}</span>
-        <span className={`text-lg md:text-2xl font-bold ${c.count}`}>
+        <span className="text-sm text-text-secondary">{label}</span>
+        <span className="text-2xl font-medium text-text-primary leading-none">
           <AnimatedNumber value={count} />
         </span>
       </div>
 
       {/* Progress bar */}
-      <ProgressBar percent={percent} color={color} />
+      <ProgressBar percent={percent} />
 
       {/* Note */}
-      <p className={`text-[10px] md:text-xs font-medium ${c.note}`}>{note}</p>
+      <p className="text-label text-text-secondary">{note}</p>
     </div>
   );
 }
 
 const DEFAULT_ITEMS = [
-  { label: "Đã chấm", count: 140, percent: 85, note: "85% hoàn thành",  color: "green"  },
-  { label: "Đã chấm", count: 18,  percent: 45, note: "45% tiến độ",     color: "orange" },
-  { label: "Đã chấm", count: 24,  percent: 50, note: "Cần xử lý gấp",   color: "red"    },
+  { label: "Đã chấm", count: 140, percent: 85, note: "85% hoàn thành" },
+  { label: "Đang chấm", count: 18, percent: 45, note: "45% tiến độ" },
+  { label: "Cần xử lý", count: 24, percent: 50, note: "Cần xử lý gấp" },
 ];
 
 export default function GradingOverview({ items = DEFAULT_ITEMS }) {
   return (
-    <div className="bg-white rounded-xl md:rounded-2xl border border-gray-100 shadow-sm p-3 md:p-5 w-full">
+    <div className="bg-surface rounded-card border border-border p-5 w-full">
       {/* Header */}
-      <h2 className="text-sm md:text-base font-bold text-gray-900 mb-3 md:mb-4">Tổng quan chấm điểm</h2>
+      <h2 className="text-base font-medium text-text-primary mb-4">Tổng quan chấm điểm</h2>
 
       {/* Rows */}
-      <div className="flex flex-col gap-2 md:gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {items.map((item, i) => (
           <GradingRow key={i} {...item} />
         ))}

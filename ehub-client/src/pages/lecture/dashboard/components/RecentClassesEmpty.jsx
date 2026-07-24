@@ -1,4 +1,5 @@
 import { MonitorPlay } from "lucide-react";
+import EmptyState from "@/components/ui/EmptyState";
 
 /**
  * RecentClassesEmpty
@@ -9,40 +10,35 @@ import { MonitorPlay } from "lucide-react";
  */
 export default function RecentClassesEmpty({ onViewAll, onCreate }) {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 w-92">
+    <div className="bg-surface rounded-card border border-border p-5 w-full">
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-base font-bold text-gray-900">Lớp học gần đây</h2>
+      <div className="flex items-center justify-between mb-2">
+        <h2 className="text-base font-medium text-text-primary">Lớp học gần đây</h2>
         <button
           onClick={onViewAll}
-          className="text-sm font-medium text-blue-500 hover:text-blue-600 transition-colors duration-150 cursor-pointer"
+          className="text-sm font-medium text-accent hover:text-accent-hover transition-colors duration-150 cursor-pointer"
         >
           Xem tất cả
         </button>
       </div>
 
       {/* Empty state */}
-      <div className="flex flex-col items-center justify-center py-8 px-4 text-center gap-3">
-
-        {/* Icon */}
-        <div className="w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center mb-1">
-          <MonitorPlay size={28} className="text-indigo-500" />
-        </div>
-
-        {/* Title */}
-        <h3 className="text-lg font-bold text-gray-900">
-          Bạn chưa tạo lớp học nào
-        </h3>
-
-        {/* Subtitle */}
-        <p className="text-sm text-gray-400 leading-relaxed max-w-[260px]">
-          Hãy bắt đầu bằng cách tạo lớp học đầu tiên của bạn
-          <br />
-          để quản lý sinh viên và bài giảng
-        </p>
-
-      </div>
+      <EmptyState
+        icon={<MonitorPlay size={24} />}
+        title="Bạn chưa tạo lớp học nào"
+        description="Hãy bắt đầu bằng cách tạo lớp học đầu tiên để quản lý sinh viên và bài giảng."
+        action={
+          onCreate ? (
+            <button
+              onClick={onCreate}
+              className="inline-flex items-center h-9 px-4 rounded-control bg-accent text-white text-sm font-medium hover:bg-accent-hover transition-colors cursor-pointer"
+            >
+              Tạo lớp học
+            </button>
+          ) : null
+        }
+      />
     </div>
   );
 }
