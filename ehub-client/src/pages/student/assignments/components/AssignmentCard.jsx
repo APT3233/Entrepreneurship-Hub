@@ -1,5 +1,6 @@
-import { Calendar, Trophy, CheckCircle2, Info } from "lucide-react";
+import { Calendar, Trophy, Info } from "lucide-react";
 import { formatDate } from "@/utils/dateTimeDisplay";
+import StatusBadge from "@/components/ui/StatusBadge";
 
 export default function AssignmentCard({ assignment, onClick }) {
   const {
@@ -26,22 +27,13 @@ export default function AssignmentCard({ assignment, onClick }) {
       <div className="p-5">
         {/* Top row: status + class */}
         <div className="flex items-center gap-2 mb-3">
-          <span
-            className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
-              isOpen
-                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                : "bg-slate-100 text-slate-700 border-slate-200"
-            }`}
-          >
-            {isOpen ? "Đang mở" : "Đã đóng"}
-          </span>
+          <StatusBadge status={isOpen ? "success" : "neutral"} label={isOpen ? "Đang mở" : "Đã đóng"} />
           <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-indigo-50 text-indigo-600 border border-indigo-100">
             {classCode}
           </span>
           {isSubmitted && (
-            <span className="ml-auto flex items-center gap-1.5 text-[10px] font-bold text-emerald-600 uppercase tracking-widest">
-              <CheckCircle2 size={12} />
-              {isGraded ? "Đã chấm" : "Đã nộp"}
+            <span className="ml-auto">
+              <StatusBadge status="success" label={isGraded ? "Đã chấm" : "Đã nộp"} />
             </span>
           )}
           {isGraded && evaluation?.scores?.length ? (
