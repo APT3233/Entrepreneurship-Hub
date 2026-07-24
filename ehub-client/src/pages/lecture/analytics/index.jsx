@@ -10,6 +10,7 @@ import MetricCard from "@/pages/admin/analytics/components/MetricCard";
 import useAnalyticsData from "@/pages/admin/analytics/hooks/useAnalyticsData";
 import { formatPercent, formatScore } from "@/pages/admin/analytics/shared";
 import { useTranslation } from "@/context/TranslationContext";
+import PageHeader from "@/components/ui/PageHeader";
 
 const emptyQuery = {};
 
@@ -25,7 +26,7 @@ export default function LecturerAnalyticsPage() {
   const cards = data?.cards || {};
 
   const classColumns = useMemo(() => [
-    { key: "class_code", label: t("admin.analytics.columns.class"), render: (row) => <span className="font-semibold text-gray-900">{row.class_code}</span> },
+    { key: "class_code", label: t("admin.analytics.columns.class"), render: (row) => <span className="font-medium text-text-primary">{row.class_code}</span> },
     { key: "subject", label: t("admin.analytics.columns.subject"), render: (row) => row.subject_code },
     { key: "average_score", label: t("admin.analytics.columns.avgScore"), render: (row) => formatScore(row.average_score) },
     { key: "graded_count", label: t("admin.analytics.columns.graded"), render: (row) => Number(row.graded_count || 0) },
@@ -36,10 +37,10 @@ export default function LecturerAnalyticsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">{classId ? t("lecturer.analyticsPage.classTitle") : t("lecturer.analyticsPage.title")}</h1>
-        <p className="mt-1 text-sm text-gray-500">{t("lecturer.analyticsPage.subtitle")}</p>
-      </div>
+      <PageHeader
+        title={classId ? t("lecturer.analyticsPage.classTitle") : t("lecturer.analyticsPage.title")}
+        description={t("lecturer.analyticsPage.subtitle")}
+      />
 
       <AnalyticsState loading={loading} error={error}>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
