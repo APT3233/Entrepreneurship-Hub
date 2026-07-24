@@ -168,23 +168,21 @@ export default function StudentDashboardOverview({ group, user, statsData, loadi
               <Link to="/student/groups" className="text-[10px] font-bold text-indigo-600 hover:underline uppercase tracking-widest">Tất cả</Link>
             </div>
             
-            <div className="max-h-[190px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-gray-100 scrollbar-track-transparent">
-              <div className="space-y-1">
-                {members.map((m, idx) => (
-                  <div key={idx} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-xl transition-colors group">
-                    <LastNameAvatar name={m.full_name || "U"} index={idx} size="xs" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold text-gray-900 truncate group-hover:text-indigo-600 transition-colors">
-                        {m.full_name?.replace(/\s*\(.*?\)/g, "")}
-                      </p>
-                      <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">
-                        {m.role === 'leader' ? 'Nhóm trưởng' : 'Thành viên'}
-                      </p>
-                    </div>
-                    {m.role === 'leader' && <CheckCircle2 size={12} className="text-amber-400 fill-amber-400" />}
+            <div className="space-y-1">
+              {members.map((m, idx) => (
+                <div key={idx} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-xl transition-colors group">
+                  <LastNameAvatar name={m.full_name || "U"} index={idx} size="xs" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold text-gray-900 truncate group-hover:text-indigo-600 transition-colors">
+                      {m.full_name?.replace(/\s*\(.*?\)/g, "")}
+                    </p>
+                    <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">
+                      {m.role === 'leader' ? 'Nhóm trưởng' : 'Thành viên'}
+                    </p>
                   </div>
-                ))}
-              </div>
+                  {m.role === 'leader' && <CheckCircle2 size={12} className="text-amber-400 fill-amber-400" />}
+                </div>
+              ))}
             </div>
           </div>
 
