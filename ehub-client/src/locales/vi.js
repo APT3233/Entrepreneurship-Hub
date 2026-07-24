@@ -479,7 +479,7 @@ export default {
       "columns": {
         "startup": "Startup",
         "product": "Sản phẩm",
-        "pipeline": "Pipeline",
+        "pipeline": "Giai đoạn",
         "updated": "Cập nhật",
         "milestone": "Cột mốc",
         "date": "Ngày",
