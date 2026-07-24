@@ -4,6 +4,9 @@ import GroupApi from "@/api/group";
 import MentorWorkflowApi from "@/api/mentorWorkflow";
 import AdminTable from "@/pages/admin/components/AdminTable";
 import StatusBadge from "@/pages/admin/components/StatusBadge";
+import PageHeader from "@/components/ui/PageHeader";
+import EmptyState from "@/components/ui/EmptyState";
+import { CalendarClock } from "lucide-react";
 import { formatDate } from "@/utils/dateTimeDisplay";
 
 export default function StudentMentoringPage() {
@@ -13,6 +16,19 @@ export default function StudentMentoringPage() {
   const [error, setError] = useState("");
   const load = useCallback(async () => { setLoading(true); setError(""); try { const groupsRes = await GroupApi.getMyGroups(); const groups = groupsRes?.data || []; const sessions = await Promise.all(groups.map((group) => MentorWorkflowApi.groupSessions(group.id, { limit: 100 }))); setRows(sessions.flatMap((res) => res?.data || [])); } catch (err) { setError(err.message || "Unable to load mentoring sessions"); } finally { setLoading(false); } }, []);
   useEffect(() => { load(); }, [load]);
-  const columns = useMemo(() => [{ key: "title", label: "Title", render: (row) => <span className="font-black text-slate-900">{row.title}</span> }, { key: "group_name", label: "Group" }, { key: "mentor_name", label: "Mentor" }, { key: "scheduled_start_at", label: "Scheduled", render: (row) => formatDate(row.scheduled_start_at) }, { key: "status", label: "Status", render: (row) => <StatusBadge value={row.status} /> }, { key: "session_type", label: "Type", render: (row) => <StatusBadge value={row.session_type} /> }], []);
-  return <AdminTable columns={columns} rows={rows} loading={loading} error={error} emptyText="No mentoring sessions" onRowClick={(row) => navigate(`/student/mentoring/sessions/${row.id}`)} />;
+  const columns = useMemo(() => [{ key: "title", label: "Tiêu đề", render: (row) => <span className="font-black text-slate-900">{row.title}</span> }, { key: "group_name", label: "Nhóm" }, { key: "mentor_name", label: "Mentor" }, { key: "scheduled_start_at", label: "Thời gian", render: (row) => formatDate(row.scheduled_start_at) }, { key: "status", label: "Trạng thái", render: (row) => <StatusBadge value={row.status} /> }, { key: "session_type", label: "Loại", render: (row) => <StatusBadge value={row.session_type} /> }], []);
+  return (
+    <div className="mx-auto max-w-6xl space-y-6">
+      <PageHeader title="Mentoring" description="Các buổi mentoring của nhóm bạn" />
+      {!loading && !error && rows.length === 0 ? (
+        <EmptyState
+          icon={<CalendarClock size={24} />}
+          title="Đặt buổi mentoring đầu tiên"
+          description="Chọn khung giờ trống của mentor để đặt buổi mentoring cho nhóm bạn."
+        />
+      ) : (
+        <AdminTable columns={columns} rows={rows} loading={loading} error={error} emptyText="No mentoring sessions" onRowClick={(row) => navigate(`/student/mentoring/sessions/${row.id}`)} />
+      )}
+    </div>
+  );
 }
