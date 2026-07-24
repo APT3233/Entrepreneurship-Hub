@@ -5,6 +5,7 @@ import { useTranslation } from "@/context/TranslationContext";
 import AdminTable from "@/pages/admin/components/AdminTable";
 import StatusBadge from "@/pages/admin/components/StatusBadge";
 import { StartupLogo } from "@/pages/admin/incubation/components";
+import PageHeader from "@/components/ui/PageHeader";
 import { formatDate } from "@/utils/dateTimeDisplay";
 
 export default function StudentStartupProfilesPage() {
@@ -41,5 +42,10 @@ export default function StudentStartupProfilesPage() {
     { key: "updated_at", label: t("student.startupProfile.columns.updated"), render: (row) => formatDate(row.updated_at) },
   ], [t]);
 
-  return <AdminTable columns={columns} rows={rows} loading={loading} error={error} emptyText={t("student.startupProfile.emptyList")} meta={meta} onPageChange={(page, limit) => setQuery((prev) => ({ ...prev, page, limit: limit || prev.limit }))} onRowClick={(row) => navigate(`/student/startups/${row.id}`)} />;
+  return (
+    <div className="mx-auto max-w-6xl space-y-6">
+      <PageHeader title={t("student.startupProfile.pageTitle")} description="Hồ sơ startup của bạn và tiến trình ươm tạo" />
+      <AdminTable columns={columns} rows={rows} loading={loading} error={error} emptyText={t("student.startupProfile.emptyList")} meta={meta} onPageChange={(page, limit) => setQuery((prev) => ({ ...prev, page, limit: limit || prev.limit }))} onRowClick={(row) => navigate(`/student/startups/${row.id}`)} />
+    </div>
+  );
 }
