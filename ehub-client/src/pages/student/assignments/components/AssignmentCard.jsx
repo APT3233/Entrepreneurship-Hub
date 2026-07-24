@@ -1,5 +1,6 @@
-import { Calendar, Trophy, CheckCircle2, Info } from "lucide-react";
+import { Calendar, Trophy, Info } from "lucide-react";
 import { formatDate } from "@/utils/dateTimeDisplay";
+import StatusBadge from "@/components/ui/StatusBadge";
 
 export default function AssignmentCard({ assignment, onClick }) {
   const {
@@ -21,27 +22,21 @@ export default function AssignmentCard({ assignment, onClick }) {
   return (
     <div
       onClick={onClick}
-      className="relative w-full rounded-xl border border-gray-200 bg-white cursor-pointer transition-all duration-200 hover:border-indigo-300 hover:shadow-md group"
+      className="relative w-full rounded-card border border-border bg-surface cursor-pointer transition-colors duration-200 hover:border-border-strong group"
     >
       <div className="p-5">
         {/* Top row: status + class */}
         <div className="flex items-center gap-2 mb-3">
-          <span
-            className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
-              isOpen
-                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                : "bg-slate-100 text-slate-700 border-slate-200"
-            }`}
-          >
-            {isOpen ? "Đang mở" : "Đã đóng"}
-          </span>
+          <StatusBadge status={isOpen ? "success" : "neutral"} label={isOpen ? "Đang mở" : "Đã đóng"} />
           <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-indigo-50 text-indigo-600 border border-indigo-100">
             {classCode}
           </span>
           {isSubmitted && (
-            <span className="ml-auto flex items-center gap-1.5 text-[10px] font-bold text-emerald-600 uppercase tracking-widest">
-              <CheckCircle2 size={12} />
-              {isGraded ? "Đã chấm" : "Đã nộp"}
+            <span className="ml-auto flex items-center gap-2">
+              <StatusBadge status="success" label={isGraded ? "Đã chấm" : "Đã nộp"} />
+              {isGraded && (
+                <span className="text-lg font-medium text-text-primary">{score}/{maxScore}</span>
+              )}
             </span>
           )}
           {isGraded && evaluation?.scores?.length ? (
@@ -69,17 +64,11 @@ export default function AssignmentCard({ assignment, onClick }) {
             <Trophy size={14} />
             <span className="text-[10px] font-bold uppercase tracking-wider">Tối đa: {maxScore} điểm</span>
           </div>
-          {isGraded && (
-             <div className="flex items-center gap-2 text-indigo-600 font-bold ml-auto">
-                <span className="text-[10px] uppercase tracking-widest">Điểm:</span>
-                <span className="text-base font-black">{score}/{maxScore}</span>
-             </div>
-          )}
         </div>
 
         {/* Action Prompt */}
         {!isSubmitted && isOpen && (
-          <div className="mt-4 flex items-center justify-center py-2 px-4 rounded-lg bg-indigo-600 text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-100 transition-all active:scale-95">
+          <div className="mt-4 flex h-10 items-center justify-center rounded-control bg-accent px-4 text-sm font-medium text-white transition-colors">
              Nộp bài ngay
           </div>
         )}
