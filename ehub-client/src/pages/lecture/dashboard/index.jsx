@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "@/context/TranslationContext";
 import { formatSemesterLabel, useSemesterYearOptions } from "@/hooks/useLectureFilterOptions";
 import StatCard from "@/components/ui/Card/StatCard";
+import Card from "@/components/ui/Card/Card";
+import PageHeader from "@/components/ui/PageHeader";
 import { useNavigate } from "react-router-dom";
 import { BookOpenIcon } from "lucide-react";
 import { StatIconGrading, StatIconAssignment, StatIconGroups } from "@/components/icons/lecture";
@@ -133,7 +135,11 @@ const LectureDashboard = () => {
 
   return (
     <>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <PageHeader
+        title="Bảng điều khiển"
+        description="Tổng quan lớp học, nhóm và tiến độ chấm điểm."
+      />
+      <div className="mt-4 grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <StatCard 
           title="Lớp học" 
           value={stats.classCount} 
@@ -167,7 +173,7 @@ const LectureDashboard = () => {
           onClick={() => navigate("/lecturer/assignments")}
         />
       </div>
-      <div className="w-full p-4 bg-white rounded-2xl shadow-sm mt-4">
+      <Card className="w-full p-4 mt-4">
         <div className="flex justify-start gap-4">
           <Dropdown
             label={t("lecturer.selectYear")}
@@ -182,23 +188,23 @@ const LectureDashboard = () => {
             onChange={(value) => setSelectedSemesterId(value)}
           />
         </div>
-      </div>
+      </Card>
 
       {/* Main content: empty state nếu chưa có lớp, ngược lại grid + grading */}
       {pageLoading ? (
         <div className="mt-4 grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-3">
-          <div className="h-48 w-full md:col-span-2 xl:col-span-1 bg-white rounded-3xl border border-gray-100 shadow-sm p-6 animate-pulse">
-            <div className="h-4 bg-gray-200 rounded w-1/3 mb-4" />
-            <div className="h-10 bg-gray-100 rounded w-full mb-3" />
-            <div className="h-10 bg-gray-100 rounded w-full" />
+          <div className="h-48 w-full md:col-span-2 xl:col-span-1 bg-surface rounded-card border border-border p-6 animate-pulse">
+            <div className="h-4 bg-subtle rounded-control w-1/3 mb-4" />
+            <div className="h-10 bg-subtle rounded-control w-full mb-3" />
+            <div className="h-10 bg-subtle rounded-control w-full" />
           </div>
-          <div className="h-48 w-full bg-white rounded-3xl border border-gray-100 shadow-sm p-6 animate-pulse">
-             <div className="h-4 bg-gray-200 rounded w-1/3 mb-4" />
-             <div className="h-20 bg-gray-100 rounded w-20 mx-auto rounded-full" />
+          <div className="h-48 w-full bg-surface rounded-card border border-border p-6 animate-pulse">
+             <div className="h-4 bg-subtle rounded-control w-1/3 mb-4" />
+             <div className="h-20 bg-subtle w-20 mx-auto rounded-full" />
           </div>
-          <div className="h-48 w-full bg-white rounded-3xl border border-gray-100 shadow-sm p-6 animate-pulse">
-             <div className="h-4 bg-gray-200 rounded w-1/3 mb-4" />
-             <div className="h-16 bg-gray-100 rounded w-full" />
+          <div className="h-48 w-full bg-surface rounded-card border border-border p-6 animate-pulse">
+             <div className="h-4 bg-subtle rounded-control w-1/3 mb-4" />
+             <div className="h-16 bg-subtle rounded-control w-full" />
           </div>
         </div>
       ) : recentClasses.length === 0 ? (
