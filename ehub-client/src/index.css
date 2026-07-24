@@ -6,31 +6,31 @@
    Utilities generated: bg-page, bg-surface, bg-subtle, border-border,
    border-border-strong, text-text-primary, text-text-secondary, text-text-muted. */
 @theme {
-  --color-page: #FAFAF9;
-  --color-surface: #FFFFFF;
-  --color-subtle: #F5F5F4;
-  --color-border: #E7E5E4;
-  --color-border-strong: #D6D3D1;
-  --color-text-primary: #1C1917;
-  --color-text-secondary: #57534E;
-  --color-text-muted: #A8A29E;
+  --color-page: #fafaf9;
+  --color-surface: #ffffff;
+  --color-subtle: #f5f5f4;
+  --color-border: #e7e5e4;
+  --color-border-strong: #d6d3d1;
+  --color-text-primary: #1c1917;
+  --color-text-secondary: #57534e;
+  --color-text-muted: #a8a29e;
 
-  /* FPT accent — #F37021 is a placeholder until the exact brand hex is confirmed;
+  /* FPT accent — #f26f20 is a placeholder until the exact brand hex is confirmed;
      swap this one line to rebrand. Utilities: bg-accent, text-accent,
      hover:bg-accent-hover, bg-accent-bg. */
-  --color-accent: #F37021;
-  --color-accent-hover: #D65F17;
-  --color-accent-bg: #FDEEE3;
+  --color-accent: #f26f20;
+  --color-accent-hover: #d65f17;
+  --color-accent-bg: #fdeee3;
 
   /* Status pairs — bg + text. Caller picks the status; component never derives it. */
-  --color-success-bg: #ECFDF5;
-  --color-success-text: #065F46;
-  --color-warning-bg: #FFFBEB;
-  --color-warning-text: #92400E;
-  --color-danger-bg: #FEF2F2;
-  --color-danger-text: #991B1B;
-  --color-neutral-bg: #F5F5F4;
-  --color-neutral-text: #57534E;
+  --color-success-bg: #ecfdf5;
+  --color-success-text: #065f46;
+  --color-warning-bg: #fffbeb;
+  --color-warning-text: #92400e;
+  --color-danger-bg: #fef2f2;
+  --color-danger-text: #991b1b;
+  --color-neutral-bg: #f5f5f4;
+  --color-neutral-text: #57534e;
 
   /* Type scale 22/18/16/14/13/12. Only weights 400 (normal) & 500 (medium) are used.
      Defaults cover text-lg(18)/base(16)/sm(14)/xs(12); add the missing 22 & 13. */
@@ -66,7 +66,8 @@
 
 @font-face {
   font-family: "Inter";
-  src: url("./assets/fptu/fonts/Inter-Italic-VariableFont.woff2") format("woff2");
+  src: url("./assets/fptu/fonts/Inter-Italic-VariableFont.woff2")
+    format("woff2");
   font-weight: 100 900;
   font-style: italic;
   font-display: swap;
@@ -84,7 +85,12 @@ body {
   font-weight: 400;
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   line-height: 1.3;
   font-weight: 500;
 }
@@ -133,6 +139,35 @@ body {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
   border-radius: 2px;
+}
+
+/* Thanh cuộn tuỳ biến: mảnh, bo tròn, KHÔNG có nút mũi tên trên/dưới.
+   Thumb dùng token viền; Firefox dùng scrollbar-width/color. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-strong) transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background-color: var(--color-border-strong);
+  border-radius: 9999px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-text-muted);
+}
+*::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+*::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 /* Respect reduced-motion: disable route/page entrance animations. */
