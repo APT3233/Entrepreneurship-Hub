@@ -241,21 +241,21 @@ export default function SubmissionListSection({ title, showSourceFilter = true, 
   const columns = useMemo(() => [
     { key: "source", label: t("admin.columns.item"), width: 230, render: (row) => (
       <div className="min-w-0">
-        <span className="font-semibold text-gray-900 line-clamp-1 hover:underline cursor-pointer" onClick={() => openGrading(row)}>
+        <span className="font-medium text-text-primary line-clamp-1 hover:underline cursor-pointer" onClick={() => openGrading(row)}>
           {row.source_title}
         </span>
-        <span className="text-xs text-gray-400 font-medium uppercase tracking-wider">{t(`status.${row.source_type}`)}</span>
+        <span className="text-label text-text-muted">{t(`status.${row.source_type}`)}</span>
       </div>
     ) },
     { key: "group", label: t("admin.columns.group"), width: 120, render: (row) => (
-      <span className="font-semibold text-gray-700 line-clamp-1" title={row.group_name || undefined}>{row.group_name || "—"}</span>
+      <span className="font-medium text-text-primary line-clamp-1" title={row.group_name || undefined}>{row.group_name || "—"}</span>
     ) },
     { key: "class", label: t("admin.columns.class"), width: 140, render: (row) => (
-      <span className="font-medium text-gray-600">{row.class_code || "—"}</span>
+      <span className="font-medium text-text-secondary">{row.class_code || "—"}</span>
     ) },
     { key: "submission_status", label: t("lecturer.gradingPage.filters.submission"), width: 130, render: (row) => <SubmissionStatusBadge value={row.submission_status} /> },
     { key: "submitted_at", label: t("admin.columns.submitted"), width: 140, render: (row) => <DateTimeCell value={row.submitted_at} /> },
-    { key: "is_late", label: t("filterLabels.late"), width: 90, render: (row) => Number(row.is_late || 0) ? <span className="text-sm font-semibold text-red-600">{t("status.late")}</span> : "—" },
+    { key: "is_late", label: t("filterLabels.late"), width: 90, render: (row) => Number(row.is_late || 0) ? <span className="text-sm font-medium text-danger-text">{t("status.late")}</span> : "—" },
     { key: "file_count", label: t("admin.columns.files"), width: 80, render: (row) => Number(row.file_count || 0) },
     { key: "current_score", label: t("admin.fields.score"), width: 90, render: (row) => row.current_score ?? "—" },
     { key: "evaluation_status", label: t("admin.columns.evaluations"), width: 130, render: (row) => <EvaluationStatusBadge value={row.evaluation_status} /> },
@@ -263,10 +263,10 @@ export default function SubmissionListSection({ title, showSourceFilter = true, 
     { key: "graded_at", label: t("admin.columns.gradedAt"), width: 140, render: (row) => <DateTimeCell value={row.graded_at || row.evaluated_at} /> },
     { key: "actions", label: "", width: 96, stickyRight: true, render: (row) => (
       <div className="flex justify-end gap-1">
-        <button type="button" onClick={() => openGrading(row)} title={t("lecturer.gradingPage.actions.viewSubmission")} className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-800">
+        <button type="button" onClick={() => openGrading(row)} title={t("lecturer.gradingPage.actions.viewSubmission")} className="rounded-control p-2 text-text-muted hover:bg-subtle hover:text-text-primary">
           <Eye size={16} />
         </button>
-        <button type="button" onClick={() => openGrading(row)} title={t("lecturer.gradingPage.actions.openGrading")} className="rounded-lg p-2 text-indigo-600 hover:bg-indigo-50">
+        <button type="button" onClick={() => openGrading(row)} title={t("lecturer.gradingPage.actions.openGrading")} className="rounded-control p-2 text-accent hover:bg-accent-bg">
           <PencilLine size={16} />
         </button>
       </div>
@@ -277,13 +277,13 @@ export default function SubmissionListSection({ title, showSourceFilter = true, 
     <section className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-xl font-bold text-gray-900">{listTitle}</h2>
-          <p className="mt-1 text-sm text-gray-500">{t("lecturer.gradingPage.submissionListSubtitle")}</p>
+          <h2 className="text-lg font-medium text-text-primary">{listTitle}</h2>
+          <p className="mt-1 text-sm text-text-secondary">{t("lecturer.gradingPage.submissionListSubtitle")}</p>
         </div>
         <button
           type="button"
           onClick={() => load(true).then(() => toast.success(t("lecturer.gradingPage.refreshSuccess")))}
-          className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 cursor-pointer"
+          className="inline-flex items-center justify-center gap-2 h-9 rounded-control border border-border bg-surface px-3 text-sm font-medium text-text-secondary hover:bg-subtle cursor-pointer"
         >
           <RotateCw size={16} />
           {t("lecturer.gradingPage.refresh")}
@@ -296,16 +296,16 @@ export default function SubmissionListSection({ title, showSourceFilter = true, 
             <button
               type="button"
               onClick={() => setShowAdvanced(!showAdvanced)}
-              className={`inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all border cursor-pointer w-full sm:w-auto ${
+              className={`inline-flex items-center justify-center gap-2 h-9 px-4 rounded-control text-sm font-medium transition-colors border cursor-pointer w-full sm:w-auto ${
                 showAdvanced || activeAdvancedCount > 0
-                  ? "border-indigo-200 bg-indigo-50 text-indigo-600 shadow-sm"
-                  : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+                  ? "border-accent bg-accent-bg text-accent"
+                  : "border-border bg-surface text-text-secondary hover:bg-subtle"
               }`}
             >
               <SlidersHorizontal size={16} />
               <span>{t("lecturer.gradingPage.filters.advanced") || "Bộ lọc nâng cao"}</span>
               {activeAdvancedCount > 0 && (
-                <span className="inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-indigo-600 rounded-full">
+                <span className="inline-flex items-center justify-center w-5 h-5 text-xs font-medium text-white bg-accent rounded-full">
                   {activeAdvancedCount}
                 </span>
               )}
@@ -314,7 +314,7 @@ export default function SubmissionListSection({ title, showSourceFilter = true, 
               <button
                 type="button"
                 onClick={resetAdvancedFilters}
-                className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold text-gray-500 hover:text-red-600 transition-colors cursor-pointer w-full sm:w-auto"
+                className="inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-control text-sm font-medium text-text-secondary hover:text-danger-text transition-colors cursor-pointer w-full sm:w-auto"
               >
                 <X size={16} />
                 <span>{t("lecturer.gradingPage.filters.clear") || "Xóa bộ lọc"}</span>
@@ -362,9 +362,9 @@ export default function SubmissionListSection({ title, showSourceFilter = true, 
       </FilterBar>
 
       {showAdvanced && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 p-6 rounded-2xl border border-gray-100 bg-gray-50/50 animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 p-6 rounded-card border border-border bg-subtle">
           <div className="flex flex-col gap-1.5">
-            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t("filterLabels.type")}</span>
+            <span className="text-label text-text-secondary">{t("filterLabels.type")}</span>
             <FilterSelectBare
               value={query.source_type}
               onChange={(value) => setFilter("source_type", value)}
@@ -374,7 +374,7 @@ export default function SubmissionListSection({ title, showSourceFilter = true, 
 
           {query.source_type !== "assignment" && (
             <div className="flex flex-col gap-1.5">
-              <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t("filterLabels.checkpoint")}</span>
+              <span className="text-label text-text-secondary">{t("filterLabels.checkpoint")}</span>
               <FilterSelectBare
                 value={query.checkpoint_id}
                 onChange={(value) => setFilter("checkpoint_id", value)}
@@ -385,7 +385,7 @@ export default function SubmissionListSection({ title, showSourceFilter = true, 
 
           {query.source_type !== "checkpoint" && (
             <div className="flex flex-col gap-1.5">
-              <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t("filterLabels.assignment")}</span>
+              <span className="text-label text-text-secondary">{t("filterLabels.assignment")}</span>
               <FilterSelectBare
                 value={query.assignment_id}
                 onChange={(value) => setFilter("assignment_id", value)}
@@ -395,7 +395,7 @@ export default function SubmissionListSection({ title, showSourceFilter = true, 
           )}
 
           <div className="flex flex-col gap-1.5">
-            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t("lecturer.gradingPage.filters.submission")}</span>
+            <span className="text-label text-text-secondary">{t("lecturer.gradingPage.filters.submission")}</span>
             <FilterSelectBare
               value={query.status}
               onChange={(value) => setFilter("status", value)}
@@ -404,7 +404,7 @@ export default function SubmissionListSection({ title, showSourceFilter = true, 
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t("filterLabels.late")}</span>
+            <span className="text-label text-text-secondary">{t("filterLabels.late")}</span>
             <FilterSelectBare
               value={query.is_late}
               onChange={(value) => setFilter("is_late", value)}
@@ -413,7 +413,7 @@ export default function SubmissionListSection({ title, showSourceFilter = true, 
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t("admin.columns.evaluations")}</span>
+            <span className="text-label text-text-secondary">{t("admin.columns.evaluations")}</span>
             <FilterSelectBare
               value={query.evaluation_status}
               onChange={(value) => setFilter("evaluation_status", value)}
@@ -434,7 +434,7 @@ export default function SubmissionListSection({ title, showSourceFilter = true, 
         emptyText={t("lecturer.gradingPage.emptySubmissions")}
       />
 
-      <div className="flex items-center gap-2 text-xs text-gray-400">
+      <div className="flex items-center gap-2 text-xs text-text-muted">
         <FileText size={14} />
         {t("lecturer.gradingPage.filesHint")}
       </div>
