@@ -1,8 +1,10 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, BookOpenIcon } from "lucide-react";
+import { Search, Users } from "lucide-react";
 import StatCard from "@/components/ui/Card/StatCard";
-import { StatIconGrading, StatIconAssignment, StatIconGroups } from "@/components/icons/lecture";
+import Card from "@/components/ui/Card/Card";
+import PageHeader from "@/components/ui/PageHeader";
+import EmptyState from "@/components/ui/EmptyState";
 import Dropdown from "@/components/ui/filter/DropDown";
 import GroupCard from "./components/GroupCard";
 import ClassApi from "@/api/class";
@@ -190,50 +192,31 @@ export default function GroupsPage() {
 
   return (
     <>
-      <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <StatCard
-          title={t("lecturer.groupsPage.stats.classes")}
-          value={stats.classCount}
-          icon={<BookOpenIcon size={22} />}
-          iconBg="bg-blue-100"
-          iconColor="text-blue-500"
-        />
-        <StatCard
-          title={t("lecturer.groupsPage.stats.groups")}
-          value={stats.groupCount}
-          icon={<StatIconGroups />}
-          iconBg="bg-amber-100"
-          iconColor="text-amber-600"
-        />
-        <StatCard
-          title={t("lecturer.groupsPage.stats.assignments")}
-          value={stats.assignmentCount}
-          icon={<StatIconAssignment />}
-          iconBg="bg-purple-100"
-          iconColor="text-violet-600"
-        />
-        <StatCard
-          title={t("lecturer.groupsPage.stats.needGrading")}
-          value={stats.needGradingCount}
-          icon={<StatIconGrading />}
-          iconBg="bg-green-100"
-          iconColor="text-green-600"
-        />
+      <PageHeader
+        title={t("lecturer.groupsPage.title", { defaultValue: "Nhóm sinh viên" })}
+        description={t("lecturer.groupsPage.subtitle", { defaultValue: "Theo dõi cấu trúc và điều kiện của các nhóm theo lớp." })}
+      />
+
+      <section className="mt-4 grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <StatCard title={t("lecturer.groupsPage.stats.classes")} value={stats.classCount} />
+        <StatCard title={t("lecturer.groupsPage.stats.groups")} value={stats.groupCount} />
+        <StatCard title={t("lecturer.groupsPage.stats.assignments")} value={stats.assignmentCount} />
+        <StatCard title={t("lecturer.groupsPage.stats.needGrading")} value={stats.needGradingCount} />
       </section>
 
-      <section className="mt-4 sm:mt-6 w-full p-4 bg-white rounded-2xl shadow-sm border border-gray-100">
+      <Card className="mt-4 sm:mt-6 w-full p-4">
         <div className="flex flex-col md:flex-row items-center gap-3 sm:gap-4 w-full">
           <div className="relative w-full md:flex-1 md:min-w-[200px]">
             <Search
               size={18}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none"
             />
             <input
               type="search"
               placeholder={t("lecturer.groupsPage.searchPlaceholder")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
+              className="w-full pl-10 pr-4 h-9 rounded-control border border-border bg-surface text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-accent"
             />
           </div>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 w-full md:w-auto md:flex">
@@ -265,16 +248,20 @@ export default function GroupsPage() {
           />
           </div>
         </div>
-      </section>
+      </Card>
 
       <section className="mt-4 sm:mt-6">
         {loading ? (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
-            <p className="text-sm text-gray-500">{t("lecturer.groupsPage.loading")}</p>
+          <div className="bg-surface rounded-card border border-border p-8 text-center">
+            <p className="text-sm text-text-secondary">{t("lecturer.groupsPage.loading")}</p>
           </div>
         ) : filteredGroups.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
-            <p className="text-sm text-gray-500">{t("lecturer.groupsPage.noResults")}</p>
+          <div className="bg-surface rounded-card border border-border">
+            <EmptyState
+              icon={<Users size={24} />}
+              title={t("lecturer.groupsPage.noResults")}
+              description={t("lecturer.groupsPage.noResultsHint", { defaultValue: "Chọn lớp khác hoặc điều chỉnh bộ lọc để xem các nhóm." })}
+            />
           </div>
         ) : (
           <div className="flex flex-col gap-4">

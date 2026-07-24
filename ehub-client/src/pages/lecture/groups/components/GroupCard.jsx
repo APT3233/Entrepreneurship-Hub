@@ -1,6 +1,7 @@
 import { useMemo } from "react";
-import { Users, CheckCircle2, XCircle, AlertTriangle, AlertCircle, ArrowRight } from "lucide-react";
+import { Users, AlertCircle, AlertTriangle, ArrowRight } from "lucide-react";
 import { GroupIcon2 } from "@/components/icons/lecture";
+import StatusBadge from "@/components/ui/StatusBadge";
 
 /**
  * GroupCard
@@ -13,18 +14,6 @@ import { GroupIcon2 } from "@/components/icons/lecture";
  * - avatars   : string[]
  * - onDetail  : () => void
  */
-
-const MAJOR_STYLE = {
-  "DE":    { text: "text-blue-600",   bg: "bg-[#F0F7FF]" },
-  "DS/DA": { text: "text-purple-600", bg: "bg-[#F9F5FF]" },
-  "Design":  { text: "text-blue-600",   bg: "bg-blue-50" },
-  "IT":      { text: "text-purple-600", bg: "bg-purple-50" },
-  "Kinh tế": { text: "text-green-700",  bg: "bg-green-50" },
-};
-
-function majorStyle(name) {
-  return MAJOR_STYLE[name] ?? { text: "text-gray-600", bg: "bg-gray-50" };
-}
 
 // Tính status từ majors
 function calcStatus(majors) {
@@ -47,21 +36,15 @@ function buildWarnings(majors) {
 }
 
 const STATUS_CONFIG = {
-  eligible:   { label: "Đủ điều kiện",      icon: CheckCircle2,   color: "text-green-500"  },
-  warning:    { label: "Cần kiểm tra",       icon: AlertTriangle,  color: "text-yellow-500" },
-  ineligible: { label: "Chưa đủ điều kiện", icon: XCircle,        color: "text-red-500"    },
+  eligible:   { label: "Đủ điều kiện",       tone: "success" },
+  warning:    { label: "Cần kiểm tra",       tone: "warning" },
+  ineligible: { label: "Chưa đủ điều kiện",  tone: "danger" },
 };
 
 const WARNING_STYLE = {
-  warning:    { bg: "bg-yellow-50",  border: "border-yellow-200", text: "text-yellow-700", Icon: AlertCircle,   iconColor: "text-yellow-500" },
-  ineligible: { bg: "bg-red-50",     border: "border-red-200",    text: "text-red-600",    Icon: AlertTriangle, iconColor: "text-red-500"    },
+  warning:    { bg: "bg-warning-bg", text: "text-warning-text", Icon: AlertCircle },
+  ineligible: { bg: "bg-danger-bg",  text: "text-danger-text",  Icon: AlertTriangle },
 };
-
-
-const DEFAULT_MAJORS = [
-  { name: "DE",    count: 1, minRequired: 1 },
-  { name: "DS/DA", count: 3, minRequired: 1 },
-];
 
 export default function GroupCard({
   name      = "Nhóm Alpha",
@@ -75,10 +58,10 @@ export default function GroupCard({
   // Thống kê sinh viên chung cho DS/DA và DE riêng biệt theo yêu cầu
   const displayMajors = useMemo(() => {
     const source = majors || [];
-    
+
     const deMatch = source.find(m => m.name === "DE");
     const de = deMatch ? deMatch.count : 0;
-    
+
     const ds = source.find(m => m.name === "DS")?.count || 0;
     const da = source.find(m => m.name === "DA")?.count || 0;
     const dsdaMatch = source.find(m => m.name === "DS/DA");
@@ -92,7 +75,7 @@ export default function GroupCard({
 
   const status   = calcStatus(displayMajors);
   const warnings = buildWarnings(displayMajors);
-  const { label, icon: StatusIcon, color } = STATUS_CONFIG[status];
+  const { label, tone } = STATUS_CONFIG[status];
   const warnStyle = WARNING_STYLE[status];
 
   const shownAvatars = avatars.slice(0, 3);
@@ -100,7 +83,7 @@ export default function GroupCard({
   const extraCount = Math.max(0, members - 3);
 
   return (
-    <div className="bg-white rounded-2xl border-[1.5px] border-blue-400/60 shadow-sm px-4 sm:px-6 py-4 sm:py-5 w-full flex flex-col gap-4 sm:gap-5 transition-all">
+    <div className="bg-surface rounded-card border border-border px-4 sm:px-6 py-4 sm:py-5 w-full flex flex-col gap-4 sm:gap-5 transition-colors">
 
       {/* Row 1: Group info + status badge */}
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-0">
@@ -109,41 +92,37 @@ export default function GroupCard({
             <GroupIcon2 status={status} />
           </div>
           <div className="flex flex-col">
-            <h3 className="text-base sm:text-lg font-bold text-gray-900 leading-tight">
+            <h3 className="text-base sm:text-lg font-medium text-text-primary leading-tight">
               {name} - {classCode}
             </h3>
-            <p className="text-xs sm:text-sm text-gray-400 mt-1 line-clamp-2 sm:line-clamp-none">{topic}</p>
+            <p className="text-sm text-text-secondary mt-1 line-clamp-2 sm:line-clamp-none">{topic}</p>
           </div>
         </div>
 
-        <div className={`flex items-center gap-1.5 shrink-0 self-start sm:self-auto bg-${color.replace('text-', '')}/10 sm:bg-transparent px-2.5 py-1 sm:px-0 sm:py-0 rounded-full sm:rounded-none ${color}`}>
-          <StatusIcon size={16} className="sm:w-[18px] sm:h-[18px]" />
-          <span className="text-xs sm:text-sm font-medium">{label}</span>
+        <div className="shrink-0 self-start sm:self-auto">
+          <StatusBadge status={tone} label={label} />
         </div>
       </div>
 
       {/* Row 2: Major badges */}
       <div className="grid grid-cols-2 gap-2 sm:gap-4">
-        {displayMajors.map(({ name: mName, count }) => {
-          const { text, bg } = majorStyle(mName);
-          return (
-            <div key={mName} className={`flex flex-col lg:flex-row lg:items-center justify-between px-3 sm:px-5 py-2 sm:py-3 rounded-xl ${bg}`}>
-              <span className={`text-sm sm:text-md font-bold ${text}`}>{mName}</span>
-              <span className={`text-[11px] sm:text-sm ${text} opacity-80 font-medium mt-0.5 lg:mt-0`}>
-                {count} Sinh viên
-              </span>
-            </div>
-          );
-        })}
+        {displayMajors.map(({ name: mName, count }) => (
+          <div key={mName} className="flex flex-col lg:flex-row lg:items-center justify-between px-3 sm:px-5 py-2 sm:py-3 rounded-control bg-subtle">
+            <span className="text-sm font-medium text-text-primary">{mName}</span>
+            <span className="text-label text-text-secondary mt-0.5 lg:mt-0">
+              {count} Sinh viên
+            </span>
+          </div>
+        ))}
       </div>
 
       {/* Row 3: Warning / error messages */}
       {warnings.length > 0 && warnStyle && (
-        <div className={`flex flex-col gap-1.5 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border ${warnStyle.bg} ${warnStyle.border}`}>
+        <div className={`flex flex-col gap-1.5 px-3 sm:px-4 py-2.5 sm:py-3 rounded-control ${warnStyle.bg}`}>
           {warnings.map((msg, i) => (
             <div key={i} className="flex items-start gap-2">
-              <warnStyle.Icon size={14} className={`mt-0.5 shrink-0 ${warnStyle.iconColor} w-[14px] h-[14px]`} />
-              <p className={`text-[11px] sm:text-xs font-medium ${warnStyle.text} leading-relaxed`}>{msg}</p>
+              <warnStyle.Icon size={14} className={`mt-0.5 shrink-0 ${warnStyle.text}`} />
+              <p className={`text-xs font-medium ${warnStyle.text} leading-relaxed`}>{msg}</p>
             </div>
           ))}
         </div>
@@ -155,32 +134,32 @@ export default function GroupCard({
           <div className="flex -space-x-2">
             {shownAvatars.map((src, i) => (
               <img key={`avatar-${i}`} src={src} alt=""
-                className="w-7 h-7 sm:w-9 sm:h-9 rounded-full border-2 border-white object-cover shadow-sm transition-transform hover:translate-y-[-2px]"
+                className="w-7 h-7 sm:w-9 sm:h-9 rounded-full border-2 border-surface object-cover"
                 style={{ zIndex: 10 - i }}
               />
             ))}
             {Array.from({ length: placeholderCount }).map((_, i) => (
               <div key={`placeholder-${i}`}
-                className="w-7 h-7 sm:w-9 sm:h-9 rounded-full border-2 border-white bg-gray-100 flex items-center justify-center shadow-sm"
+                className="w-7 h-7 sm:w-9 sm:h-9 rounded-full border-2 border-surface bg-subtle flex items-center justify-center"
                 style={{ zIndex: 5 - i }}
               >
-                <Users size={12} className="text-gray-300 sm:w-[14px] sm:h-[14px]" />
+                <Users size={12} className="text-text-muted sm:w-[14px] sm:h-[14px]" />
               </div>
             ))}
           </div>
           {extraCount > 0 && (
-            <div className="ml-2 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center">
-               <span className="text-[9px] sm:text-[10px] text-gray-500 font-bold">+{extraCount}</span>
+            <div className="ml-2 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-subtle border border-border flex items-center justify-center">
+               <span className="text-label text-text-secondary">+{extraCount}</span>
             </div>
           )}
         </div>
 
         <button
           onClick={onDetail}
-          className="flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm font-semibold text-blue-500 hover:text-blue-600 transition-colors cursor-pointer"
+          className="flex items-center gap-1 sm:gap-1.5 text-sm font-medium text-accent hover:text-accent-hover transition-colors cursor-pointer"
         >
           <span>Xem chi tiết</span>
-          <ArrowRight size={14} className="sm:w-[16px] sm:h-[16px]" />
+          <ArrowRight size={16} />
         </button>
       </div>
     </div>
