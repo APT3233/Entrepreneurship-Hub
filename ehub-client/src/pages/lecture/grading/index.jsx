@@ -3,6 +3,7 @@ import gradingService from "@/api/grading";
 import { useTranslation } from "@/context/TranslationContext";
 import GradingDashboardCards from "./components/GradingDashboardCards";
 import SubmissionListSection from "./components/SubmissionListSection";
+import PageHeader from "@/components/ui/PageHeader";
 
 export default function LecturerGradingPage() {
   const { t } = useTranslation();
@@ -32,13 +33,10 @@ export default function LecturerGradingPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">{t("lecturer.gradingPage.title")}</h1>
-          <p className="mt-1 text-sm text-gray-500">{t("lecturer.gradingPage.subtitle")}</p>
-        </div>
-      </div>
+      <PageHeader
+        title={t("lecturer.gradingPage.title")}
+        description={t("lecturer.gradingPage.subtitle")}
+      />
 
       <GradingDashboardCards summary={summary} />
       
