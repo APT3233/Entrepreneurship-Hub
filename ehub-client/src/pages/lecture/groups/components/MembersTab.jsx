@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Pencil, Trash2, UserPlus, Download } from "lucide-react";
 import { Avatar, Skeleton } from "./Common";
+import StatusBadge from "@/components/ui/StatusBadge";
 import GroupApi from "@/api/group";
 import { useToast } from "@/components/ui/Toast";
 import AddGroupMemberForm from "@/components/form/lecturer/AddGroupMemberForm";
@@ -10,9 +11,9 @@ import { formatDate } from "@/utils/dateTimeDisplay";
 import { downloadCsv } from "@/utils/exportCsv";
 
 const STATUS_LABEL = {
-  active: { text: "Đang tham gia", className: "text-emerald-700 bg-emerald-50 border-emerald-100" },
-  left: { text: "Đã rời nhóm", className: "text-slate-600 bg-slate-100 border-slate-200" },
-  removed: { text: "Đã gỡ", className: "text-red-700 bg-red-50 border-red-100" },
+  active: { text: "Đang tham gia", tone: "success" },
+  left: { text: "Đã rời nhóm", tone: "neutral" },
+  removed: { text: "Đã gỡ", tone: "danger" },
 };
 
 
@@ -31,18 +32,10 @@ export default function MembersTab({
   const toast = useToast();
   const [addOpen, setAddOpen] = useState(false);
   const [editMember, setEditMember] = useState(null);
-  
+
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [memberToDelete, setMemberToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
-
-  const MAJOR_CONFIG = {
-    IT: "text-blue-600 bg-blue-50 border-blue-100",
-    "Kinh tế": "text-emerald-600 bg-emerald-50 border-emerald-100",
-    Design: "text-purple-600 bg-purple-50 border-purple-100",
-  };
-
-  const getMajorStyle = (major) => MAJOR_CONFIG[major] ?? "text-gray-500 bg-gray-50 border-gray-100";
 
   const handleRemoveMember = (studentId, name) => {
     if (!groupId || !studentId) return;
@@ -95,20 +88,22 @@ export default function MembersTab({
     downloadCsv({ filename, headers, rows });
   };
 
+  const th = "px-4 py-3 md:px-6 md:py-4 text-label font-medium text-text-secondary";
+
   return (
     <div className="mt-6 md:mt-8 mb-10">
       <div className="mb-4 md:mb-6 flex flex-row items-center justify-between gap-3 flex-wrap">
-        <p className="text-sm md:text-base font-semibold text-gray-900 tracking-tight">
+        <p className="text-base font-medium text-text-primary">
           Danh sách sinh viên
         </p>
         <div className="flex items-center gap-3">
-          <span className="text-xs md:text-sm text-gray-500 font-medium">
+          <span className="text-sm text-text-secondary">
             {members.length} thành viên
           </span>
           <button
             type="button"
             onClick={handleExportGroup}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-green-50 border border-green-100 text-green-700 text-xs font-semibold px-3 py-2 hover:bg-green-100 transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 h-9 rounded-control bg-subtle text-text-secondary text-sm font-medium px-3 hover:bg-border transition-colors cursor-pointer"
           >
             <Download className="h-3.5 w-3.5" />
             Xuất thành viên
@@ -117,7 +112,7 @@ export default function MembersTab({
             <button
               type="button"
               onClick={() => setAddOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 text-white text-xs font-semibold px-3 py-2 hover:bg-indigo-700 transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 h-9 rounded-control bg-accent text-white text-sm font-medium px-3 hover:bg-accent-hover transition-colors cursor-pointer"
             >
               <UserPlus className="h-3.5 w-3.5" />
               Thêm thành viên
@@ -126,103 +121,79 @@ export default function MembersTab({
         </div>
       </div>
 
-      <div className="bg-white border border-gray-100 rounded-3xl overflow-hidden shadow-sm w-full">
+      <div className="bg-surface border border-border rounded-card overflow-hidden w-full">
         <div className="overflow-x-auto w-full">
           <table className="w-full text-sm text-left border-collapse whitespace-nowrap min-w-[720px]">
             <thead>
-              <tr className="bg-indigo-50/20 border-b border-gray-50">
-                <th className="px-4 py-4 md:px-6 md:py-5 text-[10px] md:text-[11px] font-bold text-gray-400 uppercase tracking-widest">
-                  MSSV
-                </th>
-                <th className="px-4 py-4 md:px-6 md:py-5 text-[10px] md:text-[11px] font-bold text-gray-400 uppercase tracking-widest">
-                  Họ và tên
-                </th>
-                <th className="px-4 py-4 md:px-6 md:py-5 text-[10px] md:text-[11px] font-bold text-gray-400 uppercase tracking-widest">
-                  Email
-                </th>
-                <th className="px-4 py-4 md:px-6 md:py-5 text-[10px] md:text-[11px] font-bold text-gray-400 uppercase tracking-widest text-center">
-                  Chuyên ngành
-                </th>
-                <th className="px-4 py-4 md:px-6 md:py-5 text-[10px] md:text-[11px] font-bold text-gray-400 uppercase tracking-widest text-center">
-                  Vai trò
-                </th>
-                <th className="px-4 py-4 md:px-6 md:py-5 text-[10px] md:text-[11px] font-bold text-gray-400 uppercase tracking-widest text-center">
-                  Trạng thái
-                </th>
-                <th className="px-4 py-4 md:px-6 md:py-5 text-[10px] md:text-[11px] font-bold text-gray-400 uppercase tracking-widest text-center">
-                  Tham gia
-                </th>
+              <tr className="bg-subtle border-b border-border">
+                <th className={th}>MSSV</th>
+                <th className={th}>Họ và tên</th>
+                <th className={th}>Email</th>
+                <th className={`${th} text-center`}>Chuyên ngành</th>
+                <th className={`${th} text-center`}>Vai trò</th>
+                <th className={`${th} text-center`}>Trạng thái</th>
+                <th className={`${th} text-center`}>Tham gia</th>
                 {canManageMembers ? (
-                  <th className="px-4 py-4 md:px-6 md:py-5 text-[10px] md:text-[11px] font-bold text-gray-400 uppercase tracking-widest text-right">
-                    Thao tác
-                  </th>
+                  <th className={`${th} text-right`}>Thao tác</th>
                 ) : null}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="divide-y divide-border">
               {members.map((m, idx) => {
                 const st = STATUS_LABEL[m.status] || STATUS_LABEL.active;
                 const isLeader = m.role === "leader";
                 return (
                   <tr
                     key={m.id ?? `${m.student_id}-${idx}`}
-                    className="hover:bg-indigo-50/10 transition-colors group cursor-default"
+                    className="hover:bg-subtle transition-colors cursor-default"
                   >
-                    <td className="px-4 py-3 md:px-6 md:py-5">
-                      <span className="font-mono text-[11px] md:text-xs font-semibold text-gray-600 bg-gray-50 px-2 py-1 rounded-lg group-hover:bg-white transition-colors">
+                    <td className="px-4 py-3 md:px-6 md:py-4">
+                      <span className="font-mono text-xs font-medium text-text-secondary bg-subtle px-2 py-1 rounded-control">
                         {m.student_code || m.mssv}
                       </span>
                     </td>
-                    <td className="px-4 py-3 md:px-6 md:py-5">
+                    <td className="px-4 py-3 md:px-6 md:py-4">
                       <div className="flex items-center gap-3">
                         <Avatar
                           name={m.full_name || m.fullName || "N A"}
                           avatar={m.avatar}
                           index={idx}
                         />
-                        <span className="font-medium text-gray-800 text-xs md:text-sm leading-none group-hover:text-indigo-600 transition-colors">
+                        <span className="font-medium text-text-primary text-sm leading-none">
                           {m.full_name || m.fullName}
                         </span>
                       </div>
                     </td>
-                    <td className="px-4 py-3 md:px-6 md:py-5">
-                      <span className="text-gray-400 font-medium text-[11px] md:text-xs leading-none">
+                    <td className="px-4 py-3 md:px-6 md:py-4">
+                      <span className="text-text-secondary text-xs leading-none">
                         {m.email || "—"}
                       </span>
                     </td>
-                    <td className="px-4 py-3 md:px-6 md:py-5 text-center">
-                      <span
-                        className={`text-[9px] md:text-[10px] font-bold px-2 md:px-3 py-1 md:py-1.5 rounded-full border uppercase tracking-wider ${getMajorStyle(m.major)} shadow-sm`}
-                      >
-                        {m.major || "Chưa cập nhật"}
-                      </span>
+                    <td className="px-4 py-3 md:px-6 md:py-4 text-center">
+                      <StatusBadge status="neutral" label={m.major || "Chưa cập nhật"} />
                     </td>
-                    <td className="px-4 py-3 md:px-6 md:py-5 text-center">
+                    <td className="px-4 py-3 md:px-6 md:py-4 text-center">
                       <span
-                        className={`text-[10px] md:text-xs font-semibold px-2 py-1 rounded-lg ${
-                          isLeader ? "text-indigo-700 bg-indigo-50" : "text-gray-600 bg-gray-50"
+                        className={`text-xs font-medium px-2 py-1 rounded-control ${
+                          isLeader ? "text-accent bg-accent-bg" : "text-text-secondary bg-subtle"
                         }`}
                       >
                         {isLeader ? "Nhóm trưởng" : "Thành viên"}
                       </span>
                     </td>
-                    <td className="px-4 py-3 md:px-6 md:py-5 text-center">
-                      <span
-                        className={`text-[9px] md:text-[10px] font-bold px-2 py-1 rounded-full border ${st.className}`}
-                      >
-                        {st.text}
-                      </span>
+                    <td className="px-4 py-3 md:px-6 md:py-4 text-center">
+                      <StatusBadge status={st.tone} label={st.text} />
                     </td>
-                    <td className="px-4 py-3 md:px-6 md:py-5 text-center text-[11px] text-gray-500">
+                    <td className="px-4 py-3 md:px-6 md:py-4 text-center text-xs text-text-secondary">
                       {formatDate(m.joined_at)}
                     </td>
                     {canManageMembers ? (
-                      <td className="px-4 py-3 md:px-6 md:py-5 text-right">
+                      <td className="px-4 py-3 md:px-6 md:py-4 text-right">
                         <div className="inline-flex items-center gap-1">
                           <button
                             type="button"
                             onClick={() => setEditMember(m)}
-                            className="p-2 rounded-lg text-indigo-600 hover:bg-indigo-50 transition-colors"
+                            className="p-2 rounded-control text-text-muted hover:bg-subtle hover:text-text-primary transition-colors"
                             title="Sửa"
                             aria-label="Sửa thành viên"
                           >
@@ -231,7 +202,7 @@ export default function MembersTab({
                           <button
                             type="button"
                             onClick={() => handleRemoveMember(m.student_id, m.full_name || m.fullName || m.student_code || m.mssv)}
-                            className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
+                            className="p-2 rounded-control text-text-muted hover:bg-danger-bg hover:text-danger-text transition-colors"
                             title="Xóa khỏi nhóm"
                             aria-label="Xóa thành viên"
                           >

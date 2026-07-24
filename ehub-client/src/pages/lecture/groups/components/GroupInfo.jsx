@@ -23,14 +23,14 @@ export default function GroupInfo({
   canEdit = true,
 }) {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden w-full">
+    <div className="bg-surface rounded-card border border-border overflow-hidden w-full">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-border">
         <div className="flex items-center gap-2.5">
-          <div className="w-6 h-6 rounded-full bg-indigo-500 flex items-center justify-center">
-            <Info size={14} className="text-white" />
+          <div className="w-6 h-6 rounded-full bg-accent-bg flex items-center justify-center">
+            <Info size={14} className="text-accent" />
           </div>
-          <h2 className="text-base font-semibold text-gray-900 tracking-tight">
+          <h2 className="text-base font-medium text-text-primary">
             Thông tin nhóm
           </h2>
         </div>
@@ -38,9 +38,9 @@ export default function GroupInfo({
         {canEdit && (
           <button
             onClick={onEdit}
-            className="flex items-center gap-2 px-4 py-1.5 rounded-lg border border-indigo-100 bg-white text-indigo-600 font-semibold text-sm hover:bg-indigo-50 transition-colors shadow-sm"
+            className="flex items-center gap-2 h-9 px-4 rounded-control border border-border bg-surface text-text-secondary font-medium text-sm hover:bg-subtle transition-colors"
           >
-            <Edit size={14} className="text-indigo-500" />
+            <Edit size={14} />
             Chỉnh sửa
           </button>
         )}
@@ -51,33 +51,33 @@ export default function GroupInfo({
         {/* Row 1: Group Name & Categories */}
         <div className="grid grid-cols-2 gap-4 md:gap-8">
           <div className="flex flex-col gap-1.5 min-w-0">
-            <span className="text-xs text-gray-400 uppercase tracking-wider">
+            <span className="text-label text-text-secondary">
               Tên nhóm
             </span>
-            <span className="text-sm md:text-base font-semibold text-gray-800 truncate">{name}</span>
+            <span className="text-base font-medium text-text-primary truncate">{name}</span>
           </div>
 
           <div className="flex flex-col gap-1.5 min-w-0">
-            <span className="text-xs text-gray-400 uppercase tracking-wider">
-              Categories
+            <span className="text-label text-text-secondary">
+              Lĩnh vực
             </span>
-            <button className="text-left text-xs md:text-sm font-semibold text-indigo-600 hover:underline truncate">
+            <button className="text-left text-sm font-medium text-accent hover:underline truncate">
               {category}
             </button>
           </div>
         </div>
 
         {/* Separator */}
-        <div className="w-full h-px bg-gray-200" />
+        <div className="w-full h-px bg-border" />
 
         {/* Row 2: Mentor & ClassInfo */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="flex flex-col gap-1.5">
-            <span className="text-sm font-semibold text-gray-400 capitalize">
+            <span className="text-label text-text-secondary">
               Mentor
             </span>
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden shrink-0">
+              <div className="w-12 h-12 rounded-full bg-subtle border border-border flex items-center justify-center overflow-hidden shrink-0">
                 {mentor?.avatar ? (
                   <img
                     src={mentor.avatar}
@@ -85,16 +85,16 @@ export default function GroupInfo({
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <span className="text-lg font-bold text-gray-400">
+                  <span className="text-lg font-medium text-text-muted">
                     {mentor?.name?.split(" ").pop()?.charAt(0) || "M"}
                   </span>
                 )}
               </div>
               <div className="flex flex-col">
-                <span className="text-sm font-semibold text-gray-800 leading-snug">
+                <span className="text-sm font-medium text-text-primary leading-snug">
                   {mentor?.name}
                 </span>
-                <span className="text-xs text-gray-400">
+                <span className="text-label text-text-secondary">
                   {mentor?.department}
                 </span>
               </div>
@@ -102,14 +102,14 @@ export default function GroupInfo({
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <span className="text-sm font-semibold text-gray-400 capitalize">
-              Lớp / Môn học
+            <span className="text-label text-text-secondary">
+              Lớp
             </span>
             <div className="flex items-baseline gap-2">
-              <span className="text-base font-semibold text-gray-800 uppercase tracking-wide">
+              <span className="text-base font-medium text-text-primary">
                 {classInfo?.code}
               </span>
-              <span className="text-xs font-medium text-gray-400">
+              <span className="text-label text-text-secondary">
                 {classInfo?.semester}
               </span>
             </div>
@@ -117,32 +117,32 @@ export default function GroupInfo({
         </div>
 
         {/* Separator */}
-        <div className="w-full h-px bg-gray-200" />
+        <div className="w-full h-px bg-border" />
 
         {/* Row 3: Topic & Zalo */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="flex flex-col gap-1.5 min-w-0">
-            <span className="text-xs text-gray-400 uppercase tracking-wider">
-              Topic
+            <span className="text-label text-text-secondary">
+              Đề tài
             </span>
             <div className="flex flex-col gap-0.5">
-              <h3 className="text-sm font-semibold text-gray-800 leading-relaxed tracking-tight break-words">
+              <h3 className="text-sm font-medium text-text-primary leading-relaxed break-words">
                 {topic}
               </h3>
-              <p className="text-xs text-gray-400 break-words">{topicDescription}</p>
+              <p className="text-label text-text-secondary break-words">{topicDescription}</p>
             </div>
           </div>
-          
+
           {zaloLink && (
             <div className="flex flex-col gap-1.5 min-w-0">
-              <span className="text-xs text-gray-400 uppercase tracking-wider">
+              <span className="text-label text-text-secondary">
                 Link Zalo
               </span>
-              <a 
-                href={zaloLink} 
-                target="_blank" 
+              <a
+                href={zaloLink}
+                target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm font-semibold text-indigo-600 hover:underline flex items-center gap-1.5"
+                className="text-sm font-medium text-accent hover:underline flex items-center gap-1.5"
               >
                 Tham gia nhóm Zalo
               </a>
