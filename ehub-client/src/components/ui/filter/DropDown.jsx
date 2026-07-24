@@ -59,13 +59,13 @@ function Dropdown({ label, options, value, onChange, disabled = false, direction
         onClick={handleToggle}
         disabled={disabled}
         className={`
-          flex items-center justify-between gap-1 sm:gap-2 px-2 sm:px-4 py-2 rounded-lg border text-sm font-medium w-full
-          transition-all duration-150
+          flex items-center justify-between gap-1 sm:gap-2 px-2 sm:px-4 py-2 rounded-control border text-sm font-medium w-full
+          transition-colors duration-150
           ${disabled
-            ? "bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed"
-            : "bg-white cursor-pointer " + (open
-              ? "border-indigo-400 ring-2 ring-indigo-100 text-gray-700"
-              : "border-gray-200 text-gray-600 hover:border-gray-300")
+            ? "bg-subtle border-border text-text-muted cursor-not-allowed"
+            : "bg-surface cursor-pointer " + (open
+              ? "border-accent ring-2 ring-accent/20 text-text-primary"
+              : "border-border text-text-secondary hover:border-border-strong")
           }
         `}
       >
@@ -74,14 +74,14 @@ function Dropdown({ label, options, value, onChange, disabled = false, direction
         </span>
         <ChevronDown
           size={15}
-          className={`shrink-0 text-gray-400 transition-transform duration-200 ${open ? (direction === "up" ? "-rotate-180" : "rotate-180") : ""}`}
+          className={`shrink-0 text-text-muted transition-transform duration-200 ${open ? (direction === "up" ? "-rotate-180" : "rotate-180") : ""}`}
         />
       </button>
 
       {/* Dropdown list - Render via Portal */}
       {open && !disabled && createPortal(
         <div 
-          className="portal-dropdown fixed z-[9999] bg-white border border-gray-100 rounded-xl shadow-lg overflow-hidden animate-in fade-in duration-100"
+          className="portal-dropdown fixed z-[9999] bg-surface border border-border rounded-control shadow-lg overflow-hidden animate-in fade-in duration-100"
           style={{
             top: coords.top - window.scrollY,
             left: coords.left,
@@ -90,11 +90,11 @@ function Dropdown({ label, options, value, onChange, disabled = false, direction
           }}
         >
           {/* Header — hiện giá trị đang chọn */}
-          <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-100">
-            <span className="text-sm font-semibold text-gray-700">
+          <div className="flex items-center justify-between px-4 py-2.5 border-b border-border">
+            <span className="text-sm font-medium text-text-primary">
               {selected ? selected.label : label}
             </span>
-            <ChevronDown size={14} className={`text-gray-400 ${direction === "up" ? "" : "rotate-180"}`} />
+            <ChevronDown size={14} className={`text-text-muted ${direction === "up" ? "" : "rotate-180"}`} />
           </div>
 
           {/* Options */}
@@ -109,8 +109,8 @@ function Dropdown({ label, options, value, onChange, disabled = false, direction
                       w-full text-left px-4 py-2.5 text-sm font-medium
                       transition-colors duration-100 cursor-pointer
                       ${isActive
-                        ? "bg-indigo-50 text-indigo-600"
-                        : "text-gray-600 hover:bg-gray-50"
+                        ? "bg-accent-bg text-accent"
+                        : "text-text-secondary hover:bg-subtle"
                       }
                     `}
                   >
