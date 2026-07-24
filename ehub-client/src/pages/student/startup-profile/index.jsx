@@ -6,6 +6,8 @@ import AdminTable from "@/pages/admin/components/AdminTable";
 import StatusBadge from "@/pages/admin/components/StatusBadge";
 import { StartupLogo } from "@/pages/admin/incubation/components";
 import PageHeader from "@/components/ui/PageHeader";
+import EmptyState from "@/components/ui/EmptyState";
+import { Rocket } from "lucide-react";
 import { formatDate } from "@/utils/dateTimeDisplay";
 
 export default function StudentStartupProfilesPage() {
@@ -45,7 +47,15 @@ export default function StudentStartupProfilesPage() {
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <PageHeader title={t("student.startupProfile.pageTitle")} description="Hồ sơ startup của bạn và tiến trình ươm tạo" />
-      <AdminTable columns={columns} rows={rows} loading={loading} error={error} emptyText={t("student.startupProfile.emptyList")} meta={meta} onPageChange={(page, limit) => setQuery((prev) => ({ ...prev, page, limit: limit || prev.limit }))} onRowClick={(row) => navigate(`/student/startups/${row.id}`)} />
+      {!loading && !error && rows.length === 0 ? (
+        <EmptyState
+          icon={<Rocket size={24} />}
+          title="Chưa có hồ sơ startup"
+          description="Hồ sơ startup sẽ xuất hiện ở đây khi được liên kết với tài khoản của bạn."
+        />
+      ) : (
+        <AdminTable columns={columns} rows={rows} loading={loading} error={error} emptyText={t("student.startupProfile.emptyList")} meta={meta} onPageChange={(page, limit) => setQuery((prev) => ({ ...prev, page, limit: limit || prev.limit }))} onRowClick={(row) => navigate(`/student/startups/${row.id}`)} />
+      )}
     </div>
   );
 }
