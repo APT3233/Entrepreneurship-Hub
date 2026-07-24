@@ -5,8 +5,6 @@ import StatCard from "@/components/ui/Card/StatCard";
 import Card from "@/components/ui/Card/Card";
 import PageHeader from "@/components/ui/PageHeader";
 import { useNavigate } from "react-router-dom";
-import { BookOpenIcon } from "lucide-react";
-import { StatIconGrading, StatIconAssignment, StatIconGroups } from "@/components/icons/lecture";
 import Dropdown from "@/components/ui/filter/DropDown";
 import RecentClasses from "@/components/ui/lecture/RecentClasses";
 import RecentClassesEmpty from "@/pages/lecture/dashboard/components/RecentClassesEmpty";
@@ -140,36 +138,24 @@ const LectureDashboard = () => {
         description="Tổng quan lớp học, nhóm và tiến độ chấm điểm."
       />
       <div className="mt-4 grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <StatCard 
-          title="Lớp học" 
-          value={stats.classCount} 
-          icon={<BookOpenIcon />} 
-          iconBg="bg-blue-100" 
-          iconColor="text-blue-500" 
+        <StatCard
+          title="Lớp học"
+          value={stats.classCount}
           onClick={() => navigate("/lecturer/classes")}
         />
-        <StatCard 
-          title="Nhóm sinh viên" 
-          value={stats.groupCount} 
-          icon={<StatIconGroups />} 
-          iconBg="bg-amber-100" 
-          iconColor="text-amber-600" 
+        <StatCard
+          title="Nhóm sinh viên"
+          value={stats.groupCount}
           onClick={() => navigate("/lecturer/groups")}
         />
-        <StatCard 
-          title="Checkpoint" 
-          value={stats.assignmentCount} 
-          icon={<StatIconAssignment />} 
-          iconBg="bg-purple-100" 
-          iconColor="text-violet-600" 
+        <StatCard
+          title="Checkpoint"
+          value={stats.assignmentCount}
           onClick={() => navigate("/lecturer/assignments?tab=checkpoints")}
         />
-        <StatCard 
-          title="Cần chấm" 
-          value={stats.needGradingCount} 
-          icon={<StatIconGrading />} 
-          iconBg="bg-green-100" 
-          iconColor="text-green-600" 
+        <StatCard
+          title="Cần chấm"
+          value={stats.needGradingCount}
           onClick={() => navigate("/lecturer/assignments")}
         />
       </div>
