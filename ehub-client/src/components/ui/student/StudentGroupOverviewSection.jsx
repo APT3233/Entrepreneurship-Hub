@@ -5,12 +5,12 @@ import { formatDate } from "@/utils/dateTimeDisplay";
 /**
  * Component hiển thị một trường thông tin với nhãn, giá trị và nút Request đổi.
  */
-function InfoField({ label, value, onRequestChange, isLongText = false }) {
+function InfoField({ label, value, onRequestChange, isLongText = false, muted = false }) {
   return (
     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 py-5 first:pt-2 last:pb-2 border-b border-gray-50 last:border-0 group">
       <div className="flex-1">
         <p className="text-label text-text-secondary mb-1">{label}</p>
-        <p className={`text-sm font-bold text-gray-900 leading-relaxed ${isLongText ? "max-w-xl" : ""}`}>
+        <p className={`text-sm font-bold leading-relaxed ${muted ? "text-text-muted" : "text-gray-900"} ${isLongText ? "max-w-xl" : ""}`}>
           {value || "—"}
         </p>
       </div>
@@ -58,8 +58,8 @@ export default function StudentGroupOverviewSection({ group }) {
 
               <div className="space-y-1">
                 <InfoField label="Tên nhóm" value={group.group_name} onRequestChange={() => {}} />
-                <InfoField label="Lĩnh vực" value={group.category || "Chưa xác định"} onRequestChange={() => {}} />
-                <InfoField label="Đề tài" value={group.topic || "Chưa có đề tài"} isLongText onRequestChange={() => {}} />
+                <InfoField label="Lĩnh vực" value={group.category || "Chưa xác định"} muted={!group.category} onRequestChange={() => {}} />
+                <InfoField label="Đề tài" value={group.topic || "Chưa có đề tài"} isLongText muted={!group.topic} onRequestChange={() => {}} />
                 
                 {/* Mentor Field */}
                 <div className="py-5 border-b border-gray-50 group">
