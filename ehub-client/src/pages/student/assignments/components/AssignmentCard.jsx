@@ -32,8 +32,11 @@ export default function AssignmentCard({ assignment, onClick }) {
             {classCode}
           </span>
           {isSubmitted && (
-            <span className="ml-auto">
+            <span className="ml-auto flex items-center gap-2">
               <StatusBadge status="success" label={isGraded ? "Đã chấm" : "Đã nộp"} />
+              {isGraded && (
+                <span className="text-lg font-medium text-text-primary">{score}/{maxScore}</span>
+              )}
             </span>
           )}
           {isGraded && evaluation?.scores?.length ? (
@@ -61,12 +64,6 @@ export default function AssignmentCard({ assignment, onClick }) {
             <Trophy size={14} />
             <span className="text-[10px] font-bold uppercase tracking-wider">Tối đa: {maxScore} điểm</span>
           </div>
-          {isGraded && (
-             <div className="flex items-center gap-2 text-indigo-600 font-bold ml-auto">
-                <span className="text-[10px] uppercase tracking-widest">Điểm:</span>
-                <span className="text-base font-black">{score}/{maxScore}</span>
-             </div>
-          )}
         </div>
 
         {/* Action Prompt */}
