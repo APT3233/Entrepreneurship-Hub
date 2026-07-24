@@ -3,6 +3,8 @@ import { useSearchParams } from "react-router-dom";
 import { Plus, ListChecks, CheckSquare, ChevronLeft, ChevronRight } from "lucide-react";
 import ConfirmModal from "@/components/modal/ConfirmModal";
 import Dropdown from "@/components/ui/filter/DropDown";
+import PageHeader from "@/components/ui/PageHeader";
+import EmptyState from "@/components/ui/EmptyState";
 import AssignmentCard from "./components/AssignmentCard";
 import AssignmentDetailForm from "@/components/form/lecturer/AssignmentDetailForm";
 import CreateAssignmentForm from "@/components/form/lecturer/CreateAssignmentForm";
@@ -104,16 +106,16 @@ export default function AssignmentManagement() {
     const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
     
     return (
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 pt-6 border-t border-slate-100 animate-in fade-in duration-200">
-        <span className="text-sm font-bold text-slate-500">
-          Hiển thị <span className="text-slate-800 font-black">{startIndex + 1}-{endIndex}</span> trong số <span className="text-slate-800 font-black">{totalItems}</span> mục
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 pt-6 border-t border-border">
+        <span className="text-sm text-text-secondary">
+          Hiển thị <span className="text-text-primary font-medium">{startIndex + 1}-{endIndex}</span> trong số <span className="text-text-primary font-medium">{totalItems}</span> mục
         </span>
-        
+
         <div className="flex items-center gap-1.5">
           <button
             onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
             disabled={currentPage === 1}
-            className="inline-flex items-center justify-center p-2.5 rounded-xl border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-95 cursor-pointer shadow-sm"
+            className="inline-flex items-center justify-center h-9 w-9 rounded-control border border-border text-text-secondary bg-surface hover:bg-subtle disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
           >
             <ChevronLeft size={16} />
           </button>
@@ -122,10 +124,10 @@ export default function AssignmentManagement() {
             <button
               key={page}
               onClick={() => setCurrentPage(page)}
-              className={`inline-flex items-center justify-center w-10 h-10 rounded-xl text-xs font-black transition-all cursor-pointer ${
+              className={`inline-flex items-center justify-center w-9 h-9 rounded-control text-sm font-medium transition-colors cursor-pointer ${
                 currentPage === page
-                  ? "bg-slate-800 text-white shadow-md"
-                  : "border border-slate-200 text-slate-600 bg-white hover:bg-slate-50"
+                  ? "bg-accent text-white"
+                  : "border border-border text-text-secondary bg-surface hover:bg-subtle"
               }`}
             >
               {page}
@@ -135,7 +137,7 @@ export default function AssignmentManagement() {
           <button
             onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
             disabled={currentPage === totalPages}
-            className="inline-flex items-center justify-center p-2.5 rounded-xl border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-95 cursor-pointer shadow-sm"
+            className="inline-flex items-center justify-center h-9 w-9 rounded-control border border-border text-text-secondary bg-surface hover:bg-subtle disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
           >
             <ChevronRight size={16} />
           </button>
@@ -432,47 +434,43 @@ export default function AssignmentManagement() {
   };
 
   return (
-    <div className="min-h-screen w-full pb-10">
+    <div className="w-full pb-10">
       <div className="w-full">
         {/* Page Header */}
-        <div className="flex flex-row items-center justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
-              Quản lý học tập
-            </h1>
-            <p className="mt-0.5 text-sm text-gray-500 font-medium">
-              Thiết lập bài tập và các mốc checkpoint cho lớp học
-            </p>
-          </div>
-          <button
-            onClick={() => {
-              if (activeTab === "assignments") {
-                setIsCreateOpen(true);
-              } else if (filterClass) {
-                setSelectedCheckpoint(null); // Reset for creation
-                setIsEditCheckpointOpen(true);
-              }
-            }}
-            disabled={activeTab === "checkpoint" && !filterClass}
-            className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-sm font-bold shadow-lg shadow-indigo-100 transition-all active:scale-95 cursor-pointer"
-          >
-            <Plus size={18} />
-            {activeTab === "assignments" ? "Tạo bài tập" : "Thêm Checkpoint"}
-          </button>
-        </div>
+        <PageHeader
+          title="Quản lý học tập"
+          description="Thiết lập bài tập và các mốc checkpoint cho lớp học."
+          actions={
+            <button
+              onClick={() => {
+                if (activeTab === "assignments") {
+                  setIsCreateOpen(true);
+                } else if (filterClass) {
+                  setSelectedCheckpoint(null); // Reset for creation
+                  setIsEditCheckpointOpen(true);
+                }
+              }}
+              disabled={activeTab === "checkpoint" && !filterClass}
+              className="inline-flex items-center gap-2 h-9 px-4 rounded-control bg-accent hover:bg-accent-hover disabled:bg-subtle disabled:text-text-muted disabled:cursor-not-allowed text-white text-sm font-medium transition-colors cursor-pointer"
+            >
+              <Plus size={16} />
+              {activeTab === "assignments" ? "Tạo bài tập" : "Thêm Checkpoint"}
+            </button>
+          }
+        />
 
         {/* Tab Switcher */}
-        <div className="flex p-1.5 bg-gray-100/50 rounded-2xl mb-8 w-fit border border-gray-100">
+        <div className="flex p-1 bg-subtle rounded-control mt-4 mb-6 w-fit">
           <button
             onClick={() => handleTabChange("assignments")}
-            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${activeTab === "assignments" ? "bg-white text-indigo-600 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+            className={`flex items-center gap-2 px-5 py-2 rounded-control text-sm font-medium transition-colors cursor-pointer ${activeTab === "assignments" ? "bg-surface text-accent" : "text-text-secondary hover:text-text-primary"}`}
           >
             <ListChecks size={16} />
             Bài tập (Assignments)
           </button>
           <button
             onClick={() => handleTabChange("checkpoints")}
-            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${activeTab === "checkpoint" ? "bg-white text-indigo-600 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+            className={`flex items-center gap-2 px-5 py-2 rounded-control text-sm font-medium transition-colors cursor-pointer ${activeTab === "checkpoint" ? "bg-surface text-accent" : "text-text-secondary hover:text-text-primary"}`}
           >
             <CheckSquare size={16} />
             Mốc quan trọng (Checkpoints)
@@ -480,10 +478,10 @@ export default function AssignmentManagement() {
         </div>
 
         {/* Filter Bar */}
-        <div className="flex items-center gap-2.5 mb-8 w-full flex-wrap">
+        <div className="flex items-center gap-2.5 mb-6 w-full flex-wrap">
           <Dropdown label={t("lecturer.filterYear")} options={yearOptions} value={filterYear} onChange={setFilterYear} />
           <Dropdown label={t("lecturer.filterSemester")} options={semesterOptions} value={filterSemesterId} onChange={setFilterSemesterId} disabled={!filterYear} />
-          <div className="h-10 w-[1px] bg-gray-100 mx-1 hidden sm:block" />
+          <div className="h-8 w-px bg-border mx-1 hidden sm:block" />
           <Dropdown label={t("lecturer.filterClass")} options={classFilterOptions} value={filterClass} onChange={setFilterClass} disabled={!filterSemesterId} />
         </div>
 
@@ -492,13 +490,17 @@ export default function AssignmentManagement() {
           {activeTab === "assignments" ? (
             <div className="w-full">
               {isLoadingAssignments ? (
-                <div className="flex flex-col items-center justify-center py-20 text-gray-400">
-                  <div className="w-8 h-8 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin mb-4" />
+                <div className="flex flex-col items-center justify-center py-20 text-text-muted">
+                  <div className="w-8 h-8 border-4 border-border border-t-accent rounded-full animate-spin mb-4" />
                   <p className="text-sm font-medium">Đang tải bài tập...</p>
                 </div>
               ) : assignments.length === 0 ? (
-                <div className="bg-white rounded-[32px] border border-gray-100 py-20 text-center shadow-sm">
-                  <p className="text-gray-400 text-sm font-medium">Không có bài tập nào được tìm thấy.</p>
+                <div className="bg-surface rounded-card border border-border">
+                  <EmptyState
+                    icon={<ListChecks size={24} />}
+                    title="Chưa có bài tập nào"
+                    description="Không tìm thấy bài tập cho bộ lọc hiện tại."
+                  />
                 </div>
               ) : (
                 <>
@@ -528,13 +530,17 @@ export default function AssignmentManagement() {
           ) : (
             <div className="w-full">
               {isLoadingCheckpoints ? (
-                <div className="flex flex-col items-center justify-center py-20 text-gray-400">
-                  <div className="w-8 h-8 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin mb-4" />
+                <div className="flex flex-col items-center justify-center py-20 text-text-muted">
+                  <div className="w-8 h-8 border-4 border-border border-t-accent rounded-full animate-spin mb-4" />
                   <p className="text-sm font-medium">Đang tải checkpoint...</p>
                 </div>
               ) : checkpoints.length === 0 ? (
-                <div className="bg-white rounded-[32px] border border-gray-100 py-20 text-center shadow-sm">
-                  <p className="text-gray-400 text-sm font-medium">Chưa có checkpoint nào cho lớp này.</p>
+                <div className="bg-surface rounded-card border border-border">
+                  <EmptyState
+                    icon={<CheckSquare size={24} />}
+                    title="Chưa có checkpoint nào"
+                    description="Chọn lớp và tạo checkpoint để theo dõi các mốc quan trọng."
+                  />
                 </div>
               ) : (
                 <>
