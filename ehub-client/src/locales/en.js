@@ -24,6 +24,7 @@ export default {
     "unpin": "Unpin sidebar",
     "pinned": "Pinned",
     "autoCollapse": "Auto collapse",
+    "comingSoon": "coming soon",
     "previousPage": "Previous page",
     "nextPage": "Next page",
     "rowsPerPage": "Rows/page:",

@@ -6,7 +6,12 @@ import { authApi } from "@/api/auth";
 import { selectAuth, setError, setUser } from "@/store/slices/authSlice";
 import { Roles } from "@/constants/roles";
 import { getDefaultRouteForUser, hasAnyRole } from "@/utils/role";
-import { UserIcon, LockIcon, EyeIcon, EyeOffIcon } from "@/components/icons/auth";
+import {
+  UserIcon,
+  LockIcon,
+  EyeIcon,
+  EyeOffIcon
+} from "@/components/icons/auth";
 import { GraduationCapIcon, LectureIcon } from "@/components/icons/education";
 import { AlertCircleIcon } from "@/components/icons/ui";
 import GoogleButton from "@/components/ui/Button/GoogleButton";
@@ -15,9 +20,9 @@ import GoogleAccessDeniedModal from "@/components/modal/auth/GoogleAccessDeniedM
 import {
   API_ERROR_ACCOUNT_LOCKED,
   API_ERROR_STUDENT_NOT_IN_ROSTER,
-  API_ERROR_INSUFFICIENT_PERMISSION,
+  API_ERROR_INSUFFICIENT_PERMISSION
 } from "@/constants/apiErrors";
-import fptOnboarding from "@/assets/images/fpt-onboarding.png";
+import fptOnboarding from "@/assets/images/background-fpt.jpeg";
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 const TabButton = ({ active, onClick, icon, label }) => (
@@ -26,8 +31,7 @@ const TabButton = ({ active, onClick, icon, label }) => (
     onClick={onClick}
     className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-full text-sm font-medium
       transition-all duration-200 cursor-pointer
-      ${active ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
-  >
+      ${active ? "bg-accent-bg text-accent" : "text-text-secondary hover:text-text-primary"}`}>
     {icon}
     {label}
   </button>
@@ -35,7 +39,9 @@ const TabButton = ({ active, onClick, icon, label }) => (
 
 const FieldError = ({ message }) =>
   message ? (
-    <p className="flex items-center gap-1 mt-1.5 text-xs text-red-500" style={{ animation: "fadeSlideIn 0.2s ease" }}>
+    <p
+      className="flex items-center gap-1 mt-1.5 text-xs text-red-500"
+      style={{ animation: "fadeSlideIn 0.2s ease" }}>
       <AlertCircleIcon />
       {message}
     </p>
@@ -55,11 +61,20 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
-  const [fieldErrors, setFieldErrors] = useState({ id: "", password: "", general: "" });
+  const [fieldErrors, setFieldErrors] = useState({
+    id: "",
+    password: "",
+    general: ""
+  });
   const [notInRosterModalOpen, setNotInRosterModalOpen] = useState(false);
   const [googleAccessDeniedOpen, setGoogleAccessDeniedOpen] = useState(false);
 
-  const { user, isAuthenticated, isLoading, error: authError } = useSelector(selectAuth);
+  const {
+    user,
+    isAuthenticated,
+    isLoading,
+    error: authError
+  } = useSelector(selectAuth);
   const isStudent = role === Roles.STUDENT;
 
   const clearErrors = () => {
@@ -79,9 +94,15 @@ export default function LoginPage() {
     const messages = {
       missing_code: "Đăng nhập Google bị hủy hoặc thiếu mã. Vui lòng thử lại.",
       access_denied: "Bạn đã từ chối đăng nhập bằng Google.",
-      redirect_uri_mismatch: "Cấu hình redirect URI chưa đúng. Liên hệ quản trị viên.",
+      redirect_uri_mismatch:
+        "Cấu hình redirect URI chưa đúng. Liên hệ quản trị viên."
     };
-    return messages[code] || (code ? `Đăng nhập Google thất bại: ${code}` : "Đăng nhập Google thất bại.");
+    return (
+      messages[code] ||
+      (code
+        ? `Đăng nhập Google thất bại: ${code}`
+        : "Đăng nhập Google thất bại.")
+    );
   };
 
   // Xử lý redirect từ Google callback: thành công → /me + Redux + navigate; thất bại → Redux error + hiển thị
@@ -98,11 +119,14 @@ export default function LoginPage() {
           "Vui lòng thử lại hoặc liên hệ quản trị viên."
         );
       }
-      setSearchParams((prev) => {
-        const n = new URLSearchParams(prev);
-        n.delete("google_error");
-        return n;
-      }, { replace: true });
+      setSearchParams(
+        (prev) => {
+          const n = new URLSearchParams(prev);
+          n.delete("google_error");
+          return n;
+        },
+        { replace: true }
+      );
       return;
     }
 
@@ -148,7 +172,9 @@ export default function LoginPage() {
       })
       .catch((err) => {
         if (!mounted) return;
-        const message = err?.message || "Không lấy được thông tin sau đăng nhập Google. Vui lòng thử lại.";
+        const message =
+          err?.message ||
+          "Không lấy được thông tin sau đăng nhập Google. Vui lòng thử lại.";
         dispatch(setError(message));
         setFieldErrors((prev) => ({ ...prev, general: message }));
         toast.error(message);
@@ -158,7 +184,9 @@ export default function LoginPage() {
         if (mounted) setGoogleLoading(false);
       });
 
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, [searchParams, setSearchParams, dispatch, navigate, toast]);
 
   // Nếu đã đăng nhập mà vẫn cố vào /auth/login (vd: bấm Back) → auto redirect về route mặc định
@@ -207,7 +235,10 @@ export default function LoginPage() {
 
     if (hasError) {
       setFieldErrors(errors);
-      toast.warning("Thiếu thông tin", "Vui lòng kiểm tra lại các trường bắt buộc.");
+      toast.warning(
+        "Thiếu thông tin",
+        "Vui lòng kiểm tra lại các trường bắt buộc."
+      );
       return;
     }
 
@@ -219,8 +250,20 @@ export default function LoginPage() {
       const result = await authApi.login({ username: id.trim(), password });
       const user = result?.data?.user ?? result?.data;
       if (!user) throw new Error("Không lấy được thông tin người dùng.");
-      if (role === Roles.STUDENT && !hasAnyRole(user, [Roles.STUDENT])) throw new Error("Tài khoản này không phải sinh viên.");
-      if (role === Roles.LECTURER && !hasAnyRole(user, [Roles.LECTURER, Roles.ADMIN, Roles.DEPARTMENT_HEAD, Roles.MENTOR])) throw new Error("Tài khoản này không thuộc cổng giảng viên/quản trị/mentor.");
+      if (role === Roles.STUDENT && !hasAnyRole(user, [Roles.STUDENT]))
+        throw new Error("Tài khoản này không phải sinh viên.");
+      if (
+        role === Roles.LECTURER &&
+        !hasAnyRole(user, [
+          Roles.LECTURER,
+          Roles.ADMIN,
+          Roles.DEPARTMENT_HEAD,
+          Roles.MENTOR
+        ])
+      )
+        throw new Error(
+          "Tài khoản này không thuộc cổng giảng viên/quản trị/mentor."
+        );
       dispatch(setUser(user));
       const msg = `Chào mừng, ${user.full_name || user.username || "bạn"}! Đăng nhập thành công.`;
       setSuccessMsg(msg);
@@ -251,29 +294,16 @@ export default function LoginPage() {
 
   // dynamic wrapper class per field
   const inputWrapClass = (key) => {
-    const base = "flex items-center rounded-xl px-3 py-3 gap-2 transition-all duration-150";
+    const base =
+      "flex items-center rounded-xl px-3 py-3 gap-2 transition-all duration-150";
     if (fieldErrors[key]) {
-      return `${base} bg-red-50 border border-red-400 ring-2 ring-red-100`;
+      return `${base} bg-red-500/15 border border-red-400/70`;
     }
-    return `${base} bg-gray-100 border border-transparent focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-100`;
+    return `${base} glass-input`;
   };
 
   return (
-    <div
-      className="min-h-screen relative flex items-center justify-center px-4 py-8 sm:px-6 lg:px-8 bg-slate-950 overflow-hidden"
-    >
-      {/* Background Image with Filter */}
-      <div 
-        className="absolute inset-0 transition-all duration-700 transform scale-100"
-        style={{
-          backgroundImage: `url(${fptOnboarding})`,
-          backgroundSize: "100% 100%",
-          backgroundPosition: "center",
-        }}
-      />
-      {/* Dark gradient & backdrop blur overlay */}
-      <div className="absolute inset-0 bg-gradient-to-tr from-slate-950/90 via-slate-900/70 to-slate-950/90 backdrop-blur-[5px]" />
-
+    <div className="min-h-screen lg:h-screen relative flex flex-col lg:flex-row bg-page lg:overflow-hidden">
       {/* Fonts + keyframes */}
       <style>{`
         @keyframes fadeSlideIn {
@@ -288,62 +318,146 @@ export default function LoginPage() {
         }
 
         .field-error-shake { animation: shake 0.35s ease; }
+
+        /* ── Liquid glass ── */
+        .glass-card {
+          background: rgba(255, 255, 255, 0.71);
+          -webkit-backdrop-filter: blur(28px) saturate(160%);
+          backdrop-filter: blur(2px) saturate(160%);
+          border-radius: 26px;
+          box-shadow:
+            0 8px 40px rgba(0, 0, 0, 0.28),
+            inset 0 1px 0 rgba(255, 255, 255, 0.5);
+        }
+        /* Fallback khi trình duyệt không hỗ trợ backdrop-filter */
+        @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+          .glass-card { background: rgba(255, 255, 255, 0.72); }
+        }
+
+        .glass-input {
+          background: rgba(255, 255, 255, 0.55);
+          border: 1px solid rgba(255, 255, 255, 0.8);
+          -webkit-backdrop-filter: blur(6px);
+          backdrop-filter: blur(6px);
+          box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
+        }
+        .glass-input:focus-within {
+          background: rgba(255, 255, 255, 0.78);
+          border-color: var(--color-accent);
+          box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+        /* Reset input mặc định + khử nền autofill của Chrome (thủ phạm "khung trong") */
+        .glass-input input {
+          border: 0;
+          outline: none;
+          background: transparent;
+          -webkit-appearance: none;
+          appearance: none;
+        }
+        .glass-input input:-webkit-autofill,
+        .glass-input input:-webkit-autofill:hover,
+        .glass-input input:-webkit-autofill:focus {
+          -webkit-box-shadow: 0 0 0 1000px transparent inset;
+          -webkit-text-fill-color: #1f2937;
+          caret-color: #1f2937;
+          transition: background-color 9999s ease-in-out 0s;
+        }
       `}</style>
 
-      {/* Card */}
+      {/* ── Full-screen campus background ── */}
       <div
-        className="bg-white/95 backdrop-blur-md rounded-3xl p-6 sm:p-8 lg:p-10 w-full z-10 border border-white/20 shadow-2xl"
-        style={{ maxWidth: "520px" }}
-      >
-        {/* Logo */}
-        <div className="flex flex-col items-center mb-7">
-          <div
-            className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4"
-            style={{ background: "linear-gradient(135deg, #6366f1 0%, #4F39F6 100%)" }}
-          >
-            <GraduationCapIcon />
+        className="absolute inset-0"
+        style={{
+          backgroundImage: `url(${fptOnboarding})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center"
+        }}
+      />
+      <div className="absolute inset-0 bg-linear-to-tr from-white via-slate-800/35 to-slate-950/10" />
+
+      {/* ── Left brand panel (desktop) ── */}
+      <div className="hidden lg:block relative z-10 lg:w-[45%]">
+        <div className="relative flex h-full flex-col justify-between p-12">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-xl bg-white/10 backdrop-blur-sm border border-white/15 flex items-center justify-center">
+              <GraduationCapIcon />
+            </div>
+            <span className="text-lg font-semibold tracking-tight text-white">
+              E-HUB
+            </span>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
-             E-HUB
-          </h1>
-          <p className="text-sm text-gray-400 mt-1">Đăng nhập để tiếp tục</p>
+          <div>
+            <h2 className="text-5xl lg:text-6xl font-black text-accent">
+              Cổng
+              <br />
+              <span>khởi nghiệp</span>
+              <br />
+              sinh viên FPT
+            </h2>
+            <p className="max-w-xl text-sm leading-relaxed text-yellow-800">
+              Kết nối ý tưởng, mentor và nguồn lực — tất cả trong một nơi.
+            </p>
+          </div>
         </div>
+      </div>
 
-        {/* Role Tabs */}
-        <div className="flex bg-gray-100 rounded-full p-1 mb-7">
-          <TabButton
-            active={isStudent}
-            onClick={() => handleRoleChange(Roles.STUDENT)}
-            icon={<UserIcon />}
-            label="Student"
-          />
-          <TabButton
-            active={!isStudent}
-            onClick={() => handleRoleChange(Roles.LECTURER)}
-            icon={<LectureIcon />}
-            label="Lecturer / Mentor"
-          />
-        </div>
+      {/* ── Right form panel (liquid glass) ── */}
+      <div className="relative z-10 flex-1 flex items-center justify-center px-4 py-8 sm:px-6 lg:px-10 overflow-y-auto">
+        <div
+          className="w-full glass-card p-6 sm:p-8"
+          style={{ maxWidth: "400px" }}>
+          {/* Mobile logo (brand panel hidden below lg) */}
+          <div className="flex flex-col items-center mb-6 lg:hidden">
+            <div
+              className="w-14 h-14 rounded-2xl flex items-center justify-center mb-3"
+              style={{
+                background: "linear-gradient(135deg, #f7943f 0%, #f26f20 100%)"
+              }}>
+              <GraduationCapIcon />
+            </div>
+            <h1 className="text-xl font-bold text-text-primary tracking-tight">
+              E-HUB
+            </h1>
+          </div>
 
-        {/* Form Card */}
-        <div className="rounded-2xl p-6 bg-white" style={{ border: "1px solid #EEEEEE" }}>
-          <h2 className="text-base font-bold text-gray-900">
-            {isStudent ? "Đăng nhập sinh viên" : "Đăng nhập giảng viên / mentor"}
-          </h2>
-          <p className="text-xs text-gray-400 mt-0.5 mb-5">
-            {isStudent
-              ? "Nhập thông tin tài khoản sinh viên của bạn"
-              : "Nhập thông tin tài khoản giảng viên / mentor của bạn"}
-          </p>
+          {/* Heading */}
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold text-text-primary tracking-tight">
+              Đăng nhập
+            </h1>
+            <p className="text-sm text-text-secondary mt-1">
+              {isStudent
+                ? "Truy cập cổng sinh viên E-HUB"
+                : "Truy cập cổng giảng viên / mentor"}
+            </p>
+          </div>
+
+          {/* Role Tabs */}
+          <div className="flex bg-white/25 rounded-full p-1 mb-5">
+            <TabButton
+              active={isStudent}
+              onClick={() => handleRoleChange(Roles.STUDENT)}
+              icon={<UserIcon />}
+              label="Student"
+            />
+            <TabButton
+              active={!isStudent}
+              onClick={() => handleRoleChange(Roles.LECTURER)}
+              icon={<LectureIcon />}
+              label="Lecturer / Mentor"
+            />
+          </div>
 
           {/* ── General error banner (form + Google) ── */}
-          {(fieldErrors.general && fieldErrors.general !== "error") || authError ? (
+          {(fieldErrors.general && fieldErrors.general !== "error") ||
+          authError ? (
             <div
               className="flex items-center gap-2 mb-5 text-xs text-red-600 bg-red-50 border border-red-200 rounded-xl px-3 py-2.5"
-              style={{ animation: "fadeSlideIn 0.2s ease" }}
-            >
+              style={{ animation: "fadeSlideIn 0.2s ease" }}>
               <AlertCircleIcon />
-              {(fieldErrors.general && fieldErrors.general !== "error") ? fieldErrors.general : authError}
+              {fieldErrors.general && fieldErrors.general !== "error"
+                ? fieldErrors.general
+                : authError}
             </div>
           ) : null}
 
@@ -351,20 +465,58 @@ export default function LoginPage() {
           {successMsg && (
             <div
               className="flex items-center gap-2 mb-5 text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2.5"
-              style={{ animation: "fadeSlideIn 0.2s ease" }}
-            >
+              style={{ animation: "fadeSlideIn 0.2s ease" }}>
               ✓ {successMsg}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} noValidate>
+          {/* ── Google (above the form) ── */}
+          {googleLoading ? (
+            <div className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gray-100 border border-gray-200 text-gray-600 text-sm">
+              <svg
+                className="animate-spin w-5 h-5"
+                viewBox="0 0 24 24"
+                fill="none">
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8v8H4z"
+                />
+              </svg>
+              Đang xử lý đăng nhập Google...
+            </div>
+          ) : (
+            <GoogleButton
+              onClick={handleGoogleLogin}
+              disabled={loading}
+            />
+          )}
 
+          {/* ── "hoặc" divider ── */}
+          <div className="flex items-center gap-3 my-5">
+            <div className="h-px flex-1 bg-border" />
+            <span className="text-xs font-medium text-text-muted">hoặc</span>
+            <div className="h-px flex-1 bg-border" />
+          </div>
+
+          <form
+            onSubmit={handleSubmit}
+            noValidate>
             {/* ── ID Field ── */}
             <div className="mb-4">
               <label className="block text-sm font-semibold text-gray-800 mb-1.5">
                 {isStudent ? "Mã sinh viên" : "Email"}
               </label>
-              <div className={`${inputWrapClass("id")} ${fieldErrors.id ? "field-error-shake" : ""}`}>
+              <div
+                className={`${inputWrapClass("id")} ${fieldErrors.id ? "field-error-shake" : ""}`}>
                 <UserIcon hasError={!!fieldErrors.id} />
                 <input
                   type="text"
@@ -378,10 +530,12 @@ export default function LoginPage() {
                     }
                   }}
                   placeholder={isStudent ? "VD: DE123456" : "VD: gv@fpt.edu.vn"}
-                  className="flex-1 bg-transparent text-sm text-gray-700 outline-none placeholder-gray-400"
+                  className="flex-1 appearance-none border-0 bg-transparent text-sm text-gray-800 outline-none placeholder-gray-400"
                 />
               </div>
-              <FieldError message={fieldErrors.id === "error" ? "" : fieldErrors.id} />
+              <FieldError
+                message={fieldErrors.id === "error" ? "" : fieldErrors.id}
+              />
             </div>
 
             {/* ── Password Field ── */}
@@ -389,7 +543,8 @@ export default function LoginPage() {
               <label className="block text-sm font-semibold text-gray-800 mb-1.5">
                 Mật khẩu
               </label>
-              <div className={`${inputWrapClass("password")} ${fieldErrors.password ? "field-error-shake" : ""}`}>
+              <div
+                className={`${inputWrapClass("password")} ${fieldErrors.password ? "field-error-shake" : ""}`}>
                 <LockIcon hasError={!!fieldErrors.password} />
                 <input
                   type={showPassword ? "text" : "password"}
@@ -398,22 +553,29 @@ export default function LoginPage() {
                   onChange={(e) => {
                     setPassword(e.target.value);
                     if (fieldErrors.password || fieldErrors.general) {
-                      setFieldErrors((p) => ({ ...p, password: "", general: "" }));
+                      setFieldErrors((p) => ({
+                        ...p,
+                        password: "",
+                        general: ""
+                      }));
                       dispatch(setError(null));
                     }
                   }}
                   placeholder="••••••••"
-                  className="flex-1 bg-transparent text-sm text-gray-700 outline-none placeholder-gray-400"
+                  className="flex-1 appearance-none border-0 bg-transparent text-sm text-gray-800 outline-none placeholder-gray-400"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="focus:outline-none flex items-center justify-center cursor-pointer p-0.5"
-                >
+                  className="focus:outline-none flex items-center justify-center cursor-pointer p-0.5">
                   {showPassword ? <EyeOffIcon /> : <EyeIcon />}
                 </button>
               </div>
-              <FieldError message={fieldErrors.password === "error" ? "" : fieldErrors.password} />
+              <FieldError
+                message={
+                  fieldErrors.password === "error" ? "" : fieldErrors.password
+                }
+              />
             </div>
 
             {/* ── Remember & Forgot ── */}
@@ -423,15 +585,15 @@ export default function LoginPage() {
                   type="checkbox"
                   checked={remember}
                   onChange={(e) => setRemember(e.target.checked)}
-                  className="w-4 h-4 rounded border-gray-300 accent-indigo-600"
+                  className="w-4 h-4 rounded border-gray-300 accent-accent"
                 />
-                <span className="text-xs text-gray-500">Ghi nhớ đăng nhập</span>
+                <span className="text-xs text-text-secondary">
+                  Ghi nhớ đăng nhập
+                </span>
               </label>
               <button
                 type="button"
-                className="text-xs font-semibold cursor-pointer hover:underline"
-                style={{ color: "#4F39F6" }}
-              >
+                className="text-xs font-semibold text-accent cursor-pointer hover:underline">
                 Quên mật khẩu?
               </button>
             </div>
@@ -440,16 +602,28 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 rounded-xl text-white text-sm font-semibold tracking-wide
-                transition-all duration-200 hover:opacity-90 active:scale-[0.98]
-                disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
-              style={{ backgroundColor: "#4F39F6" }}
-            >
+              className="w-full py-3 rounded-xl bg-accent hover:bg-accent-hover text-white text-sm font-semibold tracking-wide
+                transition-all duration-200 active:scale-[0.98]
+                disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer">
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
-                  <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                  <svg
+                    className="animate-spin w-4 h-4"
+                    viewBox="0 0 24 24"
+                    fill="none">
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v8H4z"
+                    />
                   </svg>
                   Đang đăng nhập...
                 </span>
@@ -457,28 +631,8 @@ export default function LoginPage() {
                 "Đăng nhập"
               )}
             </button>
-
-            {/* ── Or / Google ── */}
-            <div className="relative flex items-center justify-center my-5">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-200" />
-              </div>
-              <span className="relative bg-white px-3 text-xs font-medium text-gray-500">Or</span>
-            </div>
-            {googleLoading ? (
-              <div className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gray-100 border border-gray-200 text-gray-600 text-sm">
-                <svg className="animate-spin w-5 h-5" viewBox="0 0 24 24" fill="none">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-                </svg>
-                Đang xử lý đăng nhập Google...
-              </div>
-            ) : (
-              <GoogleButton onClick={handleGoogleLogin} disabled={loading} />
-            )}
           </form>
         </div>
-
       </div>
 
       <StudentNotInRosterModal

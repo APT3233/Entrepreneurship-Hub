@@ -24,6 +24,7 @@ export default {
     "unpin": "Tắt ghim",
     "pinned": "Đã ghim",
     "autoCollapse": "Tự động thu",
+    "comingSoon": "sắp ra mắt",
     "previousPage": "Trang trước",
     "nextPage": "Trang sau",
     "rowsPerPage": "Số dòng/trang:",
@@ -478,7 +479,7 @@ export default {
       "columns": {
         "startup": "Startup",
         "product": "Sản phẩm",
-        "pipeline": "Pipeline",
+        "pipeline": "Giai đoạn",
         "updated": "Cập nhật",
         "milestone": "Cột mốc",
         "date": "Ngày",
