@@ -10,7 +10,7 @@ Base tích hợp: `mem/quynh/redesign-ui`.
 | 3 | [Student](03-student.md) | dashboard, groups, assignments, mentoring, startup, opportunities | ✅ Hoàn thành (chưa merge) |
 | 4 | [Lecture](04-lecture.md) | dashboard, classes, assignments, grading, groups, analytics-schedule | ✅ Hoàn thành (chưa merge) |
 | 5 | [Mentor](05-mentor.md) | `mem/quynh/mentor-admin` (gộp) | ✅ Hoàn thành (chưa merge) |
-| 6 | [Admin](06-admin.md) | `mem/quynh/mentor-admin` (gộp) | 🚧 Lớp component dùng chung + dashboard xong; còn chrome trang lẻ |
+| 6 | [Admin](06-admin.md) | `mem/quynh/mentor-admin` (gộp) | ✅ Hoàn thành (chưa merge) |
 | 7 | Integration — final PR `redesign-ui → main` | redesign-ui | ⬜ Chưa làm |
 
 ## Chi tiết
@@ -65,10 +65,14 @@ assignments, startup detail, session detail) đã calm-token hoá. Vì mentor m�
 (Panel/MetricCard/SimpleList), `mentor-workflow/components` (InfoBox/MetricCard), `mentor-management/components`
 (MentorHeader/MentorForm/AvailabilityEditor/ExpertiseEditor).
 
-**Phase 6 — Admin 🚧**: xong lớp component dùng chung (lan tỏa khắp mọi bảng/filter/modal/badge/form/panel):
-`AdminTable`, `StatusBadge`, `FilterBar`, `SearchInput`, `FormModal`, `ActionButton`, `incubation/components`,
-`academic/components/{ActionButton,DetailGrid}` + `admin/dashboard` (StatCard chuẩn). **Còn lại**: chrome cấp
-trang (page header, nút "tạo" indigo, hero card gradient) rải ở ~50 file trang admin lẻ — chưa xử lý.
+**Phase 6 — Admin ✅ (chưa merge)**: 
+- Lớp component dùng chung (lan tỏa khắp mọi bảng/filter/modal/badge/form/panel): `AdminTable`, `StatusBadge`,
+  `FilterBar`, `SearchInput`, `FormModal`, `ActionButton`, `incubation/components`,
+  `academic/components/{ActionButton,DetailGrid}`, `mentor-management/components` + `admin/dashboard` (StatCard chuẩn).
+- Sweep token toàn bộ trang admin (97 file): `indigo`/`teal` → `accent`, `bg-white` → `bg-surface`,
+  `border-gray/slate` → `border-border`, bỏ `shadow-sm`, không còn gradient. Build `vite build` ✓.
+- **Cố ý giữ**: shadow trên overlay/drawer (dropdown log, drawer trượt — cần tách lớp) và nút solid
+  accept/reject xanh/đỏ (giữ màu ngữ nghĩa; calm cho phép tone semantic).
 
 ---
 
@@ -79,4 +83,5 @@ trang (page header, nút "tạo" indigo, hero card gradient) rải ở ~50 file 
 
 ---
 
-Tiếp theo: **Phase 5 — Mentor** ([05-mentor.md](05-mentor.md)). (Trước đó: merge Phase 4 lecture vào `redesign-ui`.)
+Tiếp theo: **Phase 7 — Integration**. Merge Phase 4 (lecture) và Phase 5+6 (`mem/quynh/mentor-admin`) vào
+`redesign-ui`, rồi PR cuối `redesign-ui → main`. Sau đó **Phase 8 — i18n Coverage**.
