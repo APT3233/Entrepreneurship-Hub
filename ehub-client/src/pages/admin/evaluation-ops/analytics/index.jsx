@@ -19,8 +19,8 @@ export default function AdminEvaluationAnalytics() {
       .finally(() => setLoading(false));
   }, [t]);
 
-  if (loading) return <div className="rounded-2xl border border-gray-100 bg-white p-8 text-center text-sm text-gray-400">{t("common.loading")}...</div>;
-  if (error) return <div className="rounded-2xl border border-red-100 bg-red-50 p-8 text-center text-sm font-medium text-red-600">{error}</div>;
+  if (loading) return <div className="rounded-card border border-border bg-surface p-8 text-center text-sm text-gray-400">{t("common.loading")}...</div>;
+  if (error) return <div className="rounded-card border border-red-100 bg-red-50 p-8 text-center text-sm font-medium text-red-600">{error}</div>;
 
   const cards = data?.cards || {};
   const charts = data?.charts || {};
@@ -47,7 +47,7 @@ export default function AdminEvaluationAnalytics() {
       </div>
 
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
-        <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+        <div className="rounded-card border border-border bg-surface p-5">
           <h2 className="mb-4 text-base font-bold text-gray-900">{t("admin.evaluationOps.analytics.topGroupsTitle")}</h2>
           {(data?.top_groups || []).length ? (
             <div className="space-y-3">
@@ -63,7 +63,7 @@ export default function AdminEvaluationAnalytics() {
             </div>
           ) : <div className="rounded-xl bg-gray-50 p-6 text-center text-sm text-gray-400">{t("admin.evaluationOps.analytics.noTopGroups")}</div>}
         </div>
-        <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+        <div className="rounded-card border border-border bg-surface p-5">
           <h2 className="mb-4 text-base font-bold text-gray-900">{t("admin.evaluationOps.analytics.atRiskGroupsTitle")}</h2>
           {(data?.at_risk_groups || []).length ? (
             <div className="space-y-3">
@@ -79,7 +79,7 @@ export default function AdminEvaluationAnalytics() {
                       })}
                     </p>
                   </div>
-                  <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-amber-700">{formatPercent(group.average_score)}</span>
+                  <span className="rounded-full bg-surface px-3 py-1 text-xs font-bold text-amber-700">{formatPercent(group.average_score)}</span>
                 </div>
               ))}
             </div>

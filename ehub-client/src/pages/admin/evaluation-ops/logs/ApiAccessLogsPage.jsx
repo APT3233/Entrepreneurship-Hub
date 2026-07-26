@@ -138,7 +138,7 @@ export default function ApiAccessLogsPage() {
               <button
                 type="button"
                 onClick={() => setExportOpen(!exportOpen)}
-                className="flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 cursor-pointer select-none transition-colors"
+                className="flex items-center gap-1.5 rounded-xl border border-border bg-surface px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 cursor-pointer select-none transition-colors"
               >
                 <Download size={15} className="text-gray-400" />
                 {t("common.export") || "Xuất file"}
@@ -147,7 +147,7 @@ export default function ApiAccessLogsPage() {
               {exportOpen && (
                 <>
                   <div className="fixed inset-0 z-10" onClick={() => setExportOpen(false)} />
-                  <div className="absolute right-0 mt-1.5 z-20 w-40 rounded-xl border border-gray-100 bg-white py-1 shadow-lg ring-1 ring-black/5 animate-in fade-in slide-in-from-top-1 duration-100">
+                  <div className="absolute right-0 mt-1.5 z-20 w-40 rounded-xl border border-border bg-surface py-1 shadow-lg ring-1 ring-black/5 animate-in fade-in slide-in-from-top-1 duration-100">
                     <button
                       type="button"
                       onClick={() => {
@@ -184,11 +184,11 @@ export default function ApiAccessLogsPage() {
 
       {selectedLog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 backdrop-blur-[2px]">
-          <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl overflow-hidden border border-gray-100 animate-in fade-in zoom-in-95 duration-150">
+          <div className="w-full max-w-md rounded-card bg-surface shadow-2xl overflow-hidden border border-border animate-in fade-in zoom-in-95 duration-150">
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-gray-100 px-5 py-3 bg-gray-50/50">
+            <div className="flex items-center justify-between border-b border-border px-5 py-3 bg-gray-50/50">
               <div className="flex items-center gap-2 max-w-[80%]">
-                <span className="font-mono text-[10px] font-bold bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded uppercase">
+                <span className="font-mono text-[10px] font-bold bg-accent-bg text-accent px-1.5 py-0.5 rounded uppercase">
                   {selectedLog.method}
                 </span>
                 <span className="text-xs font-semibold text-gray-700 truncate select-all font-mono" title={selectedLog.path}>
@@ -237,18 +237,18 @@ export default function ApiAccessLogsPage() {
                 </div>
               </div>
 
-              <div className="pt-2 border-t border-gray-100">
+              <div className="pt-2 border-t border-border">
                 <label className="text-[9px] font-bold uppercase tracking-wider text-gray-400 block mb-0.5">
                   {t("admin.fields.userAgent") || "User Agent"}
                 </label>
-                <div className="text-[10px] font-mono text-gray-500 bg-gray-50 px-2 py-1.5 rounded-lg border border-gray-100 select-all leading-relaxed max-h-[50px] overflow-y-auto">
+                <div className="text-[10px] font-mono text-gray-500 bg-gray-50 px-2 py-1.5 rounded-lg border border-border select-all leading-relaxed max-h-[50px] overflow-y-auto">
                   {selectedLog.user_agent || "—"}
                 </div>
               </div>
             </div>
 
             {/* Footer */}
-            <div className="flex justify-end border-t border-gray-100 px-5 py-2.5 bg-gray-50/35">
+            <div className="flex justify-end border-t border-border px-5 py-2.5 bg-gray-50/35">
               <button
                 type="button"
                 onClick={() => setSelectedLog(null)}

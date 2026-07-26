@@ -65,7 +65,7 @@ export default function LecturerWorkloadPage() {
     <>
       <FilterBar
         right={(
-          <button type="button" onClick={exportCsv} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+          <button type="button" onClick={exportCsv} className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">
             <Download size={16} /> {t("common.export")}
           </button>
         )}

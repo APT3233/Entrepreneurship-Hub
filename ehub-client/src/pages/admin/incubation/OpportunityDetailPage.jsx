@@ -72,13 +72,13 @@ export default function OpportunityDetailPage() {
     }
   };
 
-  if (loading) return <div className="rounded-2xl bg-white p-8 text-center text-sm text-slate-400">{t("admin.ecosystem.common.loading")}</div>;
-  if (error) return <div className="rounded-2xl bg-rose-50 p-8 text-center text-sm font-bold text-rose-600">{error}</div>;
+  if (loading) return <div className="rounded-card bg-surface p-8 text-center text-sm text-slate-400">{t("admin.ecosystem.common.loading")}</div>;
+  if (error) return <div className="rounded-card bg-rose-50 p-8 text-center text-sm font-bold text-rose-600">{error}</div>;
   if (!form) return null;
 
   return (
     <div className="space-y-5">
-      <button type="button" onClick={() => navigate("/admin/ecosystem/opportunities")} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"><ArrowLeft size={16} /> {t("admin.ecosystem.common.back")}</button>
+      <button type="button" onClick={() => navigate("/admin/ecosystem/opportunities")} className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"><ArrowLeft size={16} /> {t("admin.ecosystem.common.back")}</button>
       <Panel title={t("admin.ecosystem.opportunities.panels.opportunity")}>
         <form onSubmit={save} className="grid gap-4 md:grid-cols-2">
           <Field label={t("admin.ecosystem.opportunities.fields.title")}><input required className={inputClass} value={form.title || ""} onChange={(e) => set("title", e.target.value)} /></Field>
@@ -90,7 +90,7 @@ export default function OpportunityDetailPage() {
           <div className="md:col-span-2"><Field label={t("admin.ecosystem.opportunities.fields.externalUrl")}><input className={inputClass} value={form.external_url || ""} onChange={(e) => set("external_url", e.target.value)} /></Field></div>
           <div className="md:col-span-2"><Field label={t("admin.ecosystem.opportunities.fields.description")}><textarea rows={5} className={inputClass} value={form.description || ""} onChange={(e) => set("description", e.target.value)} /></Field></div>
           <div className="md:col-span-2"><Field label={t("admin.ecosystem.opportunities.fields.eligibility")}><textarea rows={3} className={inputClass} value={form.eligibility || ""} onChange={(e) => set("eligibility", e.target.value)} /></Field></div>
-          <div className="md:col-span-2 flex justify-end"><button disabled={saving} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white hover:bg-indigo-700 disabled:opacity-50"><Save size={16} /> {t("admin.ecosystem.common.save")}</button></div>
+          <div className="md:col-span-2 flex justify-end"><button disabled={saving} className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2 text-sm font-bold text-white hover:bg-accent-hover disabled:opacity-50"><Save size={16} /> {t("admin.ecosystem.common.save")}</button></div>
         </form>
       </Panel>
     </div>

@@ -96,7 +96,7 @@ export default function OpportunitiesPage() {
   };
 
   const columns = useMemo(() => [
-    { key: "title", label: t("admin.ecosystem.opportunities.columns.opportunity"), width: 260, render: (row) => <button type="button" onClick={() => navigate(`/admin/ecosystem/opportunities/${row.id}`)} className="text-left font-black text-slate-900 hover:text-indigo-700">{row.title}</button> },
+    { key: "title", label: t("admin.ecosystem.opportunities.columns.opportunity"), width: 260, render: (row) => <button type="button" onClick={() => navigate(`/admin/ecosystem/opportunities/${row.id}`)} className="text-left font-black text-slate-900 hover:text-accent">{row.title}</button> },
     { key: "opportunity_type", label: t("admin.ecosystem.opportunities.columns.type"), width: 170, render: (row) => <StatusBadge value={row.opportunity_type} /> },
     { key: "partner_name", label: t("admin.ecosystem.opportunities.columns.partner"), width: 180, render: (row) => row.partner_name || "-" },
     { key: "deadline", label: t("admin.ecosystem.opportunities.columns.deadline"), width: 150, render: (row) => formatDate(row.deadline) },
@@ -108,7 +108,7 @@ export default function OpportunitiesPage() {
 
   return (
     <>
-      <FilterBar right={<button type="button" onClick={() => setModal(true)} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-indigo-700"><Plus size={16} /> {t("admin.ecosystem.opportunities.addBtn")}</button>}>
+      <FilterBar right={<button type="button" onClick={() => setModal(true)} className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-bold text-white hover:bg-accent-hover"><Plus size={16} /> {t("admin.ecosystem.opportunities.addBtn")}</button>}>
         <SearchInput value={query.search} onChange={(search) => setQuery((prev) => ({ ...prev, page: 1, search }))} placeholder={t("admin.ecosystem.opportunities.searchPlaceholder")} />
         <FilterSelect label={t("admin.ecosystem.opportunities.columns.type")} value={query.opportunity_type} onChange={(opportunity_type) => setQuery((prev) => ({ ...prev, page: 1, opportunity_type }))} options={withAll(opportunityTypeOptions)} />
         <FilterSelect label={t("admin.ecosystem.opportunities.columns.status")} value={query.status} onChange={(status) => setQuery((prev) => ({ ...prev, page: 1, status }))} options={withAll(statusOptions)} />

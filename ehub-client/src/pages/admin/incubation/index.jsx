@@ -66,7 +66,7 @@ export default function StartupPoolPage() {
   const stageOptions = useMemo(() => [{ value: "", label: t("admin.ecosystem.common.all") }, ...stages.map((stage) => ({ value: String(stage.id), label: stage.name }))], [stages, t]);
   const columns = useMemo(() => [
     { key: "logo", label: t("admin.ecosystem.columns.logo"), width: 72, render: (row) => <StartupLogo startup={row} /> },
-    { key: "startup_name", label: t("admin.ecosystem.columns.startup"), width: 210, render: (row) => <button type="button" onClick={() => navigate(`/admin/incubation/startups/${row.id}`)} className="text-left font-black text-slate-900 hover:text-indigo-700">{row.startup_name}</button> },
+    { key: "startup_name", label: t("admin.ecosystem.columns.startup"), width: 210, render: (row) => <button type="button" onClick={() => navigate(`/admin/incubation/startups/${row.id}`)} className="text-left font-black text-slate-900 hover:text-accent">{row.startup_name}</button> },
     { key: "source", label: t("admin.ecosystem.columns.source"), width: 150, render: (row) => <StatusBadge value={row.source} /> },
     { key: "class_code", label: t("admin.ecosystem.columns.class"), width: 110, render: (row) => row.class_code || "-" },
     { key: "semester_code", label: t("admin.ecosystem.columns.semester"), width: 120, render: (row) => row.semester_code || "-" },
@@ -83,7 +83,7 @@ export default function StartupPoolPage() {
 
   return (
     <>
-      <FilterBar right={<button type="button" onClick={() => navigate("/admin/incubation/startups/create")} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-indigo-700"><Plus size={16} /> {t("admin.ecosystem.startupPool.createBtn")}</button>}>
+      <FilterBar right={<button type="button" onClick={() => navigate("/admin/incubation/startups/create")} className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-bold text-white hover:bg-accent-hover"><Plus size={16} /> {t("admin.ecosystem.startupPool.createBtn")}</button>}>
         <SearchInput value={query.search} onChange={(search) => setQuery((prev) => ({ ...prev, page: 1, search }))} placeholder={t("admin.ecosystem.startupPool.searchPlaceholder")} />
         <FilterSelect label={t("filterLabels.status")} value={query.status} onChange={(status) => setQuery((prev) => ({ ...prev, page: 1, status }))} options={withAll(startupStatusOptions)} />
         <FilterSelect label={t("admin.ecosystem.columns.product")} value={query.product_stage} onChange={(product_stage) => setQuery((prev) => ({ ...prev, page: 1, product_stage }))} options={withAll(productStageOptions)} />

@@ -5,7 +5,7 @@ import { useToast } from "@/components/ui/Toast";
 import { useTranslation } from "@/context/TranslationContext";
 import Dropdown from "@/components/ui/filter/DropDown";
 
-const inputClass = "w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 disabled:bg-gray-50 disabled:text-gray-400";
+const inputClass = "w-full rounded-lg border border-border px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-accent focus:ring-2 focus:ring-accent disabled:bg-gray-50 disabled:text-gray-400";
 const THIRD_PARTY_PROVIDER_KEY = "third-party-api";
 const LOCAL_9ROUTER_PROVIDER_KEY = "local-9router";
 const LOCAL_OLLAMA_PROVIDER_KEY = "local-gemma";
@@ -329,7 +329,7 @@ export default function AdminAiSettingsPage() {
     }
   };
 
-  if (loading) return <div className="rounded-lg border border-gray-100 bg-white p-8 text-center text-sm text-gray-400">{t("ai.settings.loadingSettings")}</div>;
+  if (loading) return <div className="rounded-lg border border-border bg-surface p-8 text-center text-sm text-gray-400">{t("ai.settings.loadingSettings")}</div>;
   if (error) return <div className="rounded-lg border border-red-100 bg-red-50 p-8 text-center text-sm font-semibold text-red-600">{error}</div>;
 
   const activeWarning = form.active_provider === LOCAL_OLLAMA_PROVIDER_KEY
@@ -341,7 +341,7 @@ export default function AdminAiSettingsPage() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between border-b border-gray-100 pb-4">
+      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between border-b border-border pb-4">
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold text-gray-900">{t("ai.settings.pageTitle")}</h1>
@@ -368,9 +368,9 @@ export default function AdminAiSettingsPage() {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
           {/* Left Column: General Configuration */}
           <div className="lg:col-span-5 space-y-6">
-            <section className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm space-y-4">
+            <section className="rounded-xl border border-border bg-surface p-5 space-y-4">
               <h3 className="text-sm font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2 border-b border-gray-50 pb-2">
-                <ServerCog className="h-4.5 w-4.5 text-indigo-500" />
+                <ServerCog className="h-4.5 w-4.5 text-accent" />
                 {t("ai.settings.titleGeneral")}
               </h3>
               <div className="space-y-4 pt-1">
@@ -396,9 +396,9 @@ export default function AdminAiSettingsPage() {
           {/* Right Column: Provider settings & Testing */}
           <div className="lg:col-span-7 space-y-6">
             {/* Provider card */}
-            <section className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
+            <section className="rounded-xl border border-border bg-surface p-5">
               <h3 className="text-sm font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2 border-b border-gray-50 pb-3 mb-4">
-                <KeyRound className="h-4.5 w-4.5 text-indigo-500" />
+                <KeyRound className="h-4.5 w-4.5 text-accent" />
                 {t("ai.settings.titleProvider")}
               </h3>
               
@@ -410,8 +410,8 @@ export default function AdminAiSettingsPage() {
                     onClick={() => selectProvider(provider.key)}
                     className={`inline-flex min-h-9 items-center gap-2 rounded-lg border px-4 py-1.5 text-xs font-bold transition cursor-pointer ${
                       provider.key === configProviderKey
-                        ? "border-indigo-200 bg-indigo-50 text-indigo-700"
-                        : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+                        ? "border-accent-bg bg-accent-bg text-accent"
+                        : "border-border bg-surface text-gray-600 hover:bg-gray-50"
                     }`}
                   >
                     {provider.name || providerLabels[provider.key] || provider.key}
@@ -431,7 +431,7 @@ export default function AdminAiSettingsPage() {
               ) : null}
 
               {selectedNeedsApiKey && (
-                <div className="mt-4 pt-4 border-t border-gray-100 space-y-2">
+                <div className="mt-4 pt-4 border-t border-border space-y-2">
                   <label className="block">
                     <span className="mb-1 block text-sm font-semibold text-gray-700">
                       {normalizeProviderKey(selectedProvider?.key) === LOCAL_9ROUTER_PROVIDER_KEY
@@ -456,7 +456,7 @@ export default function AdminAiSettingsPage() {
             </section>
 
             {/* Diagnostic card */}
-            <section className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm space-y-4">
+            <section className="rounded-xl border border-border bg-surface p-5 space-y-4">
               <div className="border-b border-gray-50 pb-3">
                 <h3 className="text-sm font-bold uppercase tracking-wider text-gray-400">
                   {t("ai.settings.testProvider", { name: selectedProvider?.name || providerLabels[selectedProvider?.key] || "AI provider" })}
@@ -469,10 +469,10 @@ export default function AdminAiSettingsPage() {
                   <textarea className={`${inputClass} min-h-[72px] resize-y`} value={testPrompt} onChange={(event) => setTestPrompt(event.target.value)} />
                 </Field>
                 <div className="flex gap-3">
-                  <button type="button" disabled={testing || saving} onClick={testConnection} className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg border border-indigo-100 bg-white py-2.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer">
+                  <button type="button" disabled={testing || saving} onClick={testConnection} className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg border border-accent-bg bg-surface py-2.5 text-xs font-semibold text-accent hover:bg-accent-bg disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer">
                     <Wifi size={14} /> {testing ? `${t("ai.settings.testing")}...` : t("ai.settings.btnTestConnection")}
                   </button>
-                  <button type="button" disabled={promptTesting || saving || !testPrompt.trim()} onClick={runTestPrompt} className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-gray-950 py-2.5 text-xs font-semibold text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer">
+                  <button type="button" disabled={promptTesting || saving || !testPrompt.trim()} onClick={runTestPrompt} className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-gray-950 py-2.5 text-xs font-semibold text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer">
                     <MessageSquareText size={14} /> {promptTesting ? `${t("ai.settings.testing")}...` : t("ai.settings.btnTestPrompt")}
                   </button>
                 </div>
@@ -488,11 +488,11 @@ export default function AdminAiSettingsPage() {
         </div>
 
         {/* Footer Actions */}
-        <div className="flex flex-wrap justify-end gap-3 border-t border-gray-100 pt-5">
-          <button type="button" disabled={loading || saving} onClick={resetDefaults} className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-5 py-2.5 text-xs font-semibold text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer">
+        <div className="flex flex-wrap justify-end gap-3 border-t border-border pt-5">
+          <button type="button" disabled={loading || saving} onClick={resetDefaults} className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface px-5 py-2.5 text-xs font-semibold text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer">
             <RotateCcw size={14} /> {t("ai.settings.btnResetDefaults")}
           </button>
-          <button type="submit" disabled={saving} className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-2.5 text-xs font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer">
+          <button type="submit" disabled={saving} className="inline-flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-xs font-semibold text-white hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer">
             <Save size={14} /> {saving ? `${t("ai.settings.saving")}...` : t("ai.settings.btnSaveSettings")}
           </button>
         </div>
@@ -536,7 +536,7 @@ function ProviderCard({ provider, onChange, models = [], isLoading, modelError, 
                 <button
                   type="button"
                   onClick={() => setIsManual(!isManual)}
-                  className="text-xs text-indigo-600 hover:text-indigo-800 font-semibold"
+                  className="text-xs text-accent hover:text-accent font-semibold"
                 >
                   {isManual ? t("ai.settings.selectFromList") : t("ai.settings.enterManually")}
                 </button>
@@ -545,13 +545,13 @@ function ProviderCard({ provider, onChange, models = [], isLoading, modelError, 
           }
         >
           {isLoading ? (
-            <div className="flex h-[38px] items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-400 bg-gray-50">
-              <RefreshCw className="h-4 w-4 animate-spin text-indigo-500" />
+            <div className="flex h-[38px] items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm text-gray-400 bg-gray-50">
+              <RefreshCw className="h-4 w-4 animate-spin text-accent" />
               <span>{t("ai.settings.loadingModels")}</span>
             </div>
           ) : !isManual && hasModels ? (
             <div className="flex gap-2">
-              <div className="flex-1 min-w-0 [&>div]:w-full [&>div]:md:w-full [&>div]:md:flex-1 [&>div>button]:h-[38px] [&>div>button]:rounded-lg [&>div>button]:border-gray-200 [&>div>button]:text-gray-800">
+              <div className="flex-1 min-w-0 [&>div]:w-full [&>div]:md:w-full [&>div]:md:flex-1 [&>div>button]:h-[38px] [&>div>button]:rounded-lg [&>div>button]:border-border [&>div>button]:text-gray-800">
                 <Dropdown
                   label={t("ai.settings.selectModelPlaceholder")}
                   value={provider.model || ""}
@@ -562,7 +562,7 @@ function ProviderCard({ provider, onChange, models = [], isLoading, modelError, 
               <button
                 type="button"
                 onClick={onReloadModels}
-                className="flex h-[38px] w-10 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-400 hover:bg-gray-50 hover:text-gray-600"
+                className="flex h-[38px] w-10 shrink-0 items-center justify-center rounded-lg border border-border bg-surface text-gray-400 hover:bg-gray-50 hover:text-gray-600"
                 title={t("ai.settings.reloadList")}
               >
                 <RefreshCw size={14} />
@@ -579,7 +579,7 @@ function ProviderCard({ provider, onChange, models = [], isLoading, modelError, 
               <button
                 type="button"
                 onClick={onReloadModels}
-                className="flex h-[38px] w-10 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-400 hover:bg-gray-50 hover:text-gray-600"
+                className="flex h-[38px] w-10 shrink-0 items-center justify-center rounded-lg border border-border bg-surface text-gray-400 hover:bg-gray-50 hover:text-gray-600"
                 title={t("ai.settings.loadList")}
               >
                 <RefreshCw size={14} />
@@ -605,15 +605,15 @@ function Toggle({ label, checked, onChange }) {
   return (
     <label className="block cursor-pointer">
       <span className="mb-1 block text-sm font-semibold text-gray-700">{label}</span>
-      <div className="flex h-[38px] items-center justify-between rounded-lg border border-gray-200 px-3 py-2 bg-white hover:border-gray-300 transition-colors">
-        <span className={`text-sm ${checked ? "text-indigo-600 font-semibold" : "text-gray-400"}`}>
+      <div className="flex h-[38px] items-center justify-between rounded-lg border border-border px-3 py-2 bg-surface hover:border-gray-300 transition-colors">
+        <span className={`text-sm ${checked ? "text-accent font-semibold" : "text-gray-400"}`}>
           {checked ? t("ai.settings.aiEnabled") : t("ai.settings.aiDisabled")}
         </span>
         <input
           type="checkbox"
           checked={checked}
           onChange={(event) => onChange(event.target.checked)}
-          className="h-4.5 w-4.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+          className="h-4.5 w-4.5 rounded border-gray-300 text-accent focus:ring-accent cursor-pointer"
         />
       </div>
     </label>
@@ -622,10 +622,10 @@ function Toggle({ label, checked, onChange }) {
 
 function Badge({ tone = "gray", children }) {
   const classes = {
-    gray: "border-gray-100 bg-gray-50 text-gray-600",
+    gray: "border-border bg-gray-50 text-gray-600",
     green: "border-emerald-100 bg-emerald-50 text-emerald-700",
     red: "border-red-100 bg-red-50 text-red-600",
-    indigo: "border-indigo-100 bg-indigo-50 text-indigo-700",
+    indigo: "border-accent-bg bg-accent-bg text-accent",
   };
   return <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${classes[tone] || classes.gray}`}>{children}</span>;
 }

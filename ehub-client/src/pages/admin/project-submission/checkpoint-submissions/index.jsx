@@ -168,7 +168,7 @@ export default function AdminCheckpointSubmissions() {
         activeFilterCount={activeFilterCount}
         onClear={clearFilters}
         right={(
-          <button type="button" onClick={exportAll} className="inline-flex h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+          <button type="button" onClick={exportAll} className="inline-flex h-10 items-center gap-2 rounded-lg border border-border bg-surface px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">
             <FileDown size={16} /> Export CSV
           </button>
         )}

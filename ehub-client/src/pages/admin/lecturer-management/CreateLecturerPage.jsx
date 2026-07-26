@@ -86,15 +86,15 @@ export default function CreateLecturerPage() {
 
   return (
     <form onSubmit={submit} className="space-y-5">
-      <div className="flex items-center justify-between rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
-        <button type="button" onClick={() => navigate("/admin/lecturers")} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+      <div className="flex items-center justify-between rounded-card border border-border bg-surface p-4">
+        <button type="button" onClick={() => navigate("/admin/lecturers")} className="inline-flex items-center gap-2 rounded-xl border border-border px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
           <ArrowLeft size={16} /> {t("common.cancel")}
         </button>
         <button type="submit" disabled={saving} className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50">
           <Save size={16} /> {saving ? `${t("common.loading")}...` : t("nav.createLecturer")}
         </button>
       </div>
-      <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+      <div className="rounded-card border border-border bg-surface p-5">
         <LecturerForm form={form} setForm={setForm} />
       </div>
     </form>

@@ -295,14 +295,14 @@ export default function AdminRubricDetail({
 
   if (loading) {
     return (
-      <div className="rounded-2xl border border-gray-100 bg-white p-8 text-center text-sm text-gray-400">
+      <div className="rounded-card border border-border bg-surface p-8 text-center text-sm text-gray-400">
         {t("common.loading")}
       </div>
     );
   }
   if (error) {
     return (
-      <div className="rounded-2xl border border-red-100 bg-red-50 p-8 text-center text-sm font-medium text-red-600">
+      <div className="rounded-card border border-red-100 bg-red-50 p-8 text-center text-sm font-medium text-red-600">
         {error}
       </div>
     );
@@ -310,7 +310,7 @@ export default function AdminRubricDetail({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+      <div className="rounded-card border border-border bg-surface p-5">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
             <div className="flex flex-wrap items-center gap-2">
@@ -330,7 +330,7 @@ export default function AdminRubricDetail({
         </div>
       </div>
 
-      <div className="rounded-2xl border border-gray-100 bg-white p-2 shadow-sm">
+      <div className="rounded-card border border-border bg-surface p-2">
         <div className="flex flex-wrap gap-2">
           {tabs.map((tab) => (
             <button
@@ -347,19 +347,19 @@ export default function AdminRubricDetail({
 
       {activeTab === "overview" ? (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-          <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+          <div className="rounded-card border border-border bg-surface p-5">
             <p className="text-xs font-bold uppercase text-gray-400">{c.totalScore}</p>
             <p className="mt-2 text-2xl font-black text-gray-900">{Number(rubric.total_score || 0)}</p>
           </div>
-          <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+          <div className="rounded-card border border-border bg-surface p-5">
             <p className="text-xs font-bold uppercase text-gray-400">{t("admin.rubric.tabs.criteria")}</p>
             <p className="mt-2 text-2xl font-black text-gray-900">{criteria.length}</p>
           </div>
-          <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+          <div className="rounded-card border border-border bg-surface p-5">
             <p className="text-xs font-bold uppercase text-gray-400">{c.bindings}</p>
             <p className="mt-2 text-2xl font-black text-gray-900">{bindings.length}</p>
           </div>
-          <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+          <div className="rounded-card border border-border bg-surface p-5">
             <p className="text-xs font-bold uppercase text-gray-400">{c.evaluations}</p>
             <p className="mt-2 text-2xl font-black text-gray-900">{Number(rubric.evaluation_count || 0)}</p>
           </div>
@@ -375,7 +375,7 @@ export default function AdminRubricDetail({
       ) : null}
       {activeTab === "usage" ? (
         <div className="space-y-3">
-          <div className="flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-sm font-bold text-gray-900">{t("admin.rubric.bind.usageTitle")}</p>
               <p className="mt-1 text-xs text-gray-500">{t("admin.rubric.bind.usageHint")}</p>
@@ -383,7 +383,7 @@ export default function AdminRubricDetail({
             <button
               type="button"
               onClick={openBindRubric}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50"
               disabled={rubric.status !== "active"}
               title={rubric.status !== "active" ? t("admin.rubric.bind.activeRequiredTitle") : t("admin.rubric.bind.submitLabel")}
             >
@@ -486,7 +486,7 @@ export default function AdminRubricDetail({
             type="button"
             onClick={loadBindTargets}
             disabled={bindLoading}
-            className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-xl border border-border px-3 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Plus size={16} />
             {t("admin.rubric.bind.reloadList")}

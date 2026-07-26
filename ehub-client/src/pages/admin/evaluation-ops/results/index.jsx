@@ -22,7 +22,7 @@ import {
   toSelectOptions,
 } from "@/pages/admin/evaluation-ops/shared";
 
-const smallInputClass = "h-10 w-24 rounded-xl border border-gray-200 px-3 text-sm text-gray-700 outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100";
+const smallInputClass = "h-10 w-24 rounded-xl border border-border px-3 text-sm text-gray-700 outline-none focus:border-accent focus:ring-2 focus:ring-accent";
 
 export default function AdminEvaluationResults() {
   const { t } = useTranslation();
@@ -80,7 +80,7 @@ export default function AdminEvaluationResults() {
     <>
       <FilterBar
         right={(
-          <button type="button" onClick={() => setExportOpen(true)} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700">
+          <button type="button" onClick={() => setExportOpen(true)} className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-hover">
             <FileDown size={16} /> {t("admin.columns.exportResults")}
           </button>
         )}

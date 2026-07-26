@@ -73,12 +73,12 @@ export default function AnalyticsPage() {
     };
   }, [kind, t]);
 
-  if (loading) return <div className="rounded-2xl bg-white p-8 text-center text-sm text-slate-400">{t("admin.ecosystem.analytics.loading")}</div>;
-  if (error) return <div className="rounded-2xl bg-rose-50 p-8 text-center text-sm font-bold text-rose-600">{error}</div>;
+  if (loading) return <div className="rounded-card bg-surface p-8 text-center text-sm text-slate-400">{t("admin.ecosystem.analytics.loading")}</div>;
+  if (error) return <div className="rounded-card bg-rose-50 p-8 text-center text-sm font-bold text-rose-600">{error}</div>;
 
   if (kind === "health") {
     const columns = [
-      { key: "startup_name", label: t("admin.ecosystem.analytics.columns.startup"), render: (row) => <button type="button" onClick={() => navigate(`/admin/incubation/startups/${row.startup_id}`)} className="font-black text-indigo-700 hover:underline">{row.startup_name}</button> },
+      { key: "startup_name", label: t("admin.ecosystem.analytics.columns.startup"), render: (row) => <button type="button" onClick={() => navigate(`/admin/incubation/startups/${row.startup_id}`)} className="font-black text-accent hover:underline">{row.startup_name}</button> },
       { key: "issue_type", label: t("admin.ecosystem.analytics.columns.issue"), render: (row) => <StatusBadge value={row.issue_type} /> },
       { key: "severity", label: t("admin.ecosystem.analytics.columns.severity"), render: (row) => <StatusBadge value={row.severity} /> },
       { key: "reason", label: t("admin.ecosystem.analytics.columns.reason") },
@@ -95,7 +95,7 @@ export default function AnalyticsPage() {
       { key: "avg_days_in_stage", label: t("admin.ecosystem.analytics.columns.avgDays"), render: (row) => row.avg_days_in_stage ?? "-" },
     ];
     const stuckColumns = [
-      { key: "startup_name", label: t("admin.ecosystem.analytics.columns.startup"), render: (row) => <button type="button" onClick={() => navigate(`/admin/incubation/startups/${row.id}`)} className="font-black text-indigo-700 hover:underline">{row.startup_name}</button> },
+      { key: "startup_name", label: t("admin.ecosystem.analytics.columns.startup"), render: (row) => <button type="button" onClick={() => navigate(`/admin/incubation/startups/${row.id}`)} className="font-black text-accent hover:underline">{row.startup_name}</button> },
       { key: "current_stage_name", label: t("admin.ecosystem.analytics.columns.stage") },
       { key: "days_in_stage", label: t("admin.ecosystem.analytics.columns.days") },
       { key: "startup_status", label: t("admin.ecosystem.analytics.columns.status"), render: (row) => <StatusBadge value={row.startup_status} /> },

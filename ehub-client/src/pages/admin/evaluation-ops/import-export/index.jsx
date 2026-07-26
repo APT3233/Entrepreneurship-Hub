@@ -70,13 +70,13 @@ export default function AdminImportExport() {
         <FilterBar
           right={(
             <>
-              <button type="button" onClick={() => runPlanned("upload")} className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+              <button type="button" onClick={() => runPlanned("upload")} className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50">
                 <Upload size={16} /> {t("admin.evaluationOps.importExport.upload")}
               </button>
-              <button type="button" onClick={() => runPlanned("template")} className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+              <button type="button" onClick={() => runPlanned("template")} className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50">
                 <Download size={16} /> {t("admin.evaluationOps.importExport.template")}
               </button>
-              <button type="button" onClick={() => runPlanned("export")} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700">
+              <button type="button" onClick={() => runPlanned("export")} className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-hover">
                 <FileDown size={16} /> {t("common.export")}
               </button>
             </>
@@ -86,7 +86,7 @@ export default function AdminImportExport() {
           <FilterSelect label={t("filterLabels.status")} value={query.status} onChange={(status) => setQuery((prev) => ({ ...prev, page: 1, status }))} options={importStatusOptions} />
           <label className="flex items-center gap-2 text-sm font-medium text-gray-500">
             {t("admin.evaluationOps.importExport.table")}
-            <input className="h-10 w-36 rounded-xl border border-gray-200 px-3 text-sm text-gray-700 outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100" value={query.target_table} onChange={(e) => setQuery((prev) => ({ ...prev, page: 1, target_table: e.target.value }))} placeholder={t("admin.evaluationOps.importExport.targetTablePlaceholder")} />
+            <input className="h-10 w-36 rounded-xl border border-border px-3 text-sm text-gray-700 outline-none focus:border-accent focus:ring-2 focus:ring-accent" value={query.target_table} onChange={(e) => setQuery((prev) => ({ ...prev, page: 1, target_table: e.target.value }))} placeholder={t("admin.evaluationOps.importExport.targetTablePlaceholder")} />
           </label>
         </FilterBar>
         <AdminTable columns={columns} rows={rows} loading={loading} error={error} meta={meta} onPageChange={(page) => setQuery((prev) => ({ ...prev, page }))} emptyText={t("admin.empty.importLogs")} />

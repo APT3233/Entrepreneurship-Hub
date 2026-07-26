@@ -36,7 +36,7 @@ export default function ClassActivityTab({ classCode }) {
   }, [load]);
 
   const columns = [
-    { key: "action", label: "Action", render: (row) => <span className="font-mono text-xs font-bold text-indigo-700">{row.action}</span> },
+    { key: "action", label: "Action", render: (row) => <span className="font-mono text-xs font-bold text-accent">{row.action}</span> },
     { key: "table_name", label: "Table", render: (row) => row.table_name || "—" },
     { key: "title", label: "Title", render: (row) => row.title || "—" },
     { key: "user_name", label: t("admin.fields.fullName", { defaultValue: "User" }), render: (row) => row.user_name || row.user_email || "—" },

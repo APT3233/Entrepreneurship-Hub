@@ -65,8 +65,8 @@ export default function EvaluationDetailDrawer({ sessionId, open, onClose, onCha
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/30 backdrop-blur-[1px]" onClick={(event) => event.target === event.currentTarget && onClose?.()}>
-      <aside className="flex h-full w-full max-w-5xl flex-col overflow-hidden bg-white shadow-2xl">
-        <div className="flex items-start justify-between gap-4 border-b border-gray-100 px-6 py-4">
+      <aside className="flex h-full w-full max-w-5xl flex-col overflow-hidden bg-surface shadow-2xl">
+        <div className="flex items-start justify-between gap-4 border-b border-border px-6 py-4">
           <div>
             <p className="text-xs font-bold uppercase tracking-wide text-gray-400">{t("admin.evaluationOps.drawer.title")}</p>
             <h2 className="mt-1 text-xl font-black text-gray-900">{detail?.target_title || `${c.session} #${sessionId}`}</h2>
@@ -85,12 +85,12 @@ export default function EvaluationDetailDrawer({ sessionId, open, onClose, onCha
         </div>
 
         <div className="flex-1 overflow-auto bg-[#f0f4f8] p-6">
-          {loading ? <div className="rounded-2xl bg-white p-8 text-center text-sm text-gray-400">{t("admin.evaluationOps.drawer.loading")}</div> : null}
-          {error ? <div className="rounded-2xl border border-red-100 bg-red-50 p-8 text-center text-sm font-semibold text-red-600">{error}</div> : null}
+          {loading ? <div className="rounded-card bg-surface p-8 text-center text-sm text-gray-400">{t("admin.evaluationOps.drawer.loading")}</div> : null}
+          {error ? <div className="rounded-card border border-red-100 bg-red-50 p-8 text-center text-sm font-semibold text-red-600">{error}</div> : null}
           {detail && !loading ? (
             <div className="space-y-4">
               <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
-                <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+                <section className="rounded-card border border-border bg-surface p-5">
                   <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                     <Info label={c.class} value={`${detail.class_code} · ${detail.subject_code} · ${detail.semester_code}`} />
                     <Info label={c.group} value={detail.group_name || "—"} />
@@ -100,31 +100,31 @@ export default function EvaluationDetailDrawer({ sessionId, open, onClose, onCha
                     <Info label={c.evaluator} value={detail.evaluator_name || detail.evaluator_email || "—"} />
                   </div>
                 </section>
-                <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+                <section className="rounded-card border border-border bg-surface p-5">
                   <p className="text-sm font-semibold text-gray-500">{t("admin.evaluationOps.drawer.totalScore")}</p>
                   <p className="mt-2 text-4xl font-black text-gray-900">{formatScore(detail.total_score, detail.max_score)}</p>
                   <p className="mt-3 text-sm text-gray-500">{t("admin.evaluationOps.drawer.evaluated")}: {formatDate(detail.evaluated_at)}</p>
                   <div className="mt-4 flex flex-wrap gap-2">
-                    <button type="button" disabled={detail.status === "confirmed"} onClick={() => setConfirm({ type: "confirm" })} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-40">
+                    <button type="button" disabled={detail.status === "confirmed"} onClick={() => setConfirm({ type: "confirm" })} className="inline-flex items-center gap-2 rounded-xl bg-accent px-3 py-2 text-sm font-semibold text-white disabled:opacity-40">
                       <CheckCircle2 size={16} /> {t("admin.evaluationOps.drawer.confirm")}
                     </button>
-                    <button type="button" disabled={detail.status === "draft"} onClick={() => setConfirm({ type: "reopen" })} className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 disabled:opacity-40">
+                    <button type="button" disabled={detail.status === "draft"} onClick={() => setConfirm({ type: "reopen" })} className="inline-flex items-center gap-2 rounded-xl border border-border px-3 py-2 text-sm font-semibold text-gray-700 disabled:opacity-40">
                       <RotateCcw size={16} /> {t("admin.evaluationOps.drawer.reopen")}
                     </button>
                   </div>
                 </section>
               </div>
 
-              <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+              <section className="rounded-card border border-border bg-surface p-5">
                 <p className="text-xs font-bold uppercase tracking-wide text-gray-400">{t("admin.evaluationOps.drawer.overallFeedback")}</p>
                 <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-gray-700">{detail.overall_feedback || "—"}</p>
               </section>
 
               <AdminTable columns={scoreColumns} rows={detail.scores || []} loading={false} emptyText={t("admin.evaluationOps.drawer.emptyCriteriaScores")} />
 
-              <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+              <section className="rounded-card border border-border bg-surface p-5">
                 <h3 className="text-lg font-bold text-gray-900">{t("admin.evaluationOps.drawer.submissionFiles")}</h3>
-                <div className="mt-3 divide-y divide-gray-100">
+                <div className="mt-3 divide-y divide-border">
                   {(detail.files || []).length ? detail.files.map((file) => (
                     <div key={file.id} className="flex items-center justify-between gap-3 py-3 text-sm">
                       <span className="font-semibold text-gray-800">{file.file_name}</span>
@@ -134,13 +134,13 @@ export default function EvaluationDetailDrawer({ sessionId, open, onClose, onCha
                 </div>
               </section>
 
-              <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+              <section className="rounded-card border border-border bg-surface p-5">
                 <h3 className="text-lg font-bold text-gray-900">{t("admin.evaluationOps.drawer.recentAudit")}</h3>
                 <div className="mt-3 space-y-3">
                   {(detail.audit_logs || []).length ? detail.audit_logs.map((log) => (
-                    <div key={log.id} className="rounded-xl border border-gray-100 bg-gray-50 p-3">
+                    <div key={log.id} className="rounded-xl border border-border bg-gray-50 p-3">
                       <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-                        <span className="font-mono text-xs font-bold text-indigo-700">{log.action}</span>
+                        <span className="font-mono text-xs font-bold text-accent">{log.action}</span>
                         <span className="text-gray-400">{formatDate(log.created_at)}</span>
                       </div>
                       <div className="mt-2 grid gap-2 md:grid-cols-2">

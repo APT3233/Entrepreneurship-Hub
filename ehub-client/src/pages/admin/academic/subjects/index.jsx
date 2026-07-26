@@ -131,7 +131,7 @@ export default function AdminSubjects() {
   };
 
   const columns = useMemo(() => [
-    { key: "subject_code", label: t("admin.fields.subjectCode"), render: (row) => <span className="font-mono text-xs font-bold text-indigo-700">{row.subject_code}</span> },
+    { key: "subject_code", label: t("admin.fields.subjectCode"), render: (row) => <span className="font-mono text-xs font-bold text-accent">{row.subject_code}</span> },
     { key: "subject_name", label: t("admin.fields.subjectName"), render: (row) => <span className="font-semibold text-gray-900">{row.subject_name}</span> },
     { key: "subject_name_en", label: t("admin.fields.englishName"), render: (row) => row.subject_name_en || "—" },
     { key: "status", label: t("admin.fields.status"), render: (row) => <StatusBadge value={row.deleted_at ? "deleted" : row.status} /> },
@@ -184,8 +184,8 @@ export default function AdminSubjects() {
         <div className="space-y-6">
           {/* Section 1: Subject Details */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+            <div className="flex items-center gap-2 border-b border-border pb-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent-bg text-accent">
                 <Info size={16} />
               </span>
               <h4 className="text-sm font-bold text-gray-800">
@@ -219,7 +219,7 @@ export default function AdminSubjects() {
 
           {/* Section 2: Description */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
+            <div className="flex items-center gap-2 border-b border-border pb-2">
               <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
                 <BookOpen size={16} />
               </span>
@@ -248,9 +248,9 @@ export default function AdminSubjects() {
             ]} />
             <div>
               <p className="mb-2 text-xs font-bold uppercase tracking-wide text-gray-500">{t("nav.classes")}</p>
-              <div className="max-h-64 overflow-auto rounded-xl border border-gray-100">
+              <div className="max-h-64 overflow-auto rounded-xl border border-border">
                 {(modal.subject.classes || []).length ? (modal.subject.classes || []).map((cls) => (
-                  <div key={cls.id} className="flex items-center justify-between gap-3 border-b border-gray-100 px-3 py-2 text-sm last:border-b-0">
+                  <div key={cls.id} className="flex items-center justify-between gap-3 border-b border-border px-3 py-2 text-sm last:border-b-0">
                     <span className="font-semibold text-gray-800">{cls.class_code}</span>
                     <span className="text-gray-500">{cls.semester_code}</span>
                     <span className="text-gray-500">{cls.lecturer_name || "—"}</span>

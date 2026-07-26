@@ -18,8 +18,8 @@ export default function MentorAnalyticsOverviewPage() {
       .finally(() => mounted && setLoading(false));
     return () => { mounted = false; };
   }, [t]);
-  if (loading) return <div className="rounded-2xl bg-white p-8 text-center text-sm text-slate-400">{t("common.loading")}...</div>;
-  if (error) return <div className="rounded-2xl bg-rose-50 p-8 text-center text-sm font-bold text-rose-600">{error}</div>;
+  if (loading) return <div className="rounded-card bg-surface p-8 text-center text-sm text-slate-400">{t("common.loading")}...</div>;
+  if (error) return <div className="rounded-card bg-rose-50 p-8 text-center text-sm font-bold text-rose-600">{error}</div>;
   return (
     <div className="space-y-5">
       <MetricsGrid items={[

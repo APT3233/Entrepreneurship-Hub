@@ -82,7 +82,7 @@ export default function AdminMentors() {
 
   const columns = useMemo(() => [
     { key: "avatar", label: t("admin.mentors.avatar"), width: 80, render: (row) => <MentorAvatar mentor={row} /> },
-    { key: "full_name", label: t("admin.mentors.name"), width: 190, render: (row) => <button type="button" onClick={() => navigate(`/admin/mentors/${row.id}`)} className="text-left font-black text-slate-900 hover:text-teal-700">{row.full_name}</button> },
+    { key: "full_name", label: t("admin.mentors.name"), width: 190, render: (row) => <button type="button" onClick={() => navigate(`/admin/mentors/${row.id}`)} className="text-left font-black text-slate-900 hover:text-accent">{row.full_name}</button> },
     { key: "email", label: t("admin.mentors.email"), width: 220 },
     { key: "mentor_type", label: t("admin.mentors.type"), width: 160, render: (row) => <StatusBadge value={row.mentor_type} /> },
     { key: "organization", label: t("admin.mentors.organization"), width: 190, render: (row) => row.organization || "—" },
@@ -120,7 +120,7 @@ export default function AdminMentors() {
 
   return (
     <>
-      <FilterBar right={<button type="button" onClick={() => navigate("/admin/users?page=1&create=mentor")} className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-teal-700"><Plus size={16} /> {t("admin.mentors.create")}</button>}>
+      <FilterBar right={<button type="button" onClick={() => navigate("/admin/users?page=1&create=mentor")} className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-bold text-white hover:bg-accent-hover"><Plus size={16} /> {t("admin.mentors.create")}</button>}>
         <SearchInput value={query.search} onChange={(search) => setQuery((prev) => ({ ...prev, page: 1, search }))} placeholder={t("admin.mentors.searchPlaceholder")} />
         <FilterSelect label={t("admin.mentors.type")} value={query.mentor_type} onChange={(mentor_type) => setQuery((prev) => ({ ...prev, page: 1, mentor_type }))} options={typeOptions} />
         <FilterSelect label={t("admin.mentors.status")} value={query.status} onChange={(status) => setQuery((prev) => ({ ...prev, page: 1, status }))} options={statusOptions} />

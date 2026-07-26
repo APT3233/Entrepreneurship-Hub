@@ -43,8 +43,8 @@ export default function EventCreatePage() {
 
   return (
     <div className="space-y-5">
-      <button type="button" onClick={() => navigate("/admin/ecosystem/events")} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"><ArrowLeft size={16} /> {t("admin.ecosystem.common.back")}</button>
-      <form onSubmit={submit} className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+      <button type="button" onClick={() => navigate("/admin/ecosystem/events")} className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"><ArrowLeft size={16} /> {t("admin.ecosystem.common.back")}</button>
+      <form onSubmit={submit} className="rounded-card border border-border bg-surface p-5">
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label={t("admin.ecosystem.events.fields.name")}><input required className={inputClass} value={form.event_name || ""} onChange={(e) => set("event_name", e.target.value)} /></Field>
           <Field label={t("admin.ecosystem.events.fields.code")}><input className={inputClass} value={form.event_code || ""} onChange={(e) => set("event_code", e.target.value)} /></Field>
@@ -57,7 +57,7 @@ export default function EventCreatePage() {
           <Field label={t("admin.ecosystem.events.fields.meetingLink")}><input className={inputClass} value={form.meeting_link || ""} onChange={(e) => set("meeting_link", e.target.value)} /></Field>
           <div className="sm:col-span-2"><Field label={t("admin.ecosystem.events.fields.description")}><textarea className={inputClass} rows={5} value={form.description || ""} onChange={(e) => set("description", e.target.value)} /></Field></div>
         </div>
-        <div className="mt-5 flex justify-end"><button disabled={saving} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white hover:bg-indigo-700 disabled:opacity-50"><Save size={16} /> {t("admin.ecosystem.events.createBtn")}</button></div>
+        <div className="mt-5 flex justify-end"><button disabled={saving} className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2 text-sm font-bold text-white hover:bg-accent-hover disabled:opacity-50"><Save size={16} /> {t("admin.ecosystem.events.createBtn")}</button></div>
       </form>
     </div>
   );

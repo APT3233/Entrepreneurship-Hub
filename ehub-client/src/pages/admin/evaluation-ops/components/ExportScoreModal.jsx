@@ -77,7 +77,7 @@ export default function ExportScoreModal({ open, onClose, filters = {}, defaultT
           <select
             value={form.export_type}
             onChange={(event) => setForm((prev) => ({ ...prev, export_type: event.target.value }))}
-            className="h-11 w-full rounded-xl border border-gray-200 px-3 text-sm outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100"
+            className="h-11 w-full rounded-xl border border-border px-3 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent"
           >
             {exportOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
           </select>
@@ -87,7 +87,7 @@ export default function ExportScoreModal({ open, onClose, filters = {}, defaultT
           <select
             value={form.format}
             onChange={(event) => setForm((prev) => ({ ...prev, format: event.target.value }))}
-            className="h-11 w-full rounded-xl border border-gray-200 px-3 text-sm outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100"
+            className="h-11 w-full rounded-xl border border-border px-3 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent"
           >
             <option value="csv">CSV</option>
             <option value="xlsx">XLSX</option>

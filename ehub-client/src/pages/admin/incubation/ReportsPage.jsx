@@ -40,7 +40,7 @@ export default function ReportsPage() {
   useEffect(() => { load(); }, [load]);
 
   const columns = useMemo(() => [
-    { key: "startup_name", label: t("admin.ecosystem.columns.startup"), width: 220, render: (row) => <button type="button" onClick={() => navigate(`/admin/incubation/startups/${row.id}`)} className="text-left font-black text-indigo-700 hover:underline">{row.startup_name}</button> },
+    { key: "startup_name", label: t("admin.ecosystem.columns.startup"), width: 220, render: (row) => <button type="button" onClick={() => navigate(`/admin/incubation/startups/${row.id}`)} className="text-left font-black text-accent hover:underline">{row.startup_name}</button> },
     { key: "class_code", label: t("admin.ecosystem.columns.class"), width: 110, render: (row) => row.class_code || "-" },
     { key: "semester_code", label: t("admin.ecosystem.columns.semester"), width: 120, render: (row) => row.semester_code || "-" },
     { key: "category", label: t("admin.ecosystem.columns.category"), width: 140, render: (row) => row.category || "-" },

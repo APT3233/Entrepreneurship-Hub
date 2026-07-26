@@ -99,7 +99,7 @@ export default function AlumniDetailPage() {
   };
 
   const columns = useMemo(() => [
-    { key: "startup_name", label: t("admin.ecosystem.alumni.columns.startups"), render: (row) => <button type="button" onClick={() => navigate(`/admin/incubation/startups/${row.startup_id}`)} className="font-black text-indigo-700 hover:underline">{row.startup_name}</button> },
+    { key: "startup_name", label: t("admin.ecosystem.alumni.columns.startups"), render: (row) => <button type="button" onClick={() => navigate(`/admin/incubation/startups/${row.startup_id}`)} className="font-black text-accent hover:underline">{row.startup_name}</button> },
     { key: "role", label: t("admin.ecosystem.alumni.columns.role"), render: (row) => <StatusBadge value={row.role} /> },
     { key: "status", label: t("admin.ecosystem.alumni.columns.status"), render: (row) => <StatusBadge value={row.status} /> },
     { key: "start_date", label: t("admin.ecosystem.alumni.columns.start"), render: (row) => formatDate(row.start_date) },
@@ -107,13 +107,13 @@ export default function AlumniDetailPage() {
     { key: "note", label: t("admin.ecosystem.alumni.columns.note"), render: (row) => row.note || "-" },
   ], [navigate, t]);
 
-  if (loading) return <div className="rounded-2xl bg-white p-8 text-center text-sm text-slate-400">{t("admin.ecosystem.common.loading")}</div>;
-  if (error) return <div className="rounded-2xl bg-rose-50 p-8 text-center text-sm font-bold text-rose-600">{error}</div>;
+  if (loading) return <div className="rounded-card bg-surface p-8 text-center text-sm text-slate-400">{t("admin.ecosystem.common.loading")}</div>;
+  if (error) return <div className="rounded-card bg-rose-50 p-8 text-center text-sm font-bold text-rose-600">{error}</div>;
   if (!alumni) return null;
 
   return (
     <div className="space-y-5">
-      <button type="button" onClick={() => navigate("/admin/ecosystem/alumni")} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"><ArrowLeft size={16} /> {t("admin.ecosystem.common.back")}</button>
+      <button type="button" onClick={() => navigate("/admin/ecosystem/alumni")} className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"><ArrowLeft size={16} /> {t("admin.ecosystem.common.back")}</button>
       <Panel title={t("admin.ecosystem.alumni.panels.profile")}>
         <form onSubmit={save} className="grid gap-4 md:grid-cols-2">
           <Field label={t("admin.ecosystem.alumni.fields.fullName")}><input required className={inputClass} value={form.full_name || ""} onChange={(e) => set("full_name", e.target.value)} /></Field>
@@ -127,10 +127,10 @@ export default function AlumniDetailPage() {
           <Field label={t("admin.ecosystem.alumni.fields.linkedin")}><input className={inputClass} value={form.linkedin_url || ""} onChange={(e) => set("linkedin_url", e.target.value)} /></Field>
           <Field label={t("admin.ecosystem.alumni.fields.status")}><SelectField value={form.status || "active"} onChange={(status) => set("status", status)} options={statusOptions} /></Field>
           <div className="md:col-span-2"><Field label={t("admin.ecosystem.alumni.fields.bio")}><textarea rows={4} className={inputClass} value={form.bio || ""} onChange={(e) => set("bio", e.target.value)} /></Field></div>
-          <div className="md:col-span-2 flex justify-end"><button disabled={saving} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white hover:bg-indigo-700 disabled:opacity-50"><Save size={16} /> {t("admin.ecosystem.common.save")}</button></div>
+          <div className="md:col-span-2 flex justify-end"><button disabled={saving} className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2 text-sm font-bold text-white hover:bg-accent-hover disabled:opacity-50"><Save size={16} /> {t("admin.ecosystem.common.save")}</button></div>
         </form>
       </Panel>
-      <Panel title={t("admin.ecosystem.alumni.panels.linkedStartups")} actions={<button type="button" onClick={() => setLinkModal(true)} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-3 py-2 text-sm font-bold text-white"><Plus size={16} /> {t("admin.ecosystem.alumni.modals.linkStartup")}</button>}>
+      <Panel title={t("admin.ecosystem.alumni.panels.linkedStartups")} actions={<button type="button" onClick={() => setLinkModal(true)} className="inline-flex items-center gap-2 rounded-xl bg-accent px-3 py-2 text-sm font-bold text-white"><Plus size={16} /> {t("admin.ecosystem.alumni.modals.linkStartup")}</button>}>
         <AdminTable columns={columns} rows={alumni.startup_links || []} emptyText={t("admin.ecosystem.alumni.empty.linkedStartups")} />
       </Panel>
       <FormModal open={linkModal} title={t("admin.ecosystem.alumni.modals.linkStartup")} submitLabel={t("admin.ecosystem.common.add")} saving={saving} onClose={() => setLinkModal(false)} onSubmit={addLink}>

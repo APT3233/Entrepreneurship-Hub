@@ -104,7 +104,7 @@ export default function ImportLogsPage() {
             <button
               type="button"
               onClick={() => setExportOpen(!exportOpen)}
-              className="flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 cursor-pointer select-none transition-colors"
+              className="flex items-center gap-1.5 rounded-xl border border-border bg-surface px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 cursor-pointer select-none transition-colors"
             >
               <Download size={15} className="text-gray-400" />
               {t("common.export") || "Xuất file"}
@@ -113,7 +113,7 @@ export default function ImportLogsPage() {
             {exportOpen && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setExportOpen(false)} />
-                <div className="absolute right-0 mt-1.5 z-20 w-40 rounded-xl border border-gray-100 bg-white py-1 shadow-lg ring-1 ring-black/5 animate-in fade-in slide-in-from-top-1 duration-100">
+                <div className="absolute right-0 mt-1.5 z-20 w-40 rounded-xl border border-border bg-surface py-1 shadow-lg ring-1 ring-black/5 animate-in fade-in slide-in-from-top-1 duration-100">
                   <button
                     type="button"
                     onClick={() => {
@@ -149,9 +149,9 @@ export default function ImportLogsPage() {
 
       {selectedLog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 backdrop-blur-[2px]">
-          <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl overflow-hidden border border-gray-100 animate-in fade-in zoom-in-95 duration-150">
+          <div className="w-full max-w-md rounded-card bg-surface shadow-2xl overflow-hidden border border-border animate-in fade-in zoom-in-95 duration-150">
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-gray-100 px-5 py-3 bg-gray-50/50">
+            <div className="flex items-center justify-between border-b border-border px-5 py-3 bg-gray-50/50">
               <div className="flex items-center gap-2 max-w-[80%]">
                 <span className="text-xs font-bold text-gray-700 truncate" title={selectedLog.file_name}>
                   {selectedLog.file_name}
@@ -190,7 +190,7 @@ export default function ImportLogsPage() {
 
               {/* Error messages or error log */}
               {selectedLog.error_message && (
-                <div className="pt-2 border-t border-gray-100">
+                <div className="pt-2 border-t border-border">
                   <label className="text-[9px] font-bold uppercase tracking-wider text-red-500 block mb-0.5">
                     Error Message
                   </label>
@@ -201,11 +201,11 @@ export default function ImportLogsPage() {
               )}
 
               {selectedLog.error_log && (
-                <div className="pt-2 border-t border-gray-100">
+                <div className="pt-2 border-t border-border">
                   <label className="text-[9px] font-bold uppercase tracking-wider text-gray-400 block mb-0.5">
                     Detailed Error Log
                   </label>
-                  <pre className="text-[10px] font-mono text-gray-600 bg-gray-50 p-2 rounded-lg border border-gray-100 max-h-[100px] overflow-y-auto whitespace-pre-wrap break-all select-all leading-normal">
+                  <pre className="text-[10px] font-mono text-gray-600 bg-gray-50 p-2 rounded-lg border border-border max-h-[100px] overflow-y-auto whitespace-pre-wrap break-all select-all leading-normal">
                     {renderErrorLog(selectedLog.error_log)}
                   </pre>
                 </div>
@@ -213,7 +213,7 @@ export default function ImportLogsPage() {
             </div>
 
             {/* Footer */}
-            <div className="flex justify-end border-t border-gray-100 px-5 py-2.5 bg-gray-50/35">
+            <div className="flex justify-end border-t border-border px-5 py-2.5 bg-gray-50/35">
               <button
                 type="button"
                 onClick={() => setSelectedLog(null)}

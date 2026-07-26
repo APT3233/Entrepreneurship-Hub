@@ -41,7 +41,7 @@ export default function MentorDocumentsPage() {
     { key: "file_size", label: t("admin.mentors.documentsTab.size"), render: (row) => row.file_size ? `${Math.round(row.file_size / 1024)} KB` : "—" },
     { key: "uploaded_by_name", label: t("admin.mentors.documentsTab.uploadedBy"), render: (row) => row.uploaded_by_name || "—" },
     { key: "created_at", label: t("admin.mentors.documentsTab.created"), render: (row) => formatDate(row.created_at) },
-    { key: "actions", label: "", width: 80, render: (row) => <a href={row.file_url} target="_blank" rel="noreferrer" className="inline-flex rounded-lg p-2 text-teal-600 hover:bg-teal-50"><ExternalLink size={16} /></a> },
+    { key: "actions", label: "", width: 80, render: (row) => <a href={row.file_url} target="_blank" rel="noreferrer" className="inline-flex rounded-lg p-2 text-accent hover:bg-accent-bg"><ExternalLink size={16} /></a> },
   ], [t]);
 
   const typeOptions = useMemo(() => [

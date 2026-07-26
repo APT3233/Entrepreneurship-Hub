@@ -232,7 +232,7 @@ export default function AdminGroups() {
         activeFilterCount={activeFilterCount}
         onClear={clearFilters}
         right={canWrite ? (
-          <button type="button" onClick={openCreate} className="inline-flex h-10 items-center gap-2 rounded-lg bg-indigo-600 px-4 text-sm font-semibold text-white hover:bg-indigo-700 cursor-pointer">
+          <button type="button" onClick={openCreate} className="inline-flex h-10 items-center gap-2 rounded-lg bg-accent px-4 text-sm font-semibold text-white hover:bg-accent-hover cursor-pointer">
             <Plus size={16} /> {t("admin.actions.create")}
           </button>
         ) : null}
@@ -256,8 +256,8 @@ export default function AdminGroups() {
         <div className="space-y-6">
           {/* Section 1: Basic Information */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+            <div className="flex items-center gap-2 border-b border-border pb-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent-bg text-accent">
                 <Info size={16} />
               </span>
               <h4 className="text-sm font-bold text-gray-800">
@@ -296,7 +296,7 @@ export default function AdminGroups() {
 
           {/* Section 2: Project Details */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
+            <div className="flex items-center gap-2 border-b border-border pb-2">
               <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
                 <Briefcase size={16} />
               </span>
@@ -318,7 +318,7 @@ export default function AdminGroups() {
 
           {/* Section 3: Mentor & Links */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
+            <div className="flex items-center gap-2 border-b border-border pb-2">
               <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
                 <UserCog size={16} />
               </span>

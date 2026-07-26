@@ -209,7 +209,7 @@ export default function AdminEnrollments() {
   };
 
   const columns = useMemo(() => [
-    { key: "class_code", label: t("admin.columns.class"), render: (row) => <span className="font-mono text-xs font-bold text-indigo-700">{getShortClassCode(row.class_code, row.semester_code)}</span> },
+    { key: "class_code", label: t("admin.columns.class"), render: (row) => <span className="font-mono text-xs font-bold text-accent">{getShortClassCode(row.class_code, row.semester_code)}</span> },
     { key: "semester", label: t("admin.columns.semester"), render: (row) => `${row.semester_code} (${row.year})` },
     { key: "subject", label: t("admin.columns.subject"), render: (row) => `${row.subject_code} - ${row.subject_name}` },
     { key: "student_code", label: t("admin.fields.studentCode"), render: (row) => <span className="font-mono text-xs font-bold text-gray-700">{row.student_code}</span> },
@@ -265,13 +265,13 @@ export default function AdminEnrollments() {
         onClear={clearFilters}
         right={canWrite ? (
           <>
-            <button type="button" onClick={() => loadWithoutGroup(query.class_id)} className="inline-flex h-10 items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-600 hover:bg-gray-50 cursor-pointer">
+            <button type="button" onClick={() => loadWithoutGroup(query.class_id)} className="inline-flex h-10 items-center gap-2 rounded-lg border border-border bg-surface px-4 text-sm font-semibold text-gray-600 hover:bg-gray-50 cursor-pointer">
               <UsersRound size={16} /> {t("admin.enrollment.withoutGroupBtn")}
             </button>
-            <button type="button" onClick={openBulk} className="inline-flex h-10 items-center gap-2 rounded-lg border border-indigo-100 bg-indigo-50 px-4 text-sm font-semibold text-indigo-700 hover:bg-indigo-100 cursor-pointer">
+            <button type="button" onClick={openBulk} className="inline-flex h-10 items-center gap-2 rounded-lg border border-accent-bg bg-accent-bg px-4 text-sm font-semibold text-accent hover:bg-accent-bg cursor-pointer">
               <UsersRound size={16} /> {t("admin.enrollment.bulkAdd")}
             </button>
-            <button type="button" onClick={openAdd} className="inline-flex h-10 items-center gap-2 rounded-lg bg-indigo-600 px-4 text-sm font-semibold text-white hover:bg-indigo-700 cursor-pointer">
+            <button type="button" onClick={openAdd} className="inline-flex h-10 items-center gap-2 rounded-lg bg-accent px-4 text-sm font-semibold text-white hover:bg-accent-hover cursor-pointer">
               <Plus size={16} /> {t("admin.actions.create")}
             </button>
           </>
@@ -296,8 +296,8 @@ export default function AdminEnrollments() {
         <div className="space-y-6">
           {/* Section 1: Academic Info */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+            <div className="flex items-center gap-2 border-b border-border pb-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent-bg text-accent">
                 <BookOpen size={16} />
               </span>
               <h4 className="text-sm font-bold text-gray-800">
@@ -326,7 +326,7 @@ export default function AdminEnrollments() {
 
           {/* Section 2: Status */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
+            <div className="flex items-center gap-2 border-b border-border pb-2">
               <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
                 <ShieldCheck size={16} />
               </span>
@@ -362,8 +362,8 @@ export default function AdminEnrollments() {
         <div className="space-y-6">
           {/* Section 1: Target Class */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+            <div className="flex items-center gap-2 border-b border-border pb-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent-bg text-accent">
                 <BookOpen size={16} />
               </span>
               <h4 className="text-sm font-bold text-gray-800">
@@ -384,7 +384,7 @@ export default function AdminEnrollments() {
 
           {/* Section 2: Student List */}
           <div className="space-y-4">
-            <div className="flex items-center justify-between border-b border-gray-100 pb-2">
+            <div className="flex items-center justify-between border-b border-border pb-2">
               <div className="flex items-center gap-2">
                 <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
                   <UsersRound size={16} />
@@ -393,7 +393,7 @@ export default function AdminEnrollments() {
                   {t("admin.enrollment.studentList")}
                 </h4>
               </div>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-bold text-indigo-700">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-accent-bg px-2.5 py-1 text-xs font-bold text-accent">
                 {t("admin.enrollment.selectedCount", { count: bulkForm.student_ids.length })}
               </span>
             </div>
@@ -403,7 +403,7 @@ export default function AdminEnrollments() {
               <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                className="w-full pl-9 pr-4 py-2 rounded-xl bg-gray-50 border border-gray-200 focus:bg-white focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50 outline-none transition-all text-xs font-medium"
+                className="w-full pl-9 pr-4 py-2 rounded-xl bg-gray-50 border border-border focus:bg-surface focus:border-accent focus:ring-4 focus:ring-accent outline-none transition-all text-xs font-medium"
                 placeholder={t("admin.enrollment.searchStudentPlaceholder")}
                 value={bulkSearch}
                 onChange={(e) => setBulkSearch(e.target.value)}
@@ -411,7 +411,7 @@ export default function AdminEnrollments() {
             </div>
 
             {/* Premium scroll list */}
-            <div className="max-h-64 overflow-y-auto rounded-2xl border border-gray-100 p-2 space-y-1 custom-scrollbar">
+            <div className="max-h-64 overflow-y-auto rounded-card border border-border p-2 space-y-1 custom-scrollbar">
               {filteredBulkStudents.length ? (
                 filteredBulkStudents.map((student) => {
                   const isChecked = bulkForm.student_ids.includes(student.id);
@@ -421,7 +421,7 @@ export default function AdminEnrollments() {
                       className={`
                         flex items-center justify-between gap-3 rounded-xl border px-3 py-2.5 text-xs font-medium cursor-pointer transition-all duration-150
                         ${isChecked
-                          ? "bg-indigo-50/40 border-indigo-200 text-indigo-950 font-bold"
+                          ? "bg-accent-bg/40 border-accent-bg text-accent font-bold"
                           : "border-transparent text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                         }
                       `}
@@ -429,13 +429,13 @@ export default function AdminEnrollments() {
                       <div className="flex items-center gap-3">
                         <input
                           type="checkbox"
-                          className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 h-3.5 w-3.5"
+                          className="rounded border-gray-300 text-accent focus:ring-accent h-3.5 w-3.5"
                           checked={isChecked}
                           onChange={() => toggleBulkStudent(student.id)}
                         />
                         <span>{buildStudentLabel(student)}</span>
                       </div>
-                      {isChecked && <Check size={14} className="text-indigo-600 shrink-0" />}
+                      {isChecked && <Check size={14} className="text-accent shrink-0" />}
                     </label>
                   );
                 })
@@ -458,28 +458,28 @@ export default function AdminEnrollments() {
       >
         {withoutGroup.loading ? (
           <div className="rounded-xl bg-gray-50/50 py-10 text-center text-sm text-gray-400 flex items-center justify-center gap-2">
-            <div className="h-4 w-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+            <div className="h-4 w-4 border-2 border-accent border-t-transparent rounded-full animate-spin"></div>
             {t("common.loading")}
           </div>
         ) : (
           <div className="space-y-2 max-h-96 overflow-y-auto custom-scrollbar pr-1">
             {withoutGroup.rows.length ? (
               withoutGroup.rows.map((student) => (
-                <div key={student.id} className="flex gap-4 rounded-2xl border border-gray-100 bg-white p-4 transition-all hover:border-indigo-100 hover:shadow-md hover:shadow-indigo-50/20">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-xs font-extrabold text-indigo-700">
+                <div key={student.id} className="flex gap-4 rounded-card border border-border bg-surface p-4 transition-all hover:border-accent-bg hover:shadow-md">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-bg text-xs font-extrabold text-accent">
                     {(student.full_name || "?").slice(0, 2).toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
                       <div className="font-bold text-gray-900 text-sm truncate">{student.full_name}</div>
-                      <span className="shrink-0 rounded-lg bg-slate-50 border border-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600 tracking-wide font-mono">
+                      <span className="shrink-0 rounded-lg bg-slate-50 border border-border px-2 py-0.5 text-[10px] font-bold text-slate-600 tracking-wide font-mono">
                         {student.student_code}
                       </span>
                     </div>
                     <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-500">
                       <span>{student.email}</span>
                       <span className="text-gray-300">•</span>
-                      <span className="font-medium text-indigo-600">{student.major || "—"}</span>
+                      <span className="font-medium text-accent">{student.major || "—"}</span>
                       <span className="text-gray-300">•</span>
                       <span className="font-medium">{formatDate(student.enrolled_at)}</span>
                     </div>
@@ -487,7 +487,7 @@ export default function AdminEnrollments() {
                 </div>
               ))
             ) : (
-              <div className="rounded-2xl bg-gray-50/60 p-10 text-center text-sm text-gray-400">
+              <div className="rounded-card bg-gray-50/60 p-10 text-center text-sm text-gray-400">
                 <Info size={28} className="mx-auto text-gray-300 mb-2" />
                 {t("admin.enrollment.noStudentsWithoutGroup")}
               </div>

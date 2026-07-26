@@ -90,10 +90,10 @@ export default function PartnersPage() {
   };
 
   const columns = useMemo(() => [
-    { key: "partner_name", label: t("admin.ecosystem.partners.columns.partner"), width: 220, render: (row) => <button type="button" onClick={() => navigate(`/admin/ecosystem/partners/${row.id}`)} className="text-left font-black text-slate-900 hover:text-indigo-700">{row.partner_name}</button> },
+    { key: "partner_name", label: t("admin.ecosystem.partners.columns.partner"), width: 220, render: (row) => <button type="button" onClick={() => navigate(`/admin/ecosystem/partners/${row.id}`)} className="text-left font-black text-slate-900 hover:text-accent">{row.partner_name}</button> },
     { key: "partner_type", label: t("admin.ecosystem.partners.columns.type"), width: 150, render: (row) => <StatusBadge value={row.partner_type} /> },
     { key: "contact_person", label: t("admin.ecosystem.partners.columns.contact"), width: 160, render: (row) => row.contact_person || "-" },
-    { key: "website_url", label: t("admin.ecosystem.partners.columns.website"), width: 180, render: (row) => row.website_url ? <a href={row.website_url} target="_blank" rel="noreferrer" className="font-bold text-indigo-700 hover:underline">Open</a> : "-" },
+    { key: "website_url", label: t("admin.ecosystem.partners.columns.website"), width: 180, render: (row) => row.website_url ? <a href={row.website_url} target="_blank" rel="noreferrer" className="font-bold text-accent hover:underline">Open</a> : "-" },
     { key: "focus_areas", label: t("admin.ecosystem.partners.columns.focus"), render: (row) => (row.focus_areas || []).join(", ") || "-" },
     { key: "connection_count", label: t("admin.ecosystem.partners.columns.connections"), width: 110 },
     { key: "opportunity_count", label: t("admin.ecosystem.partners.columns.opportunities"), width: 120 },
@@ -104,7 +104,7 @@ export default function PartnersPage() {
 
   return (
     <>
-      <FilterBar right={<button type="button" onClick={() => setModal(true)} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-indigo-700"><Plus size={16} /> {t("admin.ecosystem.partners.addBtn")}</button>}>
+      <FilterBar right={<button type="button" onClick={() => setModal(true)} className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-bold text-white hover:bg-accent-hover"><Plus size={16} /> {t("admin.ecosystem.partners.addBtn")}</button>}>
         <SearchInput value={query.search} onChange={(search) => setQuery((prev) => ({ ...prev, page: 1, search }))} placeholder={t("admin.ecosystem.partners.searchPlaceholder")} />
         <FilterSelect label={t("admin.ecosystem.partners.columns.type")} value={query.partner_type} onChange={(partner_type) => setQuery((prev) => ({ ...prev, page: 1, partner_type }))} options={withAll(partnerTypeOptions)} />
         <FilterSelect label={t("admin.ecosystem.partners.columns.status")} value={query.status} onChange={(status) => setQuery((prev) => ({ ...prev, page: 1, status }))} options={withAll(statusOptions)} />

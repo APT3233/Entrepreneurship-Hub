@@ -67,7 +67,7 @@ export default function AuditLogsPage() {
   const formatDate = (value) => value ? new Date(value).toLocaleString(language === "en" ? "en-US" : "vi-VN") : "—";
 
   const columns = [
-    { key: "action", label: t("admin.fields.action") || "Action", width: 150, render: (row) => <span className="font-mono text-xs font-bold text-indigo-700">{row.action}</span> },
+    { key: "action", label: t("admin.fields.action") || "Action", width: 150, render: (row) => <span className="font-mono text-xs font-bold text-accent">{row.action}</span> },
     { key: "table_name", label: t("admin.fields.tableName") || "Table", width: 150, render: (row) => row.table_name || "—" },
     { key: "title", label: t("admin.fields.title") || "Title", width: 250, render: (row) => row.title || "—" },
     { key: "user_name", label: t("nav.users"), width: 180, render: (row) => row.user_name || row.user_email || "—" },
@@ -92,7 +92,7 @@ export default function AuditLogsPage() {
             <button
               type="button"
               onClick={() => setExportOpen(!exportOpen)}
-              className="flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 cursor-pointer select-none transition-colors"
+              className="flex items-center gap-1.5 rounded-xl border border-border bg-surface px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 cursor-pointer select-none transition-colors"
             >
               <Download size={15} className="text-gray-400" />
               {t("common.export") || "Xuất file"}
@@ -101,7 +101,7 @@ export default function AuditLogsPage() {
             {exportOpen && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setExportOpen(false)} />
-                <div className="absolute right-0 mt-1.5 z-20 w-40 rounded-xl border border-gray-100 bg-white py-1 shadow-lg ring-1 ring-black/5 animate-in fade-in slide-in-from-top-1 duration-100">
+                <div className="absolute right-0 mt-1.5 z-20 w-40 rounded-xl border border-border bg-surface py-1 shadow-lg ring-1 ring-black/5 animate-in fade-in slide-in-from-top-1 duration-100">
                   <button
                     type="button"
                     onClick={() => {
@@ -136,11 +136,11 @@ export default function AuditLogsPage() {
 
       {selectedLog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 backdrop-blur-[2px]">
-          <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl overflow-hidden border border-gray-100 animate-in fade-in zoom-in-95 duration-150">
+          <div className="w-full max-w-md rounded-card bg-surface shadow-2xl overflow-hidden border border-border animate-in fade-in zoom-in-95 duration-150">
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-gray-100 px-5 py-3 bg-gray-50/50">
+            <div className="flex items-center justify-between border-b border-border px-5 py-3 bg-gray-50/50">
               <div className="flex items-center gap-2 max-w-[80%]">
-                <span className="font-mono text-[10px] font-bold bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded uppercase">
+                <span className="font-mono text-[10px] font-bold bg-accent-bg text-accent px-1.5 py-0.5 rounded uppercase">
                   {selectedLog.action}
                 </span>
                 <span className="text-xs font-semibold text-gray-700 truncate" title={selectedLog.title || t("nav.auditLogs")}>
@@ -178,12 +178,12 @@ export default function AuditLogsPage() {
               </div>
 
               {/* JSON diff display */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pt-2 border-t border-gray-100">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pt-2 border-t border-border">
                 <div>
                   <label className="text-[9px] font-bold uppercase tracking-wider text-gray-400 block mb-0.5">
                     Old Values
                   </label>
-                  <pre className="text-[10px] font-mono text-gray-600 bg-gray-50 p-2 rounded-lg border border-gray-100 max-h-[90px] overflow-y-auto whitespace-pre-wrap break-all select-all leading-normal">
+                  <pre className="text-[10px] font-mono text-gray-600 bg-gray-50 p-2 rounded-lg border border-border max-h-[90px] overflow-y-auto whitespace-pre-wrap break-all select-all leading-normal">
                     {renderJsonBlock(selectedLog.old_values)}
                   </pre>
                 </div>
@@ -191,7 +191,7 @@ export default function AuditLogsPage() {
                   <label className="text-[9px] font-bold uppercase tracking-wider text-gray-400 block mb-0.5">
                     New Values
                   </label>
-                  <pre className="text-[10px] font-mono text-gray-600 bg-gray-50 p-2 rounded-lg border border-gray-100 max-h-[90px] overflow-y-auto whitespace-pre-wrap break-all select-all leading-normal">
+                  <pre className="text-[10px] font-mono text-gray-600 bg-gray-50 p-2 rounded-lg border border-border max-h-[90px] overflow-y-auto whitespace-pre-wrap break-all select-all leading-normal">
                     {renderJsonBlock(selectedLog.new_values)}
                   </pre>
                 </div>
@@ -199,7 +199,7 @@ export default function AuditLogsPage() {
             </div>
 
             {/* Footer */}
-            <div className="flex justify-end border-t border-gray-100 px-5 py-2.5 bg-gray-50/35">
+            <div className="flex justify-end border-t border-border px-5 py-2.5 bg-gray-50/35">
               <button
                 type="button"
                 onClick={() => setSelectedLog(null)}

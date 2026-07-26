@@ -265,13 +265,13 @@ function ClassStudentsTab({ classId, lookups, canWrite, onLookupsRefresh }) {
       <FilterBar
         right={canWrite ? (
           <>
-            <button type="button" onClick={() => setWithoutGroup((value) => !value)} className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 cursor-pointer">
+            <button type="button" onClick={() => setWithoutGroup((value) => !value)} className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 cursor-pointer">
               <UsersRound size={16} /> {withoutGroup ? (t("common.confirm") === "Xác nhận" ? "Tất cả sinh viên" : "All students") : (t("common.confirm") === "Xác nhận" ? "Chưa có nhóm" : "Without group")}
             </button>
-            <button type="button" onClick={openBulk} className="inline-flex items-center gap-2 rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-2.5 text-sm font-semibold text-indigo-700 hover:bg-indigo-100 cursor-pointer">
+            <button type="button" onClick={openBulk} className="inline-flex items-center gap-2 rounded-xl border border-accent-bg bg-accent-bg px-4 py-2.5 text-sm font-semibold text-accent hover:bg-accent-bg cursor-pointer">
               {t("common.confirm") === "Xác nhận" ? "Thêm hàng loạt" : "Bulk add"}
             </button>
-            <button type="button" onClick={openAdd} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 cursor-pointer">
+            <button type="button" onClick={openAdd} className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-hover cursor-pointer">
               <Plus size={16} /> {t("admin.actions.create")}
             </button>
           </>
@@ -299,8 +299,8 @@ function ClassStudentsTab({ classId, lookups, canWrite, onLookupsRefresh }) {
         <div className="space-y-6">
           {/* Section 1: Student Information */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+            <div className="flex items-center gap-2 border-b border-border pb-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent-bg text-accent">
                 <Info size={16} />
               </span>
               <h4 className="text-sm font-bold text-gray-800">
@@ -349,7 +349,7 @@ function ClassStudentsTab({ classId, lookups, canWrite, onLookupsRefresh }) {
         saving={saving}
       >
         <div className="space-y-4">
-          <div className="flex items-center justify-between border-b border-gray-100 pb-2">
+          <div className="flex items-center justify-between border-b border-border pb-2">
             <div className="flex items-center gap-2">
               <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
                 <UsersRound size={16} />
@@ -358,7 +358,7 @@ function ClassStudentsTab({ classId, lookups, canWrite, onLookupsRefresh }) {
                 {t("common.confirm") === "Xác nhận" ? "Danh sách sinh viên khả dụng" : "Available Students List"}
               </h4>
             </div>
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-bold text-indigo-700">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-accent-bg px-2.5 py-1 text-xs font-bold text-accent">
               {t("common.confirm") === "Xác nhận" ? `Đã chọn: ${bulkForm.student_ids.length}` : `Selected: ${bulkForm.student_ids.length}`}
             </span>
           </div>
@@ -368,7 +368,7 @@ function ClassStudentsTab({ classId, lookups, canWrite, onLookupsRefresh }) {
             <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <input
               type="text"
-              className="w-full pl-9 pr-4 py-2 rounded-xl bg-gray-50 border border-gray-200 focus:bg-white focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50 outline-none transition-all text-xs font-medium"
+              className="w-full pl-9 pr-4 py-2 rounded-xl bg-gray-50 border border-border focus:bg-surface focus:border-accent focus:ring-4 focus:ring-accent outline-none transition-all text-xs font-medium"
               placeholder={t("common.confirm") === "Xác nhận" ? "Tìm sinh viên theo tên, mã SV, email..." : "Search student by name, code, email..."}
               value={bulkSearch}
               onChange={(e) => setBulkSearch(e.target.value)}
@@ -376,7 +376,7 @@ function ClassStudentsTab({ classId, lookups, canWrite, onLookupsRefresh }) {
           </div>
 
           {/* Premium scroll list */}
-          <div className="max-h-64 overflow-y-auto rounded-2xl border border-gray-100 p-2 space-y-1 custom-scrollbar">
+          <div className="max-h-64 overflow-y-auto rounded-card border border-border p-2 space-y-1 custom-scrollbar">
             {filteredBulkCandidates.length ? (
               filteredBulkCandidates.map((student) => {
                 const isChecked = bulkForm.student_ids.includes(student.id);
@@ -386,7 +386,7 @@ function ClassStudentsTab({ classId, lookups, canWrite, onLookupsRefresh }) {
                     className={`
                       flex items-center justify-between gap-3 rounded-xl border px-3 py-2.5 text-xs font-medium cursor-pointer transition-all duration-150
                       ${isChecked
-                        ? "bg-indigo-50/40 border-indigo-200 text-indigo-950 font-bold"
+                        ? "bg-accent-bg/40 border-accent-bg text-accent font-bold"
                         : "border-transparent text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                       }
                     `}
@@ -394,13 +394,13 @@ function ClassStudentsTab({ classId, lookups, canWrite, onLookupsRefresh }) {
                     <div className="flex items-center gap-3">
                       <input
                         type="checkbox"
-                        className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 h-3.5 w-3.5"
+                        className="rounded border-gray-300 text-accent focus:ring-accent h-3.5 w-3.5"
                         checked={isChecked}
                         onChange={() => toggleBulkStudent(student.id)}
                       />
                       <span>{buildStudentLabel(student)}</span>
                     </div>
-                    {isChecked && <Check size={14} className="text-indigo-600 shrink-0" />}
+                    {isChecked && <Check size={14} className="text-accent shrink-0" />}
                   </label>
                 );
               })
@@ -511,7 +511,7 @@ function ClassGroupsTab({ classId, cls, canWrite }) {
     <>
       <FilterBar
         right={canWrite ? (
-          <button type="button" onClick={openCreate} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 cursor-pointer">
+          <button type="button" onClick={openCreate} className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-hover cursor-pointer">
             <Plus size={16} /> {t("admin.actions.create")}
           </button>
         ) : null}
@@ -526,8 +526,8 @@ function ClassGroupsTab({ classId, cls, canWrite }) {
         <div className="space-y-6">
           {/* Section 1: Basic Information */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+            <div className="flex items-center gap-2 border-b border-border pb-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent-bg text-accent">
                 <Info size={16} />
               </span>
               <h4 className="text-sm font-bold text-gray-800">
@@ -557,7 +557,7 @@ function ClassGroupsTab({ classId, cls, canWrite }) {
 
           {/* Section 2: Project Details */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
+            <div className="flex items-center gap-2 border-b border-border pb-2">
               <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
                 <Briefcase size={16} />
               </span>
@@ -766,22 +766,22 @@ export default function AdminClassDetail() {
   useDocumentTitle(cls ? title : null, 1);
 
   if (loading) {
-    return <div className="rounded-2xl border border-gray-100 bg-white p-8 text-center text-sm text-gray-400 shadow-sm">{t("common.loading")}</div>;
+    return <div className="rounded-card border border-border bg-surface p-8 text-center text-sm text-gray-400">{t("common.loading")}</div>;
   }
 
   if (error) {
-    return <div className="rounded-2xl border border-red-100 bg-red-50 p-8 text-center text-sm font-medium text-red-600">{error}</div>;
+    return <div className="rounded-card border border-red-100 bg-red-50 p-8 text-center text-sm font-medium text-red-600">{error}</div>;
   }
 
   if (!cls) {
-    return <div className="rounded-2xl border border-gray-100 bg-white p-8 text-center text-sm text-gray-400 shadow-sm">{t("common.noData")}</div>;
+    return <div className="rounded-card border border-border bg-surface p-8 text-center text-sm text-gray-400">{t("common.noData")}</div>;
   }
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
-          <button type="button" onClick={() => navigate("/admin/academic/classes")} className="mb-3 inline-flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-indigo-600 cursor-pointer">
+          <button type="button" onClick={() => navigate("/admin/academic/classes")} className="mb-3 inline-flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-accent cursor-pointer">
             <ArrowLeft size={16} /> {t("common.confirm") === "Xác nhận" ? "Lớp học" : "Classes"}
           </button>
           <h2 className="truncate text-xl font-black text-gray-900">{title}</h2>
@@ -790,7 +790,7 @@ export default function AdminClassDetail() {
         <StatusBadge value={cls.status} />
       </div>
 
-      <div className="overflow-x-auto rounded-2xl border border-gray-100 bg-white p-2 shadow-sm">
+      <div className="overflow-x-auto rounded-card border border-border bg-surface p-2">
         <div className="flex min-w-max gap-1">
           {tabs.map((tab) => (
             <button
@@ -798,7 +798,7 @@ export default function AdminClassDetail() {
               type="button"
               onClick={() => setActiveTab(tab.key)}
               className={`h-10 rounded-xl px-4 text-sm font-bold transition-colors cursor-pointer ${
-                activeTab === tab.key ? "bg-indigo-50 text-indigo-700" : "text-gray-500 hover:bg-gray-50"
+                activeTab === tab.key ? "bg-accent-bg text-accent" : "text-gray-500 hover:bg-gray-50"
               }`}
             >
               {tab.label}
@@ -809,7 +809,7 @@ export default function AdminClassDetail() {
 
       {activeTab === "overview" ? (
         <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.2fr_0.8fr]">
-          <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+          <div className="rounded-card border border-border bg-surface p-5">
             <h3 className="mb-4 text-base font-black text-gray-900">{t("common.confirm") === "Xác nhận" ? "Thông tin Tổng quan" : "Class Overview"}</h3>
             <DetailGrid items={[
               [t("admin.fields.classCode"), cls.class_code],
@@ -824,7 +824,7 @@ export default function AdminClassDetail() {
           </div>
 
           <div className="space-y-5">
-            <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+            <div className="rounded-card border border-border bg-surface p-5">
               <h3 className="mb-4 text-base font-black text-gray-900">{t("common.confirm") === "Xác nhận" ? "Thông tin Học kỳ & Giảng viên" : "Academic Info"}</h3>
               <DetailGrid items={[
                 [t("nav.subjects"), `${cls.subject_code} - ${cls.subject_name}`],
@@ -840,11 +840,11 @@ export default function AdminClassDetail() {
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+              <div className="rounded-card border border-border bg-surface p-5">
                 <p className="text-xs font-bold uppercase tracking-wide text-gray-400">{t("nav.students")}</p>
                 <p className="mt-2 text-3xl font-black text-gray-900">{Number(cls.enrolled_count || 0)}</p>
               </div>
-              <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+              <div className="rounded-card border border-border bg-surface p-5">
                 <p className="text-xs font-bold uppercase tracking-wide text-gray-400">{t("nav.studentGroups")}</p>
                 <p className="mt-2 text-3xl font-black text-gray-900">{Number(cls.group_count || 0)}</p>
               </div>
