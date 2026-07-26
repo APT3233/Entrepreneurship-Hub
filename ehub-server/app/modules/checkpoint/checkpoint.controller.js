@@ -114,3 +114,5 @@ export const createCheckpointController = ({ checkpointService }) => {
 
   return { list, getById, create, createBulk, update, remove, getSubmissions, getSubmissionDetail, updateGrade, getByGroup, getStudentCheckpoints, initiateUpload, confirmUpload };
 };
+
+

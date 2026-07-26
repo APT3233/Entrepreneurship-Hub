@@ -1,5 +1,6 @@
 import { createBaseRepository } from "app/core/database/baseRepository.js";
 
+
 /**
  * Checkpoint Repository
  * Handles database operations for the 'checkpoints' table
@@ -763,3 +764,5 @@ export const createCheckpointRepository = ({ db }) => {
     countSubmittedByClass,
   };
 };
+
+
