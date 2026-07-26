@@ -1,6 +1,6 @@
 /**
  * Card — bề mặt trắng dùng chung (presentational).
- * Nền surface, viền 1px, bo 12px, KHÔNG đổ bóng.
+ * Nền surface, bo lớn, nổi bằng bóng mềm (không viền — style floating hiện đại).
  *
  * Props:
  * - className?: string      — class thêm (vd padding tuỳ chỗ)
@@ -9,7 +9,7 @@
 export default function Card({ className = "", ...rest }) {
   return (
     <div
-      className={`bg-surface border border-border rounded-card ${className}`}
+      className={`bg-surface rounded-card shadow-card ${className}`}
       {...rest}
     />
   );

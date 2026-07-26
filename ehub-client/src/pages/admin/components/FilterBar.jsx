@@ -13,13 +13,13 @@ export default function FilterBar({
   const showToolbar = search || right || (activeFilterCount > 0 && onClear);
 
   return (
-    <div className="mb-5 overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm">
+    <div className="mb-5 overflow-hidden rounded-card border border-border bg-surface">
       {showToolbar ? (
-        <div className="flex flex-col gap-3 border-b border-slate-100 bg-gradient-to-r from-slate-50/90 via-white to-indigo-50/30 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 border-b border-border bg-subtle px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex min-w-0 flex-1 flex-col gap-3 sm:flex-row sm:items-center">
-            <div className="hidden shrink-0 items-center gap-2 text-slate-500 sm:flex">
+            <div className="hidden shrink-0 items-center gap-2 text-text-secondary sm:flex">
               <Filter size={15} />
-              <span className="text-[11px] font-bold uppercase tracking-wider">{t("filterBar.title")}</span>
+              <span className="text-[11px] font-medium uppercase tracking-wider">{t("filterBar.title")}</span>
             </div>
             {search ? <div className="min-w-0 flex-1">{search}</div> : null}
           </div>
@@ -28,11 +28,11 @@ export default function FilterBar({
               <button
                 type="button"
                 onClick={onClear}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50"
+                className="inline-flex items-center gap-1.5 rounded-control border border-border bg-surface px-3 py-2 text-xs font-medium text-text-secondary transition-colors hover:border-border-strong hover:bg-subtle"
               >
                 <X size={14} />
                 {t("filterBar.clear")}
-                <span className="rounded-full bg-indigo-100 px-1.5 py-0.5 text-[10px] font-bold text-indigo-700">
+                <span className="rounded-full bg-accent-bg px-1.5 py-0.5 text-[10px] font-medium text-accent">
                   {activeFilterCount}
                 </span>
               </button>
@@ -58,7 +58,7 @@ export function FilterSelect({ label, value, onChange, options = [], className =
 
   return (
     <div className={`flex min-w-0 flex-col gap-1.5 ${className}`}>
-      <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">{label}</span>
+      <span className="text-[11px] font-medium uppercase tracking-wider text-text-muted">{label}</span>
       <Dropdown
         label={label}
         value={normalizedValue}
@@ -103,12 +103,12 @@ export function AdminSemesterFilterGroup({
 export function FilterDateField({ label, value, onChange }) {
   return (
     <div className="flex min-w-0 flex-col gap-1.5">
-      <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">{label}</span>
+      <span className="text-[11px] font-medium uppercase tracking-wider text-text-muted">{label}</span>
       <input
         type="date"
         value={value || ""}
         onChange={(event) => onChange(event.target.value)}
-        className="h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100"
+        className="h-10 w-full rounded-control border border-border bg-surface px-3 text-sm text-text-secondary outline-none focus:border-accent focus:ring-1 focus:ring-accent"
       />
     </div>
   );

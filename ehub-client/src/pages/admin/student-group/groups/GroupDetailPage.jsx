@@ -167,15 +167,15 @@ export default function AdminGroupDetail() {
   };
 
   if (loading) {
-    return <div className="rounded-2xl border border-gray-100 bg-white p-8 text-center text-sm text-gray-400 shadow-sm">{t("common.loading")}</div>;
+    return <div className="rounded-card border border-border bg-surface p-8 text-center text-sm text-gray-400">{t("common.loading")}</div>;
   }
 
   if (error) {
-    return <div className="rounded-2xl border border-red-100 bg-red-50 p-8 text-center text-sm font-medium text-red-600">{error}</div>;
+    return <div className="rounded-card border border-red-100 bg-red-50 p-8 text-center text-sm font-medium text-red-600">{error}</div>;
   }
 
   if (!group) {
-    return <div className="rounded-2xl border border-gray-100 bg-white p-8 text-center text-sm text-gray-400 shadow-sm">{t("common.noData")}</div>;
+    return <div className="rounded-card border border-border bg-surface p-8 text-center text-sm text-gray-400">{t("common.noData")}</div>;
   }
 
   const memberColumns = [
@@ -186,7 +186,7 @@ export default function AdminGroupDetail() {
       key: "role",
       label: t("common.confirm") === "Xác nhận" ? "Vai trò" : "Role",
       render: (row) => canWrite ? (
-        <select className="rounded-lg border border-gray-200 px-2 py-1 text-xs font-semibold text-gray-700 cursor-pointer" value={row.role} onChange={(event) => updateMember(row, { role: event.target.value })}>
+        <select className="rounded-lg border border-border px-2 py-1 text-xs font-semibold text-gray-700 cursor-pointer" value={row.role} onChange={(event) => updateMember(row, { role: event.target.value })}>
           <option value="member">Member</option>
           <option value="leader">Leader</option>
         </select>
@@ -196,7 +196,7 @@ export default function AdminGroupDetail() {
       key: "status",
       label: t("admin.fields.status"),
       render: (row) => canWrite ? (
-        <select className="rounded-lg border border-gray-200 px-2 py-1 text-xs font-semibold text-gray-700 cursor-pointer" value={row.status} onChange={(event) => updateMember(row, { status: event.target.value })}>
+        <select className="rounded-lg border border-border px-2 py-1 text-xs font-semibold text-gray-700 cursor-pointer" value={row.status} onChange={(event) => updateMember(row, { status: event.target.value })}>
           <option value="active">Active</option>
           <option value="left">Left</option>
           <option value="removed">Removed</option>
@@ -247,9 +247,9 @@ export default function AdminGroupDetail() {
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
-          <button type="button" onClick={() => navigate("/admin/groups")} className="mb-3 inline-flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-indigo-600 cursor-pointer">
+          <button type="button" onClick={() => navigate("/admin/groups")} className="mb-3 inline-flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-accent cursor-pointer">
             <ArrowLeft size={16} /> {t("nav.studentGroups", { defaultValue: "Groups" }) === "Nhóm sinh viên" ? "Nhóm" : "Groups"}
           </button>
           <h2 className="truncate text-xl font-black text-gray-900">{title}</h2>
@@ -270,7 +270,7 @@ export default function AdminGroupDetail() {
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-2xl border border-gray-100 bg-white p-2 shadow-sm">
+      <div className="overflow-x-auto rounded-card border border-border bg-surface p-2">
         <div className="flex min-w-max gap-1">
           {tabs.map((tab) => (
             <button
@@ -278,7 +278,7 @@ export default function AdminGroupDetail() {
               type="button"
               onClick={() => handleTabChange(tab.key)}
               className={`h-10 rounded-xl px-4 text-sm font-bold transition-colors cursor-pointer ${
-                activeTab === tab.key ? "bg-indigo-50 text-indigo-700" : "text-gray-500 hover:bg-gray-50"
+                activeTab === tab.key ? "bg-accent-bg text-accent" : "text-gray-500 hover:bg-gray-50"
               }`}
             >
               {tab.label}
@@ -289,7 +289,7 @@ export default function AdminGroupDetail() {
 
       {activeTab === "overview" ? (
         <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.1fr_0.9fr]">
-          <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+          <div className="rounded-card border border-border bg-surface p-5">
             <h3 className="mb-4 text-base font-black text-gray-900">{t("common.confirm") === "Xác nhận" ? "Thông tin Tổng quan" : "Group Overview"}</h3>
             <DetailGrid items={[
               [t("nav.studentGroups", { defaultValue: "Group" }) === "Nhóm sinh viên" ? "Nhóm" : "Group", title],
@@ -306,7 +306,7 @@ export default function AdminGroupDetail() {
               [t("admin.fields.status"), group.status],
             ]} />
           </div>
-          <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+          <div className="rounded-card border border-border bg-surface p-5">
             <h3 className="mb-4 text-base font-black text-gray-900">{t("admin.fields.topicDesc")}</h3>
             <p className="whitespace-pre-line text-sm leading-6 text-gray-600">{group.topic_desc || group.description || (t("common.confirm") === "Xác nhận" ? "Chưa có mô tả." : "No description.")}</p>
           </div>
@@ -317,7 +317,7 @@ export default function AdminGroupDetail() {
         <div className="space-y-4">
           <div className="flex justify-end">
             {canWrite ? (
-              <button type="button" onClick={openAddMember} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 cursor-pointer">
+              <button type="button" onClick={openAddMember} className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-hover cursor-pointer">
                 <Plus size={16} /> {t("admin.actions.create")}
               </button>
             ) : null}

@@ -19,8 +19,8 @@ const confidenceText = (value) => {
 const getActionClasses = (status) => {
   if (status === "accepted") return "border-emerald-100 bg-emerald-50 text-emerald-700";
   if (status === "copied") return "border-blue-100 bg-blue-50 text-blue-700";
-  if (status === "ignored") return "border-gray-200 bg-gray-50 text-gray-500";
-  return "border-gray-100 bg-gray-50 text-gray-500";
+  if (status === "ignored") return "border-border bg-gray-50 text-text-secondary";
+  return "border-border bg-gray-50 text-text-secondary";
 };
 
 const getActionLabelKey = (status) => {
@@ -34,8 +34,8 @@ function ListBlock({ title, items = [] }) {
   if (!items.length) return null;
   return (
     <div>
-      <h4 className="text-sm font-bold text-gray-800">{title}</h4>
-      <ul className="mt-2 space-y-1.5 text-sm leading-6 text-gray-600">
+      <h4 className="text-sm font-bold text-text-primary">{title}</h4>
+      <ul className="mt-2 space-y-1.5 text-sm leading-6 text-text-secondary">
         {items.map((item, index) => <li key={`${title}-${index}`}>• {item}</li>)}
       </ul>
     </div>
@@ -59,7 +59,7 @@ function SkeletonLoader() {
       {/* Strengths/Weaknesses Skeleton */}
       <div className="grid gap-4 md:grid-cols-3">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="space-y-3 p-3 bg-gray-50/50 rounded-xl border border-gray-100/50">
+          <div key={i} className="space-y-3 p-3 bg-gray-50/50 rounded-xl/50">
             <div className="h-4 w-20 bg-gray-200 rounded-lg"></div>
             <div className="space-y-2">
               <div className="h-3 bg-gray-200 rounded-lg w-full"></div>
@@ -70,7 +70,7 @@ function SkeletonLoader() {
       </div>
 
       {/* Project Potential Skeleton */}
-      <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-4 space-y-3">
+      <div className="rounded-xl bg-gray-50/50 p-4 space-y-3">
         <div className="h-4 w-32 bg-gray-200 rounded-lg"></div>
         <div className="h-3 bg-gray-200 rounded-lg w-1/4"></div>
         <div className="space-y-2">
@@ -80,7 +80,7 @@ function SkeletonLoader() {
       </div>
 
       {/* Overall Feedback Skeleton */}
-      <div className="rounded-xl border border-gray-100 p-4 space-y-3">
+      <div className="rounded-xl bg-subtle p-4 space-y-3">
         <div className="flex justify-between items-center">
           <div className="h-4 w-28 bg-gray-200 rounded-lg"></div>
           <div className="flex gap-2">
@@ -242,14 +242,14 @@ export default function AiAssistantPanel({
   };
 
   return (
-    <section className="rounded-2xl border border-indigo-100 bg-white p-5 shadow-sm">
+    <section className="rounded-2xl border border-accent-100 bg-surface p-5 shadow-sm">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600"><Sparkles size={18} /></span>
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent-50 text-accent-600"><Sparkles size={18} /></span>
             <div>
-              <h2 className="text-lg font-bold text-gray-900">{t("ai.assistant.panelTitle")}</h2>
-              <p className="text-sm text-gray-500">{t("ai.assistant.warningText")}</p>
+              <h2 className="text-lg font-bold text-text-primary">{t("ai.assistant.panelTitle")}</h2>
+              <p className="text-sm text-text-secondary">{t("ai.assistant.warningText")}</p>
             </div>
           </div>
         </div>
@@ -257,7 +257,7 @@ export default function AiAssistantPanel({
           type="button"
           disabled={isBusy}
           onClick={() => analyze(Boolean(suggestion))}
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50"
         >
           <RefreshCw size={16} className={isBusy ? "animate-spin" : ""} />
           {suggestion ? t("ai.assistant.reAnalyze") : t("ai.assistant.analyzeNow")}
@@ -276,8 +276,8 @@ export default function AiAssistantPanel({
       {/* Show Skeleton Loader when fetching or during background processing */}
       {loading || isBusy ? (
         <div className="mt-4 space-y-4">
-          <div className="flex items-center gap-2 text-sm font-medium text-indigo-700 animate-pulse">
-            <span className="flex h-2 w-2 rounded-full bg-indigo-600 animate-ping"></span>
+          <div className="flex items-center gap-2 text-sm font-medium text-accent-700 animate-pulse">
+            <span className="flex h-2 w-2 rounded-full bg-accent animate-ping"></span>
             <span>
               {job?.status ? `${t("ai.assistant.statusPrefix", "Job")} #${job.id}: ${t(statusTextKeys[job.status] || job.status)}` : t("ai.assistant.analyzing")}
             </span>
@@ -287,7 +287,7 @@ export default function AiAssistantPanel({
       ) : null}
 
       {!loading && !isBusy && !suggestion ? (
-        <div className="mt-4 rounded-xl border border-dashed border-gray-200 p-4 text-sm text-gray-500">
+        <div className="mt-4 rounded-xl border border-dashed border-border p-4 text-sm text-text-secondary">
           {t("ai.assistant.notGenerated")}
         </div>
       ) : null}
@@ -295,8 +295,8 @@ export default function AiAssistantPanel({
       {!loading && !isBusy && suggestion ? (
         <div className="mt-5 space-y-5">
           <div>
-            <h3 className="text-base font-bold text-gray-900">Summary</h3>
-            <p className="mt-2 text-sm leading-6 text-gray-600 whitespace-pre-wrap">
+            <h3 className="text-base font-bold text-text-primary">Summary</h3>
+            <p className="mt-2 text-sm leading-6 text-text-secondary whitespace-pre-wrap">
               {suggestion.summary}
             </p>
           </div>
@@ -305,22 +305,22 @@ export default function AiAssistantPanel({
             <ListBlock title={t("ai.assistant.weaknesses")} items={suggestion.weaknesses} />
             <ListBlock title={t("ai.assistant.missingRequirements")} items={suggestion.missing_requirements} />
           </div>
-          <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
-            <h4 className="text-sm font-bold text-gray-800">{t("ai.assistant.projectPotential")}</h4>
-            <p className="mt-1 text-sm font-semibold text-indigo-700">
+          <div className="rounded-xl bg-gray-50 p-4">
+            <h4 className="text-sm font-bold text-text-primary">{t("ai.assistant.projectPotential")}</h4>
+            <p className="mt-1 text-sm font-semibold text-accent-700">
               {suggestion.project_potential_level || "unknown"} · {confidenceText(suggestion.project_potential_confidence_score)}
             </p>
             <ListBlock title={t("ai.assistant.potentialReasons")} items={suggestion.project_potential_reasons} />
             <ListBlock title={t("ai.assistant.potentialNextSteps")} items={suggestion.project_potential_next_steps} />
           </div>
-          <div className="rounded-xl border border-gray-100 p-4">
+          <div className="rounded-xl bg-subtle p-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <h4 className="text-sm font-bold text-gray-800">{t("ai.assistant.overallFeedback")}</h4>
+                  <h4 className="text-sm font-bold text-text-primary">{t("ai.assistant.overallFeedback")}</h4>
                   <ActionBadge status={actionState.overall_feedback} t={t} />
                 </div>
-                <p className="mt-2 text-sm leading-6 text-gray-600 whitespace-pre-wrap">
+                <p className="mt-2 text-sm leading-6 text-text-secondary whitespace-pre-wrap">
                   {suggestion.suggested_overall_feedback}
                 </p>
               </div>
@@ -329,7 +329,7 @@ export default function AiAssistantPanel({
                   type="button"
                   disabled={disabled}
                   onClick={applyOverall}
-                  className={`inline-flex items-center gap-1 rounded-lg px-3 py-2 text-xs font-semibold disabled:opacity-50 ${actionState.overall_feedback === "accepted" ? "bg-emerald-600 text-white" : "bg-indigo-600 text-white"}`}
+                  className={`inline-flex items-center gap-1 rounded-lg px-3 py-2 text-xs font-semibold disabled:opacity-50 ${actionState.overall_feedback === "accepted" ? "bg-emerald-600 text-white" : "bg-accent text-white"}`}
                 >
                   <Check size={14} />
                   {actionState.overall_feedback === "accepted" ? t("ai.assistant.appliedButton") : t("ai.assistant.apply")}
@@ -337,7 +337,7 @@ export default function AiAssistantPanel({
                 <button
                   type="button"
                   onClick={copyOverall}
-                  className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-700"
+                  className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-2 text-xs font-semibold text-text-secondary"
                 >
                   <Copy size={14} />
                   {t("ai.assistant.copyFeedback")}
@@ -346,7 +346,7 @@ export default function AiAssistantPanel({
                   type="button"
                   disabled={actionState.overall_feedback === "ignored"}
                   onClick={() => ignoreField("overall_feedback")}
-                  className="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-xs font-semibold text-gray-500 hover:bg-gray-50 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400"
+                  className="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-xs font-semibold text-text-secondary hover:bg-subtle disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-text-muted"
                 >
                   <X size={14} />
                   {actionState.overall_feedback === "ignored" ? t("ai.assistant.ignoredButton") : t("ai.assistant.ignore")}
@@ -355,27 +355,27 @@ export default function AiAssistantPanel({
             </div>
           </div>
           <div className="space-y-3">
-            <h4 className="text-sm font-bold text-gray-800">{t("ai.assistant.rubricCriteria")}</h4>
+            <h4 className="text-sm font-bold text-text-primary">{t("ai.assistant.rubricCriteria")}</h4>
             {(suggestion.criterion_suggestions || []).map((item) => {
               const criterion = criterionById.get(Number(item.criterion_id));
               const fieldName = `criterion:${item.criterion_id}`;
               const fieldStatus = actionState[fieldName];
               return (
-                <div key={item.id || item.criterion_id} className={`rounded-xl border p-4 ${fieldStatus === "accepted" ? "border-emerald-100 bg-emerald-50/30" : fieldStatus === "ignored" ? "border-gray-100 bg-gray-50" : "border-gray-100"}`}>
+                <div key={item.id || item.criterion_id} className={`rounded-xl border p-4 ${fieldStatus === "accepted" ? "border-emerald-100 bg-emerald-50/30" : fieldStatus === "ignored" ? "border-border bg-gray-50" : "border-border"}`}>
                   <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <p className="font-semibold text-gray-900">{criterion?.name || item.criterion_name || `Criterion ${item.criterion_id}`}</p>
+                        <p className="font-semibold text-text-primary">{criterion?.name || item.criterion_name || `Criterion ${item.criterion_id}`}</p>
                         <ActionBadge status={fieldStatus} t={t} />
                       </div>
-                      <p className="mt-1 text-sm text-gray-500">
-                        {t("ai.suggestions.colSuggestedScore")}: <span className="font-semibold text-indigo-700">{item.suggested_score ?? "—"}</span> / {criterion?.max_score ?? item.max_score ?? "—"} · {t("ai.suggestions.colConfidence")} {confidenceText(item.confidence_score)}
+                      <p className="mt-1 text-sm text-text-secondary">
+                        {t("ai.suggestions.colSuggestedScore")}: <span className="font-semibold text-accent-700">{item.suggested_score ?? "—"}</span> / {criterion?.max_score ?? item.max_score ?? "—"} · {t("ai.suggestions.colConfidence")} {confidenceText(item.confidence_score)}
                       </p>
-                      <p className="mt-2 text-sm leading-6 text-gray-600 whitespace-pre-wrap">
+                      <p className="mt-2 text-sm leading-6 text-text-secondary whitespace-pre-wrap">
                         {item.suggested_feedback}
                       </p>
                       {item.evidence_text ? (
-                        <p className="mt-2 rounded-lg bg-gray-50 p-2 text-xs leading-5 text-gray-500">
+                        <p className="mt-2 rounded-lg bg-gray-50 p-2 text-xs leading-5 text-text-secondary">
                           <Clipboard size={13} className="mr-1 inline" />
                           {item.evidence_text}
                         </p>
@@ -386,7 +386,7 @@ export default function AiAssistantPanel({
                         type="button"
                         disabled={disabled}
                         onClick={() => applyCriterion(item)}
-                        className={`inline-flex items-center gap-1 rounded-lg px-3 py-2 text-xs font-semibold text-white disabled:opacity-50 ${fieldStatus === "accepted" ? "bg-emerald-600" : "bg-indigo-600"}`}
+                        className={`inline-flex items-center gap-1 rounded-lg px-3 py-2 text-xs font-semibold text-white disabled:opacity-50 ${fieldStatus === "accepted" ? "bg-emerald-600" : "bg-accent"}`}
                       >
                         <Check size={14} />
                         {fieldStatus === "accepted" ? t("ai.assistant.appliedButton") : t("ai.assistant.apply")}
@@ -395,7 +395,7 @@ export default function AiAssistantPanel({
                         type="button"
                         disabled={fieldStatus === "ignored"}
                         onClick={() => ignoreField(fieldName)}
-                        className="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-xs font-semibold text-gray-500 hover:bg-gray-50 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400"
+                        className="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-xs font-semibold text-text-secondary hover:bg-subtle disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-text-muted"
                       >
                         <X size={14} />
                         {fieldStatus === "ignored" ? t("ai.assistant.ignoredButton") : t("ai.assistant.ignore")}

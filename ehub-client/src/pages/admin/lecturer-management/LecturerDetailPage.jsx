@@ -33,7 +33,7 @@ const activeTabFromPath = (pathname) => {
 
 function SmallTable({ title, columns, rows, emptyText }) {
   return (
-    <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+    <div className="rounded-card border border-border bg-surface p-4">
       <h3 className="mb-3 text-sm font-black text-slate-900">{title}</h3>
       <AdminTable columns={columns} rows={rows || []} emptyText={emptyText} />
     </div>
@@ -225,21 +225,21 @@ export default function LecturerDetailPage() {
     { key: "last_graded_at", label: t("admin.fields.lastGradedAt"), render: (row) => formatDate(row.last_graded_at) },
   ], [t]);
 
-  if (loading) return <div className="rounded-2xl bg-white p-8 text-center text-sm text-slate-400">{t("common.loading")}...</div>;
-  if (error) return <div className="rounded-2xl bg-rose-50 p-8 text-center text-sm font-semibold text-rose-600">{error}</div>;
+  if (loading) return <div className="rounded-card bg-surface p-8 text-center text-sm text-slate-400">{t("common.loading")}...</div>;
+  if (error) return <div className="rounded-card bg-rose-50 p-8 text-center text-sm font-semibold text-rose-600">{error}</div>;
   if (!lecturer) return null;
 
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <button type="button" onClick={() => navigate("/admin/lecturers")} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+        <button type="button" onClick={() => navigate("/admin/lecturers")} className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
           <ArrowLeft size={16} /> {t("common.back")}
         </button>
         {canDelete && Number(lecturer.total_classes || 0) === 0 ? (
           <button
             type="button"
             onClick={() => setDeleteOpen(true)}
-            className="inline-flex items-center gap-2 rounded-xl border border-red-100 bg-white px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-50"
+            className="inline-flex items-center gap-2 rounded-xl border border-red-100 bg-surface px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-50"
           >
             <Trash2 size={16} /> {t("admin.dialogs.deleteLecturer")}
           </button>
@@ -248,7 +248,7 @@ export default function LecturerDetailPage() {
 
       <LecturerHeader lecturer={lecturer} />
 
-      <div className="flex gap-2 overflow-x-auto rounded-2xl border border-slate-100 bg-white p-2 shadow-sm">
+      <div className="flex gap-2 overflow-x-auto rounded-card border border-border bg-surface p-2">
         {tabs.map((tab) => {
           const to = tab.path ? `/admin/lecturers/${id}/${tab.path}` : `/admin/lecturers/${id}`;
           return (
@@ -267,7 +267,7 @@ export default function LecturerDetailPage() {
       </div>
 
       {tabLoading ? (
-        <div className="rounded-2xl bg-white p-8 text-center text-sm text-slate-400">{t("common.loading")}...</div>
+        <div className="rounded-card bg-surface p-8 text-center text-sm text-slate-400">{t("common.loading")}...</div>
       ) : null}
 
       {!tabLoading && activeTab === "overview" ? (
@@ -294,7 +294,7 @@ export default function LecturerDetailPage() {
       ) : null}
 
       {!tabLoading && activeTab === "profile" ? (
-        <form onSubmit={saveProfile} className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+        <form onSubmit={saveProfile} className="rounded-card border border-border bg-surface p-5">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field label={t("admin.fields.fullName")}><input className={inputClass} value={profileForm.full_name || ""} onChange={(e) => setProfileForm({ ...profileForm, full_name: e.target.value })} required /></Field>
             <Field label={t("admin.fields.email")}><input type="email" className={inputClass} value={profileForm.email || ""} onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })} required /></Field>
@@ -424,11 +424,11 @@ export default function LecturerDetailPage() {
 
       {!tabLoading && activeTab === "permissions" ? (
         <div className="grid gap-5 xl:grid-cols-[360px_1fr]">
-          <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+          <div className="rounded-card border border-border bg-surface p-4">
             <h3 className="mb-3 text-sm font-black text-slate-900">{t("admin.fields.roles")}</h3>
             <div className="space-y-2">
               {(tabData?.roles || []).map((role) => (
-                <div key={role.id} className="rounded-xl border border-slate-100 p-3">
+                <div key={role.id} className="rounded-xl border border-border p-3">
                   <RoleBadge role={role.role_code} />
                   <p className="mt-2 text-sm font-bold text-slate-900">{role.role_name}</p>
                   <p className="mt-1 text-xs text-slate-500">{role.description || "—"}</p>
@@ -450,9 +450,9 @@ export default function LecturerDetailPage() {
       ) : null}
 
       {!tabLoading && activeTab === "password" ? (
-        <form onSubmit={savePassword} className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
-          <div className="mb-5 flex items-start gap-3 rounded-2xl border border-amber-100 bg-amber-50 p-4 text-sm text-amber-800">
-            <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white text-amber-700">
+        <form onSubmit={savePassword} className="rounded-card border border-border bg-surface p-5">
+          <div className="mb-5 flex items-start gap-3 rounded-card border border-amber-100 bg-amber-50 p-4 text-sm text-amber-800">
+            <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-surface text-amber-700">
               <KeyRound size={17} />
             </span>
             <div>
@@ -492,7 +492,7 @@ export default function LecturerDetailPage() {
             </Field>
           </div>
 
-          <label className="mt-4 flex items-start gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3 text-sm font-medium text-slate-700">
+          <label className="mt-4 flex items-start gap-3 rounded-xl border border-border bg-slate-50 p-3 text-sm font-medium text-slate-700">
             <input
               type="checkbox"
               className="mt-1"

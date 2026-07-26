@@ -87,10 +87,10 @@ export default function EditClassForm({ isOpen, onClose, onUpdate, initialData, 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-[2px] px-4">
-      <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl">
+      <div className="relative w-full max-w-md bg-surface rounded-2xl shadow-2xl">
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-indigo-600">
+          <div className="flex items-center gap-2 text-accent-600">
             <Settings2 size={20} />
             <h2 className="text-base font-bold text-gray-900">Sửa thông tin lớp học</h2>
           </div>
@@ -154,7 +154,7 @@ export default function EditClassForm({ isOpen, onClose, onUpdate, initialData, 
             <button
               onClick={handleSubmit}
               disabled={loading}
-              className="flex-[2] py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 shadow-md shadow-indigo-100 transition-all active:scale-[0.98] disabled:opacity-50"
+              className="flex-[2] py-2.5 rounded-xl bg-accent text-white text-sm font-bold hover:bg-accent-hover shadow-md shadow-accent-100 transition-all active:scale-[0.98] disabled:opacity-50"
             >
               {loading ? "Đang cập nhật..." : "Cập nhật lớp"}
             </button>

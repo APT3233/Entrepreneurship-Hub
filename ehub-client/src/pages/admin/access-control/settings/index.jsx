@@ -96,7 +96,7 @@ export default function AdminSettings() {
   };
 
   const columns = useMemo(() => [
-    { key: "setting_key", label: t("admin.fields.key"), render: (row) => <span className="font-mono text-xs font-bold text-indigo-700">{row.setting_key}</span> },
+    { key: "setting_key", label: t("admin.fields.key"), render: (row) => <span className="font-mono text-xs font-bold text-accent">{row.setting_key}</span> },
     { key: "setting_value", label: t("admin.fields.value"), render: (row) => <span className="block max-w-sm truncate" title={row.setting_value}>{row.setting_value}</span> },
     { key: "data_type", label: t("common.confirm") === "Xác nhận" ? "Kiểu" : "Type" },
     { key: "module", label: "Module", render: (row) => <span className="rounded-lg bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-600">{row.module}</span> },

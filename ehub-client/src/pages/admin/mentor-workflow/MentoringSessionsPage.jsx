@@ -39,7 +39,7 @@ export default function MentoringSessionsPage() {
     { key: "duration_minutes", label: t("admin.mentorWorkflow.sessions.columns.duration"), width: 100, render: (row) => row.duration_minutes ? t("admin.mentorWorkflow.sessions.columns.minutes", { count: row.duration_minutes }) : "-" },
     { key: "status", label: t("admin.mentorWorkflow.sessions.columns.status"), width: 120, render: (row) => <StatusBadge value={row.status} /> },
     { key: "session_type", label: t("admin.mentorWorkflow.sessions.columns.type"), width: 110, render: (row) => <StatusBadge value={row.session_type} /> },
-    { key: "meeting_link", label: t("admin.mentorWorkflow.sessions.columns.link"), width: 80, render: (row) => row.meeting_link ? <a className="inline-flex rounded-lg p-2 text-teal-600 hover:bg-teal-50" href={row.meeting_link} target="_blank" rel="noreferrer"><ExternalLink size={16} /></a> : "-" },
+    { key: "meeting_link", label: t("admin.mentorWorkflow.sessions.columns.link"), width: 80, render: (row) => row.meeting_link ? <a className="inline-flex rounded-lg p-2 text-accent hover:bg-accent-bg" href={row.meeting_link} target="_blank" rel="noreferrer"><ExternalLink size={16} /></a> : "-" },
     { key: "feedback_count", label: t("admin.mentorWorkflow.sessions.columns.feedback"), width: 100, render: (row) => row.feedback_count || 0 },
   ], [t]);
 

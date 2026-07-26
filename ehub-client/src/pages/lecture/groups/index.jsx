@@ -1,8 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, BookOpenIcon } from "lucide-react";
-import StatCard from "@/components/ui/Card/StatCard";
-import { StatIconGrading, StatIconAssignment, StatIconGroups } from "@/components/icons/lecture";
+import { Search } from "lucide-react";
 import Dropdown from "@/components/ui/filter/DropDown";
 import GroupCard from "./components/GroupCard";
 import ClassApi from "@/api/class";
@@ -188,52 +186,77 @@ export default function GroupsPage() {
     return list;
   }, [groups, searchQuery, filterClass, filterStatus, filterSemesterId]);
 
+  const isReady = (g) => g.majors.every((m) => m.count >= (m.minRequired ?? 1));
+  const attentionGroups = useMemo(() => filteredGroups.filter((g) => !isReady(g)), [filteredGroups]);
+  const readyGroups = useMemo(() => filteredGroups.filter(isReady), [filteredGroups]);
+  const totalTeams = filteredGroups.length;
+  const readyPct = totalTeams ? Math.round((readyGroups.length / totalTeams) * 100) : 0;
+
+  const renderCard = (g) => (
+    <GroupCard
+      key={g.id}
+      name={g.name}
+      classCode={g.classCode}
+      topic={g.topic}
+      members={g.members}
+      majors={g.majors}
+      avatars={g.avatars}
+      onDetail={() => navigate(`/lecturer/groups/${g.id}`)}
+    />
+  );
+
   return (
     <>
-      <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <StatCard
-          title={t("lecturer.groupsPage.stats.classes")}
-          value={stats.classCount}
-          icon={<BookOpenIcon size={22} />}
-          iconBg="bg-blue-100"
-          iconColor="text-blue-500"
-        />
-        <StatCard
-          title={t("lecturer.groupsPage.stats.groups")}
-          value={stats.groupCount}
-          icon={<StatIconGroups />}
-          iconBg="bg-amber-100"
-          iconColor="text-amber-600"
-        />
-        <StatCard
-          title={t("lecturer.groupsPage.stats.assignments")}
-          value={stats.assignmentCount}
-          icon={<StatIconAssignment />}
-          iconBg="bg-purple-100"
-          iconColor="text-violet-600"
-        />
-        <StatCard
-          title={t("lecturer.groupsPage.stats.needGrading")}
-          value={stats.needGradingCount}
-          icon={<StatIconGrading />}
-          iconBg="bg-green-100"
-          iconColor="text-green-600"
-        />
+      {/* Portfolio: câu chuyện mức độ sẵn sàng của các đội */}
+      <section className="rounded-card bg-surface shadow-card p-6 sm:p-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-text-primary tracking-tight">{t("lecturer.groups")}</h1>
+        <p className="mt-1.5 text-sm text-text-secondary leading-relaxed max-w-2xl">
+          Danh mục các đội khởi nghiệp bạn phụ trách — theo dõi mức độ sẵn sàng và thành phần ngành.
+        </p>
+
+        {totalTeams > 0 && (
+          <div className="mt-6 border-t border-border pt-5 flex flex-wrap items-center gap-x-8 gap-y-4">
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-bold text-accent tracking-tight">{totalTeams}</span>
+              <span className="text-sm text-text-muted">đội</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-success" />
+              <span className="text-sm text-text-secondary">Đủ điều kiện</span>
+              <span className="text-sm font-bold text-success-text">{readyGroups.length}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-warning" />
+              <span className="text-sm text-text-secondary">Cần bổ sung</span>
+              <span className="text-sm font-bold text-warning-text">{attentionGroups.length}</span>
+            </div>
+            <div className="flex-1 min-w-[180px] max-w-md ml-auto">
+              <div className="flex items-center justify-between text-xs text-text-muted mb-1.5">
+                <span>Mức độ sẵn sàng</span>
+                <span className="font-medium text-text-primary">{readyPct}%</span>
+              </div>
+              <div className="flex h-2 w-full rounded-full bg-subtle overflow-hidden">
+                <div className="h-full bg-success transition-[width] duration-500" style={{ width: `${readyPct}%` }} />
+                <div className="h-full bg-warning transition-[width] duration-500" style={{ width: `${100 - readyPct}%` }} />
+              </div>
+            </div>
+          </div>
+        )}
       </section>
 
-      <section className="mt-4 sm:mt-6 w-full p-4 bg-white rounded-2xl shadow-sm border border-gray-100">
+      <section className="mt-4 sm:mt-6 w-full">
         <div className="flex flex-col md:flex-row items-center gap-3 sm:gap-4 w-full">
           <div className="relative w-full md:flex-1 md:min-w-[200px]">
             <Search
               size={18}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none"
             />
             <input
               type="search"
               placeholder={t("lecturer.groupsPage.searchPlaceholder")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
+              className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border text-sm text-text-secondary placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-accent-100 focus:border-accent-400"
             />
           </div>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 w-full md:w-auto md:flex">
@@ -267,29 +290,45 @@ export default function GroupsPage() {
         </div>
       </section>
 
-      <section className="mt-4 sm:mt-6">
+      <section className="mt-6">
         {loading ? (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
-            <p className="text-sm text-gray-500">{t("lecturer.groupsPage.loading")}</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {[...Array(2)].map((_, i) => (
+              <div key={i} className="h-44 rounded-card bg-surface shadow-card animate-pulse" />
+            ))}
           </div>
-        ) : filteredGroups.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
-            <p className="text-sm text-gray-500">{t("lecturer.groupsPage.noResults")}</p>
+        ) : totalTeams === 0 ? (
+          <div className="rounded-card bg-surface shadow-card p-10 text-center">
+            <p className="text-sm text-text-secondary">
+              {filterClass ? t("lecturer.groupsPage.noResults") : "Chọn lớp để xem danh sách các đội."}
+            </p>
           </div>
         ) : (
-          <div className="flex flex-col gap-4">
-            {filteredGroups.map((g) => (
-              <GroupCard
-                key={g.id}
-                name={g.name}
-                classCode={g.classCode}
-                topic={g.topic}
-                members={g.members}
-                majors={g.majors}
-                avatars={g.avatars}
-                onDetail={() => navigate(`/lecturer/groups/${g.id}`)}
-              />
-            ))}
+          <div className="space-y-8">
+            {attentionGroups.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="w-2 h-2 rounded-full bg-warning" />
+                  <h2 className="text-sm font-semibold text-text-primary">Cần chú ý</h2>
+                  <span className="text-xs font-medium text-text-muted">{attentionGroups.length}</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {attentionGroups.map(renderCard)}
+                </div>
+              </div>
+            )}
+            {readyGroups.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="w-2 h-2 rounded-full bg-success" />
+                  <h2 className="text-sm font-semibold text-text-primary">Đủ điều kiện</h2>
+                  <span className="text-xs font-medium text-text-muted">{readyGroups.length}</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {readyGroups.map(renderCard)}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </section>

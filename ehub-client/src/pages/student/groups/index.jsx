@@ -11,7 +11,7 @@ export default function StudentGroupsPage() {
   if (groupState.loading && !groupState.hasGroup && groupState.invites.length === 0) {
     return (
       <div className="flex h-[60vh] items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-violet-200 border-t-violet-600" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent-200 border-t-accent" />
       </div>
     );
   }

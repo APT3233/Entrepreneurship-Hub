@@ -49,7 +49,7 @@ export default function AdminGradeAudit() {
     <>
       <FilterBar
         right={(
-          <button type="button" onClick={() => setExportOpen(true)} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700">
+          <button type="button" onClick={() => setExportOpen(true)} className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-hover">
             <FileDown size={16} /> {t("common.export")}
           </button>
         )}
@@ -58,8 +58,8 @@ export default function AdminGradeAudit() {
         <FilterSelect label={t("admin.evaluationOps.gradeAudit.user")} value={query.user_id} onChange={(value) => setFilter("user_id", value)} options={options.users} />
         <FilterSelect label={t("admin.evaluationOps.gradeAudit.action")} value={query.action} onChange={(value) => setFilter("action", value)} options={options.actions} />
         <FilterSelect label={t("admin.evaluationOps.gradeAudit.table")} value={query.table_name} onChange={(value) => setFilter("table_name", value)} options={tableOptions} />
-        <input type="date" value={query.date_from} onChange={(event) => setFilter("date_from", event.target.value)} className="h-10 rounded-xl border border-gray-200 px-3 text-sm outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100" />
-        <input type="date" value={query.date_to} onChange={(event) => setFilter("date_to", event.target.value)} className="h-10 rounded-xl border border-gray-200 px-3 text-sm outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100" />
+        <input type="date" value={query.date_from} onChange={(event) => setFilter("date_from", event.target.value)} className="h-10 rounded-xl border border-border px-3 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent" />
+        <input type="date" value={query.date_to} onChange={(event) => setFilter("date_to", event.target.value)} className="h-10 rounded-xl border border-border px-3 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent" />
       </FilterBar>
 
       <GradeAuditViewer

@@ -6,7 +6,7 @@ import { useTranslation } from "@/context/TranslationContext";
 import AdminTable from "@/pages/admin/components/AdminTable";
 import FormModal, { Field, inputClass } from "@/pages/admin/components/FormModal";
 import StatusBadge from "@/pages/admin/components/StatusBadge";
-import { Panel, SelectField } from "@/pages/admin/incubation/components";
+import { SelectField } from "@/pages/admin/incubation/components";
 import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
 import { Megaphone } from "lucide-react";
@@ -76,22 +76,26 @@ export default function StudentOpportunitiesPage() {
   };
 
   const columns = useMemo(() => [
-    { key: "title", label: t("student.startupProfile.columns.opportunity"), render: (row) => <div><p className="font-black text-slate-900">{row.title}</p><p className="mt-1 text-sm text-slate-500">{row.description || row.partner_name || "-"}</p></div> },
+    { key: "title", label: t("student.startupProfile.columns.opportunity"), render: (row) => <div><p className="font-semibold text-text-primary">{row.title}</p><p className="mt-1 text-sm text-text-secondary">{row.description || row.partner_name || "-"}</p></div> },
     { key: "opportunity_type", label: t("admin.ecosystem.common.type"), render: (row) => <StatusBadge value={row.opportunity_type} /> },
     { key: "partner_name", label: t("student.startupProfile.columns.partner"), render: (row) => row.partner_name || "-" },
     { key: "deadline", label: t("student.startupProfile.columns.deadline"), render: (row) => formatDate(row.deadline) },
     { key: "visibility", label: t("admin.ecosystem.common.visibility"), render: (row) => <StatusBadge value={row.visibility} /> },
     { key: "application", label: t("student.startupProfile.columns.application"), render: (row) => appliedMap.get(Number(row.id)) ? <StatusBadge value={appliedMap.get(Number(row.id)).application_status} /> : "-" },
-    { key: "actions", label: "", width: 100, render: (row) => <button type="button" disabled={!selectedStartupId} onClick={() => { setApplyTarget(row); setApplyForm({ application_status: appliedMap.get(Number(row.id))?.application_status || "interested", application_note: appliedMap.get(Number(row.id))?.application_note || "" }); }} className="rounded-lg px-3 py-1.5 text-xs font-bold text-indigo-700 hover:bg-indigo-50 disabled:opacity-40">{t("student.startupProfile.actions.apply")}</button> },
+    { key: "actions", label: "", width: 100, render: (row) => <button type="button" disabled={!selectedStartupId} onClick={() => { setApplyTarget(row); setApplyForm({ application_status: appliedMap.get(Number(row.id))?.application_status || "interested", application_note: appliedMap.get(Number(row.id))?.application_note || "" }); }} className="rounded-lg px-3 py-1.5 text-xs font-bold text-accent hover:bg-accent-50 disabled:opacity-40">{t("student.startupProfile.actions.apply")}</button> },
   ], [appliedMap, selectedStartupId, t]);
 
-  if (loading) return <div className="rounded-2xl bg-white p-8 text-center text-sm text-slate-400">{t("common.loading")}</div>;
+  if (loading) return <div className="rounded-2xl bg-surface p-8 text-center text-sm text-text-muted">{t("common.loading")}</div>;
   if (error) return <div className="rounded-2xl bg-rose-50 p-8 text-center text-sm font-bold text-rose-600">{error}</div>;
 
   return (
     <div className="space-y-5">
       <PageHeader title="Cơ hội" description="Các cuộc thi và chương trình ươm tạo đang mở" />
-      <Panel title={t("student.startupProfile.panels.opportunities")} actions={<select className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-bold text-slate-700" value={selectedStartupId} onChange={(e) => setSelectedStartupId(e.target.value)}>{startups.map((startup) => <option key={startup.id} value={startup.id}>{startup.startup_name}</option>)}</select>}>
+      <div className="space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-base font-semibold text-text-primary">{t("student.startupProfile.panels.opportunities")}</h2>
+          <select className="rounded-control border border-border bg-surface px-3 py-2 text-sm font-medium text-text-secondary" value={selectedStartupId} onChange={(e) => setSelectedStartupId(e.target.value)}>{startups.map((startup) => <option key={startup.id} value={startup.id}>{startup.startup_name}</option>)}</select>
+        </div>
         {opportunities.length === 0 ? (
           <EmptyState
             icon={<Megaphone size={24} />}
@@ -101,7 +105,7 @@ export default function StudentOpportunitiesPage() {
         ) : (
           <AdminTable columns={columns} rows={opportunities} emptyText={t("student.startupProfile.empty.opportunities")} />
         )}
-      </Panel>
+      </div>
       <FormModal open={!!applyTarget} title={applyTarget?.title || t("student.startupProfile.modals.applyOpportunity")} submitLabel={t("common.save")} saving={saving} onClose={() => setApplyTarget(null)} onSubmit={submitApply}>
         <div className="grid gap-4">
           <Field label={t("common.status")}><SelectField value={applyForm.application_status} onChange={(application_status) => setApplyForm((prev) => ({ ...prev, application_status }))} options={statusOptions} /></Field>

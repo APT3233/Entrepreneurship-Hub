@@ -34,7 +34,7 @@ export default function SubmissionDetailModal({ open, submission, title, onClose
                   href={file.file_url || file.file_path}
                   target="_blank"
                   rel="noreferrer"
-                  className="block rounded-xl border border-gray-100 p-3 text-sm hover:bg-gray-50"
+                  className="block rounded-xl border border-border p-3 text-sm hover:bg-gray-50"
                 >
                   <div className="font-bold text-gray-900">{file.file_name}</div>
                   <div className="mt-1 text-gray-500">{file.mime_type || file.file_type || "file"} · {formatBytes(file.file_size)}</div>

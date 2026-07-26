@@ -44,7 +44,7 @@ export default function PendingGroupInvitesSection({
   if (loading && invites.length === 0) {
     return (
       <div
-        className={`rounded-xl border border-slate-200 bg-white p-6 text-center text-sm text-slate-500 ${className}`}
+        className={`rounded-xl border border-border bg-surface p-6 text-center text-sm text-text-secondary ${className}`}
       >
         Đang tải lời mời…
       </div>
@@ -56,7 +56,7 @@ export default function PendingGroupInvitesSection({
 
   return (
     <section className={`space-y-3 ${className}`} aria-label={sectionTitle}>
-      <h2 className="text-lg font-semibold tracking-tight text-slate-800">{sectionTitle}</h2>
+      <h2 className="text-lg font-semibold tracking-tight text-text-primary">{sectionTitle}</h2>
       <div className="space-y-4">
         {invites.map((inv) => (
           <GroupInviteConfirmCard key={inv.id} invite={inv} onUpdated={refresh} />

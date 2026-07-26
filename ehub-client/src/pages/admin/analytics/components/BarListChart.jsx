@@ -6,7 +6,7 @@ export default function BarListChart({ title, rows = [], labelKey, valueKey, val
 
   if (!rows.length) {
     return (
-      <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+      <div className="rounded-card border border-border bg-surface p-5">
         <h3 className="mb-3 text-sm font-bold text-gray-900">{title}</h3>
         <div className="rounded-xl bg-gray-50 p-6 text-center text-sm text-gray-400">{resolvedEmptyText}</div>
       </div>
@@ -16,7 +16,7 @@ export default function BarListChart({ title, rows = [], labelKey, valueKey, val
   const max = Math.max(...rows.map((row) => Number(row[valueKey] || 0)), 1);
 
   return (
-    <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+    <div className="rounded-card border border-border bg-surface p-5">
       <h3 className="mb-4 text-sm font-bold text-gray-900">{title}</h3>
       <div className="space-y-3">
         {rows.map((row, index) => {
@@ -32,7 +32,7 @@ export default function BarListChart({ title, rows = [], labelKey, valueKey, val
                 </span>
               </div>
               <div className="h-2 rounded-full bg-gray-100">
-                <div className="h-2 rounded-full bg-indigo-500" style={{ width }} />
+                <div className="h-2 rounded-full bg-accent" style={{ width }} />
               </div>
             </div>
           );

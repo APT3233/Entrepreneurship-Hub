@@ -25,23 +25,23 @@ export default function CheckpointTab({ checkpoints = [], loading, onViewDetail 
   return (
     <div className="mt-8 space-y-6">
       {/* Overall Progress Section (Synced with Overview Tab) */}
-      <div className="bg-indigo-50/50 border border-indigo-100 rounded-3xl p-6 shadow-sm">
+      <div className="bg-accent-50/50 border border-accent-100 rounded-3xl p-6 shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <BarChart2 size={16} className="text-indigo-500" />
-            <p className="text-[11px] font-bold text-gray-400 tracking-widest uppercase">
+            <BarChart2 size={16} className="text-accent-500" />
+            <p className="text-[11px] font-bold text-text-muted tracking-widest uppercase">
               Tiến độ hoàn thành
             </p>
           </div>
-          <span className="font-bold text-indigo-600 text-base">
+          <span className="font-bold text-accent-600 text-base">
             {pct}%
           </span>
         </div>
         
         <ProgressBar value={pct} className="h-3 mb-4" />
         
-        <div className="flex items-center gap-2 text-sm text-gray-500 font-medium">
-          <span className="w-2 h-2 rounded-full bg-indigo-500" />
+        <div className="flex items-center gap-2 text-sm text-text-secondary font-medium">
+          <span className="w-2 h-2 rounded-full bg-accent-500" />
           {done} / {total} checkpoint đã hoàn thành
         </div>
       </div>
@@ -52,19 +52,19 @@ export default function CheckpointTab({ checkpoints = [], loading, onViewDetail 
           checkpoints.map((cp) => (
             <div
               key={cp.id}
-              className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm hover:shadow-md hover:border-indigo-100 transition-all group"
+              className="bg-surface rounded-3xl p-6 shadow-sm hover:shadow-md hover:border-accent-100 transition-all group"
             >
               <div className="flex flex-col md:flex-row items-stretch justify-between gap-6">
                 {/* Left Info Column */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3 flex-wrap mb-3">
-                    <p className="font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors tracking-tight">
+                    <p className="font-semibold text-text-primary group-hover:text-accent-600 transition-colors tracking-tight">
                       {cp.name}
                     </p>
                     <StatusBadge status={cp.status} />
                   </div>
                   
-                  <div className="flex items-center gap-6 text-xs text-gray-400 font-bold uppercase tracking-widest flex-wrap">
+                  <div className="flex items-center gap-6 text-xs text-text-muted font-bold uppercase tracking-widest flex-wrap">
                     <span className="flex items-center gap-1.5 ">
                       <Calendar size={13} className="text-gray-300" /> Deadline: {cp.deadline}
                     </span>
@@ -89,7 +89,7 @@ export default function CheckpointTab({ checkpoints = [], loading, onViewDetail 
                         ))}
                       </div>
                       {cp.submitters.length > 4 && (
-                        <span className="text-[10px] text-gray-400 font-extrabold ml-1.5">
+                        <span className="text-[10px] text-text-muted font-extrabold ml-1.5">
                           +{cp.submitters.length - 4} TV khác
                         </span>
                       )}
@@ -101,14 +101,14 @@ export default function CheckpointTab({ checkpoints = [], loading, onViewDetail 
                 <div className="flex flex-row-reverse md:flex-col items-center md:items-end justify-between gap-4 shrink-0 border-t md:border-t-0 md:border-l border-gray-50 pt-4 md:pt-0 md:pl-6 w-full md:w-auto">
                   <button
                     onClick={() => onViewDetail?.(cp.id)}
-                    className="flex items-center gap-1.5 px-5 py-2.5 md:px-6 bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] md:text-xs font-bold rounded-2xl transition-all shadow-md active:scale-95 uppercase tracking-widest whitespace-nowrap shrink-0"
+                    className="flex items-center gap-1.5 px-5 py-2.5 md:px-6 bg-accent hover:bg-accent-hover text-white text-[11px] md:text-xs font-bold rounded-2xl transition-all shadow-md active:scale-95 uppercase tracking-widest whitespace-nowrap shrink-0"
                   >
                     Xem chi tiết <ChevronRight size={14} />
                   </button>
                   
                   {cp.files?.length > 0 && (
                     <div className="flex flex-col items-start md:items-end flex-1 md:flex-none">
-                      <p className="hidden md:block text-[10px] text-gray-400 font-extrabold uppercase tracking-widest mb-1.5">
+                      <p className="hidden md:block text-[10px] text-text-muted font-extrabold uppercase tracking-widest mb-1.5">
                         {cp.files.length} Tệp đính kèm
                       </p>
                       <div className="flex items-center gap-2">
@@ -122,7 +122,7 @@ export default function CheckpointTab({ checkpoints = [], loading, onViewDetail 
                           </span>
                         ))}
                         {cp.files.length > 3 && (
-                          <span className="text-[10px] text-gray-400 font-bold ml-1 tracking-tighter">
+                          <span className="text-[10px] text-text-muted font-bold ml-1 tracking-tighter">
                             +{cp.files.length - 3}
                           </span>
                         )}
@@ -134,8 +134,8 @@ export default function CheckpointTab({ checkpoints = [], loading, onViewDetail 
             </div>
           ))
         ) : (
-          <div className="bg-gray-50/50 border border-dashed border-gray-200 rounded-3xl py-12 text-center">
-            <p className="text-sm font-bold text-gray-400 uppercase tracking-widest opacity-60">
+          <div className="bg-gray-50/50 border border-dashed border-border rounded-3xl py-12 text-center">
+            <p className="text-sm font-bold text-text-muted uppercase tracking-widest opacity-60">
               Nhóm chưa có checkpoint nào được tạo.
             </p>
           </div>

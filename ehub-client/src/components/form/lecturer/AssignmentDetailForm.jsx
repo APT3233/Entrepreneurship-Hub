@@ -53,14 +53,14 @@ function GradingColumn({ assignmentId, maxScore, group, onSaved, rubric }) {
   };
 
   return (
-    <div className="flex flex-col h-full min-h-0 rounded-2xl border border-indigo-100/80 bg-indigo-50/30 p-4 sm:p-5 shadow-sm">
-      <p className="text-xs font-bold text-indigo-800 uppercase tracking-widest mb-4 flex items-center gap-2">
-        <Award className="text-indigo-500 shrink-0" size={18} />
+    <div className="flex flex-col h-full min-h-0 rounded-2xl border border-accent-100/80 bg-accent-50/30 p-4 sm:p-5 shadow-sm">
+      <p className="text-xs font-bold text-accent-800 uppercase tracking-widest mb-4 flex items-center gap-2">
+        <Award className="text-accent-500 shrink-0" size={18} />
         Chấm điểm & nhận xét
       </p>
 
       {group.score != null && group.status === "graded" && (
-        <p className="text-sm text-emerald-800 font-semibold mb-3 pb-3 border-b border-indigo-100/80">
+        <p className="text-sm text-emerald-800 font-semibold mb-3 pb-3 border-b border-accent-100/80">
           Đã lưu: <span className="text-lg tabular-nums">{Number(group.score)}</span>
           <span className="text-gray-500 font-normal"> / {maxScore}</span>
           {group.graderName && group.gradedAt && (
@@ -76,20 +76,20 @@ function GradingColumn({ assignmentId, maxScore, group, onSaved, rubric }) {
           <button
             type="button"
             onClick={() => setShowRubricInfo(!showRubricInfo)}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 bg-indigo-50/50 hover:bg-indigo-50 border border-indigo-100/50 px-3 py-2 rounded-xl transition-all"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-accent-600 hover:text-accent-800 bg-accent-50/50 hover:bg-accent-50 border border-accent-100/50 px-3 py-2 rounded-xl transition-all"
           >
             <Layers size={13} />
             {showRubricInfo ? "Ẩn tiêu chí chấm điểm" : "Xem tiêu chí chấm điểm (Rubric)"}
           </button>
           
           {showRubricInfo && (
-            <div className="mt-2.5 p-3 rounded-xl border border-indigo-100 bg-white/90 space-y-2 max-h-[220px] overflow-y-auto pr-1 animate-in slide-in-from-top-1 duration-200">
+            <div className="mt-2.5 p-3 rounded-xl border border-accent-100 bg-surface/90 space-y-2 max-h-[220px] overflow-y-auto pr-1 animate-in slide-in-from-top-1 duration-200">
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Tiêu chí chi tiết</p>
               {rubric.criteria?.map((c) => (
                 <div key={c.id} className="text-xs pb-2 border-b border-gray-50 last:border-0 last:pb-0">
                   <div className="flex justify-between font-semibold text-gray-800">
                     <span>{c.name}</span>
-                    <span className="font-mono text-indigo-600">{c.max_score}đ {Number(c.weight) !== 1 && `(x${c.weight})`}</span>
+                    <span className="font-mono text-accent-600">{c.max_score}đ {Number(c.weight) !== 1 && `(x${c.weight})`}</span>
                   </div>
                   {c.description && <p className="text-[11px] text-gray-400 mt-0.5 leading-relaxed">{c.description}</p>}
                 </div>
@@ -109,7 +109,7 @@ function GradingColumn({ assignmentId, maxScore, group, onSaved, rubric }) {
             max={maxScore}
             value={score}
             onChange={(e) => setScore(e.target.value)}
-            className="mt-1.5 w-full max-w-[9rem] border border-gray-200 rounded-xl px-3 py-2.5 text-lg font-bold text-gray-900 tabular-nums shadow-sm focus:ring-2 focus:ring-indigo-300 focus:border-indigo-300 outline-none"
+            className="mt-1.5 w-full max-w-[9rem] border border-gray-200 rounded-xl px-3 py-2.5 text-lg font-bold text-gray-900 tabular-nums shadow-sm focus:ring-2 focus:ring-accent-300 focus:border-accent-300 outline-none"
           />
         </label>
 
@@ -122,7 +122,7 @@ function GradingColumn({ assignmentId, maxScore, group, onSaved, rubric }) {
             value={feedback}
             onChange={(e) => setFeedback(e.target.value)}
             placeholder="Góp ý chi tiết, điểm mạnh / cần cải thiện, hướng bổ sung…"
-            className="w-full flex-1 min-h-[200px] sm:min-h-[280px] lg:min-h-[320px] max-h-[50vh] border border-gray-200 rounded-2xl px-4 py-3 text-sm leading-relaxed text-gray-800 bg-white shadow-inner resize-y focus:ring-2 focus:ring-indigo-200 focus:border-indigo-300 outline-none"
+            className="w-full flex-1 min-h-[200px] sm:min-h-[280px] lg:min-h-[320px] max-h-[50vh] border border-gray-200 rounded-2xl px-4 py-3 text-sm leading-relaxed text-gray-800 bg-surface shadow-inner resize-y focus:ring-2 focus:ring-accent-200 focus:border-accent-300 outline-none"
           />
         </label>
 
@@ -130,7 +130,7 @@ function GradingColumn({ assignmentId, maxScore, group, onSaved, rubric }) {
           type="button"
           onClick={save}
           disabled={saving}
-          className="w-full sm:w-auto shrink-0 self-end px-8 py-3 rounded-xl bg-indigo-600 text-white text-sm font-bold shadow-md hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+          className="w-full sm:w-auto shrink-0 self-end px-8 py-3 rounded-xl bg-accent text-white text-sm font-bold shadow-md hover:bg-accent-hover disabled:opacity-50 transition-colors"
         >
           {saving ? "Đang lưu…" : "Lưu điểm & nhận xét"}
         </button>
@@ -144,7 +144,7 @@ function SubmissionInfoColumn({ group, maxScore }) {
   return (
     <div className="rounded-2xl border border-gray-100 bg-gray-50/90 p-4 sm:p-5 min-h-0 flex flex-col">
       <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-2">
-        <FileText size={16} className="text-indigo-500" />
+        <FileText size={16} className="text-accent-500" />
         Bài nộp
       </h4>
 
@@ -154,7 +154,7 @@ function SubmissionInfoColumn({ group, maxScore }) {
           <ul className="space-y-1.5 text-sm text-gray-800">
             {group.members.map((m) => (
               <li key={m.studentId ?? `${m.studentCode}-${m.fullName}`} className="flex flex-wrap items-baseline gap-x-1.5">
-                <span className="font-mono text-xs text-indigo-600">{m.studentCode}</span>
+                <span className="font-mono text-xs text-accent-600">{m.studentCode}</span>
                 <span>{m.fullName}</span>
                 {m.role === "leader" && (
                   <span className="text-amber-600 text-xs font-medium">· Nhóm trưởng</span>
@@ -184,10 +184,10 @@ function SubmissionInfoColumn({ group, maxScore }) {
           {group.files.map((f) => (
             <li
               key={f.id ?? f.fileUrl}
-              className="flex items-center justify-between gap-2 rounded-xl bg-white border border-gray-200/80 px-3 py-2.5 shadow-sm"
+              className="flex items-center justify-between gap-2 rounded-xl bg-surface border border-gray-200/80 px-3 py-2.5 shadow-sm"
             >
               <div className="flex items-center gap-2 min-w-0">
-                <FileText size={16} className="text-indigo-500 shrink-0" />
+                <FileText size={16} className="text-accent-500 shrink-0" />
                 <span className="text-sm text-gray-800 truncate" title={f.fileName}>
                   {f.fileName}
                 </span>
@@ -197,7 +197,7 @@ function SubmissionInfoColumn({ group, maxScore }) {
                   href={f.fileUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="shrink-0 p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg"
+                  className="shrink-0 p-2 text-accent-600 hover:bg-accent-50 rounded-lg"
                   aria-label="Tải file"
                 >
                   <Download size={16} />
@@ -291,7 +291,7 @@ export default function AssignmentDetailForm({ assignment, onClose, onConfirm, o
     >
       <div
         className={`
-          relative w-full bg-white rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200
+          relative w-full bg-surface rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200
           max-h-[94vh] flex flex-col
           ${selectedGroupId != null ? "max-w-6xl" : "max-w-2xl"}
         `}
@@ -311,7 +311,7 @@ export default function AssignmentDetailForm({ assignment, onClose, onConfirm, o
               <button
                 type="button"
                 onClick={() => setSelectedGroupId(null)}
-                className="inline-flex items-center gap-1.5 text-sm font-semibold text-indigo-600 hover:text-indigo-800 py-1.5 rounded-lg hover:bg-indigo-50 -ml-1 px-2"
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-accent-600 hover:text-accent-800 py-1.5 rounded-lg hover:bg-accent-50 -ml-1 px-2"
               >
                 <ChevronLeft size={20} />
                 Danh sách nhóm
@@ -319,7 +319,7 @@ export default function AssignmentDetailForm({ assignment, onClose, onConfirm, o
             </div>
             <div className="px-4 sm:px-6 py-1 pb-2 shrink-0">
               <h2 className="text-lg sm:text-xl font-bold text-gray-900 pr-8 line-clamp-2">{title}</h2>
-              <p className="text-sm font-semibold text-indigo-700 mt-1 flex items-center gap-2 flex-wrap">
+              <p className="text-sm font-semibold text-accent-700 mt-1 flex items-center gap-2 flex-wrap">
                 <Users size={16} className="shrink-0" />
                 {selectedGroup.groupName}
               </p>
@@ -355,7 +355,7 @@ export default function AssignmentDetailForm({ assignment, onClose, onConfirm, o
         {selectedGroupId != null && !selectedGroup && (
           <div className="p-8 text-center text-sm text-gray-500">
             Không tìm thấy dữ liệu nhóm.
-            <button type="button" className="ml-2 text-indigo-600 font-semibold" onClick={() => setSelectedGroupId(null)}>Quay lại</button>
+            <button type="button" className="ml-2 text-accent-600 font-semibold" onClick={() => setSelectedGroupId(null)}>Quay lại</button>
           </div>
         )}
 
@@ -380,18 +380,18 @@ export default function AssignmentDetailForm({ assignment, onClose, onConfirm, o
 
               {/* Rubric display */}
               {loadingRubric ? (
-                <div className="mt-5 p-4 rounded-2xl border border-indigo-50 bg-indigo-50/10 animate-pulse flex items-center justify-center gap-2">
-                  <div className="w-4 h-4 border-2 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
+                <div className="mt-5 p-4 rounded-2xl border border-accent-50 bg-accent-50/10 animate-pulse flex items-center justify-center gap-2">
+                  <div className="w-4 h-4 border-2 border-accent-200 border-t-accent-600 rounded-full animate-spin" />
                   <span className="text-xs text-gray-400">Đang tải rubric...</span>
                 </div>
               ) : rubric ? (
-                <div className="mt-5 p-4 rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50/20 to-violet-50/20 shadow-sm text-left">
+                <div className="mt-5 p-4 rounded-2xl border border-accent-100 bg-gradient-to-br from-accent-50/20 to-violet-50/20 shadow-sm text-left">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
-                      <Layers className="text-indigo-500 shrink-0" size={16} />
-                      <span className="text-xs font-bold text-indigo-800 uppercase tracking-widest">Rubric đánh giá</span>
+                      <Layers className="text-accent-500 shrink-0" size={16} />
+                      <span className="text-xs font-bold text-accent-800 uppercase tracking-widest">Rubric đánh giá</span>
                     </div>
-                    <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100/50">
+                    <span className="text-[10px] font-bold text-accent-600 bg-accent-50 px-2 py-0.5 rounded-full border border-accent-100/50">
                       v{rubric.version || 1}
                     </span>
                   </div>
@@ -404,7 +404,7 @@ export default function AssignmentDetailForm({ assignment, onClose, onConfirm, o
                   {Array.isArray(rubric.criteria) && rubric.criteria.length > 0 && (
                     <div className="mt-4 space-y-2.5">
                       {rubric.criteria.map((c) => (
-                        <div key={c.id} className="flex items-start justify-between gap-3 text-xs bg-white/80 border border-gray-100 p-3 rounded-xl hover:shadow-sm transition-all">
+                        <div key={c.id} className="flex items-start justify-between gap-3 text-xs bg-surface/80 border border-gray-100 p-3 rounded-xl hover:shadow-sm transition-all">
                           <div className="min-w-0">
                             <p className="font-bold text-gray-800 flex items-center gap-1.5">
                               {c.name}
@@ -414,7 +414,7 @@ export default function AssignmentDetailForm({ assignment, onClose, onConfirm, o
                             </p>
                             {c.description && <p className="text-[11px] text-gray-400 mt-1 leading-relaxed">{c.description}</p>}
                           </div>
-                          <div className="shrink-0 text-right font-mono font-bold text-indigo-600 whitespace-nowrap bg-indigo-50/50 px-2.5 py-1 rounded-lg border border-indigo-50">
+                          <div className="shrink-0 text-right font-mono font-bold text-accent-600 whitespace-nowrap bg-accent-50/50 px-2.5 py-1 rounded-lg border border-accent-50">
                             {c.max_score}đ {Number(c.weight) !== 1 && `(x${c.weight})`}
                           </div>
                         </div>
@@ -445,7 +445,7 @@ export default function AssignmentDetailForm({ assignment, onClose, onConfirm, o
                           <button
                             type="button"
                             onClick={() => setSelectedGroupId(g.groupId)}
-                            className="w-full text-left rounded-2xl border-2 border-gray-100 bg-gradient-to-b from-white to-gray-50/80 p-4 sm:p-5 transition-all duration-200 hover:border-indigo-200 hover:shadow-md hover:ring-1 hover:ring-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                            className="w-full text-left rounded-2xl border-2 border-gray-100 bg-gradient-to-b from-white to-gray-50/80 p-4 sm:p-5 transition-all duration-200 hover:border-accent-200 hover:shadow-md hover:ring-1 hover:ring-accent-100 focus:outline-none focus:ring-2 focus:ring-accent-300"
                           >
                             <div className="flex items-start justify-between gap-3">
                               <div className="min-w-0">
@@ -474,7 +474,7 @@ export default function AssignmentDetailForm({ assignment, onClose, onConfirm, o
                                 )}
                               </div>
                             </div>
-                            <p className="text-xs text-indigo-600 font-semibold mt-3 flex items-center justify-end gap-0.5">
+                            <p className="text-xs text-accent-600 font-semibold mt-3 flex items-center justify-end gap-0.5">
                               Xem bài & chấm điểm
                               <ChevronRight size={14} className="shrink-0" />
                             </p>
@@ -497,7 +497,7 @@ export default function AssignmentDetailForm({ assignment, onClose, onConfirm, o
             <div className="flex items-center justify-end gap-3 px-6 sm:px-8 py-4 bg-gray-50 border-t border-gray-100">
               <button
                 onClick={() => onConfirm(assignment)}
-                className="px-6 py-2.5 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-semibold shadow-sm"
+                className="px-6 py-2.5 rounded-xl bg-accent-500 hover:bg-accent-hover text-white text-sm font-semibold shadow-sm"
               >
                 Đóng bài
               </button>

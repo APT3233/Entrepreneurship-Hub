@@ -1,191 +1,55 @@
 import { useTranslation } from "@/context/TranslationContext";
 
-const statusMap = {
-  active: "bg-emerald-50 text-emerald-700 border-emerald-100",
-  inactive: "bg-slate-50 text-slate-600 border-slate-200",
-  locked: "bg-red-50 text-red-600 border-red-100",
-  local: "bg-blue-50 text-blue-700 border-blue-100",
-  google: "bg-amber-50 text-amber-700 border-amber-100",
-  upcoming: "bg-sky-50 text-sky-700 border-sky-100",
-  ongoing: "bg-emerald-50 text-emerald-700 border-emerald-100",
-  completed: "bg-violet-50 text-violet-700 border-violet-100",
-  draft: "bg-slate-50 text-slate-600 border-slate-200",
-  open: "bg-emerald-50 text-emerald-700 border-emerald-100",
-  closed: "bg-slate-50 text-slate-600 border-slate-200",
-  archived: "bg-zinc-50 text-zinc-600 border-zinc-200",
-  candidate: "bg-blue-50 text-blue-700 border-blue-100",
-  incubating: "bg-indigo-50 text-indigo-700 border-indigo-100",
-  on_hold: "bg-amber-50 text-amber-700 border-amber-100",
-  graduated: "bg-emerald-50 text-emerald-700 border-emerald-100",
-  pending: "bg-amber-50 text-amber-700 border-amber-100",
-  proposed: "bg-blue-50 text-blue-700 border-blue-100",
-  pending_mentor: "bg-amber-50 text-amber-700 border-amber-100",
-  rejected: "bg-red-50 text-red-700 border-red-100",
-  private: "bg-slate-50 text-slate-600 border-slate-200",
-  internal: "bg-blue-50 text-blue-700 border-blue-100",
-  public: "bg-emerald-50 text-emerald-700 border-emerald-100",
-  business: "bg-emerald-50 text-emerald-700 border-emerald-100",
-  technical: "bg-sky-50 text-sky-700 border-sky-100",
-  primary: "bg-indigo-50 text-indigo-700 border-indigo-100",
-  supporting: "bg-slate-50 text-slate-600 border-slate-200",
-  internal_lecturer: "bg-indigo-50 text-indigo-700 border-indigo-100",
-  external_expert: "bg-violet-50 text-violet-700 border-violet-100",
-  deleted: "bg-red-50 text-red-600 border-red-100",
-  not_submitted: "bg-slate-50 text-slate-600 border-slate-200",
-  submitted: "bg-blue-50 text-blue-700 border-blue-100",
-  confirmed: "bg-indigo-50 text-indigo-700 border-indigo-100",
-  resubmitted: "bg-amber-50 text-amber-700 border-amber-100",
-  pending_grading: "bg-amber-50 text-amber-700 border-amber-100",
-  graded: "bg-emerald-50 text-emerald-700 border-emerald-100",
-  late: "bg-red-50 text-red-700 border-red-100",
-  checkpoint: "bg-indigo-50 text-indigo-700 border-indigo-100",
-  assignment: "bg-sky-50 text-sky-700 border-sky-100",
-  final: "bg-violet-50 text-violet-700 border-violet-100",
-  class_invite: "bg-blue-50 text-blue-700 border-blue-100",
-  group_invite: "bg-indigo-50 text-indigo-700 border-indigo-100",
-  email_event: "bg-cyan-50 text-cyan-700 border-cyan-100",
-  queued: "bg-blue-50 text-blue-700 border-blue-100",
-  sending: "bg-amber-50 text-amber-700 border-amber-100",
-  sent: "bg-emerald-50 text-emerald-700 border-emerald-100",
-  used: "bg-emerald-50 text-emerald-700 border-emerald-100",
-  accepted: "bg-emerald-50 text-emerald-700 border-emerald-100",
-  declined: "bg-red-50 text-red-700 border-red-100",
-  expired: "bg-slate-50 text-slate-600 border-slate-200",
-  revoked: "bg-red-50 text-red-700 border-red-100",
-  processing: "bg-amber-50 text-amber-700 border-amber-100",
-  failed: "bg-red-50 text-red-700 border-red-100",
-  cancelled: "bg-slate-50 text-slate-600 border-slate-200",
-  scheduled: "bg-blue-50 text-blue-700 border-blue-100",
-  no_show: "bg-red-50 text-red-700 border-red-100",
-  rescheduled: "bg-amber-50 text-amber-700 border-amber-100",
-  online: "bg-sky-50 text-sky-700 border-sky-100",
-  offline: "bg-emerald-50 text-emerald-700 border-emerald-100",
-  hybrid: "bg-violet-50 text-violet-700 border-violet-100",
-  rule_based: "bg-slate-50 text-slate-600 border-slate-200",
-  ai: "bg-indigo-50 text-indigo-700 border-indigo-100",
-  generated: "bg-teal-50 text-teal-700 border-teal-100",
-  converted_to_assignment: "bg-emerald-50 text-emerald-700 border-emerald-100",
-  shortlisted: "bg-blue-50 text-blue-700 border-blue-100",
-  ignored: "bg-slate-50 text-slate-600 border-slate-200",
-  in_progress: "bg-blue-50 text-blue-700 border-blue-100",
-  low: "bg-slate-50 text-slate-600 border-slate-200",
-  medium: "bg-blue-50 text-blue-700 border-blue-100",
-  normal: "bg-blue-50 text-blue-700 border-blue-100",
-  high: "bg-amber-50 text-amber-700 border-amber-100",
-  excellent: "bg-emerald-50 text-emerald-700 border-emerald-100",
-  overloaded: "bg-red-50 text-red-700 border-red-100",
-  enough: "bg-emerald-50 text-emerald-700 border-emerald-100",
-  shortage: "bg-amber-50 text-amber-700 border-amber-100",
-  critical: "bg-red-50 text-red-700 border-red-100",
-  no_mentor: "bg-red-50 text-red-700 border-red-100",
-  no_session: "bg-amber-50 text-amber-700 border-amber-100",
-  on_track: "bg-emerald-50 text-emerald-700 border-emerald-100",
-  needs_attention: "bg-orange-50 text-orange-700 border-orange-100",
-  has_feedback: "bg-emerald-50 text-emerald-700 border-emerald-100",
-  missing_feedback: "bg-amber-50 text-amber-700 border-amber-100",
-  urgent: "bg-red-50 text-red-700 border-red-100",
-  idea: "bg-slate-50 text-slate-600 border-slate-200",
-  prototype: "bg-blue-50 text-blue-700 border-blue-100",
-  mvp: "bg-indigo-50 text-indigo-700 border-indigo-100",
-  beta: "bg-violet-50 text-violet-700 border-violet-100",
-  launched: "bg-emerald-50 text-emerald-700 border-emerald-100",
-  revenue: "bg-teal-50 text-teal-700 border-teal-100",
-  company: "bg-cyan-50 text-cyan-700 border-cyan-100",
-  market_validation: "bg-sky-50 text-sky-700 border-sky-100",
-  company_registered: "bg-cyan-50 text-cyan-700 border-cyan-100",
-  module3_selection: "bg-indigo-50 text-indigo-700 border-indigo-100",
-  manual_nomination: "bg-blue-50 text-blue-700 border-blue-100",
-  showcase: "bg-violet-50 text-violet-700 border-violet-100",
-  alumni: "bg-emerald-50 text-emerald-700 border-emerald-100",
-  other: "bg-slate-50 text-slate-600 border-slate-200",
-  evaluation_result: "bg-indigo-50 text-indigo-700 border-indigo-100",
-  mentor_recommendation: "bg-teal-50 text-teal-700 border-teal-100",
-  ai_suggestion: "bg-violet-50 text-violet-700 border-violet-100",
-  needs_more_info: "bg-amber-50 text-amber-700 border-amber-100",
-  founder: "bg-indigo-50 text-indigo-700 border-indigo-100",
-  co_founder: "bg-violet-50 text-violet-700 border-violet-100",
-  member: "bg-slate-50 text-slate-600 border-slate-200",
-  advisor: "bg-teal-50 text-teal-700 border-teal-100",
-  alumni_founder: "bg-emerald-50 text-emerald-700 border-emerald-100",
-  pitch_deck: "bg-indigo-50 text-indigo-700 border-indigo-100",
-  business_plan: "bg-blue-50 text-blue-700 border-blue-100",
-  demo_video: "bg-violet-50 text-violet-700 border-violet-100",
-  logo: "bg-amber-50 text-amber-700 border-amber-100",
-  certificate: "bg-emerald-50 text-emerald-700 border-emerald-100",
-  report: "bg-slate-50 text-slate-600 border-slate-200",
-  product: "bg-indigo-50 text-indigo-700 border-indigo-100",
-  team: "bg-blue-50 text-blue-700 border-blue-100",
-  funding: "bg-emerald-50 text-emerald-700 border-emerald-100",
-  award: "bg-amber-50 text-amber-700 border-amber-100",
-  partnership: "bg-teal-50 text-teal-700 border-teal-100",
-  legal: "bg-rose-50 text-rose-700 border-rose-100",
-  customer: "bg-cyan-50 text-cyan-700 border-cyan-100",
-  market: "bg-sky-50 text-sky-700 border-sky-100",
-  mentor: "bg-indigo-50 text-indigo-700 border-indigo-100",
-  funding_connection: "bg-emerald-50 text-emerald-700 border-emerald-100",
-  legal_advice: "bg-rose-50 text-rose-700 border-rose-100",
-  marketing: "bg-pink-50 text-pink-700 border-pink-100",
-  mentor_session: "bg-indigo-50 text-indigo-700 border-indigo-100",
-  workshop: "bg-blue-50 text-blue-700 border-blue-100",
-  partner_intro: "bg-teal-50 text-teal-700 border-teal-100",
-  investor_intro: "bg-emerald-50 text-emerald-700 border-emerald-100",
-  review_meeting: "bg-violet-50 text-violet-700 border-violet-100",
-  demo_day: "bg-indigo-50 text-indigo-700 border-indigo-100",
-  pitching_day: "bg-blue-50 text-blue-700 border-blue-100",
-  networking: "bg-teal-50 text-teal-700 border-teal-100",
-  competition: "bg-amber-50 text-amber-700 border-amber-100",
-  published: "bg-emerald-50 text-emerald-700 border-emerald-100",
-  invited: "bg-blue-50 text-blue-700 border-blue-100",
-  presented: "bg-emerald-50 text-emerald-700 border-emerald-100",
-  absent: "bg-red-50 text-red-700 border-red-100",
-  withdrawn: "bg-slate-50 text-slate-600 border-slate-200",
-  lecturer: "bg-blue-50 text-blue-700 border-blue-100",
-  partner: "bg-teal-50 text-teal-700 border-teal-100",
-  investor: "bg-emerald-50 text-emerald-700 border-emerald-100",
-  guest: "bg-slate-50 text-slate-600 border-slate-200",
-  none: "bg-slate-50 text-slate-600 border-slate-200",
-  follow_up: "bg-emerald-50 text-emerald-700 border-emerald-100",
-  winner: "bg-amber-50 text-amber-700 border-amber-100",
-  runner_up: "bg-blue-50 text-blue-700 border-blue-100",
-  best_pitch: "bg-violet-50 text-violet-700 border-violet-100",
-  best_technology: "bg-cyan-50 text-cyan-700 border-cyan-100",
-  best_business_model: "bg-indigo-50 text-indigo-700 border-indigo-100",
-  social_impact: "bg-emerald-50 text-emerald-700 border-emerald-100",
-  image: "bg-blue-50 text-blue-700 border-blue-100",
-  video: "bg-violet-50 text-violet-700 border-violet-100",
-  document: "bg-slate-50 text-slate-600 border-slate-200",
-  link: "bg-cyan-50 text-cyan-700 border-cyan-100",
-  incubator: "bg-indigo-50 text-indigo-700 border-indigo-100",
-  accelerator: "bg-violet-50 text-violet-700 border-violet-100",
-  investor_fund: "bg-emerald-50 text-emerald-700 border-emerald-100",
-  angel_investor: "bg-teal-50 text-teal-700 border-teal-100",
-  university: "bg-blue-50 text-blue-700 border-blue-100",
-  government: "bg-slate-50 text-slate-600 border-slate-200",
-  ngo: "bg-rose-50 text-rose-700 border-rose-100",
-  community: "bg-amber-50 text-amber-700 border-amber-100",
-  introduction: "bg-blue-50 text-blue-700 border-blue-100",
-  pilot: "bg-indigo-50 text-indigo-700 border-indigo-100",
-  investor_interest: "bg-emerald-50 text-emerald-700 border-emerald-100",
-  incubation_program: "bg-indigo-50 text-indigo-700 border-indigo-100",
-  contacted: "bg-blue-50 text-blue-700 border-blue-100",
-  successful: "bg-emerald-50 text-emerald-700 border-emerald-100",
-  grant: "bg-emerald-50 text-emerald-700 border-emerald-100",
-  pilot_program: "bg-indigo-50 text-indigo-700 border-indigo-100",
-  investor_meeting: "bg-teal-50 text-teal-700 border-teal-100",
-  applied: "bg-blue-50 text-blue-700 border-blue-100",
-  no_progress_update: "bg-amber-50 text-amber-700 border-amber-100",
-  no_partner_connection: "bg-blue-50 text-blue-700 border-blue-100",
-  follow_up_overdue: "bg-red-50 text-red-700 border-red-100",
-  done: "bg-emerald-50 text-emerald-700 border-emerald-100",
-  dead: "bg-red-50 text-red-700 border-red-100",
-  manual: "bg-slate-50 text-slate-600 border-slate-200",
-  weighted_sum: "bg-blue-50 text-blue-700 border-blue-100",
-  high_potential: "bg-emerald-50 text-emerald-700 border-emerald-100",
-  watchlist: "bg-amber-50 text-amber-700 border-amber-100",
-  at_risk: "bg-red-50 text-red-700 border-red-100",
-  true: "bg-indigo-50 text-indigo-700 border-indigo-100",
-  false: "bg-gray-50 text-gray-600 border-gray-100",
+// Calm palette: gom mọi status về 4 tone token (success / warning / danger / neutral).
+// Caller vẫn truyền value như cũ; chỉ thay đổi CSS (không đổi logic/nhãn).
+const TONE_STYLES = {
+  success: "bg-emerald-100 text-emerald-700",
+  warning: "bg-amber-100 text-amber-700",
+  danger: "bg-red-100 text-red-700",
+  neutral: "bg-subtle text-text-secondary",
 };
+
+const TONE_DOTS = {
+  success: "bg-emerald-500",
+  warning: "bg-amber-500",
+  danger: "bg-red-500",
+  neutral: "bg-text-muted",
+};
+
+const SUCCESS = new Set([
+  "active", "ongoing", "completed", "open", "graduated", "public", "business",
+  "accepted", "sent", "used", "graded", "published", "presented", "on_track",
+  "has_feedback", "enough", "excellent", "launched", "revenue", "successful",
+  "done", "high_potential", "follow_up", "converted_to_assignment", "alumni",
+  "alumni_founder", "social_impact", "investor", "investor_interest", "investor_fund",
+  "investor_meeting", "grant", "funding", "funding_connection", "winner",
+]);
+
+const WARNING = new Set([
+  "pending", "on_hold", "pending_mentor", "pending_grading", "resubmitted",
+  "processing", "sending", "rescheduled", "shortage", "missing_feedback",
+  "watchlist", "high", "no_session", "no_progress_update", "needs_more_info",
+  "applied", "contacted", "shortlisted", "invited", "proposed",
+]);
+
+const DANGER = new Set([
+  "locked", "rejected", "deleted", "late", "no_show", "revoked", "failed",
+  "cancelled", "expired", "declined", "critical", "overloaded", "at_risk",
+  "urgent", "no_mentor", "follow_up_overdue", "dead", "absent", "withdrawn",
+  "needs_attention", "no_partner_connection",
+]);
+
+function toneOf(key) {
+  if (SUCCESS.has(key)) return "success";
+  if (WARNING.has(key)) return "warning";
+  if (DANGER.has(key)) return "danger";
+  if (/^\d{3}$/.test(key)) {
+    const code = parseInt(key, 10);
+    if (code >= 200 && code < 300) return "success";
+    if (code >= 400 && code < 600) return code < 500 ? "warning" : "danger";
+  }
+  return "neutral";
+}
 
 const labelMap = {
   active: "Active",
@@ -379,23 +243,11 @@ export default function StatusBadge({ value }) {
   const key = String(value);
   const label = t(`status.${key}`);
   const displayLabel = label === `status.${key}` ? (labelMap[key] || key) : label;
-
-  let customStyle = statusMap[key];
-  if (!customStyle && /^\d{3}$/.test(key)) {
-    const code = parseInt(key, 10);
-    if (code >= 200 && code < 300) {
-      customStyle = "bg-emerald-50 text-emerald-700 border-emerald-100";
-    } else if (code >= 300 && code < 400) {
-      customStyle = "bg-blue-50 text-blue-700 border-blue-100";
-    } else if (code >= 400 && code < 500) {
-      customStyle = "bg-amber-50 text-amber-700 border-amber-100";
-    } else if (code >= 500 && code < 600) {
-      customStyle = "bg-red-50 text-red-700 border-red-100";
-    }
-  }
+  const tone = toneOf(key);
 
   return (
-    <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold ${customStyle || "bg-gray-50 text-gray-600 border-gray-100"}`}>
+    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${TONE_STYLES[tone]}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${TONE_DOTS[tone]}`} />
       {displayLabel}
     </span>
   );

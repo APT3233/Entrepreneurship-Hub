@@ -51,15 +51,15 @@ export function MatchingRequestForm({ form, setForm, groups = [], expertise = []
         <Field label={t("admin.mentorMatching.forms.priority")}><Select value={form.priority || "normal"} onChange={(value) => set("priority", value)} options={priorityOptions} /></Field>
       </div>
       <Field label={t("admin.mentorMatching.forms.supportNeeded")}><textarea className={inputClass} rows={4} value={form.support_needed || ""} onChange={(event) => set("support_needed", event.target.value)} required /></Field>
-      {expertise.length ? <Field label={t("admin.mentorMatching.forms.requiredExpertise")}><div className="flex flex-wrap gap-2 rounded-xl border border-slate-200 bg-white p-3">{expertise.map((item) => <button type="button" key={item.id} onClick={() => toggleExpertise(item.id)} className={`rounded-full px-3 py-1 text-xs font-bold ${selectedExpertise.has(String(item.id)) ? "bg-teal-600 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}>{item.name}</button>)}</div></Field> : null}
-      {group ? <div className="rounded-xl border border-slate-100 bg-slate-50 p-3 text-sm text-slate-600"><p className="font-black text-slate-900">{group.topic || group.group_name}</p><p>{group.category || t("admin.mentorWorkflow.common.noCategory")}</p></div> : null}
+      {expertise.length ? <Field label={t("admin.mentorMatching.forms.requiredExpertise")}><div className="flex flex-wrap gap-2 rounded-xl border border-border bg-surface p-3">{expertise.map((item) => <button type="button" key={item.id} onClick={() => toggleExpertise(item.id)} className={`rounded-full px-3 py-1 text-xs font-bold ${selectedExpertise.has(String(item.id)) ? "bg-accent text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}>{item.name}</button>)}</div></Field> : null}
+      {group ? <div className="rounded-xl border border-border bg-slate-50 p-3 text-sm text-slate-600"><p className="font-black text-slate-900">{group.topic || group.group_name}</p><p>{group.category || t("admin.mentorWorkflow.common.noCategory")}</p></div> : null}
     </div>
   );
 }
 
 export function ScoreBadge({ score }) {
   const value = Number(score || 0);
-  const tone = value >= 85 ? "bg-emerald-50 text-emerald-700" : value >= 70 ? "bg-teal-50 text-teal-700" : value >= 50 ? "bg-amber-50 text-amber-700" : "bg-rose-50 text-rose-700";
+  const tone = value >= 85 ? "bg-emerald-50 text-emerald-700" : value >= 70 ? "bg-accent-bg text-accent" : value >= 50 ? "bg-amber-50 text-amber-700" : "bg-rose-50 text-rose-700";
   return <span className={`inline-flex rounded-full px-3 py-1 text-xs font-black ${tone}`}>{value.toFixed(1)}</span>;
 }
 
@@ -78,5 +78,5 @@ export function SuggestionSummary({ suggestion }) {
 }
 
 function ListBox({ title, items = [], empty }) {
-  return <div className="rounded-xl border border-slate-100 bg-slate-50 p-3"><p className="text-xs font-black uppercase text-slate-400">{title}</p><div className="mt-2 space-y-1 text-sm font-medium text-slate-700">{items?.length ? items.map((item) => <p key={item}>- {item}</p>) : <p>{empty}</p>}</div></div>;
+  return <div className="rounded-xl border border-border bg-slate-50 p-3"><p className="text-xs font-black uppercase text-slate-400">{title}</p><div className="mt-2 space-y-1 text-sm font-medium text-slate-700">{items?.length ? items.map((item) => <p key={item}>- {item}</p>) : <p>{empty}</p>}</div></div>;
 }

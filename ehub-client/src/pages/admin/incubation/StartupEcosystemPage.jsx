@@ -120,7 +120,7 @@ export default function StartupEcosystemPage() {
     { key: "contact_date", label: t("admin.ecosystem.startupEcosystem.columns.contact"), render: (row) => formatDate(row.contact_date) },
     { key: "follow_up_date", label: t("admin.ecosystem.startupEcosystem.columns.followUp"), render: (row) => formatDate(row.follow_up_date) },
     { key: "outcome", label: t("admin.ecosystem.startupEcosystem.columns.outcome"), render: (row) => row.outcome || row.note || "-" },
-    { key: "actions", label: "", width: 160, render: (row) => <div className="flex justify-end gap-1">{row.status !== "in_progress" ? <button type="button" onClick={() => updateConnection(row, "in_progress")} className="rounded-lg px-2 py-1 text-xs font-bold text-indigo-700 hover:bg-indigo-50">{t("admin.ecosystem.startupEcosystem.actions.progress")}</button> : null}{row.status !== "successful" ? <button type="button" onClick={() => updateConnection(row, "successful")} className="rounded-lg px-2 py-1 text-xs font-bold text-emerald-700 hover:bg-emerald-50">{t("admin.ecosystem.startupEcosystem.actions.success")}</button> : null}</div> },
+    { key: "actions", label: "", width: 160, render: (row) => <div className="flex justify-end gap-1">{row.status !== "in_progress" ? <button type="button" onClick={() => updateConnection(row, "in_progress")} className="rounded-lg px-2 py-1 text-xs font-bold text-accent hover:bg-accent-bg">{t("admin.ecosystem.startupEcosystem.actions.progress")}</button> : null}{row.status !== "successful" ? <button type="button" onClick={() => updateConnection(row, "successful")} className="rounded-lg px-2 py-1 text-xs font-bold text-emerald-700 hover:bg-emerald-50">{t("admin.ecosystem.startupEcosystem.actions.success")}</button> : null}</div> },
   ], [t]);
 
   const applicationColumns = useMemo(() => [
@@ -133,18 +133,18 @@ export default function StartupEcosystemPage() {
     { key: "actions", label: "", width: 170, render: (row) => <div className="flex justify-end gap-1">{row.application_status !== "accepted" ? <button type="button" onClick={() => updateApplication(row, "accepted")} className="rounded-lg px-2 py-1 text-xs font-bold text-emerald-700 hover:bg-emerald-50">{t("admin.ecosystem.startupEcosystem.actions.accept")}</button> : null}{row.application_status !== "rejected" ? <button type="button" onClick={() => updateApplication(row, "rejected")} className="rounded-lg px-2 py-1 text-xs font-bold text-rose-700 hover:bg-rose-50">{t("admin.ecosystem.startupEcosystem.actions.reject")}</button> : null}</div> },
   ], [t]);
 
-  if (loading) return <div className="rounded-2xl bg-white p-8 text-center text-sm text-slate-400">{t("admin.ecosystem.common.loading")}</div>;
-  if (error) return <div className="rounded-2xl bg-rose-50 p-8 text-center text-sm font-bold text-rose-600">{error}</div>;
+  if (loading) return <div className="rounded-card bg-surface p-8 text-center text-sm text-slate-400">{t("admin.ecosystem.common.loading")}</div>;
+  if (error) return <div className="rounded-card bg-rose-50 p-8 text-center text-sm font-bold text-rose-600">{error}</div>;
   if (!startup) return null;
 
   return (
     <div className="space-y-5">
-      <button type="button" onClick={() => navigate(`/admin/incubation/startups/${id}`)} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"><ArrowLeft size={16} /> {t("admin.ecosystem.common.back")}</button>
+      <button type="button" onClick={() => navigate(`/admin/incubation/startups/${id}`)} className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"><ArrowLeft size={16} /> {t("admin.ecosystem.common.back")}</button>
       <StartupHeader startup={startup} />
-      <Panel title={t("admin.ecosystem.startupEcosystem.panels.partnerConnections")} actions={<button type="button" onClick={() => setConnectionModal(true)} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-3 py-2 text-sm font-bold text-white"><Plus size={16} /> {t("admin.ecosystem.startupEcosystem.actions.addConnection")}</button>}>
+      <Panel title={t("admin.ecosystem.startupEcosystem.panels.partnerConnections")} actions={<button type="button" onClick={() => setConnectionModal(true)} className="inline-flex items-center gap-2 rounded-xl bg-accent px-3 py-2 text-sm font-bold text-white"><Plus size={16} /> {t("admin.ecosystem.startupEcosystem.actions.addConnection")}</button>}>
         <AdminTable columns={connectionColumns} rows={connections} emptyText={t("admin.ecosystem.startupEcosystem.empty.noPartnerConnections")} />
       </Panel>
-      <Panel title={t("admin.ecosystem.startupEcosystem.panels.opportunityApplications")} actions={<button type="button" onClick={() => setApplicationModal(true)} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-3 py-2 text-sm font-bold text-white"><Plus size={16} /> {t("admin.ecosystem.startupEcosystem.actions.apply")}</button>}>
+      <Panel title={t("admin.ecosystem.startupEcosystem.panels.opportunityApplications")} actions={<button type="button" onClick={() => setApplicationModal(true)} className="inline-flex items-center gap-2 rounded-xl bg-accent px-3 py-2 text-sm font-bold text-white"><Plus size={16} /> {t("admin.ecosystem.startupEcosystem.actions.apply")}</button>}>
         <AdminTable columns={applicationColumns} rows={applications} emptyText={t("admin.ecosystem.startupEcosystem.empty.noOpportunityApplications")} />
       </Panel>
       <FormModal open={connectionModal} title={t("admin.ecosystem.startupEcosystem.modals.addConnectionTitle")} submitLabel={t("admin.ecosystem.common.save")} saving={saving} onClose={() => setConnectionModal(false)} onSubmit={submitConnection}>

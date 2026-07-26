@@ -16,8 +16,8 @@ export default function SubmissionListPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">{label}</h1>
-        <p className="mt-1 text-sm text-gray-500">{t("lecturer.gradingPage.scopedListSubtitle")}</p>
+        <h1 className="text-2xl font-bold text-text-primary">{label}</h1>
+        <p className="mt-1 text-sm text-text-secondary">{t("lecturer.gradingPage.scopedListSubtitle")}</p>
       </div>
       <SubmissionListSection fixedFilters={fixedFilters} title={label} showSourceFilter={false} />
     </div>

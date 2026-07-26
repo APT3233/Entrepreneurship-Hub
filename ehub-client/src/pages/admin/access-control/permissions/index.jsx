@@ -52,7 +52,7 @@ export default function AdminPermissions() {
   };
 
   const columns = useMemo(() => [
-    { key: "permission_code", label: t("common.confirm") === "Xác nhận" ? "Mã quyền" : "Permission code", render: (row) => <span className="font-mono text-xs font-bold text-indigo-700">{row.permission_code}</span> },
+    { key: "permission_code", label: t("common.confirm") === "Xác nhận" ? "Mã quyền" : "Permission code", render: (row) => <span className="font-mono text-xs font-bold text-accent">{row.permission_code}</span> },
     { key: "permission_name", label: t("admin.fields.permissions", { defaultValue: "Permission name" }) === "Quyền hạn" ? "Tên quyền" : "Permission name" },
     { key: "module", label: "Module", render: (row) => <span className="rounded-lg bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-600">{row.module}</span> },
     { key: "description", label: t("admin.fields.description"), render: (row) => row.description || "—" },

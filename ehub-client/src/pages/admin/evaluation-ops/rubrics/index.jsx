@@ -112,7 +112,7 @@ export default function AdminRubrics({ basePath = "/admin/evaluation/rubrics", l
       <div>
         <FilterBar
           right={(
-            <button type="button" onClick={() => { setForm(emptyForm); setBuilderOpen(true); }} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700">
+            <button type="button" onClick={() => { setForm(emptyForm); setBuilderOpen(true); }} className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-hover">
               <Plus size={16} /> {t("admin.rubric.create")}
             </button>
           )}

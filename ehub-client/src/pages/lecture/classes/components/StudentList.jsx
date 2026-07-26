@@ -16,7 +16,7 @@ const MAJOR_COLOR = {
 };
 
 // function majorColor(major) {
-//   return MAJOR_COLOR[major] ?? "text-gray-600";
+//   return MAJOR_COLOR[major] ?? "text-text-secondary";
 // }
 
 const columnsWithoutGroup = ["STT", "MSSV", "Họ và tên", "Email", "Kích hoạt"];
@@ -77,20 +77,20 @@ export default function StudentList({
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 md:p-6 w-full">
+    <div className="bg-surface rounded-2xl shadow-card p-5 md:p-6 w-full">
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
         <div>
-          <h2 className="text-sm md:text-base font-bold text-gray-900">Danh sách sinh viên</h2>
+          <h2 className="text-sm md:text-base font-bold text-text-primary">Danh sách sinh viên</h2>
           <div className="flex flex-col gap-0.5 mt-1">
-             <p className="text-xs text-gray-400">Tổng số: {totalCount} sinh viên</p>
-             <p className="text-xs text-gray-400">
+             <p className="text-xs text-text-muted">Tổng số: {totalCount} sinh viên</p>
+             <p className="text-xs text-text-muted">
                Số nhóm: {groupCount != null ? `${groupCount} nhóm` : "Chưa có nhóm"}
              </p>
           </div>
           {students.length !== totalCount && totalCount > 0 && (
-            <p className="text-xs text-indigo-600 font-medium mt-1">
+            <p className="text-xs text-accent-600 font-medium mt-1">
               Đang hiển thị: {students.length} / {totalCount} sinh viên
             </p>
           )}
@@ -107,7 +107,7 @@ export default function StudentList({
           {canEdit && onAddStudent && (
             <button
               onClick={onAddStudent}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-50 text-indigo-600 text-xs font-bold hover:bg-indigo-100 transition-colors border border-indigo-100"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-accent-50 text-accent-600 text-xs font-bold hover:bg-accent-100 transition-colors border border-accent-100"
             >
               <Plus size={16} strokeWidth={2.5} />
               Thêm sinh viên
@@ -135,21 +135,21 @@ export default function StudentList({
               placeholder="Tìm kiếm..."
               value={searchValue}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="flex-1 min-w-[140px] sm:w-56 md:w-64 px-4 py-2 rounded-lg border border-gray-200 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 shrink-0"
+              className="flex-1 min-w-[140px] sm:w-56 md:w-64 px-4 py-2 rounded-lg border border-border text-sm text-text-secondary placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-accent-100 focus:border-accent-400 shrink-0"
             />
           )}
         </div>
       </div>
 
       {/* Table */}
-      <div className="rounded-xl border border-gray-100 overflow-x-auto w-full">
+      <div className="rounded-xl overflow-x-auto w-full">
         <table className="w-full min-w-[920px] text-sm border-collapse whitespace-nowrap">
           <thead>
-            <tr className="bg-indigo-50/20 border-b border-gray-50">
+            <tr className="bg-accent-50/20 border-b border-gray-50">
               {columns.map((col) => (
                 <th
                   key={col}
-                  className="px-4 py-4 md:px-6 md:py-5 text-left text-[10px] md:text-[11px] font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap"
+                  className="px-4 py-4 md:px-6 md:py-5 text-left text-[10px] md:text-[11px] font-bold text-text-muted uppercase tracking-widest whitespace-nowrap"
                 >
                   {col}
                 </th>
@@ -157,7 +157,7 @@ export default function StudentList({
             </tr>
           </thead>
 
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-border">
             {sortedStudents.length === 0 ? (
               <tr>
                 <td colSpan={columns.length} className="px-4 py-10 text-center text-sm text-gray-300">
@@ -166,18 +166,18 @@ export default function StudentList({
               </tr>
             ) : (
               sortedStudents.map((s, i) => (
-                <tr key={s.id ?? i} className="hover:bg-gray-50 transition-colors duration-100 group">
-                  <td className="px-4 py-3 md:px-6 md:py-5 text-gray-500 font-medium text-[11px] md:text-xs">{i + 1}</td>
+                <tr key={s.id ?? i} className="hover:bg-subtle transition-colors duration-100 group">
+                  <td className="px-4 py-3 md:px-6 md:py-5 text-text-secondary font-medium text-[11px] md:text-xs">{i + 1}</td>
                   <td className="px-4 py-3 md:px-6 md:py-5">
-                    <span className="font-mono text-xs md:text-sm font-semibold text-gray-700 leading-none">
+                    <span className="font-mono text-xs md:text-sm font-semibold text-text-secondary leading-none">
                       {s.mssv}
                     </span>
                   </td>
-                  <td className="px-4 py-3 md:px-6 md:py-5 text-gray-800">
+                  <td className="px-4 py-3 md:px-6 md:py-5 text-text-primary">
                     <div className="flex items-center gap-3">
                       <LastNameAvatar name={s.name || "—"} avatar={s.avatar} index={i} />
                       <div className="flex flex-col gap-0.5 min-w-0">
-                        <span className="font-medium text-gray-800 text-xs md:text-sm leading-none group-hover:text-indigo-600 transition-colors truncate">
+                        <span className="font-medium text-text-primary text-xs md:text-sm leading-none group-hover:text-accent-600 transition-colors truncate">
                           {s.name}
                         </span>
                         {s.isLeader && (
@@ -189,17 +189,17 @@ export default function StudentList({
                     </div>
                   </td>
                   <td className="px-4 py-3 md:px-6 md:py-5">
-                    <span className="text-gray-400 font-medium text-[11px] md:text-xs leading-none">
+                    <span className="text-text-muted font-medium text-[11px] md:text-xs leading-none">
                       {s.email}
                     </span>
                   </td>
 
                   {hasGroups && (
-                    <td className="px-4 py-3 md:px-6 md:py-5 text-gray-700 font-medium text-[11px] md:text-xs">
+                    <td className="px-4 py-3 md:px-6 md:py-5 text-text-secondary font-medium text-[11px] md:text-xs">
                       {s.groupId != null ? (
-                        <span className="font-semibold text-gray-700">{s.groupName ?? "—"}</span>
+                        <span className="font-semibold text-text-secondary">{s.groupName ?? "—"}</span>
                       ) : (
-                        <span className="text-gray-400 italic">Chưa phân nhóm</span>
+                        <span className="text-text-muted italic">Chưa phân nhóm</span>
                       )}
                     </td>
                   )}
@@ -222,7 +222,7 @@ export default function StudentList({
                         <button
                           onClick={() => onEditStudent?.(s)}
                           title="Sửa thông tin"
-                          className="p-2 rounded-lg text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-200 active:scale-95"
+                          className="p-2 rounded-lg text-text-muted hover:bg-accent-50 hover:text-accent-600 transition-all duration-200 active:scale-95"
                         >
                           <Pencil size={15} />
                         </button>
@@ -233,7 +233,7 @@ export default function StudentList({
                           className={`p-2 rounded-lg transition-all duration-200 ${
                             s.groupId != null
                               ? "text-gray-200 cursor-not-allowed"
-                              : "text-gray-400 hover:bg-red-50 hover:text-red-600 active:scale-95"
+                              : "text-text-muted hover:bg-red-50 hover:text-red-600 active:scale-95"
                           }`}
                         >
                           <Trash2 size={16} />

@@ -7,7 +7,7 @@ export default function ScorePreview({ criteria = [], totalScore }) {
   const hasMismatch = expectedTotal > 0 && criteria.length > 0 && actualTotal !== expectedTotal;
 
   return (
-    <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+    <div className="rounded-card border border-border bg-surface p-5">
       <div className="mb-4 flex items-center justify-between gap-3">
         <h2 className="text-base font-bold text-gray-900">{t("admin.rubric.preview.title")}</h2>
         <span className={`rounded-full px-3 py-1 text-xs font-bold ${hasMismatch ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700"}`}>
@@ -17,14 +17,14 @@ export default function ScorePreview({ criteria = [], totalScore }) {
       {criteria.length ? (
         <div className="space-y-3">
           {criteria.map((item) => (
-            <label key={item.id || item.order_index} className="block rounded-xl border border-gray-100 p-3">
+            <label key={item.id || item.order_index} className="block rounded-xl border border-border p-3">
               <span className="text-sm font-semibold text-gray-900">{item.name || item.criteria_name}</span>
               <input
                 type="number"
                 min="0"
                 max={item.max_score}
                 disabled
-                className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-500"
+                className="mt-2 w-full rounded-lg border border-border px-3 py-2 text-sm text-gray-500"
                 placeholder={t("admin.rubric.preview.scoreRange", { max: item.max_score })}
               />
             </label>

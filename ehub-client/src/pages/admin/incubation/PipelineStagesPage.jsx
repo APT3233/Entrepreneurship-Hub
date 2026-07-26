@@ -72,12 +72,12 @@ export default function PipelineStagesPage() {
     { key: "is_final", label: t("admin.ecosystem.columns.final"), width: 90, render: (row) => <StatusBadge value={Boolean(row.is_final)} /> },
     { key: "status", label: t("admin.ecosystem.columns.status"), width: 120, render: (row) => <StatusBadge value={row.status} /> },
     { key: "usage_count", label: t("admin.ecosystem.columns.usage"), width: 90 },
-    { key: "actions", label: "", width: 90, render: (row) => <button type="button" onClick={() => openEdit(row)} className="rounded-lg px-3 py-1.5 text-sm font-bold text-indigo-700 hover:bg-indigo-50">{t("admin.ecosystem.columns.edit")}</button> },
+    { key: "actions", label: "", width: 90, render: (row) => <button type="button" onClick={() => openEdit(row)} className="rounded-lg px-3 py-1.5 text-sm font-bold text-accent hover:bg-accent-bg">{t("admin.ecosystem.columns.edit")}</button> },
   ], [t]);
 
   return (
     <>
-      <FilterBar right={<button type="button" onClick={openCreate} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-indigo-700"><Plus size={16} /> {t("admin.ecosystem.pipelineStages.createBtn")}</button>}>
+      <FilterBar right={<button type="button" onClick={openCreate} className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-bold text-white hover:bg-accent-hover"><Plus size={16} /> {t("admin.ecosystem.pipelineStages.createBtn")}</button>}>
         <SearchInput value={query.search} onChange={(search) => setQuery((prev) => ({ ...prev, page: 1, search }))} placeholder={t("admin.ecosystem.pipelineStages.searchPlaceholder")} />
         <FilterSelect label={t("filterLabels.status")} value={query.status} onChange={(status) => setQuery((prev) => ({ ...prev, page: 1, status }))} options={statusOptions} />
       </FilterBar>

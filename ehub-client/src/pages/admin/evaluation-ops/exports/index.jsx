@@ -32,7 +32,7 @@ export default function AdminEvaluationExports() {
     <div className="space-y-4">
       <FilterBar
         right={(
-          <button type="button" onClick={() => setExportOpen(true)} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700">
+          <button type="button" onClick={() => setExportOpen(true)} className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-hover">
             <Download size={16} /> {t("common.export")}
           </button>
         )}
@@ -44,13 +44,13 @@ export default function AdminEvaluationExports() {
         <FilterSelect label={t("filterLabels.type")} value={filters.target_type} onChange={(value) => setFilter("target_type", value)} options={options.types} />
       </FilterBar>
 
-      <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+      <section className="rounded-card border border-border bg-surface p-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h2 className="text-xl font-black text-gray-900">{t("admin.evaluationOps.exports.title")}</h2>
             <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-500">{t("admin.evaluationOps.exports.description")}</p>
           </div>
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
+          <div className="flex h-14 w-14 items-center justify-center rounded-card bg-accent-bg text-accent">
             <FileSpreadsheet size={26} />
           </div>
         </div>

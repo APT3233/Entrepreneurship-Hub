@@ -21,7 +21,7 @@ const FILE_TYPE_OPTIONS = [
   { value: "pptx", label: "PowerPoint", icon: <Presentation size={14} className="text-orange-500" /> },
   { value: "xlsx", label: "Excel", icon: <FileSpreadsheet size={14} className="text-emerald-500" /> },
   { value: "zip", label: "Zip", icon: <FileArchive size={14} className="text-amber-500" /> },
-  { value: "png", label: "Image", icon: <FileImage size={14} className="text-indigo-500" /> },
+  { value: "png", label: "Image", icon: <FileImage size={14} className="text-accent-500" /> },
 ];
 
 function MultiSelectFileType({ value, onChange }) {
@@ -43,7 +43,7 @@ function MultiSelectFileType({ value, onChange }) {
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between px-3 py-3 rounded-xl bg-gray-100 text-sm text-gray-800 hover:bg-gray-200/70 transition-all border border-transparent focus:bg-white focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 outline-none"
+        className="w-full flex items-center justify-between px-3 py-3 rounded-xl bg-gray-100 text-sm text-gray-800 hover:bg-gray-200/70 transition-all border border-transparent focus:bg-surface focus:border-accent-300 focus:ring-2 focus:ring-accent-100 outline-none"
       >
         <div className="flex flex-wrap gap-1 items-center overflow-hidden text-xs">
           {selectedValues.length === 0 ? (
@@ -52,7 +52,7 @@ function MultiSelectFileType({ value, onChange }) {
             selectedValues.map(val => {
               const opt = FILE_TYPE_OPTIONS.find(o => o.value === val);
               return opt ? (
-                <div key={val} className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-white border border-gray-100 shadow-sm">
+                <div key={val} className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-surface shadow-card">
                   {opt.icon}
                   <span className="text-[10px] font-bold text-gray-600 uppercase">{opt.value}</span>
                 </div>
@@ -66,18 +66,18 @@ function MultiSelectFileType({ value, onChange }) {
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <ul className="absolute top-[calc(100%+8px)] left-0 right-0 z-50 bg-white border border-gray-200 rounded-xl shadow-lg py-1.5 max-h-60 overflow-auto animate-in fade-in slide-in-from-top-2 duration-200">
+          <ul className="absolute top-[calc(100%+8px)] left-0 right-0 z-50 bg-surface border border-gray-200 rounded-xl shadow-lg py-1.5 max-h-60 overflow-auto animate-in fade-in slide-in-from-top-2 duration-200">
             {FILE_TYPE_OPTIONS.map(opt => (
               <li key={opt.value}>
                 <button
                   type="button"
                   onClick={() => toggleValue(opt.value)}
                   className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors
-                    ${selectedValues.includes(opt.value) ? "bg-indigo-50 text-indigo-700 font-medium" : "text-gray-700 hover:bg-gray-100"}`}
+                    ${selectedValues.includes(opt.value) ? "bg-accent-50 text-accent-700 font-medium" : "text-gray-700 hover:bg-gray-100"}`}
                 >
                   {opt.icon}
                   <span className="flex-1 text-left">{opt.label}</span>
-                  {selectedValues.includes(opt.value) && <div className="w-1.5 h-1.5 rounded-full bg-indigo-600" />}
+                  {selectedValues.includes(opt.value) && <div className="w-1.5 h-1.5 rounded-full bg-accent" />}
                 </button>
               </li>
             ))}
@@ -112,7 +112,7 @@ function ClassSelect({ value = [], onChange, options }) {
           w-full flex items-center justify-between px-4 py-3 rounded-xl
           bg-gray-100 border border-transparent text-sm transition-all duration-150
           ${open
-            ? "border-indigo-400 ring-2 ring-indigo-100 bg-white"
+            ? "border-accent-400 ring-2 ring-accent-100 bg-surface"
             : "hover:bg-gray-200/70"}
         `}
       >
@@ -134,7 +134,7 @@ function ClassSelect({ value = [], onChange, options }) {
       </button>
 
       {open && (
-        <div className="absolute top-[calc(100%+6px)] left-0 right-0 z-50 bg-white border border-gray-100 rounded-xl shadow-lg overflow-hidden">
+        <div className="absolute top-[calc(100%+6px)] left-0 right-0 z-50 bg-surface border border-gray-100 rounded-xl shadow-lg overflow-hidden">
           <ul className="py-1 max-h-52 overflow-y-auto">
             {options.map((opt) => {
               const isSelected = value.includes(opt.value);
@@ -152,12 +152,12 @@ function ClassSelect({ value = [], onChange, options }) {
                     className={`
                       w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium transition-colors duration-100
                       ${isSelected
-                        ? "bg-indigo-50 text-indigo-600"
+                        ? "bg-accent-50 text-accent-600"
                         : "text-gray-600 hover:bg-gray-50"}
                     `}
                   >
                     <span>{opt.label}</span>
-                    {isSelected && <Check size={16} className="text-indigo-600" />}
+                    {isSelected && <Check size={16} className="text-accent-600" />}
                   </button>
                 </li>
               );
@@ -184,7 +184,7 @@ function Field({ label, error, children, className = "" }) {
 const inputCls = `
   w-full px-4 py-3 rounded-xl bg-gray-100 border border-transparent text-sm
   text-gray-800 placeholder-gray-400
-  focus:outline-none focus:bg-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100
+  focus:outline-none focus:bg-surface focus:border-accent-400 focus:ring-2 focus:ring-accent-100
   transition-all duration-150
 `;
 
@@ -374,7 +374,7 @@ export default function CreateAssignmentForm({
       className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/40 backdrop-blur-[2px]"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="relative w-full max-w-2xl bg-white rounded-2xl shadow-xl animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+      <div className="relative w-full max-w-2xl bg-surface rounded-2xl shadow-xl animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
 
         {/* Close */}
         <button
@@ -500,15 +500,15 @@ export default function CreateAssignmentForm({
                   {existingAttachmentUrls.map((url, idx) => (
                     <li
                       key={`ex-${url.slice(-40)}-${idx}`}
-                      className="flex items-center justify-between p-3 rounded-xl bg-indigo-50 border border-indigo-100"
+                      className="flex items-center justify-between p-3 rounded-xl bg-accent-50 border border-accent-100"
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-9 h-9 rounded-lg bg-white flex items-center justify-center text-indigo-600 shadow-sm shrink-0">
+                        <div className="w-9 h-9 rounded-lg bg-surface flex items-center justify-center text-accent-600 shadow-sm shrink-0">
                           <Paperclip size={16} />
                         </div>
                         <div className="min-w-0">
-                          <p className="text-sm font-bold text-indigo-900 truncate">{getAttachmentDisplayFileName(url)}</p>
-                          <a href={url} target="_blank" rel="noreferrer" className="text-[11px] text-indigo-500 hover:underline">Mở</a>
+                          <p className="text-sm font-bold text-accent-900 truncate">{getAttachmentDisplayFileName(url)}</p>
+                          <a href={url} target="_blank" rel="noreferrer" className="text-[11px] text-accent-500 hover:underline">Mở</a>
                         </div>
                       </div>
                       <button
@@ -529,7 +529,7 @@ export default function CreateAssignmentForm({
                       className="flex items-center justify-between p-3 rounded-xl bg-amber-50/80 border border-amber-100"
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-9 h-9 rounded-lg bg-white flex items-center justify-center text-amber-600 shadow-sm shrink-0">
+                        <div className="w-9 h-9 rounded-lg bg-surface flex items-center justify-center text-amber-600 shadow-sm shrink-0">
                           <Upload size={16} />
                         </div>
                         <div className="min-w-0">
@@ -554,9 +554,9 @@ export default function CreateAssignmentForm({
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={isUploading}
-                  className="w-full py-5 border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center gap-1.5 hover:border-indigo-300 hover:bg-indigo-50/30 transition-all text-gray-500 hover:text-indigo-600"
+                  className="w-full py-5 border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center gap-1.5 hover:border-accent-300 hover:bg-accent-50/30 transition-all text-gray-500 hover:text-accent-600"
                 >
-                  <Upload size={22} className="text-indigo-400" />
+                  <Upload size={22} className="text-accent-400" />
                   <span className="text-sm font-bold">Thêm file đính kèm</span>
                   <span className="text-[10px] text-gray-400 px-2 text-center">docx, pdf, xlsx, ảnh, zip…</span>
                 </button>
@@ -579,7 +579,7 @@ export default function CreateAssignmentForm({
             type="button"
             onClick={handleSubmit}
             disabled={isUploading}
-            className="px-6 py-2.5 rounded-xl bg-indigo-500 hover:bg-indigo-600 active:bg-indigo-700 text-white text-sm font-semibold shadow-sm transition-colors duration-150 cursor-pointer disabled:opacity-50"
+            className="px-6 py-2.5 rounded-xl bg-accent-500 hover:bg-accent-hover active:bg-accent-hover text-white text-sm font-semibold shadow-sm transition-colors duration-150 cursor-pointer disabled:opacity-50"
           >
             {isUploading ? "Đang tải lên..." : "Lưu"}
           </button>

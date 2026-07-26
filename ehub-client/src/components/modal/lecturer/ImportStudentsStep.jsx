@@ -223,8 +223,8 @@ export default function ImportStudentsStep({ onParsed, expectedClassCodes = [] }
           py-8 sm:py-10 gap-2
           cursor-pointer transition-colors
           ${dragging
-            ? "border-indigo-400 bg-indigo-50"
-            : "border-gray-200 bg-gray-50 hover:border-indigo-300 hover:bg-indigo-50/40"}
+            ? "border-accent-400 bg-accent-50"
+            : "border-gray-200 bg-gray-50 hover:border-accent-300 hover:bg-accent-50/40"}
         `}
         onClick={() => fileInputRef.current?.click()}
       >
@@ -236,7 +236,7 @@ export default function ImportStudentsStep({ onParsed, expectedClassCodes = [] }
           className="hidden"
           onChange={handleChange}
         />
-        <div className="w-10 h-10 flex items-center justify-center text-indigo-600">
+        <div className="w-10 h-10 flex items-center justify-center text-accent-600">
           <Upload size={28} strokeWidth={1.8} />
         </div>
         <p className="text-sm font-semibold text-gray-700">
@@ -250,7 +250,7 @@ export default function ImportStudentsStep({ onParsed, expectedClassCodes = [] }
       {file && (
         <div className="flex items-center justify-between px-3 py-2 bg-gray-50 rounded-lg border border-gray-100">
           <div className="flex items-center gap-2">
-            <File size={15} className="text-indigo-400 shrink-0" />
+            <File size={15} className="text-accent-400 shrink-0" />
             <span className="text-xs text-gray-700 truncate max-w-[220px] sm:max-w-xs">{file.name}</span>
             {parsing && <span className="text-[11px] text-gray-400 ml-1">Đang phân tích...</span>}
           </div>
@@ -290,7 +290,7 @@ export default function ImportStudentsStep({ onParsed, expectedClassCodes = [] }
             />
           </div>
 
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="bg-white rounded-2xl shadow-card overflow-hidden">
             {expectedClassCodes?.length > 0 && summary.needReview > 0 && (
               <div className="px-4 py-2 bg-amber-50 border-b border-amber-100 flex items-center justify-between gap-2">
                 <span className="text-xs text-amber-800">Cột Class không khớp với lớp đã chọn</span>
@@ -334,7 +334,7 @@ export default function ImportStudentsStep({ onParsed, expectedClassCodes = [] }
                             type="text"
                             value={s.classCode}
                             onChange={(e) => handleCellChange(i, "classCode", e.target.value)}
-                            className="w-full px-2 py-1 rounded-lg border border-gray-200 text-sm text-gray-800 focus:outline-none focus:ring-1 focus:ring-indigo-300 focus:border-indigo-400 bg-white"
+                            className="w-full px-2 py-1 rounded-lg border border-gray-200 text-sm text-gray-800 focus:outline-none focus:ring-1 focus:ring-accent-300 focus:border-accent-400 bg-white"
                           />
                         </td>
                         <td className="px-4 py-3 text-gray-500">
@@ -342,7 +342,7 @@ export default function ImportStudentsStep({ onParsed, expectedClassCodes = [] }
                             type="email"
                             value={s.email}
                             onChange={(e) => handleCellChange(i, "email", e.target.value)}
-                            className="w-full px-2 py-1 rounded-lg border border-gray-200 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-indigo-300 focus:border-indigo-400 bg-white"
+                            className="w-full px-2 py-1 rounded-lg border border-gray-200 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-accent-300 focus:border-accent-400 bg-white"
                           />
                         </td>
                         <td className="px-4 py-3 text-gray-800">
@@ -350,7 +350,7 @@ export default function ImportStudentsStep({ onParsed, expectedClassCodes = [] }
                             type="text"
                             value={s.memberCode}
                             onChange={(e) => handleCellChange(i, "memberCode", e.target.value)}
-                            className="w-full px-2 py-1 rounded-lg border border-gray-200 text-sm text-gray-800 focus:outline-none focus:ring-1 focus:ring-indigo-300 focus:border-indigo-400 bg-white"
+                            className="w-full px-2 py-1 rounded-lg border border-gray-200 text-sm text-gray-800 focus:outline-none focus:ring-1 focus:ring-accent-300 focus:border-accent-400 bg-white"
                           />
                         </td>
                         <td className="px-4 py-3 text-gray-800">
@@ -358,7 +358,7 @@ export default function ImportStudentsStep({ onParsed, expectedClassCodes = [] }
                             type="text"
                             value={s.fullname}
                             onChange={(e) => handleCellChange(i, "fullname", e.target.value)}
-                            className="w-full px-2 py-1 rounded-lg border border-gray-200 text-sm text-gray-800 focus:outline-none focus:ring-1 focus:ring-indigo-300 focus:border-indigo-400 bg-white"
+                            className="w-full px-2 py-1 rounded-lg border border-gray-200 text-sm text-gray-800 focus:outline-none focus:ring-1 focus:ring-accent-300 focus:border-accent-400 bg-white"
                           />
                         </td>
                         <td className="px-4 py-3 text-gray-800">
@@ -366,7 +366,7 @@ export default function ImportStudentsStep({ onParsed, expectedClassCodes = [] }
                             type="text"
                             value={s.major}
                             onChange={(e) => handleCellChange(i, "major", e.target.value)}
-                            className="w-full px-2 py-1 rounded-lg border border-gray-200 text-sm text-gray-800 focus:outline-none focus:ring-1 focus:ring-indigo-300 focus:border-indigo-400 bg-white"
+                            className="w-full px-2 py-1 rounded-lg border border-gray-200 text-sm text-gray-800 focus:outline-none focus:ring-1 focus:ring-accent-300 focus:border-accent-400 bg-white"
                           />
                         </td>
                       </tr>
@@ -392,7 +392,7 @@ export default function ImportStudentsStep({ onParsed, expectedClassCodes = [] }
                     max={100}
                     value={pageSize}
                     onChange={handlePageSizeChange}
-                    className="w-14 px-1 py-0.5 border border-gray-200 rounded-md text-[11px] text-gray-700 focus:outline-none focus:ring-1 focus:ring-indigo-300 focus:border-indigo-400"
+                    className="w-14 px-1 py-0.5 border border-gray-200 rounded-md text-[11px] text-gray-700 focus:outline-none focus:ring-1 focus:ring-accent-300 focus:border-accent-400"
                   />
                 </div>
               </div>
@@ -417,7 +417,7 @@ export default function ImportStudentsStep({ onParsed, expectedClassCodes = [] }
                       onClick={() => handleChangePage(p)}
                       className={`w-7 h-7 rounded-lg text-xs font-semibold ${
                         p === page
-                          ? "bg-indigo-600 text-white"
+                          ? "bg-accent-600 text-white"
                           : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
                       }`}
                     >
@@ -499,7 +499,7 @@ export default function ImportStudentsStep({ onParsed, expectedClassCodes = [] }
               <button
                 type="button"
                 onClick={() => setErrorModalOpen(false)}
-                className="px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700"
+                className="px-4 py-2.5 rounded-xl bg-accent-600 text-white text-xs font-semibold hover:bg-accent-700"
               >
                 Đã hiểu
               </button>

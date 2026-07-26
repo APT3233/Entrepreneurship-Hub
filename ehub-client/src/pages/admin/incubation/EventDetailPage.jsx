@@ -261,7 +261,7 @@ export default function EventDetailPage() {
     { key: "award_name", label: t("admin.ecosystem.analytics.panels.awards"), render: (row) => <span className="font-black text-slate-900">{row.award_name}</span> },
     { key: "award_type", label: t("admin.ecosystem.common.type"), render: (row) => <StatusBadge value={row.award_type} /> },
     { key: "awarded_at", label: t("admin.ecosystem.events.columns.awarded"), render: (row) => formatDate(row.awarded_at) },
-    { key: "evidence_url", label: t("admin.ecosystem.events.columns.evidence"), render: (row) => row.evidence_url ? <a href={row.evidence_url} target="_blank" rel="noreferrer" className="font-bold text-indigo-700 hover:underline">Open</a> : "-" },
+    { key: "evidence_url", label: t("admin.ecosystem.events.columns.evidence"), render: (row) => row.evidence_url ? <a href={row.evidence_url} target="_blank" rel="noreferrer" className="font-bold text-accent hover:underline">Open</a> : "-" },
   ], [t]);
 
   const mediaColumns = useMemo(() => [
@@ -269,18 +269,18 @@ export default function EventDetailPage() {
     { key: "media_type", label: t("admin.ecosystem.common.type"), render: (row) => <StatusBadge value={row.media_type} /> },
     { key: "startup_name", label: t("admin.ecosystem.analytics.columns.startup"), render: (row) => row.startup_name || "-" },
     { key: "visibility", label: t("admin.ecosystem.common.visibility"), render: (row) => <StatusBadge value={row.visibility} /> },
-    { key: "link", label: t("admin.ecosystem.events.columns.link"), render: (row) => row.file_url || row.external_url ? <a href={row.file_url || row.external_url} target="_blank" rel="noreferrer" className="font-bold text-indigo-700 hover:underline">Open</a> : "-" },
+    { key: "link", label: t("admin.ecosystem.events.columns.link"), render: (row) => row.file_url || row.external_url ? <a href={row.file_url || row.external_url} target="_blank" rel="noreferrer" className="font-bold text-accent hover:underline">Open</a> : "-" },
     { key: "created_at", label: t("admin.ecosystem.events.columns.created"), render: (row) => formatDate(row.created_at) },
   ], [t]);
 
-  if (loading) return <div className="rounded-2xl bg-white p-8 text-center text-sm text-slate-400">{t("admin.ecosystem.common.loading")}</div>;
-  if (error) return <div className="rounded-2xl bg-rose-50 p-8 text-center text-sm font-bold text-rose-600">{error}</div>;
+  if (loading) return <div className="rounded-card bg-surface p-8 text-center text-sm text-slate-400">{t("admin.ecosystem.common.loading")}</div>;
+  if (error) return <div className="rounded-card bg-rose-50 p-8 text-center text-sm font-bold text-rose-600">{error}</div>;
   if (!event) return null;
 
   return (
     <div className="space-y-5">
-      <button type="button" onClick={() => navigate("/admin/ecosystem/events")} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"><ArrowLeft size={16} /> {t("admin.ecosystem.common.back")}</button>
-      <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+      <button type="button" onClick={() => navigate("/admin/ecosystem/events")} className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"><ArrowLeft size={16} /> {t("admin.ecosystem.common.back")}</button>
+      <div className="rounded-card border border-border bg-surface p-5">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <h2 className="text-xl font-black text-slate-900">{event.event_name}</h2>
@@ -291,8 +291,8 @@ export default function EventDetailPage() {
               <StatusBadge value={event.visibility} />
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-3 text-center text-sm font-black text-indigo-700">
-            <div className="rounded-xl bg-indigo-50 p-3">
+          <div className="grid grid-cols-3 gap-3 text-center text-sm font-black text-accent">
+            <div className="rounded-xl bg-accent-bg p-3">
               {event.total_startups || 0}
               <p className="text-[11px] uppercase opacity-70">{t("admin.ecosystem.events.columns.startups")}</p>
             </div>
@@ -307,9 +307,9 @@ export default function EventDetailPage() {
           </div>
         </div>
       </div>
-      <div className="flex gap-2 overflow-x-auto rounded-2xl border border-slate-100 bg-white p-2 shadow-sm">
+      <div className="flex gap-2 overflow-x-auto rounded-card border border-border bg-surface p-2">
         {tabs.map((tab) => (
-          <button key={tab} type="button" onClick={() => openTab(tab)} className={`whitespace-nowrap rounded-xl px-3 py-2 text-sm font-bold ${activeTab === tab ? "bg-indigo-50 text-indigo-700" : "text-slate-500 hover:bg-slate-50"}`}>
+          <button key={tab} type="button" onClick={() => openTab(tab)} className={`whitespace-nowrap rounded-xl px-3 py-2 text-sm font-bold ${activeTab === tab ? "bg-accent-bg text-accent" : "text-slate-500 hover:bg-slate-50"}`}>
             {t(`admin.ecosystem.events.tabs.${tab}`)}
           </button>
         ))}
@@ -334,31 +334,31 @@ export default function EventDetailPage() {
       ) : null}
 
       {activeTab === "startups" ? (
-        <Panel title={t("admin.ecosystem.events.tabs.startups")} actions={<button type="button" onClick={() => setParticipantModal(true)} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-3 py-2 text-sm font-bold text-white"><Plus size={16} /> {t("admin.ecosystem.common.add")}</button>}>
+        <Panel title={t("admin.ecosystem.events.tabs.startups")} actions={<button type="button" onClick={() => setParticipantModal(true)} className="inline-flex items-center gap-2 rounded-xl bg-accent px-3 py-2 text-sm font-bold text-white"><Plus size={16} /> {t("admin.ecosystem.common.add")}</button>}>
           <AdminTable columns={startupColumns} rows={startups} emptyText={t("admin.ecosystem.events.empty.startups")} />
         </Panel>
       ) : null}
 
       {activeTab === "judges" ? (
-        <Panel title={t("admin.ecosystem.events.tabs.judges")} actions={<button type="button" onClick={() => setJudgeModal(true)} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-3 py-2 text-sm font-bold text-white"><Plus size={16} /> {t("admin.ecosystem.common.add")}</button>}>
+        <Panel title={t("admin.ecosystem.events.tabs.judges")} actions={<button type="button" onClick={() => setJudgeModal(true)} className="inline-flex items-center gap-2 rounded-xl bg-accent px-3 py-2 text-sm font-bold text-white"><Plus size={16} /> {t("admin.ecosystem.common.add")}</button>}>
           <AdminTable columns={judgeColumns} rows={judges} emptyText={t("admin.ecosystem.events.empty.judges")} />
         </Panel>
       ) : null}
 
       {activeTab === "feedback" ? (
-        <Panel title={t("admin.ecosystem.events.tabs.feedback")} actions={<button type="button" onClick={() => setFeedbackModal(true)} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-3 py-2 text-sm font-bold text-white"><Plus size={16} /> {t("admin.ecosystem.common.add")}</button>}>
+        <Panel title={t("admin.ecosystem.events.tabs.feedback")} actions={<button type="button" onClick={() => setFeedbackModal(true)} className="inline-flex items-center gap-2 rounded-xl bg-accent px-3 py-2 text-sm font-bold text-white"><Plus size={16} /> {t("admin.ecosystem.common.add")}</button>}>
           <AdminTable columns={feedbackColumns} rows={feedbacks} emptyText={t("admin.ecosystem.events.empty.feedback")} />
         </Panel>
       ) : null}
 
       {activeTab === "awards" ? (
-        <Panel title={t("admin.ecosystem.events.tabs.awards")} actions={<button type="button" onClick={() => setAwardModal(true)} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-3 py-2 text-sm font-bold text-white"><Plus size={16} /> {t("admin.ecosystem.common.add")}</button>}>
+        <Panel title={t("admin.ecosystem.events.tabs.awards")} actions={<button type="button" onClick={() => setAwardModal(true)} className="inline-flex items-center gap-2 rounded-xl bg-accent px-3 py-2 text-sm font-bold text-white"><Plus size={16} /> {t("admin.ecosystem.common.add")}</button>}>
           <AdminTable columns={awardColumns} rows={awards} emptyText={t("admin.ecosystem.events.empty.awards")} />
         </Panel>
       ) : null}
 
       {activeTab === "media" ? (
-        <Panel title={t("admin.ecosystem.events.tabs.media")} actions={<button type="button" onClick={() => setMediaModal(true)} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-3 py-2 text-sm font-bold text-white"><Plus size={16} /> {t("admin.ecosystem.common.add")}</button>}>
+        <Panel title={t("admin.ecosystem.events.tabs.media")} actions={<button type="button" onClick={() => setMediaModal(true)} className="inline-flex items-center gap-2 rounded-xl bg-accent px-3 py-2 text-sm font-bold text-white"><Plus size={16} /> {t("admin.ecosystem.common.add")}</button>}>
           <AdminTable columns={mediaColumns} rows={media} emptyText={t("admin.ecosystem.events.empty.media")} />
         </Panel>
       ) : null}

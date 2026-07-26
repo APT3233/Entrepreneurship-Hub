@@ -30,8 +30,8 @@ export default function RequestMentorPage() {
   };
   return (
     <form onSubmit={submit} className="space-y-5">
-      <button type="button" onClick={() => navigate(-1)} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700"><ArrowLeft size={16} /> {t("common.back")}</button>
-      <section className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+      <button type="button" onClick={() => navigate(-1)} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-surface px-3 py-2 text-sm font-bold text-slate-700"><ArrowLeft size={16} /> {t("common.back")}</button>
+      <section className="rounded-2xl border border-slate-100 bg-surface p-5 shadow-sm">
         <h2 className="mb-4 text-xl font-black text-slate-900">{t("lecturer.mentoringPage.requestTitle")}</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label={t("lecturer.mentoringPage.fields.requestedRole")}><Select value={form.requested_role} onChange={(value) => set("requested_role", value)} options={requestRoleOptions} /></Field>

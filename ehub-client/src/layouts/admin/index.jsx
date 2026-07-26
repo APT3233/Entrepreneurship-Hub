@@ -420,14 +420,14 @@ function LanguageSwitcher() {
           <button
             type="button"
             onClick={() => { changeLanguage("vi"); setOpen(false); }}
-            className={`w-full text-left px-3 py-2 text-xs font-semibold hover:bg-slate-50 transition-colors flex items-center gap-2 cursor-pointer ${language === "vi" ? "text-indigo-600 bg-indigo-50/50" : "text-slate-600"}`}
+            className={`w-full text-left px-3 py-2 text-xs font-semibold hover:bg-slate-50 transition-colors flex items-center gap-2 cursor-pointer ${language === "vi" ? "text-accent-600 bg-accent-50/50" : "text-slate-600"}`}
           >
             <span>🇻🇳 Tiếng Việt</span>
           </button>
           <button
             type="button"
             onClick={() => { changeLanguage("en"); setOpen(false); }}
-            className={`w-full text-left px-3 py-2 text-xs font-semibold hover:bg-slate-50 transition-colors flex items-center gap-2 cursor-pointer ${language === "en" ? "text-indigo-600 bg-indigo-50/50" : "text-slate-600"}`}
+            className={`w-full text-left px-3 py-2 text-xs font-semibold hover:bg-slate-50 transition-colors flex items-center gap-2 cursor-pointer ${language === "en" ? "text-accent-600 bg-accent-50/50" : "text-slate-600"}`}
           >
             <span>🇺🇸 English</span>
           </button>
@@ -676,7 +676,7 @@ function AdminHeader({ user, onMenu, onLogout, onSearchClick }) {
                     setOpen(false);
                     navigate("/admin/profile");
                   }}
-                  className="w-full text-left px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:text-indigo-600 transition-colors flex items-center gap-2 cursor-pointer"
+                  className="w-full text-left px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:text-accent-600 transition-colors flex items-center gap-2 cursor-pointer"
                 >
                   <User size={14} className="text-slate-400" />
                   <span>{t("profile.accountInfo")}</span>

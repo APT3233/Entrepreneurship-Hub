@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import StatCard from "@/components/ui/Card/StatCard";
+import PageHero from "@/components/ui/PageHero";
 import { BookOpenIcon, Plus } from "lucide-react";
 import { StatIconGrading, StatIconAssignment, StatIconGroups } from "@/components/icons/lecture";
 import Dropdown from "@/components/ui/filter/DropDown";
@@ -268,85 +268,63 @@ export default function ClassesPage() {
 
   return (
     <>
-      {/* Section 1: Thống kê tổng quan */}
-      <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <StatCard
-          title="Lớp học"
-          value={stats.classCount}
-          icon={<BookOpenIcon />}
-          iconBg="bg-blue-100"
-          iconColor="text-blue-500"
-        />
-        <StatCard
-          title="Nhóm sinh viên"
-          value={stats.groupCount}
-          icon={<StatIconGroups />}
-          iconBg="bg-amber-100"
-          iconColor="text-amber-600"
-        />
-        <StatCard
-          title="Bài tập"
-          value={stats.assignmentCount}
-          icon={<StatIconAssignment />}
-          iconBg="bg-purple-100"
-          iconColor="text-violet-600"
-        />
-        <StatCard
-          title="Cần chấm"
-          value={stats.needGradingCount}
-          icon={<StatIconGrading />}
-          iconBg="bg-green-100"
-          iconColor="text-green-600"
-        />
-      </section>
-
-      {/* Section 2: Bộ lọc + nút Tạo lớp học */}
-      <section className="mt-4 sm:mt-6 w-full p-4 bg-white rounded-2xl shadow-sm border border-gray-100">
-        <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-4">
-          <div className="grid grid-cols-3 items-center gap-2 sm:gap-4 w-full md:w-auto md:flex">
-            <Dropdown
-              label={t("lecturer.filterYear")}
-              options={yearOptions}
-              value={filterYear}
-              onChange={handleYearChange}
-            />
-            <Dropdown
-              label={t("lecturer.filterSemester")}
-              options={semesterOptions}
-              value={filterSemesterId}
-              onChange={handleSemesterChange}
-              disabled={filterYear == null}
-            />
-            <Dropdown
-              label="Lớp"
-              options={classFilterOptions}
-              value={filterClass}
-              onChange={(v) => setFilterClass(v)}
-              disabled={filterYear == null || filterSemesterId == null}
-            />
-          </div>
+      {/* Hero: tiêu đề + KPI + hành động chính */}
+      <PageHero
+        title="Lớp học"
+        subtitle="Quản lý các lớp khởi nghiệp, nhóm sinh viên và tiến độ giảng dạy của bạn."
+        kpis={[
+          { label: "Lớp học", value: stats.classCount, icon: BookOpenIcon, tone: "accent" },
+          { label: "Nhóm sinh viên", value: stats.groupCount, icon: StatIconGroups, tone: "blue" },
+          { label: "Bài tập", value: stats.assignmentCount, icon: StatIconAssignment, tone: "amber" },
+          { label: "Cần chấm", value: stats.needGradingCount, icon: StatIconGrading, tone: "green" },
+        ]}
+        actions={
           <button
             type="button"
             disabled={!canCreateClass}
             onClick={canCreateClass ? () => setCreateFormOpen(true) : undefined}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold shadow-sm transition-colors shrink-0 ${
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-control text-sm font-medium transition-all duration-150 shrink-0 ${
               canCreateClass
-                ? "bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer"
-                : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                ? "bg-accent hover:bg-accent-hover text-white shadow-sm hover:shadow-md cursor-pointer"
+                : "bg-subtle text-text-muted cursor-not-allowed"
             }`}
           >
             <Plus size={18} strokeWidth={2.5} />
             Tạo lớp học
           </button>
-        </div>
-      </section>
+        }
+      />
+
+      {/* Thanh lọc gọn */}
+      <div className="mt-4 sm:mt-6 flex flex-wrap items-center gap-3">
+        <Dropdown
+          label={t("lecturer.filterYear")}
+          options={yearOptions}
+          value={filterYear}
+          onChange={handleYearChange}
+        />
+        <Dropdown
+          label={t("lecturer.filterSemester")}
+          options={semesterOptions}
+          value={filterSemesterId}
+          onChange={handleSemesterChange}
+          disabled={filterYear == null}
+        />
+        <Dropdown
+          label="Lớp"
+          options={classFilterOptions}
+          value={filterClass}
+          onChange={(v) => setFilterClass(v)}
+          disabled={filterYear == null || filterSemesterId == null}
+        />
+      </div>
 
       {/* Nội dung chính: empty state nếu chưa có lớp, ngược lại hiển thị danh sách ClassCard */}
       <div className="mt-4 sm:mt-6">
         {pageLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 full-width">
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="bg-white rounded-3xl border border-gray-100 shadow-sm p-5 h-[200px] animate-pulse">
+              <div key={i} className="bg-surface rounded-3xl shadow-card p-5 h-[200px] animate-pulse">
                 <div className="h-5 bg-gray-200 rounded w-1/3 mb-4" />
                 <div className="h-4 bg-gray-100 rounded w-1/2 mb-2" />
                 <div className="h-4 bg-gray-100 rounded w-2/3" />

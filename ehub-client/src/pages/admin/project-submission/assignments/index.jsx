@@ -233,10 +233,10 @@ export default function AdminAssignments() {
         onClear={clearFilters}
         right={(
           <div className="flex items-center gap-2">
-            <button type="button" onClick={exportAll} className="inline-flex h-10 items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+            <button type="button" onClick={exportAll} className="inline-flex h-10 items-center gap-2 rounded-lg border border-border bg-surface px-4 text-sm font-semibold text-gray-700 hover:bg-gray-50">
               <FileDown size={16} /> Export CSV
             </button>
-            <button type="button" onClick={openCreate} className="inline-flex h-10 items-center gap-2 rounded-lg bg-indigo-600 px-4 text-sm font-semibold text-white hover:bg-indigo-700">
+            <button type="button" onClick={openCreate} className="inline-flex h-10 items-center gap-2 rounded-lg bg-accent px-4 text-sm font-semibold text-white hover:bg-accent-hover">
               <Plus size={16} /> Create assignment
             </button>
           </div>
@@ -261,8 +261,8 @@ export default function AdminAssignments() {
         <div className="space-y-6">
           {/* Section 1: Basic Information */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+            <div className="flex items-center gap-2 border-b border-border pb-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent-bg text-accent">
                 <Info size={16} />
               </span>
               <h4 className="text-sm font-bold text-gray-800">
@@ -304,7 +304,7 @@ export default function AdminAssignments() {
 
           {/* Section 2: Submission Settings */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
+            <div className="flex items-center gap-2 border-b border-border pb-2">
               <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
                 <Settings size={16} />
               </span>

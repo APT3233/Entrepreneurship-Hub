@@ -55,7 +55,7 @@ export default function AdminAnalyticsOverview() {
           <BarListChart title={t("admin.analytics.charts.submissionStatus")} rows={data?.charts?.submission_status_distribution || []} labelKey="status" valueKey="total" />
         </div>
 
-        <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+        <div className="rounded-card border border-border bg-surface p-5">
           <h2 className="mb-4 text-base font-bold text-gray-900">{t("admin.analytics.sections.classPerformanceSnapshot")}</h2>
           <div className="grid gap-3 md:grid-cols-2">
             <div className="rounded-xl bg-emerald-50 p-4">

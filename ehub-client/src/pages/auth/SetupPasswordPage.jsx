@@ -115,7 +115,7 @@ export default function SetupPasswordPage() {
                 <AlertCircleIcon />
                 {tokenError}
               </div>
-              <Link to="/auth/login" className="text-sm text-indigo-600 font-medium hover:underline">
+              <Link to="/auth/login" className="text-sm text-accent-600 font-medium hover:underline">
                 Về trang đăng nhập
               </Link>
             </div>
@@ -128,12 +128,12 @@ export default function SetupPasswordPage() {
                   <img 
                     src={data.picture} 
                     alt="Avatar" 
-                    className="w-16 h-16 rounded-full mx-auto mb-3 border-2 border-indigo-100 p-0.5"
+                    className="w-16 h-16 rounded-full mx-auto mb-3 border-2 border-accent-100 p-0.5"
                   />
                 )}
                 <h2 className="text-sm font-bold text-gray-900">{data.name}</h2>
                 <p className="text-xs text-gray-500 mt-1">{data.email}</p>
-                <div className="mt-4 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 text-indigo-600 text-[10px] font-bold uppercase tracking-wider">
+                <div className="mt-4 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent-50 text-accent-600 text-[10px] font-bold uppercase tracking-wider">
                   Mã số: {data.studentCode}
                 </div>
               </div>
@@ -154,7 +154,7 @@ export default function SetupPasswordPage() {
 
                 <div className="mb-4">
                   <label className="block text-sm font-semibold text-gray-800 mb-1.5">Mật khẩu mới</label>
-                  <div className="flex items-center rounded-xl px-3 py-3 gap-2 bg-gray-100 border border-transparent focus-within:border-indigo-400">
+                  <div className="flex items-center rounded-xl px-3 py-3 gap-2 bg-gray-100 border border-transparent focus-within:border-accent-400">
                     <LockIcon />
                     <input
                       type="password"
@@ -169,7 +169,7 @@ export default function SetupPasswordPage() {
 
                 <div className="mb-6">
                   <label className="block text-sm font-semibold text-gray-800 mb-1.5">Xác nhận mật khẩu</label>
-                  <div className="flex items-center rounded-xl px-3 py-3 gap-2 bg-gray-100 border border-transparent focus-within:border-indigo-400">
+                  <div className="flex items-center rounded-xl px-3 py-3 gap-2 bg-gray-100 border border-transparent focus-within:border-accent-400">
                     <LockIcon />
                     <input
                       type="password"
@@ -185,7 +185,7 @@ export default function SetupPasswordPage() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="w-full py-3 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 transition-colors shadow-md shadow-indigo-100"
+                  className="w-full py-3 rounded-xl text-sm font-semibold text-white bg-accent-600 hover:bg-accent-700 disabled:opacity-60 transition-colors shadow-md shadow-accent-100"
                 >
                   {submitting ? "Đang lưu…" : "Hoàn tất thiết lập"}
                 </button>
@@ -195,7 +195,7 @@ export default function SetupPasswordPage() {
         </div>
 
         <p className="text-center mt-6 text-sm text-gray-500">
-          <Link to="/auth/login" className="text-indigo-600 font-medium hover:underline">
+          <Link to="/auth/login" className="text-accent-600 font-medium hover:underline">
             Quay lại đăng nhập
           </Link>
         </p>

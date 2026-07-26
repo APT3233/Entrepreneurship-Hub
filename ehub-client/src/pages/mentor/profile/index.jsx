@@ -72,26 +72,26 @@ export default function MentorProfilePage() {
     }
   };
 
-  if (loading) return <div className="rounded-2xl bg-white p-8 text-center text-sm text-slate-400">{t("common.loading") || "Loading..."}</div>;
-  if (error) return <div className="rounded-2xl bg-rose-50 p-8 text-center text-sm font-bold text-rose-600">{error}</div>;
+  if (loading) return <div className="rounded-card border border-border bg-surface p-8 text-center text-sm text-text-muted">{t("common.loading") || "Loading..."}</div>;
+  if (error) return <div className="rounded-card border border-border bg-surface p-8 text-center text-sm font-medium text-danger-text">{error}</div>;
   if (!mentor) return null;
 
   return (
     <div className="space-y-5">
       <MentorHeader mentor={mentor} />
-      <div className="flex gap-2 rounded-2xl border border-slate-100 bg-white p-2 shadow-sm">
-        <button type="button" onClick={() => setSearchParams({})} className={`rounded-xl px-3 py-2 text-sm font-bold ${activeTab === "profile" ? "bg-teal-50 text-teal-700" : "text-slate-500 hover:bg-slate-50"}`}>{t("mentorPortal.profile.tabProfile")}</button>
-        <button type="button" onClick={() => setSearchParams({ tab: "expertise" })} className={`rounded-xl px-3 py-2 text-sm font-bold ${activeTab === "expertise" ? "bg-teal-50 text-teal-700" : "text-slate-500 hover:bg-slate-50"}`}>{t("mentorPortal.profile.tabExpertise")}</button>
+      <div className="flex gap-2 rounded-card border border-border bg-surface p-2">
+        <button type="button" onClick={() => setSearchParams({})} className={`rounded-control px-3 py-2 text-sm font-medium ${activeTab === "profile" ? "bg-accent-bg text-accent" : "text-text-secondary hover:bg-subtle"}`}>{t("mentorPortal.profile.tabProfile")}</button>
+        <button type="button" onClick={() => setSearchParams({ tab: "expertise" })} className={`rounded-control px-3 py-2 text-sm font-medium ${activeTab === "expertise" ? "bg-accent-bg text-accent" : "text-text-secondary hover:bg-subtle"}`}>{t("mentorPortal.profile.tabExpertise")}</button>
       </div>
       {activeTab === "profile" ? (
-        <form onSubmit={saveProfile} className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+        <form onSubmit={saveProfile} className="rounded-card border border-border bg-surface p-5">
           <MentorForm form={form} setForm={setForm} />
-          <div className="mt-4 flex justify-end"><button disabled={saving} className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-4 py-2 text-sm font-bold text-white hover:bg-teal-700 disabled:opacity-50"><Save size={16} /> {t("mentorPortal.profile.saveProfile")}</button></div>
+          <div className="mt-4 flex justify-end"><button disabled={saving} className="inline-flex items-center gap-2 rounded-control bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-50"><Save size={16} /> {t("mentorPortal.profile.saveProfile")}</button></div>
         </form>
       ) : (
-        <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+        <div className="rounded-card border border-border bg-surface p-5">
           <ExpertiseEditor areas={areas} items={expertiseItems} setItems={setExpertiseItems} />
-          <div className="mt-4 flex justify-end"><button type="button" disabled={saving} onClick={saveExpertise} className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-4 py-2 text-sm font-bold text-white hover:bg-teal-700 disabled:opacity-50"><Save size={16} /> {t("mentorPortal.profile.saveExpertise")}</button></div>
+          <div className="mt-4 flex justify-end"><button type="button" disabled={saving} onClick={saveExpertise} className="inline-flex items-center gap-2 rounded-control bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-50"><Save size={16} /> {t("mentorPortal.profile.saveExpertise")}</button></div>
         </div>
       )}
     </div>

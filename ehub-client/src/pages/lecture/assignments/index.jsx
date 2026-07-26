@@ -113,7 +113,7 @@ export default function AssignmentManagement() {
           <button
             onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
             disabled={currentPage === 1}
-            className="inline-flex items-center justify-center p-2.5 rounded-xl border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-95 cursor-pointer shadow-sm"
+            className="inline-flex items-center justify-center p-2.5 rounded-xl border border-slate-200 text-slate-600 bg-surface hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-95 cursor-pointer shadow-sm"
           >
             <ChevronLeft size={16} />
           </button>
@@ -125,7 +125,7 @@ export default function AssignmentManagement() {
               className={`inline-flex items-center justify-center w-10 h-10 rounded-xl text-xs font-black transition-all cursor-pointer ${
                 currentPage === page
                   ? "bg-slate-800 text-white shadow-md"
-                  : "border border-slate-200 text-slate-600 bg-white hover:bg-slate-50"
+                  : "border border-slate-200 text-slate-600 bg-surface hover:bg-slate-50"
               }`}
             >
               {page}
@@ -135,7 +135,7 @@ export default function AssignmentManagement() {
           <button
             onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
             disabled={currentPage === totalPages}
-            className="inline-flex items-center justify-center p-2.5 rounded-xl border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-95 cursor-pointer shadow-sm"
+            className="inline-flex items-center justify-center p-2.5 rounded-xl border border-slate-200 text-slate-600 bg-surface hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-95 cursor-pointer shadow-sm"
           >
             <ChevronRight size={16} />
           </button>
@@ -437,10 +437,10 @@ export default function AssignmentManagement() {
         {/* Page Header */}
         <div className="flex flex-row items-center justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+            <h1 className="text-2xl font-bold text-text-primary tracking-tight">
               Quản lý học tập
             </h1>
-            <p className="mt-0.5 text-sm text-gray-500 font-medium">
+            <p className="mt-0.5 text-sm text-text-secondary font-medium">
               Thiết lập bài tập và các mốc checkpoint cho lớp học
             </p>
           </div>
@@ -454,7 +454,7 @@ export default function AssignmentManagement() {
               }
             }}
             disabled={activeTab === "checkpoint" && !filterClass}
-            className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-sm font-bold shadow-lg shadow-indigo-100 transition-all active:scale-95 cursor-pointer"
+            className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-accent hover:bg-accent-hover disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-sm font-bold shadow-lg shadow-accent-100 transition-all active:scale-95 cursor-pointer"
           >
             <Plus size={18} />
             {activeTab === "assignments" ? "Tạo bài tập" : "Thêm Checkpoint"}
@@ -462,17 +462,17 @@ export default function AssignmentManagement() {
         </div>
 
         {/* Tab Switcher */}
-        <div className="flex p-1.5 bg-gray-100/50 rounded-2xl mb-8 w-fit border border-gray-100">
+        <div className="flex p-1.5 bg-gray-100/50 rounded-2xl mb-8 w-fit">
           <button
             onClick={() => handleTabChange("assignments")}
-            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${activeTab === "assignments" ? "bg-white text-indigo-600 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${activeTab === "assignments" ? "bg-surface text-accent-600 shadow-sm" : "text-text-secondary hover:text-text-secondary"}`}
           >
             <ListChecks size={16} />
             Bài tập (Assignments)
           </button>
           <button
             onClick={() => handleTabChange("checkpoints")}
-            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${activeTab === "checkpoint" ? "bg-white text-indigo-600 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${activeTab === "checkpoint" ? "bg-surface text-accent-600 shadow-sm" : "text-text-secondary hover:text-text-secondary"}`}
           >
             <CheckSquare size={16} />
             Mốc quan trọng (Checkpoints)
@@ -492,13 +492,13 @@ export default function AssignmentManagement() {
           {activeTab === "assignments" ? (
             <div className="w-full">
               {isLoadingAssignments ? (
-                <div className="flex flex-col items-center justify-center py-20 text-gray-400">
-                  <div className="w-8 h-8 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin mb-4" />
+                <div className="flex flex-col items-center justify-center py-20 text-text-muted">
+                  <div className="w-8 h-8 border-4 border-accent-100 border-t-accent-600 rounded-full animate-spin mb-4" />
                   <p className="text-sm font-medium">Đang tải bài tập...</p>
                 </div>
               ) : assignments.length === 0 ? (
-                <div className="bg-white rounded-[32px] border border-gray-100 py-20 text-center shadow-sm">
-                  <p className="text-gray-400 text-sm font-medium">Không có bài tập nào được tìm thấy.</p>
+                <div className="bg-surface rounded-[32px] py-20 text-center shadow-sm">
+                  <p className="text-text-muted text-sm font-medium">Không có bài tập nào được tìm thấy.</p>
                 </div>
               ) : (
                 <>
@@ -528,13 +528,13 @@ export default function AssignmentManagement() {
           ) : (
             <div className="w-full">
               {isLoadingCheckpoints ? (
-                <div className="flex flex-col items-center justify-center py-20 text-gray-400">
-                  <div className="w-8 h-8 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin mb-4" />
+                <div className="flex flex-col items-center justify-center py-20 text-text-muted">
+                  <div className="w-8 h-8 border-4 border-accent-100 border-t-accent-600 rounded-full animate-spin mb-4" />
                   <p className="text-sm font-medium">Đang tải checkpoint...</p>
                 </div>
               ) : checkpoints.length === 0 ? (
-                <div className="bg-white rounded-[32px] border border-gray-100 py-20 text-center shadow-sm">
-                  <p className="text-gray-400 text-sm font-medium">Chưa có checkpoint nào cho lớp này.</p>
+                <div className="bg-surface rounded-[32px] py-20 text-center shadow-sm">
+                  <p className="text-text-muted text-sm font-medium">Chưa có checkpoint nào cho lớp này.</p>
                 </div>
               ) : (
                 <>

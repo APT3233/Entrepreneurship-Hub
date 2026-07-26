@@ -27,7 +27,7 @@ export default function NavProgress() {
       aria-hidden
     >
       <div
-        className="h-full bg-gradient-to-r from-indigo-500 via-indigo-400 to-indigo-600 rounded-full"
+        className="h-full bg-gradient-to-r from-accent-500 via-accent-400 to-accent-600 rounded-full"
         style={{
           animation: "navProgressSlide 0.5s ease-out forwards",
           boxShadow: "0 0 10px rgba(99, 102, 241, 0.5)",

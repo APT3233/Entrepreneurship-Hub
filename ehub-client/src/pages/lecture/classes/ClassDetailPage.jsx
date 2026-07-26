@@ -1,9 +1,7 @@
 import { useState, useMemo, useEffect } from "react"; // Trigger reload
 import { useParams, useNavigate } from "react-router-dom";
-import { Plus, Users, Settings2 } from "lucide-react";
-import StatCard from "@/components/ui/Card/StatCard";
-import { StatIconGrading, StatIconAssignment, StatIconGroups } from "@/components/icons/lecture";
 import Dropdown from "@/components/ui/filter/DropDown";
+import ClassHeader from "./components/ClassHeader";
 import ClassInfo from "./components/ClassInfo";
 import StudentList from "./components/StudentList";
 import CreateGroupForm from "@/components/form/lecturer/CreateGroupForm";
@@ -365,94 +363,67 @@ export default function ClassDetailPage() {
 
   return (
     <>
-      {/* Section 1: Thống kê */}
+      {/* Section 1: Header "trung tâm chỉ huy" của lớp */}
       {pageLoading ? (
-        <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 animate-pulse">
-              <div className="h-4 bg-gray-200 rounded w-1/2 mb-3" />
-              <div className="h-6 bg-gray-100 rounded w-1/3" />
+        <div className="rounded-card bg-surface shadow-card p-6 animate-pulse">
+          <div className="flex items-center gap-4">
+            <div className="h-14 w-14 rounded-2xl bg-gray-200" />
+            <div className="flex-1">
+              <div className="h-5 bg-gray-200 rounded w-1/3 mb-2" />
+              <div className="h-4 bg-gray-100 rounded w-1/2" />
             </div>
-          ))}
-        </section>
+          </div>
+          <div className="mt-6 grid grid-cols-4 gap-4 border-t border-border pt-5">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="h-10 bg-gray-100 rounded" />
+            ))}
+          </div>
+        </div>
       ) : (
-        <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          <StatCard
-            title="Số sinh viên"
-            value={detail.studentCount}
-            icon={<Users size={22} />}
-            iconBg="bg-blue-100"
-            iconColor="text-blue-500"
-          />
-          <StatCard
-            title="Nhóm sinh viên"
-            value={detail.groupCount}
-            icon={<StatIconGroups />}
-            iconBg="bg-amber-100"
-            iconColor="text-amber-600"
-          />
-          <StatCard
-            title="Bài tập"
-            value={detail.assignmentCount}
-            icon={<StatIconAssignment />}
-            iconBg="bg-purple-100"
-            iconColor="text-violet-600"
-          />
-          <StatCard
-            title="Cần chấm"
-            value={detail.needGradingCount}
-            icon={<StatIconGrading />}
-            iconBg="bg-green-100"
-            iconColor="text-green-600"
-          />
-        </section>
+        <ClassHeader
+          classCode={detail.classCode}
+          subject={detail.subject}
+          semester={detail.semester}
+          lecturer={detail.lecturer}
+          semesterStatus={semesterStatus}
+          isNewlyCreated={isNewlyCreated}
+          studentCount={detail.studentCount}
+          groupCount={detail.groupCount}
+          assignmentCount={detail.assignmentCount}
+          needGradingCount={detail.needGradingCount}
+          canCreateGroup={canCreateGroup}
+          onCreateGroup={() => setCreateGroupModalOpen(true)}
+        />
       )}
 
-      {/* Section 2: Filter + Tạo nhóm */}
-      <section className="mt-4 sm:mt-6 w-full p-4 bg-white rounded-2xl shadow-sm border border-gray-100">
-        <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-4">
-          <div className="flex flex-wrap items-center gap-3 sm:gap-4">
-            <Dropdown
-              label={t("lecturer.filterYear")}
-              options={yearOptions}
-              value={filterYear}
-              onChange={handleYearChange}
-            />
-            <Dropdown
-              label={t("lecturer.filterSemester")}
-              options={semesterOptions}
-              value={filterSemesterId}
-              onChange={handleSemesterChange}
-              disabled={filterYear == null}
-            />
-            <Dropdown
-              label={t("filterLabels.class")}
-              options={classFilterOptions}
-              value={Number(id)}
-              onChange={handleClassChange}
-              disabled={filterYear == null || filterSemesterId == null}
-            />
-          </div>
-          <button
-            type="button"
-            disabled={!canCreateGroup}
-            onClick={canCreateGroup ? () => setCreateGroupModalOpen(true) : undefined}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold shadow-sm transition-colors shrink-0 ${
-              canCreateGroup
-                ? "bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer"
-                : "bg-gray-200 text-gray-400 cursor-not-allowed"
-            }`}
-          >
-            <Plus size={18} strokeWidth={2.5} />
-            Tạo nhóm
-          </button>
-        </div>
-      </section>
+      {/* Section 2: Thanh lọc gọn (đổi năm/kỳ/lớp) */}
+      <div className="mt-4 sm:mt-6 flex flex-wrap items-center gap-3">
+        <Dropdown
+          label={t("lecturer.filterYear")}
+          options={yearOptions}
+          value={filterYear}
+          onChange={handleYearChange}
+        />
+        <Dropdown
+          label={t("lecturer.filterSemester")}
+          options={semesterOptions}
+          value={filterSemesterId}
+          onChange={handleSemesterChange}
+          disabled={filterYear == null}
+        />
+        <Dropdown
+          label={t("filterLabels.class")}
+          options={classFilterOptions}
+          value={Number(id)}
+          onChange={handleClassChange}
+          disabled={filterYear == null || filterSemesterId == null}
+        />
+      </div>
 
       {/* Section 3: Thông tin lớp học */}
       {pageLoading ? (
         <section className="mt-4 sm:mt-6">
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 animate-pulse">
+          <div className="bg-surface rounded-2xl shadow-card p-6 animate-pulse">
             <div className="h-5 bg-gray-200 rounded w-1/4 mb-4" />
             <div className="h-4 bg-gray-100 rounded w-1/2 mb-2" />
             <div className="h-4 bg-gray-100 rounded w-2/3" />
@@ -479,7 +450,7 @@ export default function ClassDetailPage() {
       {/* Section 4: Danh sách sinh viên */}
       {pageLoading ? (
         <section className="mt-4 sm:mt-6">
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 animate-pulse">
+          <div className="bg-surface rounded-2xl shadow-card p-6 animate-pulse">
             <div className="h-5 bg-gray-200 rounded w-1/3 mb-4" />
             {[...Array(5)].map((_, i) => (
               <div key={i} className="h-12 bg-gray-50 rounded-lg mb-2" />

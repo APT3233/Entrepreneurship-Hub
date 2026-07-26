@@ -6,31 +6,52 @@
    Utilities generated: bg-page, bg-surface, bg-subtle, border-border,
    border-border-strong, text-text-primary, text-text-secondary, text-text-muted. */
 @theme {
-  --color-page: #fafaf9;
+  --color-page: #fbf9f6;
   --color-surface: #ffffff;
-  --color-subtle: #f5f5f4;
-  --color-border: #e7e5e4;
-  --color-border-strong: #d6d3d1;
-  --color-text-primary: #1c1917;
-  --color-text-secondary: #57534e;
-  --color-text-muted: #a8a29e;
+  --color-subtle: #f5f1ec;
+  --color-border: #ece7e1;
+  --color-border-strong: #ddd6cd;
+  --color-text-primary: #1f2937;
+  --color-text-secondary: #6b7280;
+  --color-text-muted: #9ca3af;
 
-  /* FPT accent — #f26f20 is a placeholder until the exact brand hex is confirmed;
-     swap this one line to rebrand. Utilities: bg-accent, text-accent,
-     hover:bg-accent-hover, bg-accent-bg. */
-  --color-accent: #f26f20;
-  --color-accent-hover: #d65f17;
-  --color-accent-bg: #fdeee3;
+  /* E-HUB brand accent — FPT orange #f26a2e. Swap this line to rebrand. Utilities:
+     bg-accent, text-accent, hover:bg-accent-hover, bg-accent-bg (pale soft tint). */
+  --color-accent: #f26a2e;
+  --color-accent-hover: #e15a20;
+  --color-accent-bg: #fceadf;
 
-  /* Status pairs — bg + text. Caller picks the status; component never derives it. */
-  --color-success-bg: #ecfdf5;
-  --color-success-text: #065f46;
-  --color-warning-bg: #fffbeb;
-  --color-warning-text: #92400e;
-  --color-danger-bg: #fef2f2;
-  --color-danger-text: #991b1b;
-  --color-neutral-bg: #f5f5f4;
-  --color-neutral-text: #57534e;
+  /* Full accent ramp (orange). 500 = brand (#f26a2e), 600 = hover. */
+  --color-accent-50: #fef4ee;
+  --color-accent-100: #fde4d6;
+  --color-accent-200: #fac6ac;
+  --color-accent-300: #f6a47d;
+  --color-accent-400: #f4854f;
+  --color-accent-500: #f26a2e;
+  --color-accent-600: #e15a20;
+  --color-accent-700: #bc4a1a;
+  --color-accent-800: #963c18;
+  --color-accent-900: #7a3316;
+
+  /* Secondary accent — cool blue #4f7cff for secondary highlights / links / charts. */
+  --color-secondary: #4f7cff;
+  --color-secondary-hover: #3a67ec;
+  --color-secondary-bg: #eaf0ff;
+
+  /* Solid semantic colors (icons, dots, small accents). */
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+
+  /* Status pairs — bg + text (badges, banners). Caller picks the status. */
+  --color-success-bg: #ecfdf3;
+  --color-success-text: #15803d;
+  --color-warning-bg: #fef6e7;
+  --color-warning-text: #b45309;
+  --color-danger-bg: #feecec;
+  --color-danger-text: #b91c1c;
+  --color-neutral-bg: #f4f4f6;
+  --color-neutral-text: #6b7280;
 
   /* Type scale 22/18/16/14/13/12. Only weights 400 (normal) & 500 (medium) are used.
      Defaults cover text-lg(18)/base(16)/sm(14)/xs(12); add the missing 22 & 13. */
@@ -41,8 +62,14 @@
 
   /* Radius — default spacing scale (4/8/12/16/24/32 = 1/2/3/4/6/8) is kept as-is.
      Utilities: rounded-control (controls), rounded-card (cards). */
-  --radius-control: 8px;
-  --radius-card: 12px;
+  --radius-control: 10px;
+  --radius-card: 16px;
+
+  /* Soft elevation — borderless "floating card" look. Cards use shadow, not 1px borders.
+     Utilities: shadow-card, shadow-card-hover, shadow-soft. */
+  --shadow-soft: 0 1px 2px 0 rgba(24, 24, 27, 0.04);
+  --shadow-card: 0 1px 2px 0 rgba(24, 24, 27, 0.04), 0 4px 16px -4px rgba(24, 24, 27, 0.08);
+  --shadow-card-hover: 0 2px 6px 0 rgba(24, 24, 27, 0.06), 0 14px 32px -8px rgba(24, 24, 27, 0.16);
 }
 
 /* Centered page container, max 1280px. */

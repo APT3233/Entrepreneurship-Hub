@@ -1,29 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ClipboardCheck, ClipboardList, Layers3, Star, TimerReset } from "lucide-react";
+import { ClipboardCheck, ClipboardList, Star, TimerReset, Layers3, ArrowRight } from "lucide-react";
 import gradingService from "@/api/grading";
 import { rubricService } from "@/api/adminEvaluationOps";
 import { useTranslation } from "@/context/TranslationContext";
-
-function MetricCard({ label, value, icon: Icon, tone = "indigo" }) {
-  const toneClass = {
-    indigo: "bg-indigo-50 text-indigo-600",
-    blue: "bg-blue-50 text-blue-600",
-    amber: "bg-amber-50 text-amber-600",
-    emerald: "bg-emerald-50 text-emerald-600",
-    violet: "bg-violet-50 text-violet-600",
-  }[tone] || "bg-indigo-50 text-indigo-600";
-
-  return (
-    <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-      <div className={`mb-4 flex h-11 w-11 items-center justify-center rounded-2xl ${toneClass}`}>
-        <Icon size={21} />
-      </div>
-      <p className="text-xs font-bold uppercase tracking-widest text-gray-400">{label}</p>
-      <p className="mt-2 text-3xl font-black text-gray-900">{value ?? 0}</p>
-    </div>
-  );
-}
 
 export default function LecturerEvaluationOverview() {
   const { t } = useTranslation();
@@ -56,45 +36,96 @@ export default function LecturerEvaluationOverview() {
     };
   }, []);
 
-  const cards = useMemo(() => [
-    { label: "Bài cần chấm", value: dashboard.total_need_grading, icon: ClipboardCheck, tone: "indigo" },
-    { label: "Checkpoint", value: dashboard.checkpoint_need_grading, icon: ClipboardList, tone: "blue" },
-    { label: "Assignment", value: dashboard.assignment_need_grading, icon: Star, tone: "emerald" },
-    { label: "Draft evaluation", value: dashboard.draft_evaluations, icon: TimerReset, tone: "amber" },
-    { label: "Rubric của tôi", value: rubricMeta.total, icon: Layers3, tone: "violet" },
-  ], [dashboard, rubricMeta.total]);
+  const breakdown = useMemo(() => [
+    { label: "Checkpoint", value: dashboard.checkpoint_need_grading ?? 0, icon: ClipboardList, dot: "bg-secondary", text: "text-secondary" },
+    { label: "Assignment", value: dashboard.assignment_need_grading ?? 0, icon: Star, dot: "bg-success", text: "text-success" },
+    { label: "Bản nháp", value: dashboard.draft_evaluations ?? 0, icon: TimerReset, dot: "bg-warning", text: "text-warning" },
+  ], [dashboard]);
+
+  const totalNeed = dashboard.total_need_grading ?? 0;
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-xl font-black text-gray-900">{t("lecturer.evaluation")}</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Quản lý rubric của chính bạn và theo dõi nhanh các bài đang chờ chấm.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Link to="/lecturer/evaluation/rubrics" className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700">
-            <Layers3 size={16} /> Rubrics
-          </Link>
-          <Link to="/lecturer/grading" className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50">
-            <ClipboardCheck size={16} /> Chấm điểm
-          </Link>
-        </div>
+    <div className="space-y-6">
+      {/* Heading */}
+      <div>
+        <h1 className="text-2xl sm:text-3xl font-bold text-text-primary tracking-tight">{t("lecturer.evaluation")}</h1>
+        <p className="mt-1.5 text-sm text-text-secondary leading-relaxed">
+          Theo dõi hàng chờ chấm và quản lý bộ rubric đánh giá của bạn.
+        </p>
       </div>
 
-      {loading ? (
-        <div className="rounded-2xl border border-gray-100 bg-white p-8 text-center text-sm text-gray-400 shadow-sm">
-          {t("common.loading")}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
-          {cards.map((card) => <MetricCard key={card.label} {...card} />)}
-        </div>
-      )}
+      {/* Workspace: hàng chờ chấm (tâm điểm) + rubrics */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Grading queue — focal */}
+        <div className="lg:col-span-2 rounded-card bg-surface shadow-card p-6 sm:p-8 flex flex-col">
+          <div className="flex items-center gap-2.5">
+            <span className="grid place-items-center w-9 h-9 rounded-xl bg-accent-bg text-accent">
+              <ClipboardCheck size={18} />
+            </span>
+            <h2 className="text-base font-semibold text-text-primary">Hàng chờ chấm</h2>
+          </div>
 
-      <div className="rounded-2xl border border-blue-100 bg-blue-50 p-5 text-sm leading-6 text-blue-800">
-        Lecturer chỉ được tạo, sửa, clone, gắn rubric do chính mình sở hữu. Admin vẫn quản lý toàn bộ rubric ở khu vực Admin.
+          <div className="mt-5 flex items-end gap-3">
+            <span className="text-5xl font-bold text-text-primary leading-none tracking-tight">
+              {loading ? "—" : totalNeed}
+            </span>
+            <span className="text-sm text-text-secondary mb-1">bài đang chờ chấm điểm</span>
+          </div>
+
+          <div className="mt-6 grid grid-cols-3 gap-3">
+            {breakdown.map((b) => (
+              <div key={b.label} className="rounded-xl bg-subtle p-4">
+                <div className="flex items-center gap-1.5">
+                  <span className={`w-2 h-2 rounded-full ${b.dot}`} />
+                  <span className="text-xs text-text-secondary">{b.label}</span>
+                </div>
+                <p className="mt-2 text-2xl font-semibold text-text-primary leading-none">{loading ? "—" : b.value}</p>
+              </div>
+            ))}
+          </div>
+
+          <Link
+            to="/lecturer/grading"
+            className="mt-auto pt-6 self-start"
+          >
+            <span className="inline-flex items-center gap-2 rounded-control bg-accent hover:bg-accent-hover text-white px-5 py-2.5 text-sm font-medium shadow-sm hover:shadow-md transition-all duration-150">
+              Bắt đầu chấm
+              <ArrowRight size={16} />
+            </span>
+          </Link>
+        </div>
+
+        {/* Rubrics panel */}
+        <div className="lg:col-span-1 rounded-card bg-surface shadow-card p-6 flex flex-col">
+          <div className="flex items-center gap-2.5">
+            <span className="grid place-items-center w-9 h-9 rounded-xl bg-secondary-bg text-secondary">
+              <Layers3 size={18} />
+            </span>
+            <h2 className="text-base font-semibold text-text-primary">Rubrics</h2>
+          </div>
+
+          <div className="mt-5 flex items-end gap-2">
+            <span className="text-4xl font-bold text-text-primary leading-none tracking-tight">
+              {loading ? "—" : (rubricMeta.total ?? 0)}
+            </span>
+            <span className="text-sm text-text-secondary mb-1">rubric của bạn</span>
+          </div>
+
+          <p className="mt-3 text-sm text-text-secondary leading-relaxed">
+            Tạo, sửa, nhân bản và gắn rubric cho các bài đánh giá.
+          </p>
+
+          <Link
+            to="/lecturer/evaluation/rubrics"
+            className="mt-5 inline-flex items-center justify-center gap-2 rounded-control border border-border px-4 py-2.5 text-sm font-medium text-text-primary hover:bg-subtle transition-colors"
+          >
+            <Layers3 size={16} /> Quản lý rubric
+          </Link>
+
+          <p className="mt-auto pt-6 text-xs text-text-muted leading-relaxed">
+            Bạn chỉ quản lý rubric do mình sở hữu. Toàn bộ rubric hệ thống do Admin quản lý.
+          </p>
+        </div>
       </div>
     </div>
   );

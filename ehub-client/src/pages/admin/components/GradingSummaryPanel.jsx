@@ -2,7 +2,7 @@ import { useMemo } from "react";
 
 function StatCard({ label, value }) {
   return (
-    <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+    <div className="rounded-card border border-border bg-surface p-5">
       <p className="text-xs font-bold uppercase tracking-wide text-gray-400">{label}</p>
       <p className="mt-2 text-3xl font-black text-gray-900">{value}</p>
     </div>

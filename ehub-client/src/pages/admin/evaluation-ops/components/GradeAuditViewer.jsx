@@ -11,7 +11,7 @@ export default function GradeAuditViewer({ rows, loading, error, meta, onPageCha
 
   const columns = useMemo(() => [
     { key: "user", label: c.user, width: 180, render: (row) => row.user_name || row.user_email || "—" },
-    { key: "action", label: c.action, width: 180, render: (row) => <span className="font-mono text-xs font-bold text-indigo-700">{row.action}</span> },
+    { key: "action", label: c.action, width: 180, render: (row) => <span className="font-mono text-xs font-bold text-accent">{row.action}</span> },
     { key: "table_name", label: c.table, width: 160 },
     { key: "record_id", label: c.record, width: 90, render: (row) => row.record_id || row.row_id || "—" },
     { key: "ip_address", label: c.ip, width: 130, render: (row) => row.ip_address || "—" },
@@ -32,10 +32,10 @@ export default function GradeAuditViewer({ rows, loading, error, meta, onPageCha
       />
       {selected ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 backdrop-blur-[1px]" onClick={(event) => event.target === event.currentTarget && onClose?.()}>
-          <div className="max-h-[88vh] w-full max-w-4xl overflow-hidden rounded-2xl bg-white shadow-2xl">
-            <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
+          <div className="max-h-[88vh] w-full max-w-4xl overflow-hidden rounded-card bg-surface shadow-2xl">
+            <div className="flex items-center justify-between border-b border-border px-5 py-4">
               <div>
-                <p className="font-mono text-xs font-bold text-indigo-700">{selected.action}</p>
+                <p className="font-mono text-xs font-bold text-accent">{selected.action}</p>
                 <h3 className="mt-1 text-lg font-black text-gray-900">{selected.table_name} #{selected.record_id || selected.row_id || "—"}</h3>
               </div>
               <button type="button" onClick={onClose} className="rounded-xl px-3 py-2 text-sm font-semibold text-gray-500 hover:bg-gray-50">{t("admin.actions.close")}</button>

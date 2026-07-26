@@ -36,7 +36,7 @@ function SubmissionInfoColumn({ group, maxScore }) {
   return (
     <div className="rounded-2xl border border-gray-100 bg-gray-50/90 p-4 sm:p-5 min-h-0 flex flex-col h-full">
       <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-2">
-        <FileText size={16} className="text-indigo-500" />
+        <FileText size={16} className="text-accent-500" />
         Bài nộp
       </h4>
 
@@ -49,7 +49,7 @@ function SubmissionInfoColumn({ group, maxScore }) {
                 key={m.studentId ?? `${m.studentCode}-${m.fullName}`}
                 className="flex flex-wrap items-baseline gap-x-1.5"
               >
-                <span className="font-mono text-xs text-indigo-600">{m.studentCode}</span>
+                <span className="font-mono text-xs text-accent-600">{m.studentCode}</span>
                 <span>{m.fullName}</span>
                 {m.role === "leader" && <span className="text-amber-600 text-xs font-medium">· Nhóm trưởng</span>}
               </li>
@@ -72,8 +72,8 @@ function SubmissionInfoColumn({ group, maxScore }) {
       )}
 
       {group?.note && String(group.note).trim() && (
-        <div className="mb-4 p-3 rounded-xl bg-white border border-indigo-100/80 text-sm text-gray-700">
-          <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest mb-1">Ghi chú nhóm</p>
+        <div className="mb-4 p-3 rounded-xl bg-surface border border-accent-100/80 text-sm text-gray-700">
+          <p className="text-[10px] font-bold text-accent-500 uppercase tracking-widest mb-1">Ghi chú nhóm</p>
           <p className="whitespace-pre-wrap">{group.note}</p>
         </div>
       )}
@@ -84,10 +84,10 @@ function SubmissionInfoColumn({ group, maxScore }) {
           {group.files.map((f) => (
             <li
               key={f.id ?? f.fileUrl}
-              className="flex items-center justify-between gap-2 rounded-xl bg-white border border-gray-200/80 px-3 py-2.5 shadow-sm"
+              className="flex items-center justify-between gap-2 rounded-xl bg-surface border border-gray-200/80 px-3 py-2.5 shadow-sm"
             >
               <div className="flex items-center gap-2 min-w-0">
-                <FileText size={16} className="text-indigo-500 shrink-0" />
+                <FileText size={16} className="text-accent-500 shrink-0" />
                 <span className="text-sm text-gray-800 truncate" title={f.fileName}>
                   {f.fileName}
                 </span>
@@ -104,7 +104,7 @@ function SubmissionInfoColumn({ group, maxScore }) {
                   href={f.fileUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="shrink-0 p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg"
+                  className="shrink-0 p-2 text-accent-600 hover:bg-accent-50 rounded-lg"
                   aria-label="Tải file"
                 >
                   <Download size={16} />
@@ -162,14 +162,14 @@ function GradingColumn({ checkpointId, maxScore, detail, onSaved, rubric }) {
   };
 
   return (
-    <div className="flex flex-col h-full min-h-0 rounded-2xl border border-indigo-100/80 bg-indigo-50/30 p-4 sm:p-5 shadow-sm">
-      <p className="text-xs font-bold text-indigo-800 uppercase tracking-widest mb-4 flex items-center gap-2">
-        <Award className="text-indigo-500 shrink-0" size={18} />
+    <div className="flex flex-col h-full min-h-0 rounded-2xl border border-accent-100/80 bg-accent-50/30 p-4 sm:p-5 shadow-sm">
+      <p className="text-xs font-bold text-accent-800 uppercase tracking-widest mb-4 flex items-center gap-2">
+        <Award className="text-accent-500 shrink-0" size={18} />
         Chấm điểm & nhận xét
       </p>
 
       {detail?.score != null && detail?.status === "graded" && (
-        <p className="text-sm text-emerald-800 font-semibold mb-3 pb-3 border-b border-indigo-100/80">
+        <p className="text-sm text-emerald-800 font-semibold mb-3 pb-3 border-b border-accent-100/80">
           Đã lưu: <span className="text-lg tabular-nums">{Number(detail.score)}</span>
           <span className="text-gray-500 font-normal"> / {maxScore}</span>
           {detail.graderName && detail.gradedAt && (
@@ -185,20 +185,20 @@ function GradingColumn({ checkpointId, maxScore, detail, onSaved, rubric }) {
           <button
             type="button"
             onClick={() => setShowRubricInfo(!showRubricInfo)}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 bg-indigo-50/50 hover:bg-indigo-50 border border-indigo-100/50 px-3 py-2 rounded-xl transition-all"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-accent-600 hover:text-accent-800 bg-accent-50/50 hover:bg-accent-50 border border-accent-100/50 px-3 py-2 rounded-xl transition-all"
           >
             <Layers size={13} />
             {showRubricInfo ? "Ẩn tiêu chí chấm điểm" : "Xem tiêu chí chấm điểm (Rubric)"}
           </button>
           
           {showRubricInfo && (
-            <div className="mt-2.5 p-3 rounded-xl border border-indigo-100 bg-white/90 space-y-2 max-h-[200px] overflow-y-auto pr-1 animate-in slide-in-from-top-1 duration-200">
+            <div className="mt-2.5 p-3 rounded-xl border border-accent-100 bg-surface/90 space-y-2 max-h-[200px] overflow-y-auto pr-1 animate-in slide-in-from-top-1 duration-200">
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Tiêu chí chi tiết</p>
               {rubric.criteria?.map((c) => (
                 <div key={c.id} className="text-xs pb-2 border-b border-gray-50 last:border-0 last:pb-0">
                   <div className="flex justify-between font-semibold text-gray-800">
                     <span>{c.name}</span>
-                    <span className="font-mono text-indigo-600">{c.max_score}đ {Number(c.weight) !== 1 && `(x${c.weight})`}</span>
+                    <span className="font-mono text-accent-600">{c.max_score}đ {Number(c.weight) !== 1 && `(x${c.weight})`}</span>
                   </div>
                   {c.description && <p className="text-[11px] text-gray-400 mt-0.5 leading-relaxed">{c.description}</p>}
                 </div>
@@ -218,7 +218,7 @@ function GradingColumn({ checkpointId, maxScore, detail, onSaved, rubric }) {
             max={maxScore}
             value={score}
             onChange={(e) => setScore(e.target.value)}
-            className="mt-1.5 w-full max-w-[9rem] border border-gray-200 rounded-xl px-3 py-2.5 text-lg font-bold text-gray-900 tabular-nums shadow-sm focus:ring-2 focus:ring-indigo-300 focus:border-indigo-300 outline-none"
+            className="mt-1.5 w-full max-w-[9rem] border border-gray-200 rounded-xl px-3 py-2.5 text-lg font-bold text-gray-900 tabular-nums shadow-sm focus:ring-2 focus:ring-accent-300 focus:border-accent-300 outline-none"
           />
         </label>
 
@@ -231,7 +231,7 @@ function GradingColumn({ checkpointId, maxScore, detail, onSaved, rubric }) {
             value={feedback}
             onChange={(e) => setFeedback(e.target.value)}
             placeholder="Góp ý chi tiết, điểm mạnh / cần cải thiện, hướng bổ sung…"
-            className="w-full flex-1 min-h-[200px] sm:min-h-[240px] lg:min-h-[280px] max-h-[50vh] border border-gray-200 rounded-2xl px-4 py-3 text-sm leading-relaxed text-gray-800 bg-white shadow-inner resize-y focus:ring-2 focus:ring-indigo-200 focus:border-indigo-300 outline-none"
+            className="w-full flex-1 min-h-[200px] sm:min-h-[240px] lg:min-h-[280px] max-h-[50vh] border border-gray-200 rounded-2xl px-4 py-3 text-sm leading-relaxed text-gray-800 bg-surface shadow-inner resize-y focus:ring-2 focus:ring-accent-200 focus:border-accent-300 outline-none"
           />
         </label>
 
@@ -239,7 +239,7 @@ function GradingColumn({ checkpointId, maxScore, detail, onSaved, rubric }) {
           type="button"
           onClick={save}
           disabled={saving}
-          className="w-full sm:w-auto shrink-0 self-end px-8 py-3 rounded-xl bg-indigo-600 text-white text-sm font-bold shadow-md hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+          className="w-full sm:w-auto shrink-0 self-end px-8 py-3 rounded-xl bg-accent text-white text-sm font-bold shadow-md hover:bg-accent-hover disabled:opacity-50 transition-colors"
         >
           {saving ? "Đang lưu…" : "Lưu điểm & nhận xét"}
         </button>
@@ -401,7 +401,7 @@ export default function CheckpointDetailForm({ checkpoint, isOpen, onClose, onSa
       }}
     >
       <div
-        className={`bg-white rounded-[32px] shadow-2xl w-full h-[90vh] flex overflow-hidden animate-in zoom-in-95 duration-200 ${
+        className={`bg-surface rounded-[32px] shadow-2xl w-full h-[90vh] flex overflow-hidden animate-in zoom-in-95 duration-200 ${
           groupId ? "max-w-5xl" : "max-w-7xl"
         }`}
         onMouseDown={(e) => e.stopPropagation()}
@@ -409,7 +409,7 @@ export default function CheckpointDetailForm({ checkpoint, isOpen, onClose, onSa
       >
         {!groupId && (
           <div className="w-[17rem] sm:w-80 border-r border-gray-100 flex flex-col bg-gray-50/30 shrink-0 min-w-0">
-            <div className="p-3 sm:p-4 border-b border-gray-100 bg-white">
+            <div className="p-3 sm:p-4 border-b border-gray-100 bg-surface">
               <h3 className="text-xs sm:text-sm font-bold text-gray-900 uppercase tracking-widest">Danh sách nhóm</h3>
               <p className="text-[9px] sm:text-[10px] text-gray-400 font-medium mt-1 uppercase tracking-wider">
                 Tổng số: {groups.length} nhóm
@@ -418,7 +418,7 @@ export default function CheckpointDetailForm({ checkpoint, isOpen, onClose, onSa
             <div className="flex-1 overflow-y-auto p-2 sm:p-2.5 space-y-1">
               {isLoadingGroups ? (
                 <div className="py-10 text-center">
-                  <div className="w-5 h-5 border-2 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mx-auto mb-2" />
+                  <div className="w-5 h-5 border-2 border-accent-200 border-t-accent-600 rounded-full animate-spin mx-auto mb-2" />
                   <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Đang tải...</p>
                 </div>
               ) : (
@@ -429,8 +429,8 @@ export default function CheckpointDetailForm({ checkpoint, isOpen, onClose, onSa
                     onClick={() => setSelectedGroupId(group.id)}
                     className={`w-full text-left p-2.5 sm:p-3 rounded-xl transition-all border ${
                       selectedGroupId === group.id
-                        ? "bg-white border-indigo-100 shadow-sm ring-1 ring-indigo-50"
-                        : "border-transparent hover:bg-white hover:border-gray-100"
+                        ? "bg-surface border-accent-100 shadow-sm ring-1 ring-accent-50"
+                        : "border-transparent hover:bg-surface hover:border-gray-100"
                     }`}
                   >
                     <div className="flex justify-between items-start gap-1.5 mb-1">
@@ -448,7 +448,7 @@ export default function CheckpointDetailForm({ checkpoint, isOpen, onClose, onSa
                       )}
                     </p>
                     {group.score != null && (
-                      <p className="text-[9px] font-bold text-indigo-600 uppercase tracking-widest mt-0.5">
+                      <p className="text-[9px] font-bold text-accent-600 uppercase tracking-widest mt-0.5">
                         Điểm: {group.score}
                       </p>
                     )}
@@ -459,7 +459,7 @@ export default function CheckpointDetailForm({ checkpoint, isOpen, onClose, onSa
           </div>
         )}
 
-        <div className="flex-1 flex flex-col bg-white min-w-0">
+        <div className="flex-1 flex flex-col bg-surface min-w-0">
           <div className="flex items-center justify-between px-6 sm:px-8 py-5 border-b border-gray-50 shrink-0">
             <div className="flex-1 min-w-0 pr-2">
               <h2 className="text-lg sm:text-xl font-black text-gray-900 truncate">{activeCheckpoint.title}</h2>
@@ -478,10 +478,10 @@ export default function CheckpointDetailForm({ checkpoint, isOpen, onClose, onSa
           </div>
 
           <div className="flex-1 overflow-y-auto px-6 sm:px-8 py-5 min-h-0">
-            <div className="mb-6 p-5 bg-indigo-50/30 rounded-2xl border border-indigo-100/50">
+            <div className="mb-6 p-5 bg-accent-50/30 rounded-2xl border border-accent-100/50">
               <div className="flex items-center gap-2 mb-2">
-                <Info size={14} className="text-indigo-500" />
-                <h3 className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest">Yêu cầu checkpoint</h3>
+                <Info size={14} className="text-accent-500" />
+                <h3 className="text-[10px] font-bold text-accent-500 uppercase tracking-widest">Yêu cầu checkpoint</h3>
               </div>
               <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
                 {activeCheckpoint.description || "Không có hướng dẫn chi tiết."}
@@ -490,18 +490,18 @@ export default function CheckpointDetailForm({ checkpoint, isOpen, onClose, onSa
 
             {/* Rubric display */}
             {loadingRubric ? (
-              <div className="mb-6 p-4 rounded-2xl border border-indigo-50 bg-indigo-50/10 animate-pulse flex items-center justify-center gap-2">
-                <div className="w-4 h-4 border-2 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
+              <div className="mb-6 p-4 rounded-2xl border border-accent-50 bg-accent-50/10 animate-pulse flex items-center justify-center gap-2">
+                <div className="w-4 h-4 border-2 border-accent-200 border-t-accent-600 rounded-full animate-spin" />
                 <span className="text-xs text-gray-400">Đang tải rubric...</span>
               </div>
             ) : rubric ? (
-              <div className="mb-6 p-5 rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50/20 to-violet-50/20 shadow-sm text-left">
+              <div className="mb-6 p-5 rounded-2xl border border-accent-100 bg-gradient-to-br from-accent-50/20 to-violet-50/20 shadow-sm text-left">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <Layers className="text-indigo-500 shrink-0" size={16} />
-                    <span className="text-xs font-bold text-indigo-800 uppercase tracking-widest">Rubric đánh giá</span>
+                    <Layers className="text-accent-500 shrink-0" size={16} />
+                    <span className="text-xs font-bold text-accent-800 uppercase tracking-widest">Rubric đánh giá</span>
                   </div>
-                  <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100/50">
+                  <span className="text-[10px] font-bold text-accent-600 bg-accent-50 px-2 py-0.5 rounded-full border border-accent-100/50">
                     v{rubric.version || 1}
                   </span>
                 </div>
@@ -514,7 +514,7 @@ export default function CheckpointDetailForm({ checkpoint, isOpen, onClose, onSa
                 {Array.isArray(rubric.criteria) && rubric.criteria.length > 0 && (
                   <div className="mt-4 space-y-2.5">
                     {rubric.criteria.map((c) => (
-                      <div key={c.id} className="flex items-start justify-between gap-3 text-xs bg-white/80 border border-gray-100 p-3 rounded-xl hover:shadow-sm transition-all">
+                      <div key={c.id} className="flex items-start justify-between gap-3 text-xs bg-surface/80 border border-gray-100 p-3 rounded-xl hover:shadow-sm transition-all">
                         <div className="min-w-0">
                           <p className="font-bold text-gray-800 flex items-center gap-1.5">
                             {c.name}
@@ -524,7 +524,7 @@ export default function CheckpointDetailForm({ checkpoint, isOpen, onClose, onSa
                           </p>
                           {c.description && <p className="text-[11px] text-gray-400 mt-1 leading-relaxed">{c.description}</p>}
                         </div>
-                        <div className="shrink-0 text-right font-mono font-bold text-indigo-600 whitespace-nowrap bg-indigo-50/50 px-2.5 py-1 rounded-lg border border-indigo-50">
+                        <div className="shrink-0 text-right font-mono font-bold text-accent-600 whitespace-nowrap bg-accent-50/50 px-2.5 py-1 rounded-lg border border-accent-50">
                           {c.max_score}đ {Number(c.weight) !== 1 && `(x${c.weight})`}
                         </div>
                       </div>
@@ -543,7 +543,7 @@ export default function CheckpointDetailForm({ checkpoint, isOpen, onClose, onSa
               </div>
             ) : isLoadingSubmission ? (
               <div className="flex flex-col items-center justify-center py-20 text-gray-400">
-                <div className="w-8 h-8 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin mb-3" />
+                <div className="w-8 h-8 border-4 border-accent-100 border-t-accent-600 rounded-full animate-spin mb-3" />
                 <p className="text-xs font-bold uppercase tracking-widest">Đang tải bài nộp...</p>
               </div>
             ) : notSubmitted || !detail ? (

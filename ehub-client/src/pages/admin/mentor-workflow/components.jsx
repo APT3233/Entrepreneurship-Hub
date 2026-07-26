@@ -107,9 +107,9 @@ export function SessionForm({ form, setForm, assignments = [] }) {
 }
 
 export function InfoBox({ title, lines = [] }) {
-  return <div className="rounded-xl border border-slate-100 bg-slate-50 p-3"><p className="text-xs font-black uppercase text-slate-400">{title}</p><div className="mt-1 space-y-0.5 text-sm font-medium text-slate-700">{lines.map((line) => <p key={line}>{line}</p>)}</div></div>;
+  return <div className="rounded-card border border-border bg-subtle p-3"><p className="text-label text-text-muted">{title}</p><div className="mt-1 space-y-0.5 text-sm text-text-secondary">{lines.map((line) => <p key={line}>{line}</p>)}</div></div>;
 }
 
 export function MetricCard({ label, value }) {
-  return <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm"><p className="text-xs font-bold uppercase text-slate-400">{label}</p><p className="mt-2 text-2xl font-black text-slate-900">{value ?? 0}</p></div>;
+  return <div className="rounded-card bg-subtle p-4"><p className="text-label text-text-secondary">{label}</p><p className="mt-2 text-2xl font-medium text-text-primary">{value ?? 0}</p></div>;
 }
