@@ -9,8 +9,8 @@ Base tích hợp: `mem/quynh/redesign-ui`.
 | 2 | [Auth](02-auth.md) — login | login | ✅ Hoàn thành |
 | 3 | [Student](03-student.md) | dashboard, groups, assignments, mentoring, startup, opportunities | ✅ Hoàn thành (chưa merge) |
 | 4 | [Lecture](04-lecture.md) | dashboard, classes, assignments, grading, groups, analytics-schedule | ✅ Hoàn thành (chưa merge) |
-| 5 | [Mentor](05-mentor.md) | `mem/quynh/mentor-admin` (gộp) | 🚧 Đang làm |
-| 6 | [Admin](06-admin.md) | `mem/quynh/mentor-admin` (gộp) | 🚧 Đang làm |
+| 5 | [Mentor](05-mentor.md) | `mem/quynh/mentor-admin` (gộp) | ✅ Hoàn thành (chưa merge) |
+| 6 | [Admin](06-admin.md) | `mem/quynh/mentor-admin` (gộp) | 🚧 Lớp component dùng chung + dashboard xong; còn chrome trang lẻ |
 | 7 | Integration — final PR `redesign-ui → main` | redesign-ui | ⬜ Chưa làm |
 
 ## Chi tiết
@@ -55,10 +55,20 @@ Nhánh `login` đã merge (commit `cea1585`). Login redesign theo yêu cầu ng�
 
 Các nhánh lecture chưa được PR/merge vào `redesign-ui`.
 
-### Phase 5 + 6 — Mentor & Admin 🚧 (gộp 1 nhánh `mem/quynh/mentor-admin`)
+### Phase 5 + 6 — Mentor & Admin (gộp 1 nhánh `mem/quynh/mentor-admin`)
 Thay đổi cách làm: gộp cả hai phase vào **một nhánh duy nhất** thay cho 11 nhánh nhỏ (theo yêu cầu).
-Tách off `mem/quynh/redesign-ui`. UI only, commit atomic theo từng màn hình. Xem
-[05-mentor.md](05-mentor.md) và [06-admin.md](06-admin.md).
+Tách off `mem/quynh/redesign-ui`. UI only, build OK sau mỗi commit.
+
+**Phase 5 — Mentor ✅ (chưa merge)**: 8 màn (dashboard, sessions, availability, documents, profile,
+assignments, startup detail, session detail) đã calm-token hoá. Vì mentor mượn nhiều component từ admin,
+đã restyle luôn: `AdminTable`, admin `StatusBadge` (gom 180 màu → 4 tone token), `mentor-analytics/components`
+(Panel/MetricCard/SimpleList), `mentor-workflow/components` (InfoBox/MetricCard), `mentor-management/components`
+(MentorHeader/MentorForm/AvailabilityEditor/ExpertiseEditor).
+
+**Phase 6 — Admin 🚧**: xong lớp component dùng chung (lan tỏa khắp mọi bảng/filter/modal/badge/form/panel):
+`AdminTable`, `StatusBadge`, `FilterBar`, `SearchInput`, `FormModal`, `ActionButton`, `incubation/components`,
+`academic/components/{ActionButton,DetailGrid}` + `admin/dashboard` (StatCard chuẩn). **Còn lại**: chrome cấp
+trang (page header, nút "tạo" indigo, hero card gradient) rải ở ~50 file trang admin lẻ — chưa xử lý.
 
 ---
 
