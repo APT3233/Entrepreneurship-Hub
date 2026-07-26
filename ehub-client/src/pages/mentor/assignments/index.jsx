@@ -47,14 +47,14 @@ export default function MentorAssignmentsPage() {
   };
 
   const columns = useMemo(() => [
-    { key: "group_name", label: t("mentorPortal.assignments.group"), render: (row) => <span className="font-black text-slate-900">{row.group_name}</span> },
+    { key: "group_name", label: t("mentorPortal.assignments.group"), render: (row) => <span className="font-medium text-text-primary">{row.group_name}</span> },
     { key: "topic", label: t("mentorPortal.assignments.topic"), render: (row) => row.topic || "-" },
     { key: "class_code", label: t("mentorPortal.assignments.class") },
     { key: "assignment_type", label: t("mentorPortal.assignments.type"), render: (row) => <StatusBadge value={row.assignment_type} /> },
     { key: "status", label: t("mentorPortal.assignments.status"), render: (row) => <StatusBadge value={row.status} /> },
     { key: "start_date", label: t("mentorPortal.assignments.start"), render: (row) => formatDate(row.start_date) },
     { key: "expected_sessions", label: t("mentorPortal.assignments.expected"), render: (row) => row.expected_sessions ?? "-" },
-    { key: "actions", label: "", width: 120, render: (row) => ['proposed', 'pending_mentor'].includes(row.status) ? <div className="flex justify-end gap-1"><button onClick={() => setConfirm({ row, response: "accept", title: t("mentorPortal.assignments.acceptTitle"), color: "green" })} className="rounded-lg p-2 text-emerald-600 hover:bg-emerald-50"><CheckCircle2 size={16} /></button><button onClick={() => setConfirm({ row, response: "decline", title: t("mentorPortal.assignments.declineTitle"), color: "red" })} className="rounded-lg p-2 text-rose-600 hover:bg-rose-50"><XCircle size={16} /></button></div> : null },
+    { key: "actions", label: "", width: 120, render: (row) => ['proposed', 'pending_mentor'].includes(row.status) ? <div className="flex justify-end gap-1"><button onClick={() => setConfirm({ row, response: "accept", title: t("mentorPortal.assignments.acceptTitle"), color: "green" })} className="rounded-control p-2 text-success-text hover:bg-success-bg"><CheckCircle2 size={16} /></button><button onClick={() => setConfirm({ row, response: "decline", title: t("mentorPortal.assignments.declineTitle"), color: "red" })} className="rounded-control p-2 text-danger-text hover:bg-danger-bg"><XCircle size={16} /></button></div> : null },
   ], [t]);
 
   return (

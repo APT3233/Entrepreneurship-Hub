@@ -77,20 +77,20 @@ export default function MentorSessionsPage() {
   };
 
   const columns = useMemo(() => [
-    { key: "title", label: t("mentorPortal.sessions.title"), render: (row) => <button onClick={() => navigate(`/mentor/sessions/${row.id}`)} className="text-left font-black text-slate-900 hover:text-teal-700">{row.title}</button> },
+    { key: "title", label: t("mentorPortal.sessions.title"), render: (row) => <button onClick={() => navigate(`/mentor/sessions/${row.id}`)} className="text-left font-medium text-text-primary hover:text-accent">{row.title}</button> },
     { key: "group_name", label: t("mentorPortal.sessions.group") },
     { key: "topic", label: t("mentorPortal.sessions.topic"), render: (row) => row.topic || "-" },
     { key: "scheduled_start_at", label: t("mentorPortal.sessions.scheduled"), render: (row) => formatDate(row.scheduled_start_at) },
     { key: "duration_minutes", label: t("mentorPortal.sessions.duration"), render: (row) => row.duration_minutes ? `${row.duration_minutes}m` : "-" },
     { key: "status", label: t("mentorPortal.sessions.status"), render: (row) => <StatusBadge value={row.status} /> },
     { key: "session_type", label: t("mentorPortal.sessions.type"), render: (row) => <StatusBadge value={row.session_type} /> },
-    { key: "actions", label: "", width: 120, render: (row) => row.status === "scheduled" ? <div className="flex justify-end gap-1"><button onClick={() => setConfirm({ row, status: "completed", title: t("mentorPortal.sessions.markCompleted"), color: "green" })} className="rounded-lg p-2 text-emerald-600 hover:bg-emerald-50"><CheckCircle2 size={16} /></button><button onClick={() => setConfirm({ row, status: "cancelled", title: t("mentorPortal.sessions.cancelSession"), color: "red" })} className="rounded-lg p-2 text-rose-600 hover:bg-rose-50"><XCircle size={16} /></button></div> : null },
+    { key: "actions", label: "", width: 120, render: (row) => row.status === "scheduled" ? <div className="flex justify-end gap-1"><button onClick={() => setConfirm({ row, status: "completed", title: t("mentorPortal.sessions.markCompleted"), color: "green" })} className="rounded-control p-2 text-success-text hover:bg-success-bg"><CheckCircle2 size={16} /></button><button onClick={() => setConfirm({ row, status: "cancelled", title: t("mentorPortal.sessions.cancelSession"), color: "red" })} className="rounded-control p-2 text-danger-text hover:bg-danger-bg"><XCircle size={16} /></button></div> : null },
   ], [navigate, t]);
 
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <button onClick={() => setModalOpen(true)} className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-4 py-2 text-sm font-bold text-white hover:bg-teal-700"><Plus size={16} /> {t("mentorPortal.sessions.createBtn")}</button>
+        <button onClick={() => setModalOpen(true)} className="inline-flex items-center gap-2 rounded-control bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover"><Plus size={16} /> {t("mentorPortal.sessions.createBtn")}</button>
       </div>
       <AdminTable columns={columns} rows={rows} loading={loading} error={error} emptyText={t("mentorPortal.sessions.noSessions")} meta={meta} onPageChange={(page, limit) => setQuery((prev) => ({ ...prev, page, limit: limit || prev.limit }))} onRowClick={(row) => navigate(`/mentor/sessions/${row.id}`)} />
       <FormModal open={modalOpen} title={t("mentorPortal.sessions.createTitle")} submitLabel={t("mentorPortal.sessions.createSubmit")} saving={saving} onClose={() => setModalOpen(false)} onSubmit={createSession}>
