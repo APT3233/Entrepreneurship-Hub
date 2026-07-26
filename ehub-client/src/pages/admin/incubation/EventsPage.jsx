@@ -54,7 +54,7 @@ export default function EcosystemEventsPage() {
   };
 
   const columns = useMemo(() => [
-    { key: "event_name", label: t("admin.ecosystem.events.columns.event"), render: (row) => <button type="button" onClick={() => navigate(`/admin/ecosystem/events/${row.id}`)} className="text-left font-black text-slate-900 hover:text-indigo-700">{row.event_name}</button> },
+    { key: "event_name", label: t("admin.ecosystem.events.columns.event"), render: (row) => <button type="button" onClick={() => navigate(`/admin/ecosystem/events/${row.id}`)} className="text-left font-black text-slate-900 hover:text-accent">{row.event_name}</button> },
     { key: "event_type", label: t("admin.ecosystem.events.columns.type"), render: (row) => <StatusBadge value={row.event_type} /> },
     { key: "start_at", label: t("admin.ecosystem.events.columns.start"), render: (row) => formatDate(row.start_at) },
     { key: "location", label: t("admin.ecosystem.events.columns.location"), render: (row) => row.location || row.meeting_link || "-" },
@@ -80,7 +80,7 @@ export default function EcosystemEventsPage() {
 
   return (
     <>
-      <FilterBar right={<button type="button" onClick={() => navigate("/admin/ecosystem/events/create")} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-indigo-700"><Plus size={16} /> {t("admin.ecosystem.events.createBtn")}</button>}>
+      <FilterBar right={<button type="button" onClick={() => navigate("/admin/ecosystem/events/create")} className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-bold text-white hover:bg-accent-hover"><Plus size={16} /> {t("admin.ecosystem.events.createBtn")}</button>}>
         <SearchInput value={query.search} onChange={(search) => setQuery((prev) => ({ ...prev, page: 1, search }))} placeholder={t("admin.ecosystem.events.searchPlaceholder")} />
         <FilterSelect label={t("admin.ecosystem.events.columns.type")} value={query.event_type} onChange={(event_type) => setQuery((prev) => ({ ...prev, page: 1, event_type }))} options={withAll(t, translatedEventTypeOptions)} />
         <FilterSelect label={t("admin.ecosystem.events.columns.status")} value={query.status} onChange={(status) => setQuery((prev) => ({ ...prev, page: 1, status }))} options={withAll(t, translatedEventStatusOptions)} />

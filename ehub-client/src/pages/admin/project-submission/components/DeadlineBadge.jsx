@@ -3,8 +3,8 @@ import { getDeadlineState, formatDate } from "@/pages/admin/project-submission/s
 const classes = {
   open: "border-emerald-100 bg-emerald-50 text-emerald-700",
   overdue: "border-red-100 bg-red-50 text-red-700",
-  closed: "border-slate-200 bg-slate-50 text-slate-600",
-  unknown: "border-gray-100 bg-gray-50 text-gray-500",
+  closed: "border-border bg-slate-50 text-slate-600",
+  unknown: "border-border bg-gray-50 text-gray-500",
 };
 
 const labels = {

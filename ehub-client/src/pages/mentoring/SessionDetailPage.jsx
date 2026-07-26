@@ -56,20 +56,20 @@ export default function SessionDetailPage() {
     }
   };
 
-  if (loading) return <div className="rounded-2xl bg-white p-8 text-center text-sm text-slate-400">{t("common.loading") || "Loading..."}</div>;
-  if (error) return <div className="rounded-2xl bg-rose-50 p-8 text-center text-sm font-bold text-rose-600">{error}</div>;
+  if (loading) return <div className="rounded-card border border-border bg-surface p-8 text-center text-sm text-text-muted">{t("common.loading") || "Loading..."}</div>;
+  if (error) return <div className="rounded-card border border-border bg-surface p-8 text-center text-sm font-medium text-danger-text">{error}</div>;
   if (!session) return null;
 
   return (
     <div className="space-y-5">
-      <button onClick={() => navigate(-1)} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50">
+      <button onClick={() => navigate(-1)} className="inline-flex items-center gap-2 rounded-control border border-border bg-surface px-3 py-2 text-sm font-medium text-text-secondary hover:bg-subtle">
         <ArrowLeft size={16} /> {t("mentorPortal.sessionDetail.back")}
       </button>
-      <section className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+      <section className="rounded-card border border-border bg-surface p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h2 className="text-xl font-black text-slate-900">{session.title}</h2>
-            <p className="mt-1 text-sm text-slate-500">{session.group_name} · {session.topic || t("mentorPortal.sessionDetail.noTopic")}</p>
+            <h2 className="text-h1 font-medium text-text-primary">{session.title}</h2>
+            <p className="mt-1 text-sm text-text-secondary">{session.group_name} · {session.topic || t("mentorPortal.sessionDetail.noTopic")}</p>
           </div>
           <div className="flex gap-2">
             <StatusBadge value={session.status} />
@@ -136,7 +136,7 @@ export default function SessionDetailPage() {
       >
         <AdminTable
           columns={[
-            { key: "title", label: t("mentorPortal.sessionDetail.actionTitle"), render: (row) => <span className="font-black text-slate-900">{row.title}</span> },
+            { key: "title", label: t("mentorPortal.sessionDetail.actionTitle"), render: (row) => <span className="font-medium text-text-primary">{row.title}</span> },
             { key: "due_date", label: t("mentorPortal.sessionDetail.actionDue"), render: (row) => formatDate(row.due_date) },
             { key: "status", label: t("mentorPortal.sessionDetail.actionStatus"), render: (row) => <StatusBadge value={row.status} /> }
           ]}
@@ -195,13 +195,13 @@ export default function SessionDetailPage() {
 
 function Info({ title, rows }) {
   return (
-    <section className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
-      <h3 className="mb-4 text-sm font-black text-slate-900">{title}</h3>
+    <section className="rounded-card border border-border bg-surface p-5">
+      <h3 className="mb-4 text-sm font-medium text-text-primary">{title}</h3>
       <div className="space-y-3">
         {rows.map(([label, value]) => (
           <div key={label} className="grid grid-cols-[110px_1fr] gap-3 text-sm">
-            <span className="font-bold text-slate-400">{label}</span>
-            <span className="font-medium text-slate-800">{value}</span>
+            <span className="font-medium text-text-muted">{label}</span>
+            <span className="font-medium text-text-primary">{value}</span>
           </div>
         ))}
       </div>
@@ -211,10 +211,10 @@ function Info({ title, rows }) {
 
 function Panel({ title, children, onAdd, addLabel }) {
   return (
-    <section className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+    <section className="rounded-card border border-border bg-surface p-5">
       <div className="mb-4 flex items-center justify-between">
-        <h3 className="text-sm font-black text-slate-900">{title}</h3>
-        <button onClick={onAdd} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50">
+        <h3 className="text-sm font-medium text-text-primary">{title}</h3>
+        <button onClick={onAdd} className="inline-flex items-center gap-2 rounded-control border border-border px-3 py-2 text-sm font-medium text-text-secondary hover:bg-subtle">
           <Plus size={16} /> {addLabel}
         </button>
       </div>

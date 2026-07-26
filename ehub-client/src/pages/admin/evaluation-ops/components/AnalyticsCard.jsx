@@ -1,6 +1,6 @@
 export default function AnalyticsCard({ label, value, helper, icon: Icon }) {
   return (
-    <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+    <div className="rounded-card border border-border bg-surface p-5">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-bold uppercase tracking-wide text-gray-400">{label}</p>

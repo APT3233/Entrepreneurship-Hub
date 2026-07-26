@@ -235,7 +235,7 @@ export default function AdminClasses() {
   };
 
   const columns = useMemo(() => [
-    { key: "class_code", label: t("admin.fields.classCode"), render: (row) => <span className="font-mono text-xs font-bold text-indigo-700">{row.class_code}</span> },
+    { key: "class_code", label: t("admin.fields.classCode"), render: (row) => <span className="font-mono text-xs font-bold text-accent">{row.class_code}</span> },
     { key: "subject", label: t("nav.subjects"), render: (row) => <span className="font-semibold text-gray-900">{row.subject_code} - {row.subject_name}</span> },
     { key: "semester", label: t("admin.fields.semester"), render: (row) => `${row.semester_code} (${row.year})` },
     { key: "lecturer", label: t("admin.fields.lecturer"), render: (row) => row.lecturer_name || "—" },
@@ -281,7 +281,7 @@ export default function AdminClasses() {
         activeFilterCount={activeFilterCount}
         onClear={clearFilters}
         right={canCreate ? (
-          <button type="button" onClick={openCreate} className="inline-flex h-10 items-center gap-2 rounded-lg bg-indigo-600 px-4 text-sm font-semibold text-white hover:bg-indigo-700 cursor-pointer">
+          <button type="button" onClick={openCreate} className="inline-flex h-10 items-center gap-2 rounded-lg bg-accent px-4 text-sm font-semibold text-white hover:bg-accent-hover cursor-pointer">
             <Plus size={16} /> {t("admin.actions.create")}
           </button>
         ) : null}
@@ -305,8 +305,8 @@ export default function AdminClasses() {
         <div className="space-y-6">
           {/* Section 1: Class Information */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+            <div className="flex items-center gap-2 border-b border-border pb-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent-bg text-accent">
                 <Info size={16} />
               </span>
               <h4 className="text-sm font-bold text-gray-800">
@@ -342,7 +342,7 @@ export default function AdminClasses() {
 
           {/* Section 2: Academic Context */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
+            <div className="flex items-center gap-2 border-b border-border pb-2">
               <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
                 <BookOpen size={16} />
               </span>
@@ -372,7 +372,7 @@ export default function AdminClasses() {
 
           {/* Section 3: Class Rules */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
+            <div className="flex items-center gap-2 border-b border-border pb-2">
               <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
                 <Users size={16} />
               </span>

@@ -84,7 +84,7 @@ export default function AlumniPage() {
   };
 
   const columns = useMemo(() => [
-    { key: "full_name", label: t("admin.ecosystem.alumni.columns.alumni"), width: 220, render: (row) => <button type="button" onClick={() => navigate(`/admin/ecosystem/alumni/${row.id}`)} className="text-left font-black text-slate-900 hover:text-indigo-700">{row.full_name}</button> },
+    { key: "full_name", label: t("admin.ecosystem.alumni.columns.alumni"), width: 220, render: (row) => <button type="button" onClick={() => navigate(`/admin/ecosystem/alumni/${row.id}`)} className="text-left font-black text-slate-900 hover:text-accent">{row.full_name}</button> },
     { key: "graduation_year", label: t("admin.ecosystem.alumni.columns.graduation"), width: 120, render: (row) => row.graduation_year || "-" },
     { key: "major", label: t("admin.ecosystem.alumni.columns.major"), width: 160, render: (row) => row.major || "-" },
     { key: "campus", label: t("admin.ecosystem.alumni.columns.campus"), width: 120, render: (row) => row.campus || "-" },
@@ -97,7 +97,7 @@ export default function AlumniPage() {
 
   return (
     <>
-      <FilterBar right={<button type="button" onClick={() => setModal(true)} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-indigo-700"><Plus size={16} /> {t("admin.ecosystem.alumni.addBtn")}</button>}>
+      <FilterBar right={<button type="button" onClick={() => setModal(true)} className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-bold text-white hover:bg-accent-hover"><Plus size={16} /> {t("admin.ecosystem.alumni.addBtn")}</button>}>
         <SearchInput value={query.search} onChange={(search) => setQuery((prev) => ({ ...prev, page: 1, search }))} placeholder={t("admin.ecosystem.alumni.searchPlaceholder")} />
         <FilterSelect label={t("admin.ecosystem.common.status")} value={query.status} onChange={(status) => setQuery((prev) => ({ ...prev, page: 1, status }))} options={statusOptions} />
       </FilterBar>

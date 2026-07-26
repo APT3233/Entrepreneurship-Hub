@@ -123,9 +123,9 @@ export default function AdminAssignmentDetail() {
     }
   };
 
-  if (loading) return <div className="rounded-2xl border border-gray-100 bg-white p-8 text-center text-sm text-gray-400 shadow-sm">Đang tải assignment...</div>;
-  if (error) return <div className="rounded-2xl border border-red-100 bg-red-50 p-8 text-center text-sm font-medium text-red-600">{error}</div>;
-  if (!assignment) return <div className="rounded-2xl border border-gray-100 bg-white p-8 text-center text-sm text-gray-400 shadow-sm">Không tìm thấy assignment.</div>;
+  if (loading) return <div className="rounded-card border border-border bg-surface p-8 text-center text-sm text-gray-400">Đang tải assignment...</div>;
+  if (error) return <div className="rounded-card border border-red-100 bg-red-50 p-8 text-center text-sm font-medium text-red-600">{error}</div>;
+  if (!assignment) return <div className="rounded-card border border-border bg-surface p-8 text-center text-sm text-gray-400">Không tìm thấy assignment.</div>;
 
   const columns = [
     { key: "group_name", label: "Group", render: (row) => <span className="font-semibold text-gray-900">{row.group_name || "—"}</span> },
@@ -152,9 +152,9 @@ export default function AdminAssignmentDetail() {
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
-          <button type="button" onClick={() => navigate("/admin/assignments")} className="mb-3 inline-flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-indigo-600">
+          <button type="button" onClick={() => navigate("/admin/assignments")} className="mb-3 inline-flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-accent">
             <ArrowLeft size={16} /> Assignments
           </button>
           <h2 className="truncate text-xl font-black text-gray-900">{title}</h2>
@@ -175,14 +175,14 @@ export default function AdminAssignmentDetail() {
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-2xl border border-gray-100 bg-white p-2 shadow-sm">
+      <div className="overflow-x-auto rounded-card border border-border bg-surface p-2">
         <div className="flex min-w-max gap-1">
           {tabs.map((tab) => (
             <button
               key={tab.key}
               type="button"
               onClick={() => setActiveTab(tab.key)}
-              className={`h-10 rounded-xl px-4 text-sm font-bold transition-colors ${activeTab === tab.key ? "bg-indigo-50 text-indigo-700" : "text-gray-500 hover:bg-gray-50"}`}
+              className={`h-10 rounded-xl px-4 text-sm font-bold transition-colors ${activeTab === tab.key ? "bg-accent-bg text-accent" : "text-gray-500 hover:bg-gray-50"}`}
             >
               {tab.label}
             </button>
@@ -192,7 +192,7 @@ export default function AdminAssignmentDetail() {
 
       {activeTab === "overview" ? (
         <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.1fr_0.9fr]">
-          <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+          <div className="rounded-card border border-border bg-surface p-5">
             <h3 className="mb-4 text-base font-black text-gray-900">Assignment Overview</h3>
             <DetailGrid items={[
               ["Title", assignment.title],
@@ -214,7 +214,7 @@ export default function AdminAssignmentDetail() {
               ["Graded", assignment.graded_groups],
               ["Late", assignment.late_submissions],
             ].map(([label, value]) => (
-              <div key={label} className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+              <div key={label} className="rounded-card border border-border bg-surface p-5">
                 <p className="text-xs font-bold uppercase tracking-wide text-gray-400">{label}</p>
                 <p className="mt-2 text-3xl font-black text-gray-900">{Number(value || 0)}</p>
               </div>
@@ -226,7 +226,7 @@ export default function AdminAssignmentDetail() {
       {activeTab === "submissions" ? (
         <div className="space-y-4">
           <div className="flex justify-end">
-            <button type="button" onClick={exportScores} className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50">
+            <button type="button" onClick={exportScores} className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50">
               <FileDown size={16} /> Export CSV
             </button>
           </div>

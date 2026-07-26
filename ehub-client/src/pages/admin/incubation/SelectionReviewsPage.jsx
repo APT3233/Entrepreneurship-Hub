@@ -112,7 +112,7 @@ export default function SelectionReviewsPage() {
 
   return (
     <>
-      <FilterBar right={<button type="button" onClick={() => setCreateOpen(true)} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-indigo-700"><Plus size={16} /> {t("admin.ecosystem.selectionReviews.createBtn")}</button>}>
+      <FilterBar right={<button type="button" onClick={() => setCreateOpen(true)} className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-bold text-white hover:bg-accent-hover"><Plus size={16} /> {t("admin.ecosystem.selectionReviews.createBtn")}</button>}>
         <SearchInput value={query.search} onChange={(search) => setQuery((prev) => ({ ...prev, page: 1, search }))} placeholder={t("admin.ecosystem.selectionReviews.searchPlaceholder")} />
         <FilterSelect label={t("filterLabels.status")} value={query.status} onChange={(status) => setQuery((prev) => ({ ...prev, page: 1, status }))} options={withAll(reviewStatusOptions)} />
         <FilterSelect label={t("filterLabels.source")} value={query.source_type} onChange={(source_type) => setQuery((prev) => ({ ...prev, page: 1, source_type }))} options={withAll(reviewSourceOptions)} />

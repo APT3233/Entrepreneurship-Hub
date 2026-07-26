@@ -13,7 +13,7 @@ function ProgressBar({ value = 0 }) {
   return (
     <div className="min-w-[130px]">
       <div className="h-2 overflow-hidden rounded-full bg-gray-100">
-        <div className="h-full rounded-full bg-indigo-500" style={{ width: `${pct}%` }} />
+        <div className="h-full rounded-full bg-accent" style={{ width: `${pct}%` }} />
       </div>
       <p className="mt-1 text-xs font-semibold text-gray-500">{formatPercent(pct)}</p>
     </div>

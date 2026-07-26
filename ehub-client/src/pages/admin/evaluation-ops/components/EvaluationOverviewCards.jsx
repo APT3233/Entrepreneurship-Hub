@@ -7,7 +7,7 @@ const cardDefs = [
   { key: "total_pending", icon: ClipboardList, bg: "bg-amber-50", color: "text-amber-600" },
   { key: "total_draft", icon: PencilLine, bg: "bg-slate-50", color: "text-slate-600" },
   { key: "total_submitted", icon: ClipboardCheck, bg: "bg-blue-50", color: "text-blue-600" },
-  { key: "total_confirmed", icon: ShieldCheck, bg: "bg-indigo-50", color: "text-indigo-600" },
+  { key: "total_confirmed", icon: ShieldCheck, bg: "bg-accent-bg", color: "text-accent" },
   { key: "active_rubrics", icon: Layers3, bg: "bg-cyan-50", color: "text-cyan-600" },
   { key: "unbound_targets", icon: AlertTriangle, bg: "bg-orange-50", color: "text-orange-600" },
   { key: "edited_grades", icon: History, bg: "bg-rose-50", color: "text-rose-600" },
@@ -25,7 +25,7 @@ export default function EvaluationOverviewCards({ cards = {}, loading = false })
       {items.map((card) => {
         const Icon = card.icon;
         return (
-          <div key={card.key} className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+          <div key={card.key} className="rounded-card border border-border bg-surface p-5">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-sm font-medium text-gray-500">{card.title}</p>

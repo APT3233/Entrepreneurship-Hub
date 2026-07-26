@@ -41,14 +41,14 @@ export default function MentorAvailabilityPage() {
     }
   };
 
-  if (loading) return <div className="rounded-2xl bg-white p-8 text-center text-sm text-slate-400">{t("common.loading") || "Loading..."}</div>;
-  if (error) return <div className="rounded-2xl bg-rose-50 p-8 text-center text-sm font-bold text-rose-600">{error}</div>;
+  if (loading) return <div className="rounded-card border border-border bg-surface p-8 text-center text-sm text-text-muted">{t("common.loading") || "Loading..."}</div>;
+  if (error) return <div className="rounded-card border border-border bg-surface p-8 text-center text-sm font-medium text-danger-text">{error}</div>;
 
   return (
-    <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+    <div className="rounded-card border border-border bg-surface p-5">
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-lg font-black text-slate-900">{t("mentorPortal.availability.title")}</h2>
-        <button type="button" disabled={saving} onClick={save} className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-4 py-2 text-sm font-bold text-white hover:bg-teal-700 disabled:opacity-50"><Save size={16} /> {t("mentorPortal.availability.save")}</button>
+        <h2 className="text-h1 font-medium text-text-primary">{t("mentorPortal.availability.title")}</h2>
+        <button type="button" disabled={saving} onClick={save} className="inline-flex items-center gap-2 rounded-control bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-50"><Save size={16} /> {t("mentorPortal.availability.save")}</button>
       </div>
       <AvailabilityEditor items={items} setItems={setItems} />
     </div>

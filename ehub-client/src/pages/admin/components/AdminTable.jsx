@@ -82,24 +82,24 @@ export default function AdminTable({
 
   if (loading) {
     return (
-      <div className="rounded-2xl border border-gray-100 bg-white p-8 text-center text-sm text-gray-400 shadow-sm">
+      <div className="rounded-card border border-border bg-surface p-8 text-center text-sm text-text-muted">
         {t("common.loading")}
       </div>
     );
   }
   if (error) {
     return (
-      <div className="rounded-2xl border border-red-100 bg-red-50 p-8 text-center text-sm font-medium text-red-600">
+      <div className="rounded-card border border-border bg-surface p-8 text-center text-sm font-medium text-danger-text">
         {error}
       </div>
     );
   }
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+    <div className="overflow-hidden rounded-card border border-border bg-surface">
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-100 table-fixed">
-          <thead className="bg-gray-50">
+        <table className="min-w-full divide-y divide-border table-fixed">
+          <thead className="bg-subtle">
             <tr>
               {columns.map((column) => {
                 const width = colWidths[column.key];
@@ -108,14 +108,14 @@ export default function AdminTable({
                   <th
                     key={column.key}
                     style={width ? { width: `${width}px`, minWidth: `${width}px`, maxWidth: `${width}px` } : undefined}
-                    className={`relative px-4 py-3 text-left text-xs font-bold text-gray-500 select-none group/th ${
-                      stickyRight ? "sticky right-0 z-30 bg-gray-50 shadow-[-6px_0_12px_-8px_rgba(0,0,0,0.12)]" : ""
+                    className={`relative px-4 py-3 text-left text-xs font-medium text-text-secondary select-none group/th ${
+                      stickyRight ? "sticky right-0 z-30 bg-subtle" : ""
                     }`}
                   >
                     <div className="truncate pr-2">{column.label}</div>
                     <div
                       onMouseDown={(e) => handleMouseDown(e, column.key)}
-                      className="absolute top-0 right-0 h-full w-1.5 cursor-col-resize select-none bg-transparent hover:bg-indigo-500/30 group-hover/th:bg-gray-200 active:bg-indigo-500 transition-colors"
+                      className="absolute top-0 right-0 h-full w-1.5 cursor-col-resize select-none bg-transparent hover:bg-accent/30 group-hover/th:bg-border active:bg-accent transition-colors"
                       style={{ zIndex: 10 }}
                     />
                   </th>
@@ -123,12 +123,12 @@ export default function AdminTable({
               })}
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-border">
             {rows.length ? rows.map((row) => (
-              <tr 
-                key={row[rowKey]} 
-                onClick={() => onRowClick?.(row)} 
-                className={`group/row hover:bg-gray-50/70 transition-colors ${onRowClick ? "cursor-pointer" : ""}`}
+              <tr
+                key={row[rowKey]}
+                onClick={() => onRowClick?.(row)}
+                className={`group/row hover:bg-subtle transition-colors ${onRowClick ? "cursor-pointer" : ""}`}
               >
                 {columns.map((column) => {
                   const width = colWidths[column.key];
@@ -137,8 +137,8 @@ export default function AdminTable({
                     <td
                       key={column.key}
                       style={width ? { width: `${width}px`, minWidth: `${width}px`, maxWidth: `${width}px` } : undefined}
-                      className={`px-4 py-3 align-middle text-sm text-gray-700 truncate ${
-                        stickyRight ? "sticky right-0 z-20 bg-white shadow-[-6px_0_12px_-8px_rgba(0,0,0,0.12)] group-hover/row:bg-gray-50" : ""
+                      className={`px-4 py-3 align-middle text-sm text-text-secondary truncate ${
+                        stickyRight ? "sticky right-0 z-20 bg-surface group-hover/row:bg-subtle" : ""
                       }`}
                     >
                       {column.render ? column.render(row) : row[column.key]}
@@ -148,7 +148,7 @@ export default function AdminTable({
               </tr>
             )) : (
               <tr>
-                <td colSpan={columns.length} className="px-4 py-12 text-center text-sm text-gray-400">
+                <td colSpan={columns.length} className="px-4 py-12 text-center text-sm text-text-muted">
                   {actualEmptyText}
                 </td>
               </tr>
@@ -157,7 +157,7 @@ export default function AdminTable({
         </table>
       </div>
       {meta ? (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-gray-100 px-4 py-3 text-sm text-gray-500">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-border px-4 py-3 text-sm text-text-secondary">
           <span>
             {t("common.paginationInfo", { page: meta.page || 1, totalPages: meta.totalPages || 1, total: meta.total || 0 })}
           </span>
@@ -165,7 +165,7 @@ export default function AdminTable({
             {/* Record limit manual input */}
             {meta.limit !== undefined ? (
               <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-400 font-medium">
+                <span className="text-xs text-text-muted font-medium">
                   {t("common.rowsPerPage") || "Rows/page:"}
                 </span>
                 <input
@@ -176,7 +176,7 @@ export default function AdminTable({
                   onChange={(e) => setLimitInput(e.target.value)}
                   onBlur={(e) => handleLimitSubmit(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  className="w-14 rounded-lg border border-gray-200 px-2 py-0.5 text-center font-mono text-xs font-semibold text-gray-700 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                  className="w-14 rounded-control border border-border px-2 py-0.5 text-center font-mono text-xs font-medium text-text-secondary outline-none focus:border-accent focus:ring-1 focus:ring-accent"
                 />
               </div>
             ) : null}
@@ -187,7 +187,7 @@ export default function AdminTable({
                 type="button"
                 disabled={!meta.hasPrev}
                 onClick={() => onPageChange?.((meta.page || 1) - 1, meta.limit)}
-                className="rounded-lg border border-gray-200 p-2 text-gray-500 disabled:opacity-40 hover:bg-gray-50 transition-colors"
+                className="rounded-control border border-border p-2 text-text-secondary disabled:opacity-40 hover:bg-subtle transition-colors"
                 aria-label={t("common.previousPage")}
               >
                 <ChevronLeft size={16} />
@@ -196,7 +196,7 @@ export default function AdminTable({
                 type="button"
                 disabled={!meta.hasNext}
                 onClick={() => onPageChange?.((meta.page || 1) + 1, meta.limit)}
-                className="rounded-lg border border-gray-200 p-2 text-gray-500 disabled:opacity-40 hover:bg-gray-50 transition-colors"
+                className="rounded-control border border-border p-2 text-text-secondary disabled:opacity-40 hover:bg-subtle transition-colors"
                 aria-label={t("common.nextPage")}
               >
                 <ChevronRight size={16} />

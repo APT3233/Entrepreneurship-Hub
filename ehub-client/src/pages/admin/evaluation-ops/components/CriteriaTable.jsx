@@ -39,7 +39,7 @@ export default function CriteriaTable({ criteria = [], planned = false, onAdd, o
           type="button"
           disabled={planned}
           onClick={onAdd}
-          className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Plus size={16} /> {t("admin.rubric.addCriterion")}
         </button>

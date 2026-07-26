@@ -41,7 +41,7 @@ const emptyForm = {
 
 function UserAvatar({ user }) {
   if (user.avatar_url) {
-    return <img src={user.avatar_url} alt="" className="h-9 w-9 rounded-full object-cover border border-gray-100" />;
+    return <img src={user.avatar_url} alt="" className="h-9 w-9 rounded-full object-cover border border-border" />;
   }
   return (
     <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-xs font-bold text-gray-500">
@@ -63,9 +63,9 @@ const getRoleBadgeStyle = (role) => {
     case "guest":
       return "bg-amber-50 text-amber-700 border border-amber-200/60";
     case "mentor":
-      return "bg-teal-50 text-teal-700 border border-teal-200/60";
+      return "bg-accent-bg text-accent border border-accent-bg/60";
     default:
-      return "bg-slate-50 text-slate-700 border border-slate-200/60";
+      return "bg-slate-50 text-slate-700 border border-border/60";
   }
 };
 
@@ -92,8 +92,8 @@ const getRoleCardConfig = (roleCode, t) => {
         colorClass: "indigo",
         title: t("admin.roleCards.lecturer.title"),
         desc: t("admin.roleCards.lecturer.desc"),
-        activeBorder: "border-indigo-500 ring-2 ring-indigo-100 bg-indigo-50/10",
-        iconBg: "bg-indigo-50 text-indigo-600",
+        activeBorder: "border-accent ring-2 ring-accent bg-accent-bg/10",
+        iconBg: "bg-accent-bg text-accent",
       };
     case "student":
       return {
@@ -110,8 +110,8 @@ const getRoleCardConfig = (roleCode, t) => {
         colorClass: "teal",
         title: t("admin.roleCards.mentor.title"),
         desc: t("admin.roleCards.mentor.desc"),
-        activeBorder: "border-teal-500 ring-2 ring-teal-100 bg-teal-50/10",
-        iconBg: "bg-teal-50 text-teal-600",
+        activeBorder: "border-teal-500 ring-2 ring-teal-100 bg-accent-bg/10",
+        iconBg: "bg-accent-bg text-accent",
       };
     default:
       return {
@@ -309,7 +309,7 @@ export default function AdminUsers() {
         <div className="flex justify-end gap-1">
           <button type="button" onClick={() => openDetail(row)} className="rounded-lg p-2 text-gray-500 hover:bg-gray-50 cursor-pointer" title={t("admin.actions.detail")}><Eye size={16} /></button>
           {canWrite && <button type="button" onClick={() => openEdit(row)} className="rounded-lg p-2 text-gray-500 hover:bg-gray-50 cursor-pointer" title={t("admin.actions.edit")}><SquarePen size={16} /></button>}
-          {canWrite && <button type="button" onClick={() => openRoles(row)} className="rounded-lg p-2 text-indigo-600 hover:bg-indigo-50 cursor-pointer" title={t("admin.actions.assignRoles")}><ShieldCheck size={16} /></button>}
+          {canWrite && <button type="button" onClick={() => openRoles(row)} className="rounded-lg p-2 text-accent hover:bg-accent-bg cursor-pointer" title={t("admin.actions.assignRoles")}><ShieldCheck size={16} /></button>}
           {canWrite && <button type="button" onClick={() => setConfirmUser(row)} className="rounded-lg p-2 text-red-600 hover:bg-red-50 cursor-pointer" title="Lock/unlock">{row.status === "locked" ? <RotateCcw size={16} /> : <Lock size={16} />}</button>}
         </div>
       ),
@@ -327,7 +327,7 @@ export default function AdminUsers() {
     <>
       <FilterBar
         right={canWrite ? (
-          <button type="button" onClick={() => openCreate()} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 cursor-pointer">
+          <button type="button" onClick={() => openCreate()} className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-hover cursor-pointer">
             <Plus size={16} /> {t("admin.actions.create")}
           </button>
         ) : null}
@@ -363,8 +363,8 @@ export default function AdminUsers() {
       >
         {modal.type === "roles" ? (
           <div className="space-y-6">
-            <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+            <div className="flex items-center gap-2 border-b border-border pb-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent-bg text-accent">
                 <ShieldCheck size={16} />
               </span>
               <div>
@@ -388,10 +388,10 @@ export default function AdminUsers() {
                     onClick={() => {
                       if (!isDisabled) toggleRole(role.role_code);
                     }}
-                    className={`relative flex items-start gap-4 rounded-2xl border p-5 transition-all duration-300 outline-none select-none ${
+                    className={`relative flex items-start gap-4 rounded-card border p-5 transition-all duration-300 outline-none select-none ${
                       isDisabled 
-                        ? "opacity-50 cursor-not-allowed bg-gray-50 border-gray-200" 
-                        : `cursor-pointer border-gray-200 hover:shadow-md ${isChecked ? `${config.activeBorder}` : "hover:border-gray-300 hover:bg-gray-50/30"}`
+                        ? "opacity-50 cursor-not-allowed bg-gray-50 border-border" 
+                        : `cursor-pointer border-border hover:shadow-md ${isChecked ? `${config.activeBorder}` : "hover:border-gray-300 hover:bg-gray-50/30"}`
                     }`}
                   >
                     {isChecked && !isDisabled && (
@@ -427,8 +427,8 @@ export default function AdminUsers() {
           <div className="space-y-6">
             {/* Section 1: Account Information */}
             <div className="space-y-4">
-              <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
-                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+              <div className="flex items-center gap-2 border-b border-border pb-2">
+                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent-bg text-accent">
                   <User size={16} />
                 </span>
                 <h4 className="text-sm font-bold text-gray-800">
@@ -455,7 +455,7 @@ export default function AdminUsers() {
 
             {/* Section 2: Additional details */}
             <div className="space-y-4">
-              <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
+              <div className="flex items-center gap-2 border-b border-border pb-2">
                 <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
                   <Settings size={16} />
                 </span>
@@ -493,7 +493,7 @@ export default function AdminUsers() {
             {/* Section 3: Roles Selection (Create Mode Only) */}
             {modal.type === "create" ? (
               <div className="space-y-4">
-                <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
+                <div className="flex items-center gap-2 border-b border-border pb-2">
                   <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
                     <KeyRound size={16} />
                   </span>
@@ -510,7 +510,7 @@ export default function AdminUsers() {
                       <div
                         key={role.id}
                         onClick={() => toggleRole(role.role_code)}
-                        className={`relative flex items-start gap-4 rounded-2xl border p-5 transition-all duration-300 outline-none select-none cursor-pointer border-gray-200 hover:shadow-md ${
+                        className={`relative flex items-start gap-4 rounded-card border p-5 transition-all duration-300 outline-none select-none cursor-pointer border-border hover:shadow-md ${
                           isChecked ? `${config.activeBorder}` : "hover:border-gray-300 hover:bg-gray-50/30"
                         }`}
                       >

@@ -27,7 +27,7 @@ import {
 const isSemesterCompleted = (semester) => semester?.status === "completed";
 
 const CurrentSemesterBadge = ({ t }) => (
-  <span className="inline-flex shrink-0 items-center rounded-full border border-indigo-100 bg-indigo-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-indigo-700">
+  <span className="inline-flex shrink-0 items-center rounded-full border border-accent-bg bg-accent-bg px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-accent">
     {t("admin.fields.currentSemester")}
   </span>
 );
@@ -135,7 +135,7 @@ export default function AdminSemesters() {
       width: 160,
       render: (row) => (
         <div className="flex flex-wrap items-center gap-1.5">
-          <span className="font-mono text-xs font-bold text-indigo-700">{row.semester_code}</span>
+          <span className="font-mono text-xs font-bold text-accent">{row.semester_code}</span>
           {row.is_current ? <CurrentSemesterBadge t={t} /> : null}
         </div>
       ),
@@ -172,7 +172,7 @@ export default function AdminSemesters() {
     <>
       <FilterBar
         right={canCreate ? (
-          <button type="button" onClick={openCreate} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 cursor-pointer">
+          <button type="button" onClick={openCreate} className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-hover cursor-pointer">
             <Plus size={16} /> {t("admin.actions.create")}
           </button>
         ) : null}
@@ -187,8 +187,8 @@ export default function AdminSemesters() {
       <FormModal open={["create", "edit"].includes(modal.type)} title={modal.type === "create" ? t("admin.dialogs.createSemester") : t("admin.dialogs.editSemester")} onClose={() => setModal({ type: null, semester: null })} onSubmit={save} saving={saving}>
         <div className="space-y-6">
           <div className="space-y-4">
-            <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+            <div className="flex items-center gap-2 border-b border-border pb-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent-bg text-accent">
                 <Info size={16} />
               </span>
               <h4 className="text-sm font-bold text-gray-800">{t("admin.sections.basicInfo")}</h4>
@@ -220,7 +220,7 @@ export default function AdminSemesters() {
           </div>
 
           <div className="space-y-4">
-            <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
+            <div className="flex items-center gap-2 border-b border-border pb-2">
               <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
                 <Calendar size={16} />
               </span>
@@ -259,9 +259,9 @@ export default function AdminSemesters() {
             ]} />
             <div>
               <p className="mb-2 text-xs font-bold uppercase tracking-wide text-gray-500">{t("nav.classes")}</p>
-              <div className="max-h-64 overflow-auto rounded-xl border border-gray-100">
+              <div className="max-h-64 overflow-auto rounded-xl border border-border">
                 {(modal.semester.classes || []).length ? (modal.semester.classes || []).map((cls) => (
-                  <div key={cls.id} className="grid grid-cols-3 gap-3 border-b border-gray-100 px-3 py-2 text-sm last:border-b-0">
+                  <div key={cls.id} className="grid grid-cols-3 gap-3 border-b border-border px-3 py-2 text-sm last:border-b-0">
                     <span className="font-semibold text-gray-800">{cls.class_code}</span>
                     <span className="text-gray-500">{cls.subject_code}</span>
                     <span className="text-gray-500">{cls.lecturer_name || "—"}</span>

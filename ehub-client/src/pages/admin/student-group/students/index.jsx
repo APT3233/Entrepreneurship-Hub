@@ -235,7 +235,7 @@ export default function AdminStudents() {
             if (el) el.indeterminate = somePageSelected && !allPageSelected;
           }}
           onChange={toggleSelectAllPage}
-          className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+          className="h-4 w-4 rounded border-gray-300 text-accent focus:ring-accent"
           aria-label={isVi ? "Chọn tất cả trên trang" : "Select all on page"}
         />
       ),
@@ -246,12 +246,12 @@ export default function AdminStudents() {
           checked={selectedIds.includes(row.id)}
           onChange={() => toggleSelect(row.id)}
           onClick={(e) => e.stopPropagation()}
-          className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+          className="h-4 w-4 rounded border-gray-300 text-accent focus:ring-accent"
           aria-label={isVi ? `Chọn ${row.student_code}` : `Select ${row.student_code}`}
         />
       ),
     }] : []),
-    { key: "student_code", label: t("admin.fields.studentCode"), render: (row) => <span className="font-mono text-xs font-bold text-indigo-700">{row.student_code}</span> },
+    { key: "student_code", label: t("admin.fields.studentCode"), render: (row) => <span className="font-mono text-xs font-bold text-accent">{row.student_code}</span> },
     { key: "full_name", label: t("admin.fields.fullName"), render: (row) => <span className="font-semibold text-gray-900">{row.full_name}</span> },
     { key: "email", label: t("admin.fields.email") },
     { key: "phone", label: t("admin.fields.phone"), render: (row) => row.phone || "—" },
@@ -332,7 +332,7 @@ export default function AdminStudents() {
                 {isVi ? `Xoá đã chọn (${selectedIds.length})` : `Delete selected (${selectedIds.length})`}
               </button>
             ) : null}
-            <button type="button" onClick={openCreate} className="inline-flex h-10 items-center gap-2 rounded-lg bg-indigo-600 px-4 text-sm font-semibold text-white hover:bg-indigo-700 cursor-pointer">
+            <button type="button" onClick={openCreate} className="inline-flex h-10 items-center gap-2 rounded-lg bg-accent px-4 text-sm font-semibold text-white hover:bg-accent-hover cursor-pointer">
               <Plus size={16} /> {t("admin.actions.create")}
             </button>
           </div>
@@ -366,8 +366,8 @@ export default function AdminStudents() {
         <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-1">
           {/* Section 1: Personal Info */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+            <div className="flex items-center gap-2 border-b border-border pb-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent-bg text-accent">
                 <User size={16} />
               </span>
               <h4 className="text-sm font-bold text-gray-800">
@@ -392,7 +392,7 @@ export default function AdminStudents() {
 
           {/* Section 2: Academic Info */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
+            <div className="flex items-center gap-2 border-b border-border pb-2">
               <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
                 <GraduationCap size={16} />
               </span>
@@ -449,7 +449,7 @@ export default function AdminStudents() {
 
           {/* Section 3: System Status & Links */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
+            <div className="flex items-center gap-2 border-b border-border pb-2">
               <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
                 <KeyRound size={16} />
               </span>
@@ -513,7 +513,7 @@ export default function AdminStudents() {
               <h3 className="mb-2 text-sm font-black text-gray-900">{t("common.confirm") === "Xác nhận" ? "Lớp học tham gia" : "Classes"}</h3>
               <div className="space-y-2">
                 {(modal.student.classes || []).length ? modal.student.classes.map((item) => (
-                  <div key={item.enrollment_id} className="rounded-xl border border-gray-100 p-3 text-sm">
+                  <div key={item.enrollment_id} className="rounded-xl border border-border p-3 text-sm">
                     <div className="font-bold text-gray-900">{getShortClassCode(item.class_code, item.semester_code)} · {item.subject_code}</div>
                     <div className="mt-1 flex flex-wrap items-center gap-2 text-gray-500">
                       <span>{item.semester_code} · {item.enrollment_status}</span>

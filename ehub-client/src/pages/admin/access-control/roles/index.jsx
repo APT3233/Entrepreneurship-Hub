@@ -146,7 +146,7 @@ export default function AdminRoles() {
   };
 
   const columns = useMemo(() => [
-    { key: "role_code", label: t("admin.fields.roleCode"), render: (row) => <span className="font-mono text-xs font-bold text-indigo-700">{row.role_code}</span> },
+    { key: "role_code", label: t("admin.fields.roleCode"), render: (row) => <span className="font-mono text-xs font-bold text-accent">{row.role_code}</span> },
     { key: "role_name", label: t("admin.fields.roleName") },
     { key: "description", label: t("admin.fields.description"), render: (row) => row.description || "—" },
     {
@@ -162,7 +162,7 @@ export default function AdminRoles() {
       render: (row) => canWrite ? (
         <div className="flex justify-end gap-1">
           <button type="button" onClick={() => openEdit(row)} className="rounded-lg p-2 text-gray-500 hover:bg-gray-50 cursor-pointer" title={t("admin.actions.edit")}><SquarePen size={16} /></button>
-          <button type="button" onClick={() => openPermissions(row)} className="rounded-lg p-2 text-indigo-600 hover:bg-indigo-50 cursor-pointer" title={t("admin.actions.assignRoles")}><ShieldCheck size={16} /></button>
+          <button type="button" onClick={() => openPermissions(row)} className="rounded-lg p-2 text-accent hover:bg-accent-bg cursor-pointer" title={t("admin.actions.assignRoles")}><ShieldCheck size={16} /></button>
         </div>
       ) : null,
     },
@@ -172,7 +172,7 @@ export default function AdminRoles() {
     <>
       <FilterBar
         right={canWrite ? (
-          <button type="button" onClick={openCreate} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 cursor-pointer">
+          <button type="button" onClick={openCreate} className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-hover cursor-pointer">
             <Plus size={16} /> {t("admin.actions.create")}
           </button>
         ) : null}
@@ -198,7 +198,7 @@ export default function AdminRoles() {
                 <p className="mb-2 text-xs font-bold uppercase tracking-wide text-gray-500">{module}</p>
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   {items.map((permission) => (
-                    <label key={permission.id} className="flex items-start gap-3 rounded-xl border border-gray-100 p-3 cursor-pointer">
+                    <label key={permission.id} className="flex items-start gap-3 rounded-xl border border-border p-3 cursor-pointer">
                       <input className="mt-1" type="checkbox" checked={form.permissions.includes(permission.permission_code)} onChange={() => togglePermission(permission.permission_code)} />
                       <span>
                         <span className="block text-sm font-semibold text-gray-800">{permission.permission_name}</span>

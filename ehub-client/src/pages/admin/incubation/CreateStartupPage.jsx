@@ -67,13 +67,13 @@ export default function CreateStartupPage() {
 
   return (
     <div className="space-y-5">
-      <button type="button" onClick={() => navigate("/admin/incubation/startups")} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"><ArrowLeft size={16} /> {t("common.back")}</button>
-      <div className="rounded-2xl border border-slate-100 bg-white p-2 shadow-sm">
+      <button type="button" onClick={() => navigate("/admin/incubation/startups")} className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"><ArrowLeft size={16} /> {t("common.back")}</button>
+      <div className="rounded-card border border-border bg-surface p-2">
         <div className="grid gap-2 sm:grid-cols-2">
-          {[["from_group", t("admin.ecosystem.createStartup.modes.fromGroup")], ["manual", t("admin.ecosystem.createStartup.modes.manual")]].map(([key, label]) => <button key={key} type="button" onClick={() => setMode(key)} className={`rounded-xl px-4 py-2 text-sm font-black ${mode === key ? "bg-indigo-50 text-indigo-700" : "text-slate-500 hover:bg-slate-50"}`}>{label}</button>)}
+          {[["from_group", t("admin.ecosystem.createStartup.modes.fromGroup")], ["manual", t("admin.ecosystem.createStartup.modes.manual")]].map(([key, label]) => <button key={key} type="button" onClick={() => setMode(key)} className={`rounded-xl px-4 py-2 text-sm font-black ${mode === key ? "bg-accent-bg text-accent" : "text-slate-500 hover:bg-slate-50"}`}>{label}</button>)}
         </div>
       </div>
-      <form onSubmit={submit} className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+      <form onSubmit={submit} className="rounded-card border border-border bg-surface p-5">
         {mode === "from_group" ? (
           <div className="mb-5 grid gap-4 lg:grid-cols-3">
             <Field label={t("admin.ecosystem.createStartup.fields.group")}><SelectField value={groupId} onChange={(value) => setGroupId(value)} options={groupOptions} /></Field>

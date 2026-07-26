@@ -50,13 +50,13 @@ export default function RubricCriterionFields({ form, onChange, disabled = false
           disabled={disabled}
         />
       </Field>
-      <label className="flex items-center gap-2 rounded-xl border border-gray-100 px-3 py-2.5 text-sm font-semibold text-gray-700 sm:col-span-2">
+      <label className="flex items-center gap-2 rounded-xl border border-border px-3 py-2.5 text-sm font-semibold text-gray-700 sm:col-span-2">
         <input
           type="checkbox"
           checked={Boolean(form.is_required_feedback)}
           onChange={(e) => setValue("is_required_feedback", e.target.checked)}
           disabled={disabled}
-          className="h-4 w-4 rounded border-gray-300 text-indigo-600"
+          className="h-4 w-4 rounded border-gray-300 text-accent"
         />
         {t("admin.rubric.form.requireFeedback")}
       </label>

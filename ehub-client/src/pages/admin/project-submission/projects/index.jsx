@@ -181,7 +181,7 @@ export default function AdminProjects() {
         activeFilterCount={activeFilterCount}
         onClear={clearFilters}
         right={(
-          <button type="button" onClick={exportAll} className="inline-flex h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+          <button type="button" onClick={exportAll} className="inline-flex h-10 items-center gap-2 rounded-lg border border-border bg-surface px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">
             <FileDown size={16} /> Export CSV
           </button>
         )}
@@ -237,11 +237,11 @@ export default function AdminProjects() {
             ]} />
             <div className="rounded-xl bg-gray-50 p-3 text-sm text-gray-600">{modal.project.topic_desc || "Chưa có mô tả project."}</div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div className="rounded-xl border border-gray-100 p-3">
+              <div className="rounded-xl border border-border p-3">
                 <h3 className="text-sm font-black text-gray-900">Checkpoint submissions</h3>
                 <p className="mt-1 text-2xl font-black text-gray-900">{(modal.project.checkpoint_submissions || []).length}</p>
               </div>
-              <div className="rounded-xl border border-gray-100 p-3">
+              <div className="rounded-xl border border-border p-3">
                 <h3 className="text-sm font-black text-gray-900">Assignment submissions</h3>
                 <p className="mt-1 text-2xl font-black text-gray-900">{(modal.project.assignment_submissions || []).length}</p>
               </div>

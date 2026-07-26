@@ -152,7 +152,7 @@ export default function MentorDetailPage() {
     { key: "file_size", label: t("admin.mentors.documentsTab.size"), width: 100, render: (row) => row.file_size ? `${Math.round(row.file_size / 1024)} KB` : "—" },
     { key: "uploaded_by_name", label: t("admin.mentors.documentsTab.uploadedBy"), width: 160, render: (row) => row.uploaded_by_name || "—" },
     { key: "created_at", label: t("admin.mentors.documentsTab.created"), width: 150, render: (row) => formatDate(row.created_at) },
-    { key: "actions", label: "", width: 110, render: (row) => <div className="flex justify-end gap-1"><a href={row.file_url} target="_blank" rel="noreferrer" className="rounded-lg p-2 text-teal-600 hover:bg-teal-50"><ExternalLink size={16} /></a><button type="button" onClick={() => setDeleteDoc(row)} className="rounded-lg p-2 text-rose-600 hover:bg-rose-50"><Trash2 size={16} /></button></div> },
+    { key: "actions", label: "", width: 110, render: (row) => <div className="flex justify-end gap-1"><a href={row.file_url} target="_blank" rel="noreferrer" className="rounded-lg p-2 text-accent hover:bg-accent-bg"><ExternalLink size={16} /></a><button type="button" onClick={() => setDeleteDoc(row)} className="rounded-lg p-2 text-rose-600 hover:bg-rose-50"><Trash2 size={16} /></button></div> },
   ], [t]);
 
   const activityColumns = useMemo(() => [
@@ -164,24 +164,24 @@ export default function MentorDetailPage() {
 
   const localizedDocumentTypeOptions = useMemo(() => documentTypeOptions.map((opt) => ({ value: opt.value, label: t(`status.${opt.value}`) })), [t]);
 
-  if (loading) return <div className="rounded-2xl bg-white p-8 text-center text-sm text-slate-400">{t("common.loading") || "Loading..."}</div>;
-  if (error) return <div className="rounded-2xl bg-rose-50 p-8 text-center text-sm font-bold text-rose-600">{error}</div>;
+  if (loading) return <div className="rounded-card bg-surface p-8 text-center text-sm text-slate-400">{t("common.loading") || "Loading..."}</div>;
+  if (error) return <div className="rounded-card bg-rose-50 p-8 text-center text-sm font-bold text-rose-600">{error}</div>;
   if (!mentor) return null;
 
   return (
     <div className="space-y-5">
-      <button type="button" onClick={() => navigate("/admin/mentors")} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"><ArrowLeft size={16} /> {t("admin.mentors.back")}</button>
+      <button type="button" onClick={() => navigate("/admin/mentors")} className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"><ArrowLeft size={16} /> {t("admin.mentors.back")}</button>
       <MentorHeader mentor={mentor} />
-      <div className="flex gap-2 overflow-x-auto rounded-2xl border border-slate-100 bg-white p-2 shadow-sm">
-        {tabs.map((tab) => <NavLink key={tab.key} to={tab.path ? `/admin/mentors/${id}/${tab.path}` : `/admin/mentors/${id}`} end={tab.key === "overview"} className={({ isActive }) => `whitespace-nowrap rounded-xl px-3 py-2 text-sm font-bold ${isActive ? "bg-teal-50 text-teal-700" : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"}`}>{t(`admin.mentors.tabs.${tab.key}`)}</NavLink>)}
+      <div className="flex gap-2 overflow-x-auto rounded-card border border-border bg-surface p-2">
+        {tabs.map((tab) => <NavLink key={tab.key} to={tab.path ? `/admin/mentors/${id}/${tab.path}` : `/admin/mentors/${id}`} end={tab.key === "overview"} className={({ isActive }) => `whitespace-nowrap rounded-xl px-3 py-2 text-sm font-bold ${isActive ? "bg-accent-bg text-accent" : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"}`}>{t(`admin.mentors.tabs.${tab.key}`)}</NavLink>)}
       </div>
 
       {activeTab === "overview" ? <Overview mentor={mentor} /> : null}
       {activeTab === "profile" ? (
-        <form onSubmit={saveProfile} className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+        <form onSubmit={saveProfile} className="rounded-card border border-border bg-surface p-5">
           <MentorForm form={profileForm} setForm={setProfileForm} />
           <div className="mt-4 flex justify-end">
-            <button disabled={saving} className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-4 py-2 text-sm font-bold text-white hover:bg-teal-700 disabled:opacity-50"><Save size={16} /> {t("admin.mentors.saveProfile")}</button>
+            <button disabled={saving} className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2 text-sm font-bold text-white hover:bg-accent-hover disabled:opacity-50"><Save size={16} /> {t("admin.mentors.saveProfile")}</button>
           </div>
         </form>
       ) : null}
@@ -189,7 +189,7 @@ export default function MentorDetailPage() {
         <Panel title={t("admin.mentors.tabs.expertise")}>
           <ExpertiseEditor areas={areas} items={expertiseItems} setItems={setExpertiseItems} />
           <div className="mt-4 flex justify-end">
-            <button type="button" disabled={saving} onClick={saveExpertise} className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-4 py-2 text-sm font-bold text-white hover:bg-teal-700 disabled:opacity-50"><Save size={16} /> {t("admin.mentors.saveExpertise")}</button>
+            <button type="button" disabled={saving} onClick={saveExpertise} className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2 text-sm font-bold text-white hover:bg-accent-hover disabled:opacity-50"><Save size={16} /> {t("admin.mentors.saveExpertise")}</button>
           </div>
         </Panel>
       ) : null}
@@ -197,7 +197,7 @@ export default function MentorDetailPage() {
         <Panel title={t("admin.mentors.tabs.availability")}>
           <AvailabilityEditor items={availabilityItems} setItems={setAvailabilityItems} />
           <div className="mt-4 flex justify-end">
-            <button type="button" disabled={saving} onClick={saveAvailability} className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-4 py-2 text-sm font-bold text-white hover:bg-teal-700 disabled:opacity-50"><Save size={16} /> {t("admin.mentors.saveAvailability")}</button>
+            <button type="button" disabled={saving} onClick={saveAvailability} className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2 text-sm font-bold text-white hover:bg-accent-hover disabled:opacity-50"><Save size={16} /> {t("admin.mentors.saveAvailability")}</button>
           </div>
         </Panel>
       ) : null}
@@ -205,8 +205,8 @@ export default function MentorDetailPage() {
         <Panel title={t("admin.mentors.tabs.documents")}>
           <form onSubmit={uploadDocument} className="mb-4 grid gap-3 rounded-xl bg-slate-50 p-3 md:grid-cols-[180px_1fr_auto]">
             <Field label={t("admin.mentors.documentsTab.docType")}><Select value={upload.document_type} onChange={(value) => setUpload((prev) => ({ ...prev, document_type: value }))} options={localizedDocumentTypeOptions} /></Field>
-            <Field label={t("admin.mentors.documentsTab.docFile")}><input type="file" className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-xl file:border-0 file:bg-teal-50 file:px-3 file:py-2 file:text-sm file:font-bold file:text-teal-700" onChange={(e) => setUpload((prev) => ({ ...prev, file: e.target.files?.[0] || null }))} /></Field>
-            <button disabled={saving} className="mt-5 inline-flex items-center justify-center gap-2 rounded-xl bg-teal-600 px-4 py-2 text-sm font-bold text-white hover:bg-teal-700 disabled:opacity-50"><Upload size={16} /> {t("admin.mentors.documentsTab.btnUpload")}</button>
+            <Field label={t("admin.mentors.documentsTab.docFile")}><input type="file" className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-xl file:border-0 file:bg-accent-bg file:px-3 file:py-2 file:text-sm file:font-bold file:text-accent" onChange={(e) => setUpload((prev) => ({ ...prev, file: e.target.files?.[0] || null }))} /></Field>
+            <button disabled={saving} className="mt-5 inline-flex items-center justify-center gap-2 rounded-xl bg-accent px-4 py-2 text-sm font-bold text-white hover:bg-accent-hover disabled:opacity-50"><Upload size={16} /> {t("admin.mentors.documentsTab.btnUpload")}</button>
           </form>
           <AdminTable columns={docColumns} rows={documents} emptyText={t("admin.mentors.documentsTab.noDocuments")} />
         </Panel>
@@ -231,14 +231,14 @@ function Overview({ mentor }) {
     [t("admin.mentors.overviewStats.mentoringHours"), 0],
     [t("admin.mentors.overviewStats.lastUpdated"), formatDate(mentor.updated_at)],
   ];
-  return <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">{stats.map(([label, value]) => <div key={label} className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm"><p className="text-xs font-bold uppercase tracking-wide text-slate-400">{label}</p><div className="mt-2 text-2xl font-black text-slate-900">{value}</div></div>)}</div>;
+  return <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">{stats.map(([label, value]) => <div key={label} className="rounded-card border border-border bg-surface p-4"><p className="text-xs font-bold uppercase tracking-wide text-slate-400">{label}</p><div className="mt-2 text-2xl font-black text-slate-900">{value}</div></div>)}</div>;
 }
 
 function Panel({ title, children }) {
-  return <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm"><h3 className="mb-4 text-sm font-black text-slate-900">{title}</h3>{children}</div>;
+  return <div className="rounded-card border border-border bg-surface p-5"><h3 className="mb-4 text-sm font-black text-slate-900">{title}</h3>{children}</div>;
 }
 
 function Placeholder({ title }) {
   const { t } = useTranslation();
-  return <Panel title={t(`admin.mentors.tabs.${title}`)}><div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center text-sm font-semibold text-slate-400"><FileText className="mx-auto mb-2 text-slate-300" /> {t("admin.mentors.placeholderComingSoon")}</div></Panel>;
+  return <Panel title={t(`admin.mentors.tabs.${title}`)}><div className="rounded-xl border border-dashed border-border bg-slate-50 p-8 text-center text-sm font-semibold text-slate-400"><FileText className="mx-auto mb-2 text-slate-300" /> {t("admin.mentors.placeholderComingSoon")}</div></Panel>;
 }

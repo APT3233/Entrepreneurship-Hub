@@ -68,15 +68,15 @@ export default function GroupMentorsPage() {
     { key: "created_at", label: t("common.created"), render: (row) => formatDate(row.created_at) },
   ], [t]);
 
-  if (loading) return <div className="rounded-2xl bg-white p-8 text-center text-sm text-slate-400">{t("common.loading")}...</div>;
+  if (loading) return <div className="rounded-card bg-surface p-8 text-center text-sm text-slate-400">{t("common.loading")}...</div>;
 
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <button onClick={() => navigate(-1)} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700"><ArrowLeft size={16} /> {t("common.back")}</button>
-        <button onClick={() => setModalOpen(true)} className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-4 py-2 text-sm font-bold text-white"><Plus size={16} /> {t("admin.mentorWorkflow.groupMentors.assignMentor")}</button>
+        <button onClick={() => navigate(-1)} className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 text-sm font-bold text-slate-700"><ArrowLeft size={16} /> {t("common.back")}</button>
+        <button onClick={() => setModalOpen(true)} className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2 text-sm font-bold text-white"><Plus size={16} /> {t("admin.mentorWorkflow.groupMentors.assignMentor")}</button>
       </div>
-      <section className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+      <section className="rounded-card border border-border bg-surface p-5">
         <h2 className="text-xl font-black text-slate-900">{data?.group?.group_name}</h2>
         <p className="mt-1 text-sm text-slate-500">{data?.group?.topic || t("admin.mentorWorkflow.common.noTopic")} · {data?.group?.class_code}</p>
       </section>

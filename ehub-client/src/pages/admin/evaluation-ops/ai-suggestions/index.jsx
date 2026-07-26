@@ -107,20 +107,20 @@ export default function AdminAiSuggestionsPage() {
         <FilterSelect label={t("ai.suggestions.filterStatus")} value={query.status} onChange={(status) => setQuery((prev) => ({ ...prev, page: 1, status }))} options={statusOptions} />
         <FilterSelect label="Provider" value={query.provider_key} onChange={(provider_key) => setQuery((prev) => ({ ...prev, page: 1, provider_key }))} options={providerOptions} />
         <input
-          className="h-10 rounded-xl border border-gray-200 px-3 text-sm outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100"
+          className="h-10 rounded-xl border border-border px-3 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent"
           value={query.model}
           onChange={(e) => setQuery((prev) => ({ ...prev, page: 1, model: e.target.value }))}
           placeholder={t("ai.suggestions.filterModel")}
         />
         <input
           type="date"
-          className="h-10 rounded-xl border border-gray-200 px-3 text-sm outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100"
+          className="h-10 rounded-xl border border-border px-3 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent"
           value={query.date_from}
           onChange={(e) => setQuery((prev) => ({ ...prev, page: 1, date_from: e.target.value }))}
         />
         <input
           type="date"
-          className="h-10 rounded-xl border border-gray-200 px-3 text-sm outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100"
+          className="h-10 rounded-xl border border-border px-3 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent"
           value={query.date_to}
           onChange={(e) => setQuery((prev) => ({ ...prev, page: 1, date_to: e.target.value }))}
         />
@@ -144,7 +144,7 @@ function SuggestionDetail({ row, onClose }) {
   const { t } = useTranslation();
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-gray-900/30" onClick={onClose}>
-      <aside className="h-full w-full max-w-xl overflow-y-auto bg-white p-6 shadow-xl" onClick={(event) => event.stopPropagation()}>
+      <aside className="h-full w-full max-w-xl overflow-y-auto bg-surface p-6 shadow-xl" onClick={(event) => event.stopPropagation()}>
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 className="text-xl font-bold text-gray-900">{t("ai.suggestions.detailTitle")} #{row.id}</h2>

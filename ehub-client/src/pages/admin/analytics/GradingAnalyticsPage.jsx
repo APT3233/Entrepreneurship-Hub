@@ -47,7 +47,7 @@ export default function AdminGradingAnalytics() {
         lookups={lookups}
         showLecturer
         right={(
-          <button type="button" onClick={() => exportRowsToCsv("grading-analytics.csv", tableRows)} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700">
+          <button type="button" onClick={() => exportRowsToCsv("grading-analytics.csv", tableRows)} className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-hover">
             <FileDown size={16} /> {t("admin.analytics.exportTable")}
           </button>
         )}
@@ -57,10 +57,10 @@ export default function AdminGradingAnalytics() {
           <BarListChart title={t("admin.analytics.charts.pendingGradingByLecturer")} rows={data?.pending_grading_by_lecturer || []} labelKey="lecturer" valueKey="total" />
           <BarListChart title={t("admin.analytics.charts.gradedCountByLecturer")} rows={data?.graded_count_by_lecturer || []} labelKey="lecturer" valueKey="total" />
         </div>
-        <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+        <div className="rounded-card border border-border bg-surface p-5">
           <h2 className="mb-4 text-base font-bold text-gray-900">{t("admin.analytics.sections.submissionsWaitingLongest")}</h2>
           {(data?.submissions_waiting_longest || []).length ? (
-            <div className="divide-y divide-gray-100">
+            <div className="divide-y divide-border">
               {data.submissions_waiting_longest.map((row) => (
                 <div key={`${row.target_type}-${row.target_id}-${row.group_id || row.group_name}`} className="flex items-center justify-between gap-3 py-3 text-sm">
                   <div className="min-w-0">

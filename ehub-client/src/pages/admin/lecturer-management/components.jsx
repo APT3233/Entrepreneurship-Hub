@@ -8,7 +8,7 @@ import { useTranslation } from "@/context/TranslationContext";
 export function LecturerAvatar({ lecturer, size = "md" }) {
   const className = size === "lg" ? "h-16 w-16 text-lg" : "h-10 w-10 text-sm";
   if (lecturer?.avatar_url) {
-    return <img src={lecturer.avatar_url} alt="" className={`${className} rounded-full border border-slate-100 object-cover`} />;
+    return <img src={lecturer.avatar_url} alt="" className={`${className} rounded-full border border-border object-cover`} />;
   }
   return (
     <div className={`${className} flex items-center justify-center rounded-full bg-blue-50 font-black text-blue-700`}>
@@ -27,7 +27,7 @@ export function RoleBadge({ role }) {
 
 export function CountBadge({ value, tone = "slate" }) {
   const styles = {
-    slate: "bg-slate-50 text-slate-700 border-slate-200",
+    slate: "bg-slate-50 text-slate-700 border-border",
     amber: "bg-amber-50 text-amber-700 border-amber-200",
     emerald: "bg-emerald-50 text-emerald-700 border-emerald-200",
     blue: "bg-blue-50 text-blue-700 border-blue-200",
@@ -42,7 +42,7 @@ export function CountBadge({ value, tone = "slate" }) {
 export function StatCard(props) {
   const { icon: Icon, label, value, sub } = props;
   return (
-    <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+    <div className="rounded-card border border-border bg-surface p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-bold uppercase tracking-wide text-slate-400">{label}</p>
@@ -76,8 +76,8 @@ export function LecturerForm({ form, setForm, mode = "create" }) {
   return (
     <div className="space-y-5">
       {/* SECTION 1: ACCOUNT DETAILS */}
-      <div className="rounded-2xl border border-slate-100 bg-slate-50/50 p-5">
-        <div className="mb-4 flex items-center gap-2 border-b border-slate-100 pb-3">
+      <div className="rounded-card border border-border bg-slate-50/50 p-5">
+        <div className="mb-4 flex items-center gap-2 border-b border-border pb-3">
           <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
             <UserRound size={16} />
           </span>
@@ -121,9 +121,9 @@ export function LecturerForm({ form, setForm, mode = "create" }) {
       </div>
 
       {/* SECTION 2: PROFESSIONAL PROFILE */}
-      <div className="rounded-2xl border border-slate-100 bg-slate-50/50 p-5">
-        <div className="mb-4 flex items-center gap-2 border-b border-slate-100 pb-3">
-          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+      <div className="rounded-card border border-border bg-slate-50/50 p-5">
+        <div className="mb-4 flex items-center gap-2 border-b border-border pb-3">
+          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-accent-bg text-accent">
             <GraduationCap size={16} />
           </span>
           <div>
@@ -162,7 +162,7 @@ export function LecturerForm({ form, setForm, mode = "create" }) {
 export function LecturerHeader({ lecturer }) {
   const { t } = useTranslation();
   return (
-    <div className="mb-5 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+    <div className="mb-5 rounded-card border border-border bg-surface p-5">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center gap-4">
           <LecturerAvatar lecturer={lecturer} size="lg" />

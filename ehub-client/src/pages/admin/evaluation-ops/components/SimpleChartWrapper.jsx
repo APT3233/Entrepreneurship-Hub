@@ -7,7 +7,7 @@ export default function SimpleChartWrapper({ title, rows = [], labelKey, valueKe
   const maxValue = Math.max(...rows.map((row) => Number(row[valueKey] || 0)), 0);
 
   return (
-    <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+    <div className="rounded-card border border-border bg-surface p-5">
       <div className="mb-4 flex items-center justify-between gap-3">
         <h2 className="text-base font-bold text-gray-900">{title}</h2>
         <span className="text-xs font-semibold text-gray-400">{t("admin.evaluationOps.analytics.itemCount", { count: rows.length })}</span>

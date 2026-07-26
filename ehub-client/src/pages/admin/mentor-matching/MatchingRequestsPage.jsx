@@ -71,12 +71,12 @@ export default function MatchingRequestsPage() {
     { key: "suggestion_count", label: t("admin.mentorMatching.columns.suggestions"), render: (row) => row.suggestion_count || 0 },
     { key: "top_score", label: t("admin.mentorMatching.columns.topScore"), render: (row) => row.top_score ? <ScoreBadge score={row.top_score} /> : "-" },
     { key: "created_at", label: t("admin.mentorMatching.columns.created"), render: (row) => formatDate(row.created_at) },
-    { key: "actions", label: "", render: (row) => <div className="flex justify-end gap-1"><button className="rounded-lg p-2 text-teal-600 hover:bg-teal-50" onClick={(e) => { e.stopPropagation(); navigate(`/admin/mentor-matching/${row.id}`); }}><Eye size={16} /></button><button className="rounded-lg p-2 text-indigo-600 hover:bg-indigo-50" onClick={async (e) => { e.stopPropagation(); await MentorMatchingApi.generate(row.id, { matching_method: "hybrid" }); toast.success(t("admin.mentorMatching.generateSuccess")); await load(); }}><Sparkles size={16} /></button></div> },
+    { key: "actions", label: "", render: (row) => <div className="flex justify-end gap-1"><button className="rounded-lg p-2 text-accent hover:bg-accent-bg" onClick={(e) => { e.stopPropagation(); navigate(`/admin/mentor-matching/${row.id}`); }}><Eye size={16} /></button><button className="rounded-lg p-2 text-accent hover:bg-accent-bg" onClick={async (e) => { e.stopPropagation(); await MentorMatchingApi.generate(row.id, { matching_method: "hybrid" }); toast.success(t("admin.mentorMatching.generateSuccess")); await load(); }}><Sparkles size={16} /></button></div> },
   ], [load, navigate, t, toast]);
 
   return (
     <>
-      <FilterBar right={<button type="button" onClick={() => setModalOpen(true)} className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-teal-700"><Plus size={16} /> {t("admin.mentorMatching.createRequest")}</button>}>
+      <FilterBar right={<button type="button" onClick={() => setModalOpen(true)} className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-bold text-white hover:bg-accent-hover"><Plus size={16} /> {t("admin.mentorMatching.createRequest")}</button>}>
         <SearchInput value={query.search} onChange={(search) => setQuery((prev) => ({ ...prev, page: 1, search }))} placeholder={t("admin.mentorMatching.searchPlaceholder")} />
         <FilterSelect label={t("admin.mentorMatching.columns.status")} value={query.status} onChange={(status) => setQuery((prev) => ({ ...prev, page: 1, status }))} options={[{ value: "", label: t("common.all") }, ...matchingStatusOptions]} />
         <FilterSelect label={t("admin.mentorMatching.columns.priority")} value={query.priority || ""} onChange={(priority) => setQuery((prev) => ({ ...prev, page: 1, priority }))} options={[{ value: "", label: t("common.all") }, ...priorityOptions]} />
