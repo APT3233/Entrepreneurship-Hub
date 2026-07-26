@@ -1,3 +1,4 @@
+import { Users } from "lucide-react";
 import AnimatedNumber from "@/components/ui/common/AnimatedNumber";
 
 /**
@@ -37,14 +38,19 @@ export default function GroupStatus({
   onDetail,
 }) {
   return (
-    <div className="h-full w-full rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+    <div className="h-full w-full rounded-card bg-surface p-5 shadow-card">
 
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-base font-bold text-gray-900">Trạng thái nhóm</h2>
+        <div className="flex items-center gap-2.5">
+          <span className="grid place-items-center w-8 h-8 rounded-lg bg-secondary-bg text-secondary">
+            <Users size={17} />
+          </span>
+          <h2 className="text-base font-semibold text-text-primary">Trạng thái nhóm</h2>
+        </div>
         <button
           onClick={onDetail}
-          className="text-sm font-medium text-blue-500 hover:text-blue-600 transition-colors duration-150 cursor-pointer"
+          className="text-sm font-medium text-accent hover:text-accent-hover transition-colors duration-150 cursor-pointer"
         >
           Chi tiết
         </button>
@@ -59,7 +65,7 @@ export default function GroupStatus({
           >
             <div className="flex items-center gap-3">
               <span className={`w-3 h-3 rounded-full shrink-0 ${dot}`} />
-              <span className="text-sm font-medium text-gray-700">{label}</span>
+              <span className="text-sm font-medium text-text-secondary">{label}</span>
             </div>
             <span className={`text-sm font-bold ${text}`}>
               <AnimatedNumber value={stats[key] ?? 0} />

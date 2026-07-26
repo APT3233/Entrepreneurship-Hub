@@ -13,17 +13,17 @@ export default function ScoreSummary({
   const hasProblems = invalidCount > 0 || missingFeedbackCount > 0 || missingScoreCount > 0;
 
   return (
-    <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+    <div className="rounded-2xl bg-surface p-5 shadow-sm">
       <div className="flex items-end justify-between gap-4">
         <div>
-          <p className="text-sm font-medium text-gray-500">{t("lecturer.gradingPage.summary.total")}</p>
-          <p className="mt-1 text-4xl font-bold text-gray-900">{Number(total || 0).toFixed(2)}</p>
+          <p className="text-sm font-medium text-text-secondary">{t("lecturer.gradingPage.summary.total")}</p>
+          <p className="mt-1 text-4xl font-bold text-text-primary">{Number(total || 0).toFixed(2)}</p>
         </div>
-        <div className="text-right text-sm text-gray-500">
+        <div className="text-right text-sm text-text-secondary">
           {!directMode ? (
-            <p>{t("lecturer.gradingPage.summary.rubric")}: <span className="font-semibold text-gray-800">{rubricTotal ?? "—"}</span></p>
+            <p>{t("lecturer.gradingPage.summary.rubric")}: <span className="font-semibold text-text-primary">{rubricTotal ?? "—"}</span></p>
           ) : null}
-          <p>{t("lecturer.gradingPage.summary.source")}: <span className="font-semibold text-gray-800">{sourceMax ?? "—"}</span></p>
+          <p>{t("lecturer.gradingPage.summary.source")}: <span className="font-semibold text-text-primary">{sourceMax ?? "—"}</span></p>
         </div>
       </div>
       {hasProblems ? (

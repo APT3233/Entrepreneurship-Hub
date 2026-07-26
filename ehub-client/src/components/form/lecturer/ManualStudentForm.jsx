@@ -60,10 +60,10 @@ export default function ManualStudentForm({ isOpen, onClose, onSubmit, initialDa
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-[2px] px-4">
-      <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden">
+      <div className="relative w-full max-w-md bg-surface rounded-2xl shadow-2xl overflow-hidden">
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-indigo-600">
+          <div className="flex items-center gap-2 text-accent-600">
             <UserPlus size={20} />
             <h2 className="text-base font-bold text-gray-900">
               {initialData ? "Sửa thông tin sinh viên" : "Thêm sinh viên thủ công"}
@@ -84,7 +84,7 @@ export default function ManualStudentForm({ isOpen, onClose, onSubmit, initialDa
               onChange={handleChange}
               placeholder="Ví dụ: DE180001"
               className={`px-4 py-2.5 rounded-xl bg-gray-50 border text-sm outline-none transition-all ${
-                errors.student_code ? "border-red-300 bg-red-50" : "border-gray-100 focus:border-indigo-300 focus:bg-white"
+                errors.student_code ? "border-red-300 bg-red-50" : "border-gray-100 focus:border-accent-300 focus:bg-surface"
               }`}
             />
             {errors.student_code && <p className="text-[10px] text-red-500 font-medium">{errors.student_code}</p>}
@@ -98,7 +98,7 @@ export default function ManualStudentForm({ isOpen, onClose, onSubmit, initialDa
               onChange={handleChange}
               placeholder="Ví dụ: Nguyễn Văn A"
               className={`px-4 py-2.5 rounded-xl bg-gray-50 border text-sm outline-none transition-all ${
-                errors.full_name ? "border-red-300 bg-red-50" : "border-gray-100 focus:border-indigo-300 focus:bg-white"
+                errors.full_name ? "border-red-300 bg-red-50" : "border-gray-100 focus:border-accent-300 focus:bg-surface"
               }`}
             />
             {errors.full_name && <p className="text-[10px] text-red-500 font-medium">{errors.full_name}</p>}
@@ -113,7 +113,7 @@ export default function ManualStudentForm({ isOpen, onClose, onSubmit, initialDa
               onChange={handleChange}
               placeholder="Ví dụ: sv@fpt.edu.vn"
               className={`px-4 py-2.5 rounded-xl bg-gray-50 border text-sm outline-none transition-all ${
-                errors.email ? "border-red-300 bg-red-50" : "border-gray-100 focus:border-indigo-300 focus:bg-white"
+                errors.email ? "border-red-300 bg-red-50" : "border-gray-100 focus:border-accent-300 focus:bg-surface"
               }`}
             />
             {errors.email && <p className="text-[10px] text-red-500 font-medium">{errors.email}</p>}
@@ -126,7 +126,7 @@ export default function ManualStudentForm({ isOpen, onClose, onSubmit, initialDa
               value={formData.major}
               onChange={handleChange}
               placeholder="Ví dụ: IT, Kinh tế..."
-              className="px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-100 text-sm outline-none focus:border-indigo-300 focus:bg-white transition-all"
+              className="px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-100 text-sm outline-none focus:border-accent-300 focus:bg-surface transition-all"
             />
           </div>
 
@@ -141,7 +141,7 @@ export default function ManualStudentForm({ isOpen, onClose, onSubmit, initialDa
             <button
               type="submit"
               disabled={loading}
-              className="flex-[2] py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 shadow-md shadow-indigo-100 transition-all active:scale-[0.98] disabled:opacity-50"
+              className="flex-[2] py-2.5 rounded-xl bg-accent text-white text-sm font-bold hover:bg-accent-hover shadow-md shadow-accent-100 transition-all active:scale-[0.98] disabled:opacity-50"
             >
               {loading ? "Đang xử lý..." : initialData ? "Cập nhật sinh viên" : "Thêm sinh viên"}
             </button>

@@ -140,7 +140,7 @@ export default function CreateClassForm({ isOpen, onClose, onCreate, onClearErro
     >
       <div
         className="
-        relative w-full bg-white shadow-2xl
+        relative w-full bg-surface shadow-2xl
         rounded-t-2xl sm:rounded-2xl
         max-h-[92dvh] sm:max-h-[90vh] overflow-y-auto
         sm:mx-4 sm:max-w-4xl lg:max-w-5xl
@@ -152,7 +152,7 @@ export default function CreateClassForm({ isOpen, onClose, onCreate, onClearErro
         </div>
 
         {/* Header */}
-        <div className="px-5 sm:px-7 pt-4 sm:pt-6 pb-4 border-b border-gray-100 sticky top-0 bg-white z-10">
+        <div className="px-5 sm:px-7 pt-4 sm:pt-6 pb-4 border-b border-gray-100 sticky top-0 bg-surface z-10">
           <button
             onClick={onClose}
             className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
@@ -282,15 +282,15 @@ export default function CreateClassForm({ isOpen, onClose, onCreate, onClearErro
         </div>
 
         {/* Footer */}
-        <div className="px-5 sm:px-7 pb-6 sm:pb-7 pt-2 sticky bottom-0 bg-white">
+        <div className="px-5 sm:px-7 pb-6 sm:pb-7 pt-2 sticky bottom-0 bg-surface">
           <button
             onClick={handleSubmit}
             disabled={loading || !!displayImportError || importSummary.needReview > 0}
             className="
               w-full py-3 rounded-xl
-              bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99]
+              bg-accent hover:bg-accent-hover active:scale-[0.99]
               text-white text-sm font-bold tracking-wide
-              shadow-md shadow-indigo-200 transition-all duration-200
+              shadow-md shadow-accent-200 transition-all duration-200
               disabled:opacity-60 disabled:cursor-not-allowed
             "
           >

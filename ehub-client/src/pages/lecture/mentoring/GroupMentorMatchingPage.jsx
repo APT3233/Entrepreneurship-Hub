@@ -55,7 +55,7 @@ export default function GroupMentorMatchingPage() {
     { key: "suggestion_count", label: t("lecturer.mentoringPage.columns.suggestions") },
     { key: "top_score", label: t("lecturer.mentoringPage.columns.topScore"), render: (row) => row.top_score ? <ScoreBadge score={row.top_score} /> : "-" },
     { key: "created_at", label: t("lecturer.mentoringPage.columns.created"), render: (row) => formatDate(row.created_at) },
-    { key: "actions", label: "", render: (row) => <button className="rounded-lg p-2 text-indigo-600 hover:bg-indigo-50" onClick={async (event) => { event.stopPropagation(); await MentorMatchingApi.generate(row.id, { matching_method: "hybrid" }); toast.success(t("lecturer.mentoringPage.suggestionsGenerated")); await load(); }}><Sparkles size={16} /></button> },
+    { key: "actions", label: "", render: (row) => <button className="rounded-lg p-2 text-accent-600 hover:bg-accent-50" onClick={async (event) => { event.stopPropagation(); await MentorMatchingApi.generate(row.id, { matching_method: "hybrid" }); toast.success(t("lecturer.mentoringPage.suggestionsGenerated")); await load(); }}><Sparkles size={16} /></button> },
   ], [load, toast, t]);
   return (
     <div className="space-y-4">

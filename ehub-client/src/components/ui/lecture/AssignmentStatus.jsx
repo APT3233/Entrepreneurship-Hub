@@ -1,3 +1,4 @@
+import { ClipboardList } from "lucide-react";
 import AnimatedNumber from "@/components/ui/common/AnimatedNumber";
 
 /**
@@ -39,14 +40,19 @@ export default function AssignmentStatus({
   onCreate,
 }) {
   return (
-    <div className="h-full w-full rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+    <div className="h-full w-full rounded-card bg-surface p-5 shadow-card">
 
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-base font-bold text-gray-900">Checkpoint cần xử lý</h2>
+        <div className="flex items-center gap-2.5">
+          <span className="grid place-items-center w-8 h-8 rounded-lg bg-warning-bg text-warning">
+            <ClipboardList size={17} />
+          </span>
+          <h2 className="text-base font-semibold text-text-primary">Checkpoint cần xử lý</h2>
+        </div>
         <button
           onClick={onCreate}
-          className="text-sm font-medium text-blue-500 hover:text-blue-600 transition-colors duration-150 cursor-pointer"
+          className="text-sm font-medium text-accent hover:text-accent-hover transition-colors duration-150 cursor-pointer"
         >
           Tạo mới
         </button>
@@ -61,7 +67,7 @@ export default function AssignmentStatus({
           >
             <div className="flex items-center gap-3">
               <span className={`w-3 h-3 rounded-full shrink-0 ${dot}`} />
-              <span className="text-sm font-medium text-gray-700">{label}</span>
+              <span className="text-sm font-medium text-text-secondary">{label}</span>
             </div>
             <span className={`text-sm font-bold ${text}`}>
               <AnimatedNumber value={stats[key] ?? 0} />{unit}

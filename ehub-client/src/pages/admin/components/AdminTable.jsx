@@ -82,24 +82,24 @@ export default function AdminTable({
 
   if (loading) {
     return (
-      <div className="rounded-card border border-border bg-surface p-8 text-center text-sm text-text-muted">
+      <div className="rounded-card bg-surface shadow-card p-8 text-center text-sm text-text-muted">
         {t("common.loading")}
       </div>
     );
   }
   if (error) {
     return (
-      <div className="rounded-card border border-border bg-surface p-8 text-center text-sm font-medium text-danger-text">
+      <div className="rounded-card bg-surface shadow-card p-8 text-center text-sm font-medium text-danger-text">
         {error}
       </div>
     );
   }
 
   return (
-    <div className="overflow-hidden rounded-card border border-border bg-surface">
+    <div className="overflow-hidden rounded-card bg-surface shadow-card">
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-border table-fixed">
-          <thead className="bg-subtle">
+          <thead className="bg-subtle/60">
             <tr>
               {columns.map((column) => {
                 const width = colWidths[column.key];
@@ -108,7 +108,7 @@ export default function AdminTable({
                   <th
                     key={column.key}
                     style={width ? { width: `${width}px`, minWidth: `${width}px`, maxWidth: `${width}px` } : undefined}
-                    className={`relative px-4 py-3 text-left text-xs font-medium text-text-secondary select-none group/th ${
+                    className={`relative px-4 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider text-text-muted select-none group/th ${
                       stickyRight ? "sticky right-0 z-30 bg-subtle" : ""
                     }`}
                   >
@@ -137,7 +137,7 @@ export default function AdminTable({
                     <td
                       key={column.key}
                       style={width ? { width: `${width}px`, minWidth: `${width}px`, maxWidth: `${width}px` } : undefined}
-                      className={`px-4 py-3 align-middle text-sm text-text-secondary truncate ${
+                      className={`px-4 py-4 align-middle text-sm text-text-secondary truncate ${
                         stickyRight ? "sticky right-0 z-20 bg-surface group-hover/row:bg-subtle" : ""
                       }`}
                     >

@@ -24,19 +24,19 @@ function UserAvatar({ user }) {
       <img
         src={url}
         alt=""
-        className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border border-border shrink-0 bg-subtle"
+        className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border border-border shrink-0 bg-page"
         onError={() => setFailed(true)}
       />
     );
   }
   return (
-    <div className="relative w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-surface bg-subtle flex items-center justify-center shrink-0">
+    <div className="relative w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-surface bg-page flex items-center justify-center shrink-0">
       <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-text-muted" />
     </div>
   );
 }
 
-export default function AppHeader({ user = null, onLogout }) {
+export default function AppHeader({ user = null, onLogout, hidden = false }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
@@ -58,40 +58,40 @@ export default function AppHeader({ user = null, onLogout }) {
   };
 
   return (
-    <header className="shrink-0 w-full bg-surface border-b border-border">
-      <div className="flex items-center justify-end gap-3 sm:gap-6 px-4 sm:px-6 py-2 sm:py-3">
+    <header
+      className={`sticky top-0 z-30 w-full bg-page/90 backdrop-blur-md transition-transform duration-300 ease-out ${
+        hidden ? "-translate-y-full" : "translate-y-0"
+      }`}
+    >
+      <div className="flex items-center justify-end gap-2 sm:gap-3 px-4 sm:px-6 py-2.5 sm:py-3">
         <LanguageSwitcher />
-        <div className="h-6 sm:h-8 w-px bg-border shrink-0" />
+
+        {/* Profile */}
         <div
           onClick={handleProfileClick}
-          className="flex items-center gap-1.5 sm:gap-2 min-h-[44px] min-w-0 cursor-pointer group/header"
+          className="flex items-center gap-2.5 min-w-0 cursor-pointer rounded-full pl-1 pr-1 sm:pr-3 py-1 hover:bg-subtle transition-colors group/header"
         >
           <UserAvatar user={user} />
-          <div className="text-right leading-tight min-w-0">
-            <p className="text-xs sm:text-sm font-medium text-text-primary truncate group-hover/header:text-accent transition-colors" title={name}>
+          <div className="leading-tight min-w-0 hidden sm:block">
+            <p className="text-sm font-semibold text-text-primary truncate group-hover/header:text-accent transition-colors" title={name}>
               {name}
             </p>
-            {major ? (
-              <p className="text-[11px] sm:text-xs text-text-secondary font-medium truncate mt-0.5" title={major}>
-                {major}
+            {(major || department || rolesLine) && (
+              <p className="text-xs text-text-muted truncate">
+                {major || department || rolesLine}
               </p>
-            ) : null}
-            {!major && !email && department ? (
-              <p className="text-[11px] sm:text-xs text-text-muted truncate">{department}</p>
-            ) : null}
-            {!major && !email && !department && rolesLine ? (
-              <p className="text-[11px] sm:text-xs text-text-muted truncate">{rolesLine}</p>
-            ) : null}
+            )}
           </div>
         </div>
-        <div className="h-6 sm:h-8 w-px bg-border shrink-0" />
+
+        {/* Logout */}
         <button
           type="button"
           onClick={onLogout}
-          className="flex items-center gap-1.5 sm:gap-2 min-h-[44px] text-xs sm:text-sm font-medium text-text-secondary hover:text-accent transition-colors duration-200 group shrink-0 cursor-pointer"
+          className="flex items-center gap-1.5 rounded-full px-2.5 sm:px-3 py-2 text-sm font-medium text-text-secondary hover:bg-danger-bg hover:text-danger-text transition-colors shrink-0 cursor-pointer"
         >
-          <LogOut className="w-4 h-4 sm:w-[18px] sm:h-[18px] group-hover:translate-x-0.5 transition-transform" />
-          {t("header.logoutButton")}
+          <LogOut className="w-[18px] h-[18px]" />
+          <span className="hidden sm:inline">{t("header.logoutButton")}</span>
         </button>
       </div>
     </header>

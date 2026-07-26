@@ -167,7 +167,7 @@ export default function GroupDetailPage() {
     <div className="flex flex-col gap-6 w-full pb-10">
       {/* Top Banner: Main Info Section */}
       {loading || !group ? (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 w-full animate-pulse">
+        <div className="bg-surface rounded-2xl shadow-card p-6 w-full animate-pulse">
           <div className="h-5 bg-gray-200 rounded w-1/3 mb-4" />
           <div className="h-4 bg-gray-100 rounded w-1/2 mb-2" />
           <div className="h-4 bg-gray-100 rounded w-2/3" />
@@ -214,9 +214,9 @@ export default function GroupDetailPage() {
       />
 
       {/* Tabs Container */}
-      <div className="bg-white border border-gray-100 rounded-[32px] shadow-sm overflow-hidden flex flex-col">
+      <div className="bg-surface rounded-card shadow-card overflow-hidden flex flex-col">
         {/* Tab Header */}
-        <div className="flex px-2 md:px-4 pt-4 border-b border-gray-50/50 bg-gray-50/20 overflow-x-auto">
+        <div className="flex px-2 md:px-4 pt-2 border-b border-border overflow-x-auto">
           {TABS.map((tab) => {
             const Icon = tab.icon;
             const active = activeTab === tab.key;
@@ -224,15 +224,15 @@ export default function GroupDetailPage() {
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`flex items-center gap-1.5 md:gap-2.5 px-4 md:px-6 py-3.5 md:py-4 text-[10px] md:text-xs font-extrabold transition-all relative uppercase tracking-wider md:tracking-widest whitespace-nowrap shrink-0
-                  ${active 
-                    ? "text-indigo-600 bg-white rounded-t-2xl shadow-[0_-4px_10px_-5px_rgba(0,0,0,0.05)]" 
-                    : "text-gray-400 hover:text-gray-600 hover:bg-gray-100/50 rounded-t-2xl"}`}
+                className={`flex items-center gap-2 px-4 md:px-5 py-3.5 text-sm font-medium transition-colors relative whitespace-nowrap shrink-0
+                  ${active
+                    ? "text-accent"
+                    : "text-text-muted hover:text-text-secondary"}`}
               >
-                <Icon size={14} className={active ? "text-indigo-500" : "text-gray-300"} />
+                <Icon size={16} className={active ? "text-accent" : "text-text-muted"} />
                 {tab.label}
                 {active && (
-                   <span className="absolute bottom-0 left-0 right-0 h-1 bg-indigo-500 rounded-t-full" />
+                   <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent rounded-t-full" />
                 )}
               </button>
             );

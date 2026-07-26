@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { PenLine } from "lucide-react";
 import AnimatedNumber from "@/components/ui/common/AnimatedNumber";
 
 /**
@@ -13,7 +14,7 @@ const COLOR_MAP = {
   green: {
     bg: "bg-green-50",
     border: "border-green-100",
-    label: "text-gray-800",
+    label: "text-text-primary",
     count: "text-green-500",
     bar: "bg-green-500",
     track: "bg-green-200",
@@ -22,7 +23,7 @@ const COLOR_MAP = {
   orange: {
     bg: "bg-orange-50",
     border: "border-orange-100",
-    label: "text-gray-800",
+    label: "text-text-primary",
     count: "text-orange-400",
     bar: "bg-orange-400",
     track: "bg-orange-200",
@@ -31,7 +32,7 @@ const COLOR_MAP = {
   red: {
     bg: "bg-red-50",
     border: "border-red-100",
-    label: "text-gray-800",
+    label: "text-text-primary",
     count: "text-red-500",
     bar: "bg-red-500",
     track: "bg-red-200",
@@ -89,9 +90,14 @@ const DEFAULT_ITEMS = [
 
 export default function GradingOverview({ items = DEFAULT_ITEMS }) {
   return (
-    <div className="bg-white rounded-xl md:rounded-2xl border border-gray-100 shadow-sm p-3 md:p-5 w-full">
+    <div className="bg-surface rounded-card shadow-card p-3 md:p-5 w-full">
       {/* Header */}
-      <h2 className="text-sm md:text-base font-bold text-gray-900 mb-3 md:mb-4">Tổng quan chấm điểm</h2>
+      <div className="flex items-center gap-2.5 mb-3 md:mb-4">
+        <span className="grid place-items-center w-8 h-8 rounded-lg bg-accent-bg text-accent">
+          <PenLine size={17} />
+        </span>
+        <h2 className="text-sm md:text-base font-semibold text-text-primary">Tổng quan chấm điểm</h2>
+      </div>
 
       {/* Rows */}
       <div className="flex flex-col gap-2 md:gap-3">

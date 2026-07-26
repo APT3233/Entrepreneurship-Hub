@@ -69,16 +69,16 @@ export default function StudentAssignmentsPage() {
     const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
     
     return (
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 pt-6 border-t border-slate-100 animate-in fade-in duration-200">
-        <span className="text-sm font-bold text-slate-500">
-          Hiển thị <span className="text-slate-800 font-black">{startIndex + 1}-{endIndex}</span> trong số <span className="text-slate-800 font-black">{totalItems}</span> mục
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 pt-6 border-t border-border animate-in fade-in duration-200">
+        <span className="text-sm font-bold text-text-secondary">
+          Hiển thị <span className="text-text-primary font-semibold">{startIndex + 1}-{endIndex}</span> trong số <span className="text-text-primary font-semibold">{totalItems}</span> mục
         </span>
         
         <div className="flex items-center gap-1.5">
           <button
             onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
             disabled={currentPage === 1}
-            className="inline-flex items-center justify-center p-2.5 rounded-xl border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-95 cursor-pointer shadow-sm"
+            className="inline-flex items-center justify-center p-2.5 rounded-xl border border-border text-text-secondary bg-surface hover:bg-subtle disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-95 cursor-pointer shadow-sm"
           >
             <ChevronLeft size={16} />
           </button>
@@ -87,10 +87,10 @@ export default function StudentAssignmentsPage() {
             <button
               key={page}
               onClick={() => setCurrentPage(page)}
-              className={`inline-flex items-center justify-center w-10 h-10 rounded-xl text-xs font-black transition-all cursor-pointer ${
+              className={`inline-flex items-center justify-center w-10 h-10 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                 currentPage === page
                   ? "bg-slate-800 text-white shadow-md"
-                  : "border border-slate-200 text-slate-600 bg-white hover:bg-slate-50"
+                  : "border border-border text-text-secondary bg-surface hover:bg-subtle"
               }`}
             >
               {page}
@@ -100,7 +100,7 @@ export default function StudentAssignmentsPage() {
           <button
             onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
             disabled={currentPage === totalPages}
-            className="inline-flex items-center justify-center p-2.5 rounded-xl border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-95 cursor-pointer shadow-sm"
+            className="inline-flex items-center justify-center p-2.5 rounded-xl border border-border text-text-secondary bg-surface hover:bg-subtle disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-95 cursor-pointer shadow-sm"
           >
             <ChevronRight size={16} />
           </button>
@@ -260,27 +260,27 @@ export default function StudentAssignmentsPage() {
         {/* Page Header */}
         <div className="flex flex-row items-center justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+            <h1 className="text-2xl font-bold text-text-primary tracking-tight">
               Nhiệm vụ học tập
             </h1>
-            <p className="mt-0.5 text-sm text-gray-500 font-medium">
+            <p className="mt-0.5 text-sm text-text-secondary font-medium">
               Theo dõi và nộp bài tập, checkpoint cho các lớp học
             </p>
           </div>
         </div>
 
         {/* Tab Switcher */}
-        <div className="flex p-1.5 bg-gray-100/50 rounded-2xl mb-8 w-fit border border-gray-100">
+        <div className="flex p-1.5 bg-gray-100/50 rounded-2xl mb-8 w-fit">
           <button
             onClick={() => handleTabChange("assignments")}
-            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${activeTab === "assignments" ? "bg-white text-indigo-600 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${activeTab === "assignments" ? "bg-surface text-accent shadow-sm" : "text-text-secondary hover:text-text-secondary"}`}
           >
             <ListChecks size={16} />
             Bài tập (Assignments)
           </button>
           <button
             onClick={() => handleTabChange("checkpoints")}
-            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${activeTab === "checkpoints" ? "bg-white text-indigo-600 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${activeTab === "checkpoints" ? "bg-surface text-accent shadow-sm" : "text-text-secondary hover:text-text-secondary"}`}
           >
             <CheckSquare size={16} />
             Mốc quan trọng (Checkpoints)
@@ -300,13 +300,13 @@ export default function StudentAssignmentsPage() {
           {activeTab === "assignments" ? (
             <div className="w-full">
               {isLoadingAssignments ? (
-                <div className="flex flex-col items-center justify-center py-20 text-gray-400">
-                  <div className="w-8 h-8 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin mb-4" />
+                <div className="flex flex-col items-center justify-center py-20 text-text-muted">
+                  <div className="w-8 h-8 border-4 border-accent-100 border-t-accent-600 rounded-full animate-spin mb-4" />
                   <p className="text-sm font-medium">Đang tải bài tập...</p>
                 </div>
               ) : assignments.length === 0 ? (
-                <div className="bg-white rounded-[32px] border border-gray-100 py-20 text-center shadow-sm">
-                  <p className="text-gray-400 text-sm font-medium">Không có bài tập nào được tìm thấy.</p>
+                <div className="bg-surface rounded-[32px] py-20 text-center shadow-sm">
+                  <p className="text-text-muted text-sm font-medium">Không có bài tập nào được tìm thấy.</p>
                 </div>
               ) : (
                 <>
@@ -329,16 +329,16 @@ export default function StudentAssignmentsPage() {
           ) : (
             <div className="w-full">
               {isLoadingCheckpoints ? (
-                <div className="flex flex-col items-center justify-center py-20 text-gray-400">
-                  <div className="w-8 h-8 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin mb-4" />
+                <div className="flex flex-col items-center justify-center py-20 text-text-muted">
+                  <div className="w-8 h-8 border-4 border-accent-100 border-t-accent-600 rounded-full animate-spin mb-4" />
                   <p className="text-sm font-medium">Đang tải checkpoint...</p>
                 </div>
               ) : filteredCheckpoints.length === 0 ? (
-                <div className="bg-white rounded-[32px] border border-gray-100 py-20 text-center shadow-sm">
+                <div className="bg-surface rounded-[32px] py-20 text-center shadow-sm">
                   <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-300">
                     <CheckSquare size={32} />
                   </div>
-                  <p className="text-gray-500 text-sm font-bold">Không có checkpoint nào được tìm thấy.</p>
+                  <p className="text-text-secondary text-sm font-bold">Không có checkpoint nào được tìm thấy.</p>
                 </div>
               ) : (
                 <>

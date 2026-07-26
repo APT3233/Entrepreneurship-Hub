@@ -35,7 +35,7 @@ function MentorSelectField({ value, onChange, options, placeholder, loading }) {
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <ul className="absolute top-[calc(100%+4px)] left-0 right-0 z-50 bg-white border border-gray-100 rounded-xl shadow-lg py-1 max-h-60 overflow-y-auto">
+          <ul className="absolute top-[calc(100%+4px)] left-0 right-0 z-50 bg-surface border border-gray-100 rounded-xl shadow-lg py-1 max-h-60 overflow-y-auto">
             {loading ? (
               <li className="px-4 py-2.5 text-sm text-gray-400">Đang tải danh sách...</li>
             ) : options.length === 0 ? (
@@ -47,7 +47,7 @@ function MentorSelectField({ value, onChange, options, placeholder, loading }) {
                     type="button"
                     onClick={() => { onChange(""); setOpen(false); }}
                     className={`w-full text-left px-4 py-2.5 text-sm transition-colors
-                      ${!value ? "bg-indigo-50 text-indigo-600 font-medium" : "text-gray-600 hover:bg-gray-50"}`}
+                      ${!value ? "bg-accent-50 text-accent-600 font-medium" : "text-gray-600 hover:bg-gray-50"}`}
                   >
                     Không phân công (None)
                   </button>
@@ -58,7 +58,7 @@ function MentorSelectField({ value, onChange, options, placeholder, loading }) {
                       type="button"
                       onClick={() => { onChange(opt.id); setOpen(false); }}
                       className={`w-full text-left px-4 py-2.5 text-sm transition-colors
-                        ${opt.id === value ? "bg-indigo-50 text-indigo-600 font-medium" : "text-gray-600 hover:bg-gray-50"}`}
+                        ${opt.id === value ? "bg-accent-50 text-accent-600 font-medium" : "text-gray-600 hover:bg-gray-50"}`}
                     >
                       <div className="font-semibold text-gray-800">{opt.full_name}</div>
                       <div className="text-xs text-gray-400 truncate">{opt.organization || opt.position_title || "Mentor"}</div>
@@ -87,14 +87,14 @@ function SelectField({ value, onChange, options, placeholder }) {
         <ChevronDown size={16} className={`text-gray-400 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
       </button>
       {open && (
-        <ul className="absolute top-[calc(100%+4px)] left-0 right-0 z-50 bg-white border border-gray-100 rounded-xl shadow-lg py-1 overflow-hidden">
+        <ul className="absolute top-[calc(100%+4px)] left-0 right-0 z-50 bg-surface border border-gray-100 rounded-xl shadow-lg py-1 overflow-hidden">
           {options.map(opt => (
             <li key={opt}>
               <button
                 type="button"
                 onClick={() => { onChange(opt); setOpen(false); }}
                 className={`w-full text-left px-4 py-2.5 text-sm transition-colors
-                  ${opt === value ? "bg-indigo-50 text-indigo-600 font-medium" : "text-gray-600 hover:bg-gray-50"}`}
+                  ${opt === value ? "bg-accent-50 text-accent-600 font-medium" : "text-gray-600 hover:bg-gray-50"}`}
               >
                 {opt}
               </button>
@@ -245,7 +245,7 @@ export default function CreateGroupForm({
     >
       <div 
         className="
-          relative w-full bg-white shadow-2xl flex flex-col
+          relative w-full bg-surface shadow-2xl flex flex-col
           rounded-t-2xl sm:rounded-2xl
           max-h-[95dvh] sm:max-h-[90vh]
           sm:mx-4 sm:max-w-xl lg:max-w-2xl
@@ -284,7 +284,7 @@ export default function CreateGroupForm({
               placeholder="Ví dụ: Alpha"
               className={`w-full px-4 py-3 rounded-xl bg-gray-100 text-sm placeholder-gray-400
                 outline-none border border-transparent transition-colors
-                ${nameError ? "border-red-400" : "focus:border-indigo-300"}`}
+                ${nameError ? "border-red-400" : "focus:border-accent-300"}`}
             />
             {nameError && <p className="text-xs text-red-500">{nameError}</p>}
           </div>
@@ -319,7 +319,7 @@ export default function CreateGroupForm({
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
               placeholder="Ví dụ: E-commerce Platform..."
-              className="w-full px-4 py-3 rounded-xl bg-gray-100 text-sm placeholder-gray-400 outline-none border border-transparent focus:border-indigo-300 transition-colors"
+              className="w-full px-4 py-3 rounded-xl bg-gray-100 text-sm placeholder-gray-400 outline-none border border-transparent focus:border-accent-300 transition-colors"
             />
           </div>
 
@@ -330,7 +330,7 @@ export default function CreateGroupForm({
               value={zaloLink}
               onChange={(e) => setZaloLink(e.target.value)}
               placeholder="Ví dụ: https://zalo.me/g/xxxxxx"
-              className="w-full px-4 py-3 rounded-xl bg-gray-100 text-sm placeholder-gray-400 outline-none border border-transparent focus:border-indigo-300 transition-colors"
+              className="w-full px-4 py-3 rounded-xl bg-gray-100 text-sm placeholder-gray-400 outline-none border border-transparent focus:border-accent-300 transition-colors"
             />
           </div>
 
@@ -343,7 +343,7 @@ export default function CreateGroupForm({
               placeholder="Ví dụ: Mô tả chi tiết về dự án..."
               rows={3}
               className="w-full px-4 py-3 rounded-xl bg-gray-100 text-sm placeholder-gray-400
-                outline-none border border-transparent focus:border-indigo-300 transition-colors resize-none"
+                outline-none border border-transparent focus:border-accent-300 transition-colors resize-none"
             />
           </div>
 
@@ -354,7 +354,7 @@ export default function CreateGroupForm({
               <p className="text-xs text-gray-400 mt-0.5">
                 Nhóm cần 4 - 6 thành viên: tối thiểu 2 DE và 2 DS/DA.
               </p>
-              <p className="text-[10px] text-indigo-500 font-medium mt-1">
+              <p className="text-[10px] text-accent-500 font-medium mt-1">
                 * Sau khi thêm, hãy nhấn biểu tượng <Crown size={10} className="inline mb-0.5" /> để chọn trưởng nhóm.
               </p>
               <p
@@ -377,12 +377,12 @@ export default function CreateGroupForm({
                   const added = members.includes(s.id);
                   const isLeader = leaderId === s.id;
                   return (
-                    <div key={s.id} className={`flex items-center gap-3 px-4 py-3 transition-colors ${added ? "bg-indigo-50/30" : "hover:bg-gray-50"}`}>
+                    <div key={s.id} className={`flex items-center gap-3 px-4 py-3 transition-colors ${added ? "bg-accent-50/30" : "hover:bg-gray-50"}`}>
                       <LastNameAvatar name={s.name} index={i} />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                            <p className="text-sm font-semibold text-gray-800 truncate">{s.name}</p>
-                           {isLeader && <span className="text-[9px] bg-indigo-100 text-indigo-600 px-1.5 py-0.5 rounded font-bold uppercase">Leader</span>}
+                           {isLeader && <span className="text-[9px] bg-accent-100 text-accent-600 px-1.5 py-0.5 rounded font-bold uppercase">Leader</span>}
                         </div>
                         <p className="text-xs text-gray-400">{s.student_code || s.mssv || s.major}</p>
                       </div>
@@ -410,7 +410,7 @@ export default function CreateGroupForm({
                         <button
                           type="button"
                           onClick={() => toggleMember(s.id)}
-                          className="px-4 py-1.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:border-indigo-300 hover:text-indigo-600 transition-all duration-150 shrink-0"
+                          className="px-4 py-1.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:border-accent-300 hover:text-accent-600 transition-all duration-150 shrink-0"
                         >
                           Thêm
                         </button>
@@ -432,7 +432,7 @@ export default function CreateGroupForm({
             className={`
               w-full py-3 rounded-xl text-sm font-bold tracking-wide transition-all duration-200
               ${isValid && !loading
-                ? "bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] text-white shadow-md shadow-indigo-200"
+                ? "bg-accent hover:bg-accent-hover active:scale-[0.99] text-white shadow-md shadow-accent-200"
                 : "bg-gray-200 text-gray-400 cursor-not-allowed"}
             `}
           >

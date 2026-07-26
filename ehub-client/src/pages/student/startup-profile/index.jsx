@@ -37,7 +37,7 @@ export default function StudentStartupProfilesPage() {
 
   const columns = useMemo(() => [
     { key: "logo", label: "", width: 64, render: (row) => <StartupLogo startup={row} /> },
-    { key: "startup_name", label: t("student.startupProfile.columns.startup"), render: (row) => <span className="font-black text-slate-900">{row.startup_name}</span> },
+    { key: "startup_name", label: t("student.startupProfile.columns.startup"), render: (row) => <span className="font-semibold text-text-primary">{row.startup_name}</span> },
     { key: "product_stage", label: t("student.startupProfile.columns.product"), render: (row) => <StatusBadge value={row.product_stage} /> },
     { key: "startup_status", label: t("common.status"), render: (row) => <StatusBadge value={row.startup_status} /> },
     { key: "current_stage_name", label: t("student.startupProfile.columns.pipeline"), render: (row) => row.current_stage_name || "-" },

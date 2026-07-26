@@ -13,7 +13,7 @@ function SelectField({ value, onChange, options, placeholder }) {
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl bg-gray-50 text-sm text-gray-800 hover:bg-gray-100 transition-all border border-gray-200 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 outline-none"
+        className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl bg-gray-50 text-sm text-gray-800 hover:bg-gray-100 transition-all border border-gray-200 focus:border-accent-300 focus:ring-2 focus:ring-accent-100 outline-none"
       >
         <span className={value ? "text-gray-800" : "text-gray-400"}>
           {value || placeholder}
@@ -29,14 +29,14 @@ function SelectField({ value, onChange, options, placeholder }) {
             className="fixed inset-0 z-40" 
             onClick={() => setOpen(false)} 
           />
-          <ul className="absolute top-[calc(100%+8px)] left-0 right-0 z-50 bg-white border border-gray-200 rounded-xl shadow-lg py-1.5 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+          <ul className="absolute top-[calc(100%+8px)] left-0 right-0 z-50 bg-surface border border-gray-200 rounded-xl shadow-lg py-1.5 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
             {options.map(opt => (
               <li key={opt}>
                 <button
                   type="button"
                   onClick={() => { onChange(opt); setOpen(false); }}
                   className={`w-full text-left px-4 py-2.5 text-sm transition-colors
-                    ${opt === value ? "bg-indigo-50 text-indigo-700 font-medium" : "text-gray-700 hover:bg-gray-100"}`}
+                    ${opt === value ? "bg-accent-50 text-accent-700 font-medium" : "text-gray-700 hover:bg-gray-100"}`}
                 >
                   {opt}
                 </button>
@@ -107,7 +107,7 @@ export default function EditGroupForm({
       }}
     >
       <div 
-        className="bg-white rounded-[32px] shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-300"
+        className="bg-surface rounded-[32px] shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-300"
         onMouseDown={(e) => e.stopPropagation()}
         onMouseUp={(e) => e.stopPropagation()}
       >
@@ -138,9 +138,9 @@ export default function EditGroupForm({
               value={name}
               onChange={(e) => { setName(e.target.value); if (errors.name) setErrors({...errors, name: ""}); }}
               placeholder="Ví dụ: Alpha"
-              className={`w-full px-4 py-2.5 rounded-xl bg-white text-sm text-gray-800 placeholder-gray-400
+              className={`w-full px-4 py-2.5 rounded-xl bg-surface text-sm text-gray-800 placeholder-gray-400
                 outline-none border transition-all
-                ${errors.name ? "border-red-400 focus:ring-2 focus:ring-red-100" : "border-gray-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"}`}
+                ${errors.name ? "border-red-400 focus:ring-2 focus:ring-red-100" : "border-gray-200 focus:border-accent-400 focus:ring-2 focus:ring-accent-100"}`}
             />
             {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name}</p>}
           </div>
@@ -167,8 +167,8 @@ export default function EditGroupForm({
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
               placeholder="Ví dụ: E-commerce Platform..."
-              className="w-full px-4 py-2.5 rounded-xl bg-white text-sm text-gray-800 placeholder-gray-400
-                outline-none border border-gray-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all"
+              className="w-full px-4 py-2.5 rounded-xl bg-surface text-sm text-gray-800 placeholder-gray-400
+                outline-none border border-gray-200 focus:border-accent-400 focus:ring-2 focus:ring-accent-100 transition-all"
             />
           </div>
 
@@ -181,8 +181,8 @@ export default function EditGroupForm({
               value={zaloLink}
               onChange={(e) => setZaloLink(e.target.value)}
               placeholder="Ví dụ: https://zalo.me/g/xxxxxx"
-              className="w-full px-4 py-2.5 rounded-xl bg-white text-sm text-gray-800 placeholder-gray-400
-                outline-none border border-gray-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all"
+              className="w-full px-4 py-2.5 rounded-xl bg-surface text-sm text-gray-800 placeholder-gray-400
+                outline-none border border-gray-200 focus:border-accent-400 focus:ring-2 focus:ring-accent-100 transition-all"
             />
           </div>
 
@@ -196,8 +196,8 @@ export default function EditGroupForm({
               onChange={(e) => setTopicDesc(e.target.value)}
               placeholder="Ví dụ: Mô tả chi tiết về dự án..."
               rows={3}
-              className="w-full px-4 py-2.5 rounded-xl bg-white text-sm text-gray-800 placeholder-gray-400
-                outline-none border border-gray-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all resize-none"
+              className="w-full px-4 py-2.5 rounded-xl bg-surface text-sm text-gray-800 placeholder-gray-400
+                outline-none border border-gray-200 focus:border-accent-400 focus:ring-2 focus:ring-accent-100 transition-all resize-none"
             />
           </div>
         </div>
@@ -212,7 +212,7 @@ export default function EditGroupForm({
               px-5 py-2 rounded-xl text-sm font-medium transition-all
               ${loading 
                 ? "bg-gray-300 text-white cursor-not-allowed" 
-                : "bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm shadow-indigo-200 active:scale-[0.98]"}
+                : "bg-accent hover:bg-accent-hover text-white shadow-sm shadow-accent-200 active:scale-[0.98]"}
             `}
           >
             {loading ? "Đang lưu..." : "Lưu thay đổi"}
@@ -220,7 +220,7 @@ export default function EditGroupForm({
           <button
             type="button"
             onClick={onClose}
-            className="px-5 py-2 rounded-xl text-sm font-medium text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 transition-all active:scale-[0.98]"
+            className="px-5 py-2 rounded-xl text-sm font-medium text-gray-600 bg-surface border border-gray-200 hover:bg-gray-50 transition-all active:scale-[0.98]"
           >
             Hủy
           </button>

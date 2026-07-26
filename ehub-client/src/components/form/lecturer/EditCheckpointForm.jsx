@@ -21,7 +21,7 @@ const FILE_TYPE_OPTIONS = [
   { value: "pptx", label: "PowerPoint", icon: <Presentation size={14} className="text-orange-500" /> },
   { value: "xlsx", label: "Excel", icon: <FileSpreadsheet size={14} className="text-emerald-500" /> },
   { value: "zip", label: "Zip", icon: <FileArchive size={14} className="text-amber-500" /> },
-  { value: "png", label: "Image", icon: <FileImage size={14} className="text-indigo-500" /> },
+  { value: "png", label: "Image", icon: <FileImage size={14} className="text-accent-500" /> },
 ];
 
 function MultiSelectFileType({ value, onChange }) {
@@ -43,7 +43,7 @@ function MultiSelectFileType({ value, onChange }) {
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-gray-50 text-sm text-gray-800 hover:bg-gray-100 transition-all border border-gray-200 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 outline-none"
+        className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-gray-50 text-sm text-gray-800 hover:bg-gray-100 transition-all border border-gray-200 focus:border-accent-300 focus:ring-2 focus:ring-accent-100 outline-none"
       >
         <div className="flex flex-wrap gap-1 items-center overflow-hidden">
           {selectedValues.length === 0 ? (
@@ -52,7 +52,7 @@ function MultiSelectFileType({ value, onChange }) {
             selectedValues.map(val => {
               const opt = FILE_TYPE_OPTIONS.find(o => o.value === val);
               return opt ? (
-                <div key={val} className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-white border border-gray-100 shadow-sm">
+                <div key={val} className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-surface shadow-card">
                   {opt.icon}
                   <span className="text-[10px] font-bold text-gray-600 uppercase">{opt.value}</span>
                 </div>
@@ -66,18 +66,18 @@ function MultiSelectFileType({ value, onChange }) {
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <ul className="absolute top-[calc(100%+8px)] left-0 right-0 z-50 bg-white border border-gray-200 rounded-xl shadow-lg py-1.5 max-h-60 overflow-auto animate-in fade-in slide-in-from-top-2 duration-200">
+          <ul className="absolute top-[calc(100%+8px)] left-0 right-0 z-50 bg-surface border border-gray-200 rounded-xl shadow-lg py-1.5 max-h-60 overflow-auto animate-in fade-in slide-in-from-top-2 duration-200">
             {FILE_TYPE_OPTIONS.map(opt => (
               <li key={opt.value}>
                 <button
                   type="button"
                   onClick={() => toggleValue(opt.value)}
                   className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors
-                    ${selectedValues.includes(opt.value) ? "bg-indigo-50 text-indigo-700 font-medium" : "text-gray-700 hover:bg-gray-100"}`}
+                    ${selectedValues.includes(opt.value) ? "bg-accent-50 text-accent-700 font-medium" : "text-gray-700 hover:bg-gray-100"}`}
                 >
                   {opt.icon}
                   <span className="flex-1 text-left">{opt.label}</span>
-                  {selectedValues.includes(opt.value) && <div className="w-1.5 h-1.5 rounded-full bg-indigo-600" />}
+                  {selectedValues.includes(opt.value) && <div className="w-1.5 h-1.5 rounded-full bg-accent" />}
                 </button>
               </li>
             ))}
@@ -95,7 +95,7 @@ function SelectField({ value, onChange, options, placeholder, disabledOptions = 
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl bg-gray-50 text-sm text-gray-800 hover:bg-gray-100 transition-all border border-gray-200 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 outline-none"
+        className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl bg-gray-50 text-sm text-gray-800 hover:bg-gray-100 transition-all border border-gray-200 focus:border-accent-300 focus:ring-2 focus:ring-accent-100 outline-none"
       >
         <span className={value ? "text-gray-800" : "text-gray-400"}>
           {options.find(o => o.value === value)?.label || placeholder}
@@ -108,7 +108,7 @@ function SelectField({ value, onChange, options, placeholder, disabledOptions = 
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <ul className="absolute top-[calc(100%+8px)] left-0 right-0 z-50 bg-white border border-gray-200 rounded-xl shadow-lg py-1.5 max-h-60 overflow-auto animate-in fade-in slide-in-from-top-2 duration-200">
+          <ul className="absolute top-[calc(100%+8px)] left-0 right-0 z-50 bg-surface border border-gray-200 rounded-xl shadow-lg py-1.5 max-h-60 overflow-auto animate-in fade-in slide-in-from-top-2 duration-200">
             {options.map(opt => {
               const isDisabled = disabledOptions.includes(opt.value) && opt.value !== value;
               return (
@@ -118,7 +118,7 @@ function SelectField({ value, onChange, options, placeholder, disabledOptions = 
                     disabled={isDisabled}
                     onClick={() => { onChange(opt.value); setOpen(false); }}
                     className={`w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center justify-between
-                      ${isDisabled ? "opacity-30 cursor-not-allowed bg-gray-50 text-gray-400" : (opt.value === value ? "bg-indigo-50 text-indigo-700 font-medium" : "text-gray-700 hover:bg-gray-100")}`}
+                      ${isDisabled ? "opacity-30 cursor-not-allowed bg-gray-50 text-gray-400" : (opt.value === value ? "bg-accent-50 text-accent-700 font-medium" : "text-gray-700 hover:bg-gray-100")}`}
                   >
                     <span>{opt.label}</span>
                     {isDisabled && <span className="text-[9px] font-bold uppercase opacity-50"></span>}
@@ -156,14 +156,14 @@ function ClassSelect({ value = [], onChange, options, disabledOptions = [] }) {
           w-full flex items-center justify-between px-4 py-2.5 rounded-xl
           bg-gray-50 border border-gray-200 text-sm transition-all duration-150
           ${open
-            ? "border-indigo-400 ring-2 ring-indigo-100 bg-white"
+            ? "border-accent-400 ring-2 ring-accent-100 bg-surface"
             : "hover:bg-gray-100"}
         `}
       >
         <div className="flex flex-wrap gap-1 items-center overflow-hidden">
           {selectedOptions.length > 0 ? (
             selectedOptions.map((opt) => (
-              <span key={opt.value} className="text-gray-700 font-medium whitespace-nowrap bg-white px-2 py-0.5 rounded-lg border border-gray-100 text-[10px] uppercase">
+              <span key={opt.value} className="text-gray-700 font-medium whitespace-nowrap bg-surface px-2 py-0.5 rounded-lg border border-gray-100 text-[10px] uppercase">
                 {opt.label}
               </span>
             ))
@@ -178,7 +178,7 @@ function ClassSelect({ value = [], onChange, options, disabledOptions = [] }) {
       </button>
 
       {open && (
-        <div className="absolute top-[calc(100%+6px)] left-0 right-0 z-50 bg-white border border-gray-100 rounded-xl shadow-lg overflow-hidden">
+        <div className="absolute top-[calc(100%+6px)] left-0 right-0 z-50 bg-surface border border-gray-100 rounded-xl shadow-lg overflow-hidden">
           <ul className="py-1 max-h-52 overflow-y-auto">
             {options.map((opt) => {
               const isSelected = value.includes(opt.value);
@@ -201,7 +201,7 @@ function ClassSelect({ value = [], onChange, options, disabledOptions = [] }) {
                       w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium transition-colors duration-100
                       ${isDisabled 
                         ? "opacity-50 cursor-not-allowed bg-gray-50 text-gray-400" 
-                        : (isSelected ? "bg-indigo-50 text-indigo-600" : "text-gray-600 hover:bg-gray-50")}
+                        : (isSelected ? "bg-accent-50 text-accent-600" : "text-gray-600 hover:bg-gray-50")}
                     `}
                   >
                     <div className="flex flex-col items-start">
@@ -212,7 +212,7 @@ function ClassSelect({ value = [], onChange, options, disabledOptions = [] }) {
                         </span>
                       )}
                     </div>
-                    {isSelected && !isDisabled && <Check size={16} className="text-indigo-600" />}
+                    {isSelected && !isDisabled && <Check size={16} className="text-accent-600" />}
                   </button>
                 </li>
               );
@@ -475,7 +475,7 @@ export default function EditCheckpointForm({ isOpen, checkpoint, onClose, onSave
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-[2px] animate-in fade-in duration-300">
-      <div className="bg-white rounded-[32px] shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-300 max-h-[90vh]">
+      <div className="bg-surface rounded-[32px] shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-300 max-h-[90vh]">
         {/* Header */}
         <div className="relative px-8 pt-8 pb-4 border-b border-gray-50 shrink-0">
           <button onClick={onClose} className="absolute top-6 right-6 w-10 h-10 flex items-center justify-center rounded-2xl text-gray-400 hover:bg-gray-50 hover:text-gray-600 transition-all active:scale-95">
@@ -524,7 +524,7 @@ export default function EditCheckpointForm({ isOpen, checkpoint, onClose, onSave
             </div>
             <div className="space-y-1.5 md:col-span-3">
               <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Tiêu đề nội dung</label>
-              <input name="title" value={formData.title} onChange={handleChange} placeholder="Ví dụ: Business Model Canvas" className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-100 focus:bg-white focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50 outline-none transition-all text-sm font-medium" />
+              <input name="title" value={formData.title} onChange={handleChange} placeholder="Ví dụ: Business Model Canvas" className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-100 focus:bg-surface focus:border-accent-400 focus:ring-4 focus:ring-accent-50 outline-none transition-all text-sm font-medium" />
             </div>
           </div>
 
@@ -537,7 +537,7 @@ export default function EditCheckpointForm({ isOpen, checkpoint, onClose, onSave
                 name="open_at"
                 value={formData.open_at}
                 onChange={handleChange}
-                className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-100 focus:bg-white focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50 outline-none transition-all text-sm font-medium"
+                className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-100 focus:bg-surface focus:border-accent-400 focus:ring-4 focus:ring-accent-50 outline-none transition-all text-sm font-medium"
               />
             </div>
             <div className="space-y-1.5">
@@ -548,7 +548,7 @@ export default function EditCheckpointForm({ isOpen, checkpoint, onClose, onSave
                 min={minDeadlineLocal}
                 value={formData.deadline}
                 onChange={handleChange}
-                className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-100 focus:bg-white focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50 outline-none transition-all text-sm font-medium"
+                className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-100 focus:bg-surface focus:border-accent-400 focus:ring-4 focus:ring-accent-50 outline-none transition-all text-sm font-medium"
               />
             </div>
             <div className="space-y-1.5 overflow-visible">
@@ -561,15 +561,15 @@ export default function EditCheckpointForm({ isOpen, checkpoint, onClose, onSave
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-1.5">
               <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Điểm tối đa</label>
-              <input type="number" name="max_score" value={formData.max_score} onChange={handleChange} className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-100 focus:bg-white focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50 outline-none transition-all text-sm font-medium" />
+              <input type="number" name="max_score" value={formData.max_score} onChange={handleChange} className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-100 focus:bg-surface focus:border-accent-400 focus:ring-4 focus:ring-accent-50 outline-none transition-all text-sm font-medium" />
             </div>
             <div className="space-y-1.5">
               <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Dung lượng tối đa (MB)</label>
-              <input type="number" name="max_file_size_mb" value={formData.max_file_size_mb} onChange={handleChange} className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-100 focus:bg-white focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50 outline-none transition-all text-sm font-medium" />
+              <input type="number" name="max_file_size_mb" value={formData.max_file_size_mb} onChange={handleChange} className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-100 focus:bg-surface focus:border-accent-400 focus:ring-4 focus:ring-accent-50 outline-none transition-all text-sm font-medium" />
             </div>
             <div className="space-y-1.5">
               <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Số file tối đa</label>
-              <input type="number" name="max_files" value={formData.max_files} onChange={handleChange} className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-100 focus:bg-white focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50 outline-none transition-all text-sm font-medium" />
+              <input type="number" name="max_files" value={formData.max_files} onChange={handleChange} className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-100 focus:bg-surface focus:border-accent-400 focus:ring-4 focus:ring-accent-50 outline-none transition-all text-sm font-medium" />
             </div>
           </div>
 
@@ -577,7 +577,7 @@ export default function EditCheckpointForm({ isOpen, checkpoint, onClose, onSave
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-1.5">
               <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Trọng số (0-1)</label>
-              <input type="number" step="0.01" name="weight" value={formData.weight} onChange={handleChange} className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-100 focus:bg-white focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50 outline-none transition-all text-sm font-medium" />
+              <input type="number" step="0.01" name="weight" value={formData.weight} onChange={handleChange} className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-100 focus:bg-surface focus:border-accent-400 focus:ring-4 focus:ring-accent-50 outline-none transition-all text-sm font-medium" />
             </div>
             <div className="space-y-1.5">
               <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Trạng thái</label>
@@ -597,14 +597,14 @@ export default function EditCheckpointForm({ isOpen, checkpoint, onClose, onSave
               {(existingAttachmentUrls.length > 0 || pendingFiles.length > 0) && (
                 <ul className="space-y-2 max-h-56 overflow-y-auto pr-0.5">
                   {existingAttachmentUrls.map((url, idx) => (
-                    <li key={`ex-${idx}`} className="flex items-center justify-between p-3 rounded-xl bg-indigo-50 border border-indigo-100">
+                    <li key={`ex-${idx}`} className="flex items-center justify-between p-3 rounded-xl bg-accent-50 border border-accent-100">
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-9 h-9 rounded-lg bg-white flex items-center justify-center text-indigo-600 shadow-sm shrink-0">
+                        <div className="w-9 h-9 rounded-lg bg-surface flex items-center justify-center text-accent-600 shadow-sm shrink-0">
                           <Paperclip size={16} />
                         </div>
                         <div className="min-w-0">
-                          <p className="text-sm font-bold text-indigo-900 truncate">{getAttachmentDisplayFileName(url)}</p>
-                          <a href={url} target="_blank" rel="noreferrer" className="text-[11px] text-indigo-500 hover:underline">Mở</a>
+                          <p className="text-sm font-bold text-accent-900 truncate">{getAttachmentDisplayFileName(url)}</p>
+                          <a href={url} target="_blank" rel="noreferrer" className="text-[11px] text-accent-500 hover:underline">Mở</a>
                         </div>
                       </div>
                       <button
@@ -643,9 +643,9 @@ export default function EditCheckpointForm({ isOpen, checkpoint, onClose, onSave
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={isUploading}
-                  className="w-full py-5 border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center gap-1.5 hover:border-indigo-300 hover:bg-indigo-50/30 text-gray-500 hover:text-indigo-600"
+                  className="w-full py-5 border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center gap-1.5 hover:border-accent-300 hover:bg-accent-50/30 text-gray-500 hover:text-accent-600"
                 >
-                  <Upload size={22} className="text-indigo-400" />
+                  <Upload size={22} className="text-accent-400" />
                   <span className="text-sm font-bold">Thêm file đính kèm</span>
                 </button>
               )}
@@ -662,7 +662,7 @@ export default function EditCheckpointForm({ isOpen, checkpoint, onClose, onSave
 
           <div className="space-y-1.5 pb-20">
             <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Mô tả hướng dẫn</label>
-            <textarea name="description" value={formData.description} onChange={handleChange} rows={5} placeholder="Nhập hướng dẫn cụ thể cho sinh viên..." className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-100 focus:bg-white focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50 outline-none transition-all text-sm font-medium resize-none min-h-[120px]" />
+            <textarea name="description" value={formData.description} onChange={handleChange} rows={5} placeholder="Nhập hướng dẫn cụ thể cho sinh viên..." className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-100 focus:bg-surface focus:border-accent-400 focus:ring-4 focus:ring-accent-50 outline-none transition-all text-sm font-medium resize-none min-h-[120px]" />
           </div>
         </div>
 
@@ -671,7 +671,7 @@ export default function EditCheckpointForm({ isOpen, checkpoint, onClose, onSave
           <button onClick={onClose} className="px-6 py-2.5 rounded-xl text-sm font-bold text-gray-500 hover:bg-gray-100 transition-all active:scale-95 cursor-pointer">
             Hủy bỏ
           </button>
-          <button onClick={handleSave} disabled={loading || isUploading} className="px-8 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold shadow-lg shadow-indigo-100 transition-all active:scale-95 disabled:opacity-50 cursor-pointer">
+          <button onClick={handleSave} disabled={loading || isUploading} className="px-8 py-2.5 rounded-xl bg-accent hover:bg-accent-hover text-white text-sm font-bold shadow-lg shadow-accent-100 transition-all active:scale-95 disabled:opacity-50 cursor-pointer">
             {loading || isUploading
               ? (isUploading ? "Đang tải lên..." : "Đang xử lý...")
               : (checkpoint ? "Lưu thay đổi" : "Tạo Checkpoint")}

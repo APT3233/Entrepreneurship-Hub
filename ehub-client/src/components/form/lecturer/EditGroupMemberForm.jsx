@@ -66,7 +66,7 @@ export default function EditGroupMemberForm({
     >
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border border-gray-100"
+        className="w-full max-w-md rounded-2xl bg-surface p-6 shadow-2xl border border-gray-100"
       >
         <div className="flex items-start justify-between gap-3">
           <div>
@@ -120,7 +120,7 @@ export default function EditGroupMemberForm({
           <button
             type="submit"
             disabled={submitting}
-            className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+            className="rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-hover disabled:opacity-50"
           >
             {submitting ? "Đang lưu…" : "Lưu"}
           </button>

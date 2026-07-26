@@ -173,18 +173,18 @@ export default function CheckpointManagement() {
         <div className="flex items-center gap-4">
           <button 
             onClick={() => navigate("/lecturer/assignments")}
-            className="p-2.5 rounded-2xl bg-white border border-gray-100 text-gray-500 hover:text-indigo-600 hover:border-indigo-100 transition-all shadow-sm cursor-pointer"
+            className="p-2.5 rounded-2xl bg-surface text-text-secondary hover:text-accent-600 hover:border-accent-100 transition-all shadow-sm cursor-pointer"
           >
             <ArrowLeft size={20} />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Quản lý Checkpoint</h1>
-            <p className="text-sm text-gray-500 font-medium">Thiết lập các mốc nộp bài cho lớp học</p>
+            <h1 className="text-2xl font-bold text-text-primary tracking-tight">Quản lý Checkpoint</h1>
+            <p className="text-sm text-text-secondary font-medium">Thiết lập các mốc nộp bài cho lớp học</p>
           </div>
         </div>
         <button 
           onClick={() => { setSelectedCheckpoint(null); setIsEditModalOpen(true); }}
-          className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold shadow-lg shadow-indigo-200 transition-all active:scale-95 cursor-pointer"
+          className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-accent hover:bg-accent-hover text-white text-sm font-bold shadow-lg shadow-accent-200 transition-all active:scale-95 cursor-pointer"
         >
           <Plus size={18} />
           Thêm Checkpoint
@@ -202,16 +202,16 @@ export default function CheckpointManagement() {
       {/* Content */}
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-20">
-          <div className="w-10 h-10 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin mb-4" />
-          <p className="text-gray-400 text-sm font-medium">Đang tải danh sách checkpoint...</p>
+          <div className="w-10 h-10 border-4 border-accent-100 border-t-accent-600 rounded-full animate-spin mb-4" />
+          <p className="text-text-muted text-sm font-medium">Đang tải danh sách checkpoint...</p>
         </div>
       ) : checkpoints.length === 0 ? (
-        <div className="bg-white rounded-[32px] border border-gray-100 p-16 text-center shadow-sm">
+        <div className="bg-surface rounded-[32px] p-16 text-center shadow-sm">
           <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
             <Plus size={32} className="text-gray-300" />
           </div>
-          <h3 className="text-lg font-bold text-gray-900 mb-2">Chưa có checkpoint nào</h3>
-          <p className="text-gray-500 max-w-xs mx-auto mb-8 text-sm">Chọn một lớp học hoặc bắt đầu tạo mới checkpoint cho lớp này.</p>
+          <h3 className="text-lg font-bold text-text-primary mb-2">Chưa có checkpoint nào</h3>
+          <p className="text-text-secondary max-w-xs mx-auto mb-8 text-sm">Chọn một lớp học hoặc bắt đầu tạo mới checkpoint cho lớp này.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-6">

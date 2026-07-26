@@ -3,10 +3,17 @@ import { useTranslation } from "@/context/TranslationContext";
 // Calm palette: gom mọi status về 4 tone token (success / warning / danger / neutral).
 // Caller vẫn truyền value như cũ; chỉ thay đổi CSS (không đổi logic/nhãn).
 const TONE_STYLES = {
-  success: "bg-success-bg text-success-text",
-  warning: "bg-warning-bg text-warning-text",
-  danger: "bg-danger-bg text-danger-text",
-  neutral: "bg-neutral-bg text-neutral-text",
+  success: "bg-emerald-100 text-emerald-700",
+  warning: "bg-amber-100 text-amber-700",
+  danger: "bg-red-100 text-red-700",
+  neutral: "bg-subtle text-text-secondary",
+};
+
+const TONE_DOTS = {
+  success: "bg-emerald-500",
+  warning: "bg-amber-500",
+  danger: "bg-red-500",
+  neutral: "bg-text-muted",
 };
 
 const SUCCESS = new Set([
@@ -236,9 +243,11 @@ export default function StatusBadge({ value }) {
   const key = String(value);
   const label = t(`status.${key}`);
   const displayLabel = label === `status.${key}` ? (labelMap[key] || key) : label;
+  const tone = toneOf(key);
 
   return (
-    <span className={`inline-flex items-center rounded-control px-2 py-0.5 text-xs font-medium ${TONE_STYLES[toneOf(key)]}`}>
+    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${TONE_STYLES[tone]}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${TONE_DOTS[tone]}`} />
       {displayLabel}
     </span>
   );

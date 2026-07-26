@@ -41,7 +41,7 @@ export function ProgressBar({ value = 0, className = "" }) {
   return (
     <div className={`h-2.5 bg-gray-100 rounded-full overflow-hidden ${className}`}>
       <div
-        className="h-full bg-indigo-500 rounded-full transition-all duration-700 ease-out"
+        className="h-full bg-accent-500 rounded-full transition-all duration-700 ease-out"
         style={{ width: `${Math.min(100, value)}%` }}
       />
     </div>

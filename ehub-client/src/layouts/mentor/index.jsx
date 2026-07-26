@@ -9,6 +9,7 @@ import ConfirmModal from "@/components/modal/ConfirmModal";
 import NavProgress from "@/components/ui/NavProgress";
 import { useTranslation } from "@/context/TranslationContext";
 import { logout, selectAuthUser } from "@/store/slices/authSlice";
+import useHideOnScroll from "@/hooks/useHideOnScroll";
 
 export default function MentorLayout() {
   const { t } = useTranslation();
@@ -28,6 +29,8 @@ export default function MentorLayout() {
     { label: t("mentorPortal.nav.sessions"), icon: ClipboardList, path: "/mentor/sessions" },
   ], [t]);
 
+  const [headerHidden, handleScroll] = useHideOnScroll();
+
   const handleLogout = () => {
     setLogoutOpen(false);
     authApi.logout();
@@ -36,17 +39,19 @@ export default function MentorLayout() {
   };
 
   return (
-    <div className="flex h-screen h-[100dvh] overflow-hidden bg-slate-100">
+    <div className="flex h-screen h-[100dvh] overflow-hidden bg-page">
       <NavProgress />
-      <AppSidebar items={navItems} subtitle="Mentor Portal" />
+      <AppSidebar items={navItems} subtitle="Mentor Portal" navHidden={headerHidden} />
       <div className="relative flex min-h-0 min-w-0 flex-1 flex-col">
-        <AppHeader user={user} onLogout={() => setLogoutOpen(true)} />
-        <main className="min-h-0 flex-1 overflow-auto bg-slate-100 p-4 pb-20 sm:p-6 sm:pb-6">
-          <Suspense fallback={<div className="rounded-2xl bg-white p-8 text-center text-sm text-slate-400">{t("common.loading") || "Loading..."}</div>}>
-            <div key={location.pathname + location.search} className="page-fade-in">
-              <Outlet />
-            </div>
-          </Suspense>
+        <main onScroll={handleScroll} className="min-h-0 flex-1 overflow-auto bg-page">
+          <AppHeader user={user} onLogout={() => setLogoutOpen(true)} hidden={headerHidden} />
+          <div className="p-4 pb-20 sm:p-6 sm:pb-6">
+            <Suspense fallback={<div className="rounded-2xl bg-white p-8 text-center text-sm text-slate-400">{t("common.loading") || "Loading..."}</div>}>
+              <div key={location.pathname + location.search} className="page-fade-in">
+                <Outlet />
+              </div>
+            </Suspense>
+          </div>
         </main>
       </div>
 

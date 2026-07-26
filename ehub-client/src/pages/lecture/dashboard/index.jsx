@@ -1,16 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "@/context/TranslationContext";
 import { formatSemesterLabel, useSemesterYearOptions } from "@/hooks/useLectureFilterOptions";
-import StatCard from "@/components/ui/Card/StatCard";
 import { useNavigate } from "react-router-dom";
-import { BookOpenIcon } from "lucide-react";
-import { StatIconGrading, StatIconAssignment, StatIconGroups } from "@/components/icons/lecture";
+import { useSelector } from "react-redux";
+import { selectAuthUser } from "@/store/slices/authSlice";
 import Dropdown from "@/components/ui/filter/DropDown";
+import DashboardHero from "@/pages/lecture/dashboard/components/DashboardHero";
 import RecentClasses from "@/components/ui/lecture/RecentClasses";
 import RecentClassesEmpty from "@/pages/lecture/dashboard/components/RecentClassesEmpty";
 import GroupStatus from "@/components/ui/lecture/GroupStatus";
 import AssignmentStatus from "@/components/ui/lecture/AssignmentStatus";
-import GradingOverview from "@/components/ui/lecture/GradingOverview";
 import SemesterApi from "@/api/semester";
 import ClassApi from "@/api/class";
 
@@ -19,6 +18,12 @@ const VALUE_ALL_SEMESTERS = "all";
 const LectureDashboard = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const user = useSelector(selectAuthUser);
+  const heroName = (user?.full_name || user?.username || "")
+    .replace(/\s*\(.*?\)/g, "")
+    .trim()
+    .split(/\s+/)
+    .slice(-1)[0] || "";
   const [semesterList, setSemesterList] = useState([]);
   const [selectedYear, setSelectedYear] = useState(null);
   const [selectedSemesterId, setSelectedSemesterId] = useState(null);
@@ -133,110 +138,65 @@ const LectureDashboard = () => {
 
   return (
     <>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <StatCard 
-          title="Lớp học" 
-          value={stats.classCount} 
-          icon={<BookOpenIcon />} 
-          iconBg="bg-blue-100" 
-          iconColor="text-blue-500" 
-          onClick={() => navigate("/lecturer/classes")}
+      <DashboardHero
+        name={heroName}
+        stats={[
+          { label: "Lớp học", value: stats.classCount },
+          { label: "Nhóm sinh viên", value: stats.groupCount },
+          { label: "Checkpoint", value: stats.assignmentCount },
+          { label: "Cần chấm", value: stats.needGradingCount },
+        ]}
+      />
+
+      {/* Thanh lọc gọn */}
+      <div className="mt-4 sm:mt-6 flex flex-wrap items-center gap-3">
+        <Dropdown
+          label={t("lecturer.selectYear")}
+          options={yearOptions}
+          value={selectedYear}
+          onChange={handleYearChange}
         />
-        <StatCard 
-          title="Nhóm sinh viên" 
-          value={stats.groupCount} 
-          icon={<StatIconGroups />} 
-          iconBg="bg-amber-100" 
-          iconColor="text-amber-600" 
-          onClick={() => navigate("/lecturer/groups")}
+        <Dropdown
+          label={t("lecturer.filterSemester")}
+          options={semesterOptions}
+          value={selectedSemesterId}
+          onChange={(value) => setSelectedSemesterId(value)}
         />
-        <StatCard 
-          title="Checkpoint" 
-          value={stats.assignmentCount} 
-          icon={<StatIconAssignment />} 
-          iconBg="bg-purple-100" 
-          iconColor="text-violet-600" 
-          onClick={() => navigate("/lecturer/assignments?tab=checkpoints")}
-        />
-        <StatCard 
-          title="Cần chấm" 
-          value={stats.needGradingCount} 
-          icon={<StatIconGrading />} 
-          iconBg="bg-green-100" 
-          iconColor="text-green-600" 
-          onClick={() => navigate("/lecturer/assignments")}
-        />
-      </div>
-      <div className="w-full p-4 bg-white rounded-2xl shadow-sm mt-4">
-        <div className="flex justify-start gap-4">
-          <Dropdown
-            label={t("lecturer.selectYear")}
-            options={yearOptions}
-            value={selectedYear}
-            onChange={handleYearChange}
-          />
-          <Dropdown
-            label={t("lecturer.filterSemester")}
-            options={semesterOptions}
-            value={selectedSemesterId}
-            onChange={(value) => setSelectedSemesterId(value)}
-          />
-        </div>
       </div>
 
-      {/* Main content: empty state nếu chưa có lớp, ngược lại grid + grading */}
+      {/* Bố cục bất đối xứng (bento): khối lớn trái + cột phải xếp chồng */}
       {pageLoading ? (
-        <div className="mt-4 grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-3">
-          <div className="h-48 w-full md:col-span-2 xl:col-span-1 bg-white rounded-3xl border border-gray-100 shadow-sm p-6 animate-pulse">
-            <div className="h-4 bg-gray-200 rounded w-1/3 mb-4" />
-            <div className="h-10 bg-gray-100 rounded w-full mb-3" />
-            <div className="h-10 bg-gray-100 rounded w-full" />
-          </div>
-          <div className="h-48 w-full bg-white rounded-3xl border border-gray-100 shadow-sm p-6 animate-pulse">
-             <div className="h-4 bg-gray-200 rounded w-1/3 mb-4" />
-             <div className="h-20 bg-gray-100 rounded w-20 mx-auto rounded-full" />
-          </div>
-          <div className="h-48 w-full bg-white rounded-3xl border border-gray-100 shadow-sm p-6 animate-pulse">
-             <div className="h-4 bg-gray-200 rounded w-1/3 mb-4" />
-             <div className="h-16 bg-gray-100 rounded w-full" />
-          </div>
-        </div>
-      ) : recentClasses.length === 0 ? (
-        <div className="mt-4">
-          <RecentClassesEmpty
-            onViewAll={() => navigate("/lecturer/classes")}
-            onCreate={() => navigate("/lecturer/classes")}
-          />
+        <div className="mt-4 grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="lg:col-span-2 lg:row-span-2 h-80 rounded-card bg-surface shadow-card animate-pulse" />
+          <div className="h-40 rounded-card bg-surface shadow-card animate-pulse" />
+          <div className="h-40 rounded-card bg-surface shadow-card animate-pulse" />
         </div>
       ) : (
-        <>
-          <div className="mt-4 grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-3">
-            <div className="h-full w-full md:col-span-2 xl:col-span-1">
+        <div className="mt-4 grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="lg:col-span-2 lg:row-span-2 min-w-0">
+            {recentClasses.length === 0 ? (
+              <RecentClassesEmpty
+                onViewAll={() => navigate("/lecturer/classes")}
+                onCreate={() => navigate("/lecturer/classes")}
+              />
+            ) : (
               <RecentClasses
                 classes={recentClasses}
                 onViewAll={() => navigate("/lecturer/classes")}
                 onSelect={(item) => navigate(`/lecturer/classes/${item.id}`)}
               />
-            </div>
-            <div className="h-full w-full">
-              <GroupStatus
-                stats={stats.groupStats || { eligible: 0, needsReview: 0, ineligible: 0 }}
-                onDetail={() => navigate("/lecturer/groups")}
-              />
-            </div>
-            <div className="h-full w-full">
-              <AssignmentStatus
-                stats={stats.checkpointStats || { submitted: 0, pending: 0, late: 0 }}
-                unit=""
-                onCreate={() => navigate("/lecturer/assignments?tab=checkpoints")}
-              />
-            </div>
+            )}
           </div>
-
-          <div className="mt-4">
-            <GradingOverview items={[]} />
-          </div>
-        </>
+          <GroupStatus
+            stats={stats.groupStats || { eligible: 0, needsReview: 0, ineligible: 0 }}
+            onDetail={() => navigate("/lecturer/groups")}
+          />
+          <AssignmentStatus
+            stats={stats.checkpointStats || { submitted: 0, pending: 0, late: 0 }}
+            unit=""
+            onCreate={() => navigate("/lecturer/assignments?tab=checkpoints")}
+          />
+        </div>
       )}
     </>
   );

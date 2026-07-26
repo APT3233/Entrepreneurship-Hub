@@ -291,7 +291,7 @@ export default function GradingFormPage({ sourceType }) {
   };
 
   if (forbidden) return <PageForbidden />;
-  if (loading) return <div className="rounded-2xl border border-gray-100 bg-white p-8 text-center text-sm text-gray-400">{t("lecturer.gradingPage.form.loading")}</div>;
+  if (loading) return <div className="rounded-2xl bg-surface p-8 text-center text-sm text-text-muted">{t("lecturer.gradingPage.form.loading")}</div>;
   if (error) return <div className="rounded-2xl border border-red-100 bg-red-50 p-8 text-center text-sm font-semibold text-red-600">{error}</div>;
   if (!data) return null;
 
@@ -299,12 +299,12 @@ export default function GradingFormPage({ sourceType }) {
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <button type="button" onClick={() => navigate(backPath)} className="mb-3 inline-flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-gray-800">
+          <button type="button" onClick={() => navigate(backPath)} className="mb-3 inline-flex items-center gap-2 text-sm font-semibold text-text-secondary hover:text-text-primary">
             <ArrowLeft size={16} />
             {t("lecturer.gradingPage.backToList")}
           </button>
-          <h1 className="text-2xl font-bold text-gray-900">{data.source_title}</h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <h1 className="text-2xl font-bold text-text-primary">{data.source_title}</h1>
+          <p className="mt-1 text-sm text-text-secondary">
             {data.class_code} · {data.group_name || "—"}
           </p>
         </div>
@@ -313,7 +313,7 @@ export default function GradingFormPage({ sourceType }) {
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="space-y-4">
-          <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+          <div className="rounded-2xl bg-surface p-5 shadow-sm">
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               <Info label={t("filterLabels.class")} value={data.class_code} />
               <Info label={t("filterLabels.subject")} value={`${data.subject_code || ""} ${data.subject_name || ""}`.trim() || "—"} />
@@ -327,7 +327,7 @@ export default function GradingFormPage({ sourceType }) {
           </div>
 
           <section className="space-y-3">
-            <h2 className="text-lg font-bold text-gray-900">{t("lecturer.gradingPage.form.submissionFiles")}</h2>
+            <h2 className="text-lg font-bold text-text-primary">{t("lecturer.gradingPage.form.submissionFiles")}</h2>
             <SubmissionFileList files={data.files || []} />
           </section>
 
@@ -360,13 +360,13 @@ export default function GradingFormPage({ sourceType }) {
           ) : (
             <>
           <section className="space-y-3">
-            <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+            <div className="rounded-2xl bg-surface p-5 shadow-sm">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                  <h2 className="text-lg font-bold text-gray-900">{data.rubric?.name}</h2>
-                  <p className="mt-1 text-sm text-gray-500">{t("lecturer.gradingPage.form.rubricVersionTotal", { version: data.rubric?.version || 1, total: data.rubric?.total_score })}</p>
+                  <h2 className="text-lg font-bold text-text-primary">{data.rubric?.name}</h2>
+                  <p className="mt-1 text-sm text-text-secondary">{t("lecturer.gradingPage.form.rubricVersionTotal", { version: data.rubric?.version || 1, total: data.rubric?.total_score })}</p>
                 </div>
-                <span className="rounded-full border border-indigo-100 bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">
+                <span className="rounded-full border border-accent-100 bg-accent-50 px-3 py-1 text-xs font-semibold text-accent-700">
                   {data.scoring?.method || "sum"}
                 </span>
               </div>
@@ -380,9 +380,9 @@ export default function GradingFormPage({ sourceType }) {
             />
           </section>
 
-          <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+          <section className="rounded-2xl bg-surface p-5 shadow-sm">
             <label className="block">
-              <span className="mb-1 block text-sm font-semibold text-gray-700">{t("lecturer.gradingPage.form.overallFeedback")}</span>
+              <span className="mb-1 block text-sm font-semibold text-text-secondary">{t("lecturer.gradingPage.form.overallFeedback")}</span>
               <textarea
                 rows={4}
                 value={overallFeedback}
@@ -391,10 +391,10 @@ export default function GradingFormPage({ sourceType }) {
                   setOverallFeedback(event.target.value);
                   markAiEdited("overall_feedback");
                 }}
-                className={`w-full resize-y rounded-xl border px-3 py-2.5 text-sm text-gray-800 outline-none focus:ring-2 disabled:bg-gray-50 disabled:text-gray-400 ${
+                className={`w-full resize-y rounded-xl border px-3 py-2.5 text-sm text-text-primary outline-none focus:ring-2 disabled:bg-gray-50 disabled:text-text-muted ${
                   scoreState.overallFeedbackMissing || scoreState.overallFeedbackTooShort
                     ? "border-red-200 focus:border-red-300 focus:ring-red-100"
-                    : "border-gray-200 focus:border-indigo-300 focus:ring-indigo-100"
+                    : "border-border focus:border-accent-300 focus:ring-accent-100"
                 }`}
               />
               {scoreState.overallFeedbackMissing ? <span className="mt-1 block text-xs text-red-600">{t("lecturer.gradingPage.form.overallFeedbackRequired")}</span> : null}
@@ -415,13 +415,13 @@ export default function GradingFormPage({ sourceType }) {
             missingScoreCount={scoreState.missingScoreCount}
             directMode={isDirectGrading}
           />
-          <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+          <div className="rounded-2xl bg-surface p-4 shadow-sm">
             <div className="grid gap-2">
               <button
                 type="button"
                 disabled={!canSaveDraft || saving}
                 onClick={saveDraft}
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-border px-4 py-3 text-sm font-semibold text-text-secondary hover:bg-subtle disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Save size={16} />
                 {t("lecturer.gradingPage.actions.saveDraft")}
@@ -430,7 +430,7 @@ export default function GradingFormPage({ sourceType }) {
                 type="button"
                 disabled={!canSubmit || saving}
                 onClick={() => setConfirmOpen(true)}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Send size={16} />
                 {t("lecturer.gradingPage.actions.submitScore")}
@@ -439,13 +439,13 @@ export default function GradingFormPage({ sourceType }) {
                 type="button"
                 disabled={isConfirmed || saving}
                 onClick={resetForm}
-                className="inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold text-gray-500 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold text-text-secondary hover:bg-subtle disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <RotateCcw size={16} />
                 {t("lecturer.gradingPage.actions.reset")}
               </button>
             </div>
-            {isConfirmed ? <p className="mt-3 text-xs text-gray-500">{t("lecturer.gradingPage.form.confirmedReadOnly")}</p> : null}
+            {isConfirmed ? <p className="mt-3 text-xs text-text-secondary">{t("lecturer.gradingPage.form.confirmedReadOnly")}</p> : null}
           </div>
           {!isDirectGrading ? <EvaluationDetailPanel evaluation={evaluation} /> : null}
         </aside>
@@ -470,8 +470,8 @@ export default function GradingFormPage({ sourceType }) {
 function Info({ label, value }) {
   return (
     <div className="min-w-0">
-      <p className="text-xs font-semibold uppercase text-gray-400">{label}</p>
-      <div className="mt-1 truncate text-sm font-semibold text-gray-800">{value}</div>
+      <p className="text-xs font-semibold uppercase text-text-muted">{label}</p>
+      <div className="mt-1 truncate text-sm font-semibold text-text-primary">{value}</div>
     </div>
   );
 }

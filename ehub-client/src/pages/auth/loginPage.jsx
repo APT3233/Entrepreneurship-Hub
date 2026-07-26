@@ -14,6 +14,7 @@ import {
 } from "@/components/icons/auth";
 import { GraduationCapIcon, LectureIcon } from "@/components/icons/education";
 import { AlertCircleIcon } from "@/components/icons/ui";
+import { Users as UsersTabIcon } from "lucide-react";
 import GoogleButton from "@/components/ui/Button/GoogleButton";
 import StudentNotInRosterModal from "@/components/modal/auth/StudentNotInRosterModal";
 import GoogleAccessDeniedModal from "@/components/modal/auth/GoogleAccessDeniedModal";
@@ -29,9 +30,8 @@ const TabButton = ({ active, onClick, icon, label }) => (
   <button
     type="button"
     onClick={onClick}
-    className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-full text-sm font-medium
-      transition-all duration-200 cursor-pointer
-      ${active ? "bg-accent-bg text-accent" : "text-text-secondary hover:text-text-primary"}`}>
+    className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-full text-sm transition-all duration-200 cursor-pointer
+      ${active ? "bg-white text-accent font-semibold shadow-sm" : "text-text-secondary font-medium hover:text-text-primary"}`}>
     {icon}
     {label}
   </button>
@@ -335,16 +335,20 @@ export default function LoginPage() {
         }
 
         .glass-input {
-          background: rgba(255, 255, 255, 0.55);
-          border: 1px solid rgba(255, 255, 255, 0.8);
+          background: rgba(255, 255, 255, 0.92);
+          border: 1px solid rgba(226, 224, 220, 0.9);
           -webkit-backdrop-filter: blur(6px);
           backdrop-filter: blur(6px);
-          box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
+          box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+          transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+        .glass-input:hover {
+          background: rgba(255, 255, 255, 0.97);
         }
         .glass-input:focus-within {
-          background: rgba(255, 255, 255, 0.78);
+          background: #ffffff;
           border-color: var(--color-accent);
-          box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+          box-shadow: 0 0 0 3px rgba(242, 106, 46, 0.16);
         }
         /* Reset input mặc định + khử nền autofill của Chrome (thủ phạm "khung trong") */
         .glass-input input {
@@ -373,7 +377,7 @@ export default function LoginPage() {
           backgroundPosition: "center"
         }}
       />
-      <div className="absolute inset-0 bg-linear-to-tr from-white via-slate-800/35 to-slate-950/10" />
+      <div className="absolute inset-0 bg-linear-to-r from-slate-950/80 via-slate-900/45 to-slate-950/15" />
 
       {/* ── Left brand panel (desktop) ── */}
       <div className="hidden lg:block relative z-10 lg:w-[45%]">
@@ -387,14 +391,14 @@ export default function LoginPage() {
             </span>
           </div>
           <div>
-            <h2 className="text-5xl lg:text-6xl font-black text-accent">
+            <h2 className="text-5xl lg:text-6xl font-black text-white leading-[1.05] tracking-tight drop-shadow-[0_2px_16px_rgba(0,0,0,0.4)]">
               Cổng
               <br />
-              <span>khởi nghiệp</span>
+              <span className="text-accent">khởi nghiệp</span>
               <br />
               sinh viên FPT
             </h2>
-            <p className="max-w-xl text-sm leading-relaxed text-yellow-800">
+            <p className="mt-4 max-w-md text-sm leading-relaxed text-white/85">
               Kết nối ý tưởng, mentor và nguồn lực — tất cả trong một nơi.
             </p>
           </div>
@@ -411,7 +415,7 @@ export default function LoginPage() {
             <div
               className="w-14 h-14 rounded-2xl flex items-center justify-center mb-3"
               style={{
-                background: "linear-gradient(135deg, #f7943f 0%, #f26f20 100%)"
+                background: "linear-gradient(135deg, #ff7a48 0%, #ff5c27 100%)"
               }}>
               <GraduationCapIcon />
             </div>
@@ -433,11 +437,11 @@ export default function LoginPage() {
           </div>
 
           {/* Role Tabs */}
-          <div className="flex bg-white/25 rounded-full p-1 mb-5">
+          <div className="flex bg-black/5 rounded-full p-1 mb-5">
             <TabButton
               active={isStudent}
               onClick={() => handleRoleChange(Roles.STUDENT)}
-              icon={<UserIcon />}
+              icon={<UsersTabIcon size={16} strokeWidth={1.8} />}
               label="Student"
             />
             <TabButton
@@ -603,8 +607,9 @@ export default function LoginPage() {
               type="submit"
               disabled={loading}
               className="w-full py-3 rounded-xl bg-accent hover:bg-accent-hover text-white text-sm font-semibold tracking-wide
-                transition-all duration-200 active:scale-[0.98]
-                disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer">
+                shadow-sm hover:shadow-lg hover:shadow-accent/25 hover:-translate-y-0.5
+                transition-all duration-200 active:translate-y-0 active:scale-[0.98]
+                disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-sm cursor-pointer">
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
                   <svg

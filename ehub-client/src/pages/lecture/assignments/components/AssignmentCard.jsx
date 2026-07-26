@@ -22,8 +22,8 @@ export default function AssignmentCard({ assignment, isSelected, onEdit, onDelet
     <div
       onClick={onClick}
       className={`
-        relative w-full rounded-[24px] border bg-white cursor-pointer overflow-hidden
-        transition-all duration-300 hover:shadow-xl hover:shadow-indigo-500/5
+        relative w-full rounded-[24px] border bg-surface cursor-pointer overflow-hidden
+        transition-all duration-300 hover:shadow-xl hover:shadow-accent-500/5
         ${isSelected
           ? "border-slate-800 shadow-md"
           : "border-slate-100/80 hover:border-slate-200/80"}
@@ -34,7 +34,7 @@ export default function AssignmentCard({ assignment, isSelected, onEdit, onDelet
         progressPercent === 100
           ? "bg-emerald-500"
           : status === "open"
-            ? "bg-indigo-500"
+            ? "bg-accent-500"
             : "bg-slate-300"
       }`} />
 
@@ -50,7 +50,7 @@ export default function AssignmentCard({ assignment, isSelected, onEdit, onDelet
             <div className="flex items-center gap-2 shrink-0">
               <button
                 onClick={(e) => { e.stopPropagation(); onEdit(assignment); }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-black text-slate-600 bg-white hover:bg-slate-50 hover:text-slate-850 hover:border-slate-300 transition-all duration-150 shadow-sm active:scale-95 cursor-pointer"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-black text-slate-600 bg-surface hover:bg-slate-50 hover:text-slate-850 hover:border-slate-300 transition-all duration-150 shadow-sm active:scale-95 cursor-pointer"
               >
                 <Pencil size={12} />
                 <span>Sửa</span>
@@ -58,7 +58,7 @@ export default function AssignmentCard({ assignment, isSelected, onEdit, onDelet
               
               <button
                 onClick={(e) => { e.stopPropagation(); onDelete(assignment); }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-rose-100 text-xs font-black text-rose-500 bg-white hover:bg-rose-50 hover:border-rose-200 transition-all duration-150 shadow-sm active:scale-95 cursor-pointer"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-rose-100 text-xs font-black text-rose-500 bg-surface hover:bg-rose-50 hover:border-rose-200 transition-all duration-150 shadow-sm active:scale-95 cursor-pointer"
               >
                 <Trash2 size={12} />
                 <span>Xóa</span>
@@ -67,7 +67,7 @@ export default function AssignmentCard({ assignment, isSelected, onEdit, onDelet
           </div>
 
           {/* Title */}
-          <h3 className="text-lg font-black text-slate-900 group-hover:text-indigo-600 transition-colors leading-snug tracking-tight mt-3">
+          <h3 className="text-lg font-black text-slate-900 group-hover:text-accent-600 transition-colors leading-snug tracking-tight mt-3">
             {title}
           </h3>
 
@@ -80,7 +80,7 @@ export default function AssignmentCard({ assignment, isSelected, onEdit, onDelet
           <div className="grid grid-cols-2 gap-3 mt-5 mb-5">
             <div className="bg-slate-50 rounded-2xl p-3.5 border border-slate-200/60 flex flex-col justify-between hover:bg-slate-100/60 transition-colors duration-200">
               <div className="flex items-center gap-1.5 text-slate-500">
-                <Calendar size={14} className="text-indigo-500" />
+                <Calendar size={14} className="text-accent-500" />
                 <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Hạn nộp</span>
               </div>
               <p className="text-xs font-black text-slate-800 mt-2 leading-none">
@@ -114,7 +114,7 @@ export default function AssignmentCard({ assignment, isSelected, onEdit, onDelet
               className={`h-full rounded-full transition-all duration-500 ${
                 progressPercent === 100
                   ? "bg-emerald-500"
-                  : "bg-gradient-to-r from-indigo-500 to-violet-500"
+                  : "bg-gradient-to-r from-accent-500 to-violet-500"
               }`} 
               style={{ width: `${progressPercent}%` }} 
             />

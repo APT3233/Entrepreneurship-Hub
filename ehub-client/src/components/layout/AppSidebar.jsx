@@ -16,7 +16,7 @@ import {
 import { GraduationCapIcon } from "@/components/icons/education";
 import { useTranslation } from "@/context/TranslationContext";
 
-export default function AppSidebar({ items, subtitle }) {
+export default function AppSidebar({ items, subtitle, navHidden = false }) {
   const { t } = useTranslation();
 
   const localizedDefaultNavItems = useMemo(() => [
@@ -79,16 +79,16 @@ export default function AppSidebar({ items, subtitle }) {
       <aside
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
-        style={{ width: isOpen ? "224px" : "68px" }}
+        style={{ width: isOpen ? "260px" : "80px" }}
         className="
           hidden md:flex
           relative h-screen flex-col shrink-0 overflow-hidden
-          bg-surface border-r border-border
+          bg-surface shadow-[1px_0_24px_-10px_rgba(24,24,27,0.12)] z-10
           transition-[width] duration-300 ease-in-out
         "
       >
         {/* Branding */}
-        <div className="flex items-center gap-3 px-[14px] py-5 border-b border-border overflow-hidden">
+        <div className="flex items-center gap-3 px-[14px] py-5 overflow-hidden">
           <div className="w-10 h-10 rounded-xl bg-accent flex items-center justify-center shrink-0">
             <GraduationCapIcon />
           </div>
@@ -146,7 +146,7 @@ export default function AppSidebar({ items, subtitle }) {
                  transition-all duration-200 overflow-hidden whitespace-nowrap
                  ${
                    active
-                     ? "bg-accent-bg text-accent"
+                     ? "bg-accent-bg text-accent font-semibold"
                      : "text-text-secondary hover:bg-subtle hover:text-text-primary"
                  }`
                 }
@@ -179,7 +179,7 @@ export default function AppSidebar({ items, subtitle }) {
         </nav>
 
         {/* Footer — Pin */}
-        <div className="mt-auto border-t border-border px-[14px] py-4 flex items-center gap-3 overflow-hidden">
+        <div className="mt-auto px-[14px] py-4 flex items-center gap-3 overflow-hidden">
           <button
             onClick={togglePin}
             title={pinned ? t("common.unpin") : t("common.pin")}
@@ -211,13 +211,15 @@ export default function AppSidebar({ items, subtitle }) {
 
       {/* Mobile bottom nav */}
       <nav
-        className="
+        className={`
         md:hidden fixed bottom-0 left-0 right-0 z-50
         bg-surface/95 backdrop-blur-md
         border-t border-border
         flex items-center justify-around
         px-2 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))]
-      "
+        transition-transform duration-300 ease-out
+        ${navHidden ? "translate-y-full" : "translate-y-0"}
+      `}
       >
         {navItems.map((item, index) => {
           if (item.disabled) {

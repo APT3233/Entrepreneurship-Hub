@@ -96,7 +96,7 @@ export default function ProfilePage() {
   if (!user) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-600"></div>
       </div>
     );
   }
@@ -106,7 +106,7 @@ export default function ProfilePage() {
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       {/* Header Profile Section */}
-      <div className="relative bg-white rounded-[32px] shadow-sm border border-gray-100">
+      <div className="relative bg-white rounded-[32px] shadow-card">
         {/* Cover Image */}
         <div className="h-48 sm:h-64 relative rounded-t-[32px] overflow-hidden">
           <img 
@@ -134,7 +134,7 @@ export default function ProfilePage() {
               </div>
               <button 
                 onClick={() => setIsEditModalOpen(true)}
-                className="absolute bottom-2 right-2 p-2 rounded-xl bg-indigo-600 text-white shadow-lg hover:bg-indigo-700 transition-all border-2 border-white cursor-pointer"
+                className="absolute bottom-2 right-2 p-2 rounded-xl bg-accent-600 text-white shadow-lg hover:bg-accent-700 transition-all border-2 border-white cursor-pointer"
               >
                 <Camera size={16} />
               </button>
@@ -146,7 +146,7 @@ export default function ProfilePage() {
                 <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">{name}</h1>
                 <div className="flex flex-wrap justify-center sm:justify-start gap-2">
                   {roles.map(role => (
-                    <span key={role} className="px-3 py-1 rounded-full bg-indigo-50 text-indigo-600 text-[10px] font-bold uppercase tracking-widest border border-indigo-100">
+                    <span key={role} className="px-3 py-1 rounded-full bg-accent-50 text-accent-600 text-[10px] font-bold uppercase tracking-widest border border-accent-100">
                       {role}
                     </span>
                   ))}
@@ -169,7 +169,7 @@ export default function ProfilePage() {
               </button>
               <button 
                 onClick={() => setIsEditModalOpen(true)}
-                className="w-full sm:w-auto px-6 py-2.5 rounded-2xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full sm:w-auto px-6 py-2.5 rounded-2xl bg-accent-600 text-white text-sm font-semibold hover:bg-accent-700 shadow-lg shadow-accent-100 transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Edit2 size={18} />
                 {t("profile.editProfile")}
@@ -183,7 +183,7 @@ export default function ProfilePage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column - Details */}
         <div className="lg:col-span-1 space-y-6">
-          <div className="bg-white rounded-[32px] p-8 shadow-sm border border-gray-100">
+          <div className="bg-white rounded-[32px] p-8 shadow-card">
             <h3 className="text-lg font-bold text-gray-900 mb-6">{t("profile.title")}</h3>
             <div className="space-y-6">
               {isStudent && (
@@ -233,7 +233,7 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          <div className="bg-white rounded-[32px] p-8 shadow-sm border border-gray-100">
+          <div className="bg-white rounded-[32px] p-8 shadow-card">
             <h3 className="text-lg font-bold text-gray-900 mb-6">{t("profile.contact")}</h3>
             <div className="space-y-6">
               <div className="flex items-center gap-4 group">
@@ -261,7 +261,7 @@ export default function ProfilePage() {
         {/* Right Column - Stats / Bio / Activity */}
         <div className="lg:col-span-2 space-y-6">
           {/* Bio / About */}
-          <div className="bg-white rounded-[32px] p-8 shadow-sm border border-gray-100">
+          <div className="bg-white rounded-[32px] p-8 shadow-card">
             <h3 className="text-lg font-bold text-gray-900 mb-4">{t("profile.about")}</h3>
             <p className="text-gray-500 leading-relaxed font-medium">
               {user.bio || t("profile.defaultBio")}
@@ -271,13 +271,13 @@ export default function ProfilePage() {
           {/* Activity / Stats Grid */}
           {isLecturer && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div className="bg-indigo-600 rounded-[32px] p-8 text-white shadow-xl shadow-indigo-100 relative overflow-hidden group">
+              <div className="bg-accent-600 rounded-[32px] p-8 text-white shadow-xl shadow-accent-100 relative overflow-hidden group">
                 <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500"></div>
-                <p className="text-indigo-100 text-[10px] font-bold uppercase tracking-widest mb-1">{t("profile.managedClasses")}</p>
+                <p className="text-accent-100 text-[10px] font-bold uppercase tracking-widest mb-1">{t("profile.managedClasses")}</p>
                 <h4 className="text-3xl font-black mb-2">{stats?.classCount || 0}</h4>
-                <p className="text-indigo-200 text-xs font-medium">{t("profile.managedClassesSub")}</p>
+                <p className="text-accent-200 text-xs font-medium">{t("profile.managedClassesSub")}</p>
               </div>
-              <div className="bg-white rounded-[32px] p-8 shadow-sm border border-gray-100 relative overflow-hidden group">
+              <div className="bg-white rounded-[32px] p-8 shadow-card relative overflow-hidden group">
                 <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-slate-50 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500"></div>
                 <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-1">{t("profile.managedStudents")}</p>
                 <h4 className="text-3xl font-black text-gray-900 mb-2">
@@ -289,12 +289,12 @@ export default function ProfilePage() {
           )}
 
           {/* Recent Activity Placeholder */}
-          <div className="bg-white rounded-[32px] p-8 shadow-sm border border-gray-100">
+          <div className="bg-white rounded-[32px] p-8 shadow-card">
             <div className="flex items-center justify-between mb-8">
               <h3 className="text-lg font-bold text-gray-900">{t("profile.recentActivity")}</h3>
               <button 
                 onClick={() => setIsActivityModalOpen(true)}
-                className="text-xs font-bold text-indigo-600 hover:bg-indigo-50 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+                className="text-xs font-bold text-accent-600 hover:bg-accent-50 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
               >
                 {t("profile.viewAll")}
               </button>
@@ -325,11 +325,11 @@ export default function ProfilePage() {
                    return (
                      <div key={act.id} className="flex gap-4 relative group">
                        {idx !== activities.length - 1 && <div className="absolute left-5 top-10 bottom-[-32px] w-0.5 bg-gray-50"></div>}
-                       <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center shrink-0 border border-gray-100 group-hover:bg-indigo-600 group-hover:border-indigo-600 transition-all duration-300">
-                          <div className="w-2 h-2 rounded-full bg-indigo-500 group-hover:bg-white"></div>
+                       <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center shrink-0 border border-gray-100 group-hover:bg-accent-600 group-hover:border-accent-600 transition-all duration-300">
+                          <div className="w-2 h-2 rounded-full bg-accent-500 group-hover:bg-white"></div>
                        </div>
                        <div className="flex-1">
-                          <p className="text-sm font-bold text-gray-800 group-hover:text-indigo-600 transition-colors">
+                          <p className="text-sm font-bold text-gray-800 group-hover:text-accent-600 transition-colors">
                             {actionLabel}
                           </p>
                           <div className="mt-1 flex flex-wrap items-center gap-2">
