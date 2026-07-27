@@ -40,25 +40,56 @@ export default function GroupsPage() {
 
   useEffect(() => {
     const fetchSemesters = async () => {
-      const list = await SemesterApi.getList();
-      const safeList = Array.isArray(list) ? list : [];
-      setSemesterList(safeList);
-      
-      if (safeList.length) {
-        // Tự động chọn học kỳ đang diễn ra
-        const ongoing = safeList.find(s => s.status === 'ongoing');
-        if (ongoing) {
-          setFilterYear(ongoing.year);
-          setFilterSemesterId(String(ongoing.id));
-        } else {
-          const years = [...new Set(safeList.map((s) => s.year))].sort((a, b) => b - a);
-          const currentYear = new Date().getFullYear();
-          const selectedYear = years.includes(currentYear) ? currentYear : years[0];
-          setFilterYear(selectedYear);
-          
-          const inYear = safeList.filter(s => s.year === selectedYear);
-          setFilterSemesterId(String(inYear[0].id));
+      try {
+        const list = await SemesterApi.getList();
+        const safeList = Array.isArray(list) ? list : [];
+        setSemesterList(safeList);
+        if (!safeList.length) return;
+
+        const pickSemester = (semester) => {
+          if (!semester) return;
+          setFilterYear(semester.year);
+          setFilterSemesterId(String(semester.id));
+        };
+
+        const ongoing = safeList.find((s) => s.status === "ongoing");
+
+        // Ưu tiên kỳ ongoing nếu GV có lớp; không thì chọn kỳ gần nhất mà GV còn lớp
+        const myClassesRes = await ClassApi.getList({ lecturerScope: "mine", limit: 100 });
+        const myClasses = myClassesRes?.data || [];
+        const semesterIdsWithClass = new Set(
+          myClasses.map((c) => String(c.semester_id)).filter(Boolean),
+        );
+
+        if (ongoing && semesterIdsWithClass.has(String(ongoing.id))) {
+          pickSemester(ongoing);
+          return;
         }
+
+        const withClass = safeList
+          .filter((s) => semesterIdsWithClass.has(String(s.id)))
+          .sort((a, b) => {
+            if (b.year !== a.year) return b.year - a.year;
+            return Number(b.id) - Number(a.id);
+          });
+
+        if (withClass.length) {
+          pickSemester(withClass[0]);
+          return;
+        }
+
+        if (ongoing) {
+          pickSemester(ongoing);
+          return;
+        }
+
+        const years = [...new Set(safeList.map((s) => s.year))].sort((a, b) => b - a);
+        const currentYear = new Date().getFullYear();
+        const selectedYear = years.includes(currentYear) ? currentYear : years[0];
+        const inYear = safeList.filter((s) => s.year === selectedYear);
+        pickSemester(inYear[0]);
+      } catch {
+        setSemesterList([]);
       }
     };
     fetchSemesters();
@@ -94,9 +125,13 @@ export default function GroupsPage() {
   }, [filterYear, filterSemesterId]);
 
   useEffect(() => {
+    if (filterYear == null || filterSemesterId == null) return;
     const fetchStats = async () => {
       try {
-        const statsRes = await ClassApi.getStats({});
+        const statsRes = await ClassApi.getStats({
+          year: filterYear,
+          semester_id: filterSemesterId,
+        });
         const s = statsRes?.data || {};
         setStats({
           classCount: s.classCount ?? 0,
@@ -109,7 +144,7 @@ export default function GroupsPage() {
       }
     };
     fetchStats();
-  }, []);
+  }, [filterYear, filterSemesterId]);
 
   useEffect(() => {
     if (!filterClass) {
@@ -126,7 +161,8 @@ export default function GroupsPage() {
           page: 1,
           class_id: filterClass,
         });
-        const data = res?.data?.data ?? res?.data ?? [];
+        const raw = res?.data;
+        const data = Array.isArray(raw) ? raw : [];
         setGroups(
           data.map((g) => ({
             id: g.id,
@@ -176,17 +212,14 @@ export default function GroupsPage() {
           (g.topic && g.topic.toLowerCase().includes(q))
       );
     }
-    if (filterClass !== VALUE_ALL) {
-      list = list.filter((g) => String(g.class_id) === filterClass);
+    if (filterClass && filterClass !== VALUE_ALL) {
+      list = list.filter((g) => String(g.class_id) === String(filterClass));
     }
     if (filterStatus !== VALUE_ALL) {
       list = list.filter((g) => g.status === filterStatus);
     }
-    if (filterSemesterId !== VALUE_ALL) {
-      list = list.filter((g) => String(g.semester_id) === filterSemesterId);
-    }
     return list;
-  }, [groups, searchQuery, filterClass, filterStatus, filterSemesterId]);
+  }, [groups, searchQuery, filterClass, filterStatus]);
 
   return (
     <>
@@ -247,7 +280,7 @@ export default function GroupsPage() {
             label={t("lecturer.filterSemester")}
             options={semesterOptions}
             value={filterSemesterId}
-            onChange={(v) => setFilterSemesterId(v)}
+            onChange={(v) => setFilterSemesterId(v == null ? null : String(v))}
             disabled={!filterYear}
           />
           <Dropdown

@@ -10,6 +10,8 @@ export const ErrorTypes = Object.freeze({
   ACCOUNT_LOCKED: "AUTH_005",
   /** MSSV đúng format nhưng chưa có bản ghi sinh viên (chưa được GV import) */
   STUDENT_NOT_IN_ROSTER: "AUTH_006",
+  /** Hồ sơ mentor chưa được duyệt hoặc đã bị vô hiệu hóa */
+  MENTOR_PROFILE_NOT_ACTIVE: "AUTH_007",
 
   // Validation
   VALIDATION_ERROR: "VAL_001",

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { CheckCircle2, Plus, XCircle } from "lucide-react";
+import { CheckCircle2, Pencil, Plus, UserX, XCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import MentorWorkflowApi from "@/api/mentorWorkflow";
 import { useToast } from "@/components/ui/Toast";
@@ -13,6 +13,11 @@ import { formatDate } from "@/utils/dateTimeDisplay";
 
 const emptyForm = { assignment_id: "", title: "", session_type: "online", meeting_link: "", location: "", scheduled_start_at: "", scheduled_end_at: "", description: "" };
 
+/** Chuyển giá trị datetime từ API sang định dạng input[type=datetime-local] (YYYY-MM-DDTHH:mm). */
+const toFormValue = (value) => (value ? String(value).replace(" ", "T").slice(0, 16) : "");
+
+const EDITABLE = ["scheduled", "rescheduled"];
+
 export default function MentorSessionsPage() {
   const { t } = useTranslation();
   const toast = useToast();
@@ -24,6 +29,7 @@ export default function MentorSessionsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [form, setForm] = useState(emptyForm);
+  const [editingId, setEditingId] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [confirm, setConfirm] = useState(null);
@@ -48,13 +54,17 @@ export default function MentorSessionsPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  const createSession = async (e) => {
+  const saveSession = async (e) => {
     e.preventDefault();
     setSaving(true);
     try {
-      await MentorWorkflowApi.mentorCreateSession(form);
-      toast.success(t("mentorPortal.sessions.created"));
+      const res = editingId
+        ? await MentorWorkflowApi.mentorUpdateSession(editingId, form)
+        : await MentorWorkflowApi.mentorCreateSession(form);
+      toast.success(editingId ? t("mentorPortal.sessions.updated") : t("mentorPortal.sessions.created"));
+      (res?.data?.warnings || []).forEach((warning) => toast.warning(warning));
       setModalOpen(false);
+      setEditingId(null);
       setForm(emptyForm);
       await load();
     } catch (err) {
@@ -62,6 +72,21 @@ export default function MentorSessionsPage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const openEdit = (row) => {
+    setEditingId(row.id);
+    setForm({
+      assignment_id: row.assignment_id,
+      title: row.title || "",
+      session_type: row.session_type || "online",
+      meeting_link: row.meeting_link || "",
+      location: row.location || "",
+      scheduled_start_at: toFormValue(row.scheduled_start_at),
+      scheduled_end_at: toFormValue(row.scheduled_end_at),
+      description: row.description || "",
+    });
+    setModalOpen(true);
   };
 
   const updateStatus = async () => {
@@ -84,16 +109,23 @@ export default function MentorSessionsPage() {
     { key: "duration_minutes", label: t("mentorPortal.sessions.duration"), render: (row) => row.duration_minutes ? `${row.duration_minutes}m` : "-" },
     { key: "status", label: t("mentorPortal.sessions.status"), render: (row) => <StatusBadge value={row.status} /> },
     { key: "session_type", label: t("mentorPortal.sessions.type"), render: (row) => <StatusBadge value={row.session_type} /> },
-    { key: "actions", label: "", width: 120, render: (row) => row.status === "scheduled" ? <div className="flex justify-end gap-1"><button onClick={() => setConfirm({ row, status: "completed", title: t("mentorPortal.sessions.markCompleted"), color: "green" })} className="rounded-control p-2 text-success-text hover:bg-success-bg"><CheckCircle2 size={16} /></button><button onClick={() => setConfirm({ row, status: "cancelled", title: t("mentorPortal.sessions.cancelSession"), color: "red" })} className="rounded-control p-2 text-danger-text hover:bg-danger-bg"><XCircle size={16} /></button></div> : null },
+    { key: "actions", label: "", width: 170, render: (row) => EDITABLE.includes(row.status) ? (
+      <div className="flex justify-end gap-1">
+        <button title={t("mentorPortal.sessions.editTitle")} onClick={(e) => { e.stopPropagation(); openEdit(row); }} className="rounded-control p-2 text-text-secondary hover:bg-subtle"><Pencil size={16} /></button>
+        <button title={t("mentorPortal.sessions.markCompleted")} onClick={(e) => { e.stopPropagation(); setConfirm({ row, status: "completed", title: t("mentorPortal.sessions.markCompleted"), color: "green" }); }} className="rounded-control p-2 text-success-text hover:bg-success-bg"><CheckCircle2 size={16} /></button>
+        <button title={t("mentorPortal.sessions.markNoShow")} onClick={(e) => { e.stopPropagation(); setConfirm({ row, status: "no_show", title: t("mentorPortal.sessions.markNoShow"), color: "amber" }); }} className="rounded-control p-2 text-text-secondary hover:bg-subtle"><UserX size={16} /></button>
+        <button title={t("mentorPortal.sessions.cancelSession")} onClick={(e) => { e.stopPropagation(); setConfirm({ row, status: "cancelled", title: t("mentorPortal.sessions.cancelSession"), color: "red" }); }} className="rounded-control p-2 text-danger-text hover:bg-danger-bg"><XCircle size={16} /></button>
+      </div>
+    ) : null },
   ], [navigate, t]);
 
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <button onClick={() => setModalOpen(true)} className="inline-flex items-center gap-2 rounded-control bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover"><Plus size={16} /> {t("mentorPortal.sessions.createBtn")}</button>
+        <button onClick={() => { setEditingId(null); setForm(emptyForm); setModalOpen(true); }} className="inline-flex items-center gap-2 rounded-control bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover"><Plus size={16} /> {t("mentorPortal.sessions.createBtn")}</button>
       </div>
       <AdminTable columns={columns} rows={rows} loading={loading} error={error} emptyText={t("mentorPortal.sessions.noSessions")} meta={meta} onPageChange={(page, limit) => setQuery((prev) => ({ ...prev, page, limit: limit || prev.limit }))} onRowClick={(row) => navigate(`/mentor/sessions/${row.id}`)} />
-      <FormModal open={modalOpen} title={t("mentorPortal.sessions.createTitle")} submitLabel={t("mentorPortal.sessions.createSubmit")} saving={saving} onClose={() => setModalOpen(false)} onSubmit={createSession}>
+      <FormModal open={modalOpen} title={editingId ? t("mentorPortal.sessions.editTitle") : t("mentorPortal.sessions.createTitle")} submitLabel={t("mentorPortal.sessions.createSubmit")} saving={saving} onClose={() => { setModalOpen(false); setEditingId(null); }} onSubmit={saveSession}>
         <SessionForm form={form} setForm={setForm} assignments={assignments} />
       </FormModal>
       <ConfirmDialog isOpen={!!confirm} title={confirm?.title} subtitle={confirm?.row?.title || ""} variant="confirm" color={confirm?.color} yesLabel={t("mentorPortal.sessions.confirm")} noLabel={t("common.cancel") || "Cancel"} onYes={updateStatus} onNo={() => setConfirm(null)} onClose={() => setConfirm(null)} />

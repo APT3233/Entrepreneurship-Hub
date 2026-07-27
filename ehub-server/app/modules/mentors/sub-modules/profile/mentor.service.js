@@ -1,3 +1,5 @@
+import bcrypt from "bcryptjs";
+import { OUTBOX_MENTOR_NOTIFICATION_EMAIL_DISPATCH } from "app/core/constants/outboxEventTypes.js";
 import { AlreadyExists, BadRequest, Forbidden, NotFound } from "app/core/errors/errorFactory.js";
 import { getFileProxyUrl } from "app/core/utils/file.js";
 import { parsePagination } from "app/core/utils/pagination.js";
@@ -49,7 +51,7 @@ const compactValues = (row = {}) => Object.fromEntries(
   Object.entries(row).filter(([, value]) => value !== undefined),
 );
 
-export const createMentorService = ({ mentorRepository, transaction, auditService, storageService, tokenService }) => {
+export const createMentorService = ({ mentorRepository, outboxRepository, transaction, auditService, storageService, tokenService }) => {
   const getMentorOrFail = async (id) => {
     const mentor = await mentorRepository.findMentorById(id);
     if (!mentor) throw NotFound("Mentor");
@@ -124,6 +126,24 @@ export const createMentorService = ({ mentorRepository, transaction, auditServic
     };
   };
 
+  /** Tạo user đăng nhập cho mentor chưa có tài khoản. Username lấy từ phần trước @ của email, thêm hậu tố nếu trùng. */
+  const createLoginAccount = async (payload, password, conn) => {
+    const base = (payload.email.split("@")[0] || "mentor").slice(0, 50);
+    let username = base;
+    for (let n = 1; await mentorRepository.findUserByUsername(username, conn); n += 1) {
+      const suffix = `_${n}`;
+      username = `${base.slice(0, Math.max(1, 50 - suffix.length))}${suffix}`;
+    }
+    return mentorRepository.createUser({
+      username,
+      email: payload.email,
+      password: await bcrypt.hash(password, 12),
+      full_name: payload.full_name,
+      phone: payload.phone,
+      avatar_url: payload.avatar_url,
+    }, conn);
+  };
+
   const createMentor = async (data, actor) => {
     assertCanReviewStatus(data.status, actor);
     const allowed = [
@@ -144,7 +164,16 @@ export const createMentorService = ({ mentorRepository, transaction, auditServic
     if (payload.user_id) await assertLinkedUserAvailable(payload.user_id);
     if (payload.status === "active") await assertActiveEmailAvailable(payload.email);
 
+    const createAccount = data.create_account !== false && !payload.user_id;
+    if (createAccount) {
+      if (!data.password) throw BadRequest("Cần đặt mật khẩu để tạo tài khoản đăng nhập cho mentor");
+      if (await mentorRepository.findUserByEmail(payload.email)) {
+        throw AlreadyExists("Email đã được dùng cho một tài khoản khác");
+      }
+    }
+
     const mentorId = await transaction.run(async (conn) => {
+      if (createAccount) payload.user_id = await createLoginAccount(payload, data.password, conn);
       const id = await mentorRepository.createMentor(payload, conn);
       if (payload.user_id) await mentorRepository.assignUserRole(payload.user_id, "mentor", actor?.id, conn);
       return id;
@@ -158,7 +187,11 @@ export const createMentorService = ({ mentorRepository, transaction, auditServic
       title: payload.full_name,
       newValues: { email: payload.email, mentor_type: payload.mentor_type, status: payload.status },
     });
-    return getMentor(mentorId);
+    const mentor = await getMentor(mentorId);
+    if (!mentor.user_id) {
+      mentor.warnings = ["Mentor chưa có tài khoản đăng nhập nên không truy cập được portal. Hãy liên kết user hoặc tạo tài khoản ở Access Control."];
+    }
+    return mentor;
   };
 
   const updateMentor = async (id, data, actor) => {
@@ -190,6 +223,17 @@ export const createMentorService = ({ mentorRepository, transaction, auditServic
     return getMentor(id);
   };
 
+  /** Giữ role `mentor` của user khớp với trạng thái hồ sơ: chỉ mentor active mới được vào portal. */
+  const syncMentorRole = async (userId, status, actor) => {
+    if (!userId) return;
+    if (status === "active") {
+      await mentorRepository.assignUserRole(userId, "mentor", actor?.id || null);
+      return;
+    }
+    await mentorRepository.revokeUserRole(userId, "mentor");
+    await tokenService.revokeAllTokens(userId);
+  };
+
   const updateMentorStatus = async (id, status, actor) => {
     const current = await getMentorOrFail(id);
     if (status === "active") await assertActiveEmailAvailable(current.email, id);
@@ -198,7 +242,16 @@ export const createMentorService = ({ mentorRepository, transaction, auditServic
       updates.reviewed_by = actor?.id || null;
       updates.reviewed_at = new Date();
     }
-    await mentorRepository.updateMentor(id, updates);
+    await transaction.run(async (conn) => {
+      await mentorRepository.updateMentor(id, updates, conn);
+      if (REVIEW_STATUSES.has(status) && current.email) {
+        await outboxRepository.insertWithConn(conn, {
+          eventType: OUTBOX_MENTOR_NOTIFICATION_EMAIL_DISPATCH,
+          payload: { kind: "profile_status", recipients: [current.email], mentorName: current.full_name, status },
+        });
+      }
+    });
+    await syncMentorRole(current.user_id, status, actor);
     await auditService.log({
       userId: actor?.id || null,
       action: "mentor_status_update",
@@ -213,7 +266,11 @@ export const createMentorService = ({ mentorRepository, transaction, auditServic
 
   const deleteMentor = async (id, actor) => {
     const current = await getMentorOrFail(id);
+    if (await mentorRepository.countActiveAssignmentsForMentor(id)) {
+      throw BadRequest("Mentor còn assignment đang hoạt động, hãy hủy hoặc kết thúc trước khi xóa");
+    }
     await mentorRepository.softDeleteMentor(id);
+    await syncMentorRole(current.user_id, "deleted", actor);
     await auditService.log({
       userId: actor?.id || null,
       action: "mentor_delete",

@@ -24,7 +24,7 @@ export function useSemesterOptions(semesterList, filterYear, { prependAll, allVa
     if (filterYear == null || filterYear === "") return prependAll ? [{ value: allValue, label: t("filters.all") }] : [];
     const mapped = semesterList
       .filter((s) => s.year === filterYear)
-      .map((s) => ({ value: s.id, label: formatSemesterLabel(s, t) }));
+      .map((s) => ({ value: String(s.id), label: formatSemesterLabel(s, t) }));
     if (prependAll && allValue != null) {
       return [{ value: allValue, label: t("filters.all") }, ...mapped];
     }

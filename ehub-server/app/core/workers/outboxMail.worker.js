@@ -5,6 +5,7 @@ import { Events } from "app/core/constants/events.js";
 import {
   OUTBOX_CLASS_INVITE_EMAIL_DISPATCH,
   OUTBOX_GROUP_INVITE_EMAIL_DISPATCH,
+  OUTBOX_MENTOR_NOTIFICATION_EMAIL_DISPATCH,
 } from "app/core/constants/outboxEventTypes.js";
 import {
   GROUP_INVITE_EMAIL_ERR_NO_CLASS_INVITE,
@@ -24,6 +25,12 @@ import {
   buildGroupInviteMailPartsActiveUser,
   buildGroupInviteMailPartsPendingUser,
 } from "app/modules/mail/core/groupInviteMail.helper.js";
+import {
+  buildMentorAssignmentMailParts,
+  buildMentorAssignmentResponseMailParts,
+  buildMentorProfileStatusMailParts,
+  buildMentoringSessionMailParts,
+} from "app/modules/mail/core/mentorMail.helper.js";
 
 const parsePayload = (raw) => {
   if (typeof raw === "string") {
@@ -424,6 +431,49 @@ export const startOutboxMailWorker = ({ db, redis, container }) => {
     await publishProgressFromRows(redis, progressPublicId, outboxDbId, rows2);
   };
 
+  /**
+   * Thông báo nghiệp vụ mentor. Khác class/group invite: không có bảng theo dõi từng người nhận,
+   * nên gửi một lượt rồi đánh dấu outbox done; lỗi để processOneOutbox retry cả sự kiện.
+   */
+  const buildMentorMailParts = (payload) => {
+    switch (payload?.kind) {
+      case "assignment_created": return buildMentorAssignmentMailParts(payload);
+      case "assignment_responded": return buildMentorAssignmentResponseMailParts(payload);
+      case "session": return buildMentoringSessionMailParts(payload);
+      case "profile_status": return buildMentorProfileStatusMailParts(payload);
+      default: return null;
+    }
+  };
+
+  const processMentorNotificationOutbox = async (cand, payload) => {
+    const { transaction, email, outboxRepository } = container.cradle;
+    const outboxDbId = cand.id;
+    const parts = buildMentorMailParts(payload);
+    const recipients = [...new Set((payload?.recipients || []).filter(Boolean))];
+
+    if (!parts || !recipients.length) {
+      logger.warn("[OutboxMailWorker] mentor notification skipped", { outboxId: outboxDbId, kind: payload?.kind, recipients: recipients.length });
+      await transaction.run(async (conn) => outboxRepository.markDone(conn, outboxDbId));
+      return;
+    }
+
+    const limit = pLimit(Math.max(1, Math.min(50, cfg.mailInviteConcurrency || 10)));
+    const failures = [];
+    await Promise.all(recipients.map((to) => limit(async () => {
+      if (stopped) return;
+      try {
+        await email.send({ to, subject: parts.subject, text: parts.text, html: parts.html });
+        logger.info("[OutboxMailWorker] mentor notification sent", { outboxId: outboxDbId, kind: payload.kind, to: maskEmail(to) });
+      } catch (err) {
+        failures.push(String(err?.message || err));
+        logger.error("[OutboxMailWorker] mentor notification failed", { outboxId: outboxDbId, kind: payload.kind, to: maskEmail(to), err: String(err?.message || err) });
+      }
+    })));
+
+    if (failures.length === recipients.length) throw new Error(failures[0]);
+    await transaction.run(async (conn) => outboxRepository.markDone(conn, outboxDbId));
+  };
+
   const POLL_LOCK_KEY = "ehub:outbox:mail:poll";
   const POLL_LOCK_RELEASE = `if redis.call("get", KEYS[1]) == ARGV[1] then return redis.call("del", KEYS[1]) else return 0 end`;
 
@@ -447,9 +497,9 @@ export const startOutboxMailWorker = ({ db, redis, container }) => {
       for (let i = 0; i < maxRowsPerTick && !stopped; i += 1) {
         const [candidates] = await db.execute(
           `SELECT id, public_id, dispatch_public_id, payload, event_type FROM outbox_events
-         WHERE status = 'pending' AND event_type IN (?, ?) AND (next_retry_at IS NULL OR next_retry_at <= NOW())
+         WHERE status = 'pending' AND event_type IN (?, ?, ?) AND (next_retry_at IS NULL OR next_retry_at <= NOW())
          ORDER BY id ASC LIMIT 1`,
-          [OUTBOX_CLASS_INVITE_EMAIL_DISPATCH, OUTBOX_GROUP_INVITE_EMAIL_DISPATCH]
+          [OUTBOX_CLASS_INVITE_EMAIL_DISPATCH, OUTBOX_GROUP_INVITE_EMAIL_DISPATCH, OUTBOX_MENTOR_NOTIFICATION_EMAIL_DISPATCH]
         );
         const cand = candidates[0];
         if (!cand) break;
@@ -466,6 +516,8 @@ export const startOutboxMailWorker = ({ db, redis, container }) => {
         try {
           if (cand.event_type === OUTBOX_GROUP_INVITE_EMAIL_DISPATCH) {
             await processGroupInviteOutbox(cand, payload);
+          } else if (cand.event_type === OUTBOX_MENTOR_NOTIFICATION_EMAIL_DISPATCH) {
+            await processMentorNotificationOutbox(cand, payload);
           } else {
             await processClassInviteOutbox(cand, payload);
           }

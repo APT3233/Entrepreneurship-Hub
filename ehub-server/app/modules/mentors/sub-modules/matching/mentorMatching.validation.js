@@ -22,6 +22,7 @@ export const listMatchingRequestsSchema = {
 export const createMatchingRequestSchema = {
   body: Joi.object({
     group_id: positiveId.required(),
+    source_assignment_request_id: positiveId.allow(null),
     support_needed: Joi.string().trim().max(10000).required(),
     preferred_mentor_type: Joi.string().valid("business", "technical", "any").default("any"),
     required_expertise: Joi.array().items(positiveId).max(30).allow(null),

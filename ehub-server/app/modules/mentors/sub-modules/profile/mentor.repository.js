@@ -163,6 +163,30 @@ export const createMentorRepository = ({ db }) => {
     return rows[0] || null;
   };
 
+  const findUserByEmail = async (email) => {
+    const [rows] = await db.execute("SELECT id FROM users WHERE email = :email AND deleted_at IS NULL LIMIT 1", { email });
+    return rows[0] || null;
+  };
+
+  const findUserByUsername = async (username, conn) => {
+    const executor = conn ?? db;
+    const [rows] = await executor.execute(
+      "SELECT id FROM users WHERE LOWER(TRIM(username)) = LOWER(TRIM(:username)) AND deleted_at IS NULL LIMIT 1",
+      { username },
+    );
+    return rows[0] || null;
+  };
+
+  const createUser = async (data, conn) => {
+    const executor = conn ?? db;
+    const [result] = await executor.execute(
+      `INSERT INTO users (username, email, password, full_name, phone, avatar_url, auth_provider, status)
+       VALUES (:username, :email, :password, :full_name, :phone, :avatar_url, 'local', 'active')`,
+      data,
+    );
+    return result.insertId;
+  };
+
   const findRoleByCode = async (roleCode) => {
     const [rows] = await db.execute("SELECT id, role_code FROM roles WHERE role_code = :roleCode LIMIT 1", { roleCode });
     return rows[0] || null;
@@ -176,6 +200,14 @@ export const createMentorRepository = ({ db }) => {
     await executor.execute(
       "INSERT IGNORE INTO user_roles (user_id, role_id, assigned_by, assigned_at) VALUES (:userId, :roleId, :assignedBy, NOW())",
       { userId: Number(userId), roleId: role.id, assignedBy: assignedBy || null },
+    );
+  };
+
+  const revokeUserRole = async (userId, roleCode, conn) => {
+    const executor = conn ?? db;
+    await executor.execute(
+      "DELETE ur FROM user_roles ur JOIN roles r ON r.id = ur.role_id WHERE ur.user_id = :userId AND r.role_code = :roleCode",
+      { userId: Number(userId), roleCode },
     );
   };
 
@@ -210,6 +242,15 @@ export const createMentorRepository = ({ db }) => {
 
   const softDeleteMentor = async (id) => {
     await db.execute("UPDATE mentor_profiles SET deleted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND deleted_at IS NULL", { id: Number(id) });
+  };
+
+  const countActiveAssignmentsForMentor = async (mentorId) => {
+    const [rows] = await db.execute(
+      `SELECT COUNT(*) AS total FROM mentor_assignments
+       WHERE mentor_id = :mentorId AND deleted_at IS NULL AND status IN ('proposed','pending_mentor','active')`,
+      { mentorId: Number(mentorId) },
+    );
+    return Number(rows[0]?.total || 0);
   };
 
   const getMentorActivity = async (mentorId) => {
@@ -505,11 +546,16 @@ export const createMentorRepository = ({ db }) => {
     findActiveMentorByEmail,
     findActiveMentorByUserId,
     findUserById,
+    findUserByEmail,
+    findUserByUsername,
+    createUser,
     findRoleByCode,
     assignUserRole,
+    revokeUserRole,
     createMentor,
     updateMentor,
     softDeleteMentor,
+    countActiveAssignmentsForMentor,
     getMentorActivity,
     listExpertiseAreas,
     findExpertiseAreaById,

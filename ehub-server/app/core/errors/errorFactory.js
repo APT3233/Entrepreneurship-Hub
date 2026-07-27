@@ -29,6 +29,10 @@ export const StudentNotInRoster = (
   message = "MSSV của bạn chưa được giảng viên thêm vào hệ thống. Vui lòng liên hệ giảng viên để được cấp quyền."
 ) => AppError(message, 403, ErrorTypes.STUDENT_NOT_IN_ROSTER);
 
+export const MentorProfileNotActive = (
+  message = "Hồ sơ mentor của bạn chưa được duyệt. Vui lòng hoàn thiện hồ sơ và chờ quản trị viên phê duyệt."
+) => AppError(message, 403, ErrorTypes.MENTOR_PROFILE_NOT_ACTIVE);
+
 // ─── 404 ────────────────────────────────────────────
 export const NotFound = (resource = "Tài nguyên") =>
   AppError(`${resource} không tồn tại`, 404, ErrorTypes.NOT_FOUND);

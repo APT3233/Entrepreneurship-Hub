@@ -9,6 +9,7 @@ import {
   listAssignmentsSchema,
   listActionItemsSchema,
   listSessionsSchema,
+  replaceAssignmentSchema,
   updateAssignmentSchema,
   updateAssignmentStatusSchema,
 } from "./mentorWorkflow.validation.js";
@@ -23,6 +24,7 @@ export const createMentorWorkflowAdminRouter = (container) => {
   router.get("/mentor-assignments/:id", can("mentor.assignment.read"), validateRequest(assignmentIdParamSchema), mentorWorkflowController.getAssignment);
   router.put("/mentor-assignments/:id", can("mentor.assignment.update"), validateRequest(updateAssignmentSchema), mentorWorkflowController.updateAssignment);
   router.patch("/mentor-assignments/:id/status", can("mentor.assignment.approve", "mentor.assignment.cancel", "mentor.assignment.complete"), validateRequest(updateAssignmentStatusSchema), mentorWorkflowController.updateAssignmentStatus);
+  router.post("/mentor-assignments/:id/replace", can("mentor.assignment.create"), validateRequest(replaceAssignmentSchema), mentorWorkflowController.replaceAssignment);
   router.delete("/mentor-assignments/:id", can("mentor.assignment.cancel"), validateRequest(assignmentIdParamSchema), mentorWorkflowController.deleteAssignment);
 
   router.get("/groups/:groupId/mentor-assignments", can("mentor.assignment.read"), validateRequest(groupIdParamSchema), mentorWorkflowController.listGroupAssignments);

@@ -1,7 +1,7 @@
 import { Suspense, useMemo, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { BarChart3, CalendarDays, ClipboardList, FileText, Handshake, Tags, UserRound } from "lucide-react";
+import { BarChart3, CalendarDays, ClipboardList, FileText, Handshake, Tags, UserRound, Users } from "lucide-react";
 import { authApi } from "@/api/auth";
 import AppHeader from "@/components/layout/AppHeader";
 import AppSidebar from "@/components/layout/AppSidebar";
@@ -25,6 +25,7 @@ export default function MentorLayout() {
     { label: t("mentorPortal.nav.availability"), icon: CalendarDays, path: "/mentor/availability" },
     { label: t("mentorPortal.nav.documents"), icon: FileText, path: "/mentor/documents" },
     { label: t("mentorPortal.nav.assignments"), icon: Handshake, path: "/mentor/assignments" },
+    { label: t("mentorPortal.nav.groups"), icon: Users, path: "/mentor/groups" },
     { label: t("mentorPortal.nav.sessions"), icon: ClipboardList, path: "/mentor/sessions" },
   ], [t]);
 

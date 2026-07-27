@@ -65,6 +65,19 @@ export const updateAssignmentSchema = {
   }).min(1),
 };
 
+export const replaceAssignmentSchema = {
+  params: Joi.object({ id: positiveId.required() }),
+  body: Joi.object({
+    mentor_id: positiveId.required(),
+    reason: Joi.string().trim().max(1000).required(),
+    assignment_type: Joi.string().valid(...assignmentTypes),
+    start_date: Joi.date().iso().allow(null),
+    end_date: Joi.date().iso().allow(null),
+    expected_sessions: Joi.number().integer().min(0).max(200).allow(null),
+    note: optionalText,
+  }),
+};
+
 export const updateAssignmentStatusSchema = {
   params: Joi.object({ id: positiveId.required() }),
   body: Joi.object({
@@ -150,10 +163,34 @@ export const updateSessionStatusSchema = {
   }),
 };
 
+export const listAssignmentRequestsSchema = {
+  query: Joi.object({
+    page: Joi.number().integer().min(1),
+    limit: Joi.number().integer().min(1).max(100),
+    group_id: positiveId,
+    status: Joi.string().valid("open", "matched", "closed", "cancelled"),
+  }),
+};
+
+export const updateAssignmentRequestStatusSchema = {
+  params: Joi.object({ id: positiveId.required() }),
+  body: Joi.object({ status: Joi.string().valid("closed", "cancelled").required() }),
+};
+
+export const updateAttendanceSchema = {
+  params: Joi.object({ id: positiveId.required() }),
+  body: Joi.object({
+    items: Joi.array().items(Joi.object({
+      id: positiveId.required(),
+      attendance_status: Joi.string().valid("invited", "attended", "absent", "late").required(),
+      note: optionalText,
+    })).min(1).required(),
+  }),
+};
+
 export const createNoteSchema = {
   params: Joi.object({ id: positiveId.required() }),
   body: Joi.object({
-    note_type: Joi.string().valid("mentor_note", "student_note", "lecturer_note", "private_admin_note").default("mentor_note"),
     content: Joi.string().trim().max(10000).required(),
     visibility: Joi.string().valid("private_to_author", "internal", "shared_with_group", "shared_with_mentor").default("internal"),
   }),

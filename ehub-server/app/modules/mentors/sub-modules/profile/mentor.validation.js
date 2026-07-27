@@ -60,6 +60,9 @@ export const createMentorSchema = {
   body: Joi.object({
     ...mentorProfileBase,
     status: Joi.string().valid(...mentorStatuses).default("pending"),
+    create_account: Joi.boolean().default(true),
+    // Bắt buộc khi tạo tài khoản đăng nhập mới — kiểm tra ở service vì phụ thuộc cả user_id.
+    password: Joi.string().min(8).max(128),
   }),
 };
 

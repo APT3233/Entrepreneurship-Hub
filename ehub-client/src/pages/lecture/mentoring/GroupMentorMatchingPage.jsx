@@ -2,10 +2,11 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Sparkles } from "lucide-react";
 import { useParams } from "react-router-dom";
 import MentorMatchingApi from "@/api/mentorMatching";
+import MentorWorkflowApi from "@/api/mentorWorkflow";
 import { useToast } from "@/components/ui/Toast";
 import { useTranslation } from "@/context/TranslationContext";
 import AdminTable from "@/pages/admin/components/AdminTable";
-import FormModal from "@/pages/admin/components/FormModal";
+import FormModal, { Field, inputClass } from "@/pages/admin/components/FormModal";
 import StatusBadge from "@/pages/admin/components/StatusBadge";
 import { MatchingRequestForm, ScoreBadge } from "@/pages/admin/mentor-matching/components";
 import { formatDate } from "@/utils/dateTimeDisplay";
@@ -19,13 +20,34 @@ export default function GroupMentorMatchingPage() {
   const [error, setError] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState({ group_id: groupId, preferred_mentor_type: "any", support_needed: "", priority: "normal", required_expertise: [] });
+  const [openRequests, setOpenRequests] = useState([]);
   const [saving, setSaving] = useState(false);
+
+  /** Lấy lại nội dung từ yêu cầu mentor giảng viên đã gửi, khỏi phải mô tả nhu cầu lần hai. */
+  const prefillFromRequest = (requestId) => {
+    const source = openRequests.find((row) => String(row.id) === String(requestId));
+    if (!source) {
+      setForm((prev) => ({ ...prev, source_assignment_request_id: "" }));
+      return;
+    }
+    setForm((prev) => ({
+      ...prev,
+      source_assignment_request_id: source.id,
+      support_needed: [source.support_needed, source.problem_statement].filter(Boolean).join("\n\n"),
+      preferred_mentor_type: source.requested_role || "any",
+      priority: source.priority || "normal",
+    }));
+  };
   const load = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
-      const res = await MentorMatchingApi.listRequests({ group_id: groupId, limit: 20 });
+      const [res, requestsRes] = await Promise.all([
+        MentorMatchingApi.listRequests({ group_id: groupId, limit: 20 }),
+        MentorWorkflowApi.lecturerAssignmentRequests({ group_id: groupId, status: "open", limit: 20 }),
+      ]);
       setRows(res?.data || []);
+      setOpenRequests(requestsRes?.data || []);
     } catch (err) {
       setError(err.message || t("lecturer.mentoringPage.matchingLoadError"));
     } finally {
@@ -62,6 +84,14 @@ export default function GroupMentorMatchingPage() {
       <div className="flex justify-end"><button type="button" onClick={() => setModalOpen(true)} className="rounded-xl bg-teal-600 px-4 py-2 text-sm font-black text-white hover:bg-teal-700">{t("lecturer.mentoringPage.createMatchingBtn")}</button></div>
       <AdminTable columns={columns} rows={rows} loading={loading} error={error} emptyText={t("lecturer.mentoringPage.emptyMatching")} />
       <FormModal open={modalOpen} title={t("lecturer.mentoringPage.requestMatchingTitle")} submitLabel={t("admin.ecosystem.common.create")} saving={saving} onClose={() => setModalOpen(false)} onSubmit={submit}>
+        {openRequests.length ? (
+          <Field label={t("lecturer.mentoringPage.fromExistingRequest")}>
+            <select className={inputClass} value={form.source_assignment_request_id || ""} onChange={(e) => prefillFromRequest(e.target.value)}>
+              <option value="">{t("lecturer.mentoringPage.noSourceRequest")}</option>
+              {openRequests.map((row) => <option key={row.id} value={row.id}>{row.support_needed.slice(0, 80)}</option>)}
+            </select>
+          </Field>
+        ) : null}
         <MatchingRequestForm form={form} setForm={setForm} lockedGroupId={groupId} groups={[{ id: groupId, group_name: `Group #${groupId}` }]} expertise={[]} />
       </FormModal>
     </div>

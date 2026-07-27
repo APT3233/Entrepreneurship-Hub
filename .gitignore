@@ -18,3 +18,4 @@ data/ehub
 *.log
 
 bk/
+.claude/

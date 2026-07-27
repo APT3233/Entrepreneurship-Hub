@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { authenticate } from "app/core/middlewares/authMiddleware.js";
+import { mentorStatusGuard } from "app/core/middlewares/mentorStatusGuard.js";
 import { permissionGuard } from "app/core/middlewares/permissionGuard.js";
 import { roleGuard } from "app/core/middlewares/roleGuard.js";
 import { validateRequest } from "app/core/middlewares/validateRequest.js";
@@ -19,7 +20,7 @@ export const createMentorAnalyticsRouter = (container) => {
   router.get("/admin/mentor-analytics/ecosystem", authenticate, roleGuard("admin", "department_head"), can("mentor.analytics.admin_read", "mentor.analytics.read"), validateRequest(analyticsQuerySchema), mentorAnalyticsController.ecosystem);
 
   router.get("/lecturer/mentor-analytics", authenticate, roleGuard("lecturer", "admin", "department_head"), can("mentor.analytics.read"), validateRequest(analyticsQuerySchema), mentorAnalyticsController.lecturerDashboard);
-  router.get("/mentor/dashboard", authenticate, roleGuard("mentor"), can("mentor.dashboard.read"), mentorAnalyticsController.mentorDashboard);
+  router.get("/mentor/dashboard", authenticate, roleGuard("mentor"), mentorStatusGuard(container), can("mentor.dashboard.read"), mentorAnalyticsController.mentorDashboard);
 
   return router;
 };

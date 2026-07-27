@@ -32,6 +32,16 @@ export const createMentorWorkflowController = ({ mentorWorkflowService }) => {
     return sendNoContent(res);
   });
 
+  const listGroupMentors = catchAsync(async (req, res) => {
+    const data = await mentorWorkflowService.listGroupMentors(req.params.groupId, req.user);
+    return sendSuccess(res, { data, message: "Group mentors retrieved successfully" });
+  });
+
+  const replaceAssignment = catchAsync(async (req, res) => {
+    const data = await mentorWorkflowService.replaceAssignment(req.params.id, req.body, req.user);
+    return sendCreated(res, { data, message: "Mentor replaced successfully" });
+  });
+
   const listGroupAssignments = catchAsync(async (req, res) => {
     const data = await mentorWorkflowService.listGroupAssignments(req.params.groupId, req.user);
     return sendSuccess(res, { data, message: "Group mentor assignments retrieved successfully" });
@@ -40,6 +50,31 @@ export const createMentorWorkflowController = ({ mentorWorkflowService }) => {
   const createGroupAssignment = catchAsync(async (req, res) => {
     const data = await mentorWorkflowService.createAssignment(req.body, req.user, req.params.groupId);
     return sendCreated(res, { data, message: "Group mentor assignment created successfully" });
+  });
+
+  const listAssignmentRequests = catchAsync(async (req, res) => {
+    const result = await mentorWorkflowService.listAssignmentRequests(req.query, req.user);
+    return sendPaginated(res, { ...result, message: "Mentor assignment requests retrieved successfully" });
+  });
+
+  const updateAssignmentRequestStatus = catchAsync(async (req, res) => {
+    const data = await mentorWorkflowService.updateAssignmentRequestStatus(req.params.id, req.body.status, req.user);
+    return sendSuccess(res, { data, message: "Mentor assignment request updated successfully" });
+  });
+
+  const updateAttendance = catchAsync(async (req, res) => {
+    const data = await mentorWorkflowService.updateAttendance(req.params.id, req.body.items, req.user);
+    return sendSuccess(res, { data, message: "Attendance updated successfully" });
+  });
+
+  const listMyGroups = catchAsync(async (req, res) => {
+    const { data } = await mentorWorkflowService.listMyGroups(req.user);
+    return sendSuccess(res, { data, message: "Mentor groups retrieved successfully" });
+  });
+
+  const getMyGroup = catchAsync(async (req, res) => {
+    const data = await mentorWorkflowService.getMyGroup(req.params.groupId, req.user);
+    return sendSuccess(res, { data, message: "Mentor group detail retrieved successfully" });
   });
 
   const listLecturerClassAssignments = catchAsync(async (req, res) => {
@@ -154,7 +189,14 @@ export const createMentorWorkflowController = ({ mentorWorkflowService }) => {
     updateAssignment,
     updateAssignmentStatus,
     deleteAssignment,
+    replaceAssignment,
     listGroupAssignments,
+    listGroupMentors,
+    listAssignmentRequests,
+    updateAssignmentRequestStatus,
+    updateAttendance,
+    listMyGroups,
+    getMyGroup,
     createGroupAssignment,
     listLecturerClassAssignments,
     createAssignmentRequest,

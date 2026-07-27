@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { CheckCircle2, XCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import MentorWorkflowApi from "@/api/mentorWorkflow";
 import { useToast } from "@/components/ui/Toast";
 import { useTranslation } from "@/context/TranslationContext";
@@ -11,6 +12,7 @@ import { formatDate } from "@/utils/dateTimeDisplay";
 export default function MentorAssignmentsPage() {
   const { t } = useTranslation();
   const toast = useToast();
+  const navigate = useNavigate();
   const [rows, setRows] = useState([]);
   const [meta, setMeta] = useState(null);
   const [query, setQuery] = useState({ page: 1, limit: 10 });
@@ -47,19 +49,19 @@ export default function MentorAssignmentsPage() {
   };
 
   const columns = useMemo(() => [
-    { key: "group_name", label: t("mentorPortal.assignments.group"), render: (row) => <span className="font-medium text-text-primary">{row.group_name}</span> },
+    { key: "group_name", label: t("mentorPortal.assignments.group"), render: (row) => <button onClick={(e) => { e.stopPropagation(); navigate(`/mentor/groups/${row.group_id}`); }} className="text-left font-medium text-text-primary hover:text-accent">{row.group_name}</button> },
     { key: "topic", label: t("mentorPortal.assignments.topic"), render: (row) => row.topic || "-" },
     { key: "class_code", label: t("mentorPortal.assignments.class") },
     { key: "assignment_type", label: t("mentorPortal.assignments.type"), render: (row) => <StatusBadge value={row.assignment_type} /> },
     { key: "status", label: t("mentorPortal.assignments.status"), render: (row) => <StatusBadge value={row.status} /> },
     { key: "start_date", label: t("mentorPortal.assignments.start"), render: (row) => formatDate(row.start_date) },
     { key: "expected_sessions", label: t("mentorPortal.assignments.expected"), render: (row) => row.expected_sessions ?? "-" },
-    { key: "actions", label: "", width: 120, render: (row) => ['proposed', 'pending_mentor'].includes(row.status) ? <div className="flex justify-end gap-1"><button onClick={() => setConfirm({ row, response: "accept", title: t("mentorPortal.assignments.acceptTitle"), color: "green" })} className="rounded-control p-2 text-success-text hover:bg-success-bg"><CheckCircle2 size={16} /></button><button onClick={() => setConfirm({ row, response: "decline", title: t("mentorPortal.assignments.declineTitle"), color: "red" })} className="rounded-control p-2 text-danger-text hover:bg-danger-bg"><XCircle size={16} /></button></div> : null },
-  ], [t]);
+    { key: "actions", label: "", width: 120, render: (row) => ['proposed', 'pending_mentor'].includes(row.status) ? <div className="flex justify-end gap-1"><button onClick={(e) => { e.stopPropagation(); setConfirm({ row, response: "accept", title: t("mentorPortal.assignments.acceptTitle"), color: "green" }); }} className="rounded-control p-2 text-success-text hover:bg-success-bg"><CheckCircle2 size={16} /></button><button onClick={(e) => { e.stopPropagation(); setConfirm({ row, response: "decline", title: t("mentorPortal.assignments.declineTitle"), color: "red" }); }} className="rounded-control p-2 text-danger-text hover:bg-danger-bg"><XCircle size={16} /></button></div> : null },
+  ], [navigate, t]);
 
   return (
     <>
-      <AdminTable columns={columns} rows={rows} loading={loading} error={error} emptyText={t("mentorPortal.assignments.noAssignments")} meta={meta} onPageChange={(page, limit) => setQuery((prev) => ({ ...prev, page, limit: limit || prev.limit }))} />
+      <AdminTable columns={columns} rows={rows} loading={loading} error={error} emptyText={t("mentorPortal.assignments.noAssignments")} meta={meta} onPageChange={(page, limit) => setQuery((prev) => ({ ...prev, page, limit: limit || prev.limit }))} onRowClick={(row) => navigate(`/mentor/assignments/${row.id}`)} />
       <ConfirmDialog isOpen={!!confirm} title={confirm?.title} subtitle={confirm ? `${confirm.row.group_name} · ${confirm.row.topic || ''}` : ""} variant="confirm" color={confirm?.color} yesLabel={t("mentorPortal.assignments.confirm")} noLabel={t("common.cancel") || "Cancel"} onYes={respond} onNo={() => setConfirm(null)} onClose={() => setConfirm(null)} />
     </>
   );

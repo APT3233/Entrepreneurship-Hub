@@ -74,8 +74,8 @@ export const createMentorMatchingRepository = ({ db }) => {
   const createRequest = async (data) => {
     const [result] = await db.execute(
       `INSERT INTO mentor_matching_requests
-       (group_id, class_id, semester_id, requested_by, support_needed, preferred_mentor_type, required_expertise, priority, status)
-       VALUES (:group_id, :class_id, :semester_id, :requested_by, :support_needed, :preferred_mentor_type, :required_expertise, :priority, :status)`,
+       (group_id, class_id, semester_id, requested_by, source_assignment_request_id, support_needed, preferred_mentor_type, required_expertise, priority, status)
+       VALUES (:group_id, :class_id, :semester_id, :requested_by, :source_assignment_request_id, :support_needed, :preferred_mentor_type, :required_expertise, :priority, :status)`,
       { ...data, required_expertise: data.required_expertise ? JSON.stringify(data.required_expertise) : null },
     );
     return result.insertId;

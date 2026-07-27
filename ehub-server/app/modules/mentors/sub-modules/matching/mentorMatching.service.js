@@ -133,11 +133,18 @@ export const createMentorMatchingService = ({ mentorMatchingRepository, mentorWo
     const group = await mentorMatchingRepository.findGroupContext(data.group_id);
     if (!group) throw NotFound("Group");
     await assertLecturerOwnsClass(actor, group.class_id);
+    // Nếu tạo từ yêu cầu mentor của giảng viên, giữ liên kết để truy được nguồn gốc.
+    let sourceRequestId = null;
+    if (data.source_assignment_request_id) {
+      const source = await mentorWorkflowService.getAssignmentRequestForGroup(data.source_assignment_request_id, group.id);
+      sourceRequestId = source.id;
+    }
     const payload = {
       group_id: Number(group.id),
       class_id: Number(group.class_id),
       semester_id: Number(group.semester_id),
       requested_by: actor?.id || null,
+      source_assignment_request_id: sourceRequestId,
       support_needed: String(data.support_needed).trim(),
       preferred_mentor_type: data.preferred_mentor_type || "any",
       required_expertise: data.required_expertise || null,
